@@ -3,7 +3,7 @@ import { AuthService } from '../../services/auth.service.js';
 export class AuthModule {
     constructor(authService) {
         this.authService = authService;
-        this.mode = 'login'; // login или register
+        this.mode = 'login';
     }
 
     render() {
@@ -18,7 +18,6 @@ export class AuthModule {
                 <div class="container">
                     <div class="row justify-content-center">
                         <div class="col-11 col-sm-8 col-md-6 col-lg-4">
-                            <!-- Логотип -->
                             <div class="text-center mb-4 fade-in-up">
                                 <div class="auth-logo mb-3">
                                     <i class="bi bi-rocket-takeoff display-4 text-primary"></i>
@@ -27,10 +26,8 @@ export class AuthModule {
                                 <p class="text-muted">${this.mode === 'login' ? 'С возвращением!' : 'Создай свой мир мечты'}</p>
                             </div>
 
-                            <!-- Форма -->
                             <div class="card-premium p-4 fade-in-up" style="animation-delay: 0.2s">
                                 <form id="authForm" class="auth-form">
-                                    <!-- Email -->
                                     <div class="mb-3">
                                         <label class="form-label fw-semibold">
                                             <i class="bi bi-envelope me-2"></i>Email
@@ -48,7 +45,6 @@ export class AuthModule {
                                     </div>
 
                                     ${this.mode === 'register' ? `
-                                        <!-- Никнейм (только при регистрации) -->
                                         <div class="mb-3">
                                             <label class="form-label fw-semibold">
                                                 <i class="bi bi-person-badge me-2"></i>Никнейм
@@ -70,7 +66,6 @@ export class AuthModule {
                                         </div>
                                     ` : ''}
 
-                                    <!-- Пароль -->
                                     <div class="mb-3">
                                         <label class="form-label fw-semibold">
                                             <i class="bi bi-shield-lock me-2"></i>Пароль
@@ -93,13 +88,11 @@ export class AuthModule {
                                         </div>
                                     </div>
 
-                                    <!-- Кнопка -->
                                     <button type="submit" class="btn btn-premium w-100 mb-3">
                                         <i class="bi ${this.mode === 'login' ? 'bi-box-arrow-in-right' : 'bi-person-plus'} me-2"></i>
                                         ${this.mode === 'login' ? 'Войти' : 'Создать аккаунт'}
                                     </button>
 
-                                    <!-- Переключение режима -->
                                     <div class="text-center">
                                         <span class="text-muted">
                                             ${this.mode === 'login' ? 'Нет аккаунта?' : 'Уже есть аккаунт?'}
@@ -111,7 +104,6 @@ export class AuthModule {
                                 </form>
                             </div>
 
-                            <!-- Ошибки -->
                             <div id="authError" class="alert alert-danger mt-3 d-none fade-in-up">
                                 <i class="bi bi-exclamation-triangle me-2"></i>
                                 <span id="authErrorMessage"></span>
@@ -124,69 +116,87 @@ export class AuthModule {
     }
 
     attachEventListeners() {
-        // Показать/скрыть пароль
-        document.getElementById('togglePassword').addEventListener('click', () => {
-            const passwordInput = document.getElementById('password');
-            const icon = document.querySelector('#togglePassword i');
-            
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                icon.className = 'bi bi-eye-slash';
-            } else {
-                passwordInput.type = 'password';
-                icon.className = 'bi bi-eye';
-            }
-        });
+        const togglePassword = document.getElementById('togglePassword');
+        if (togglePassword) {
+            togglePassword.addEventListener('click', () => {
+                const passwordInput = document.getElementById('password');
+                const icon = document.querySelector('#togglePassword i');
+                
+                if (passwordInput && icon) {
+                    if (passwordInput.type === 'password') {
+                        passwordInput.type = 'text';
+                        icon.className = 'bi bi-eye-slash';
+                    } else {
+                        passwordInput.type = 'password';
+                        icon.className = 'bi bi-eye';
+                    }
+                }
+            });
+        }
 
-        // Переключение логин/регистрация
-        document.getElementById('toggleMode').addEventListener('click', () => {
-            this.mode = this.mode === 'login' ? 'register' : 'login';
-            this.render();
-        });
+        const toggleMode = document.getElementById('toggleMode');
+        if (toggleMode) {
+            toggleMode.addEventListener('click', () => {
+                this.mode = this.mode === 'login' ? 'register' : 'login';
+                this.render();
+            });
+        }
 
-        // Отправка формы
-        document.getElementById('authForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            await this.handleSubmit();
-        });
+        const authForm = document.getElementById('authForm');
+        if (authForm) {
+            authForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await this.handleSubmit();
+            });
+        }
     }
 
     async handleSubmit() {
-        const email = document.getElementById('email').value.trim();
-        const password = document.getElementById('password').value;
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
         
-        // Показываем загрузку
+        if (!emailInput || !passwordInput) return;
+        
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+
         const submitBtn = document.querySelector('#authForm button[type="submit"]');
+        if (!submitBtn) return;
+        
         const originalText = submitBtn.innerHTML;
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Загрузка...';
         submitBtn.disabled = true;
 
         let result;
-        
+
         if (this.mode === 'login') {
             result = await this.authService.signInWithEmail(email, password);
         } else {
-            const username = document.getElementById('username').value.trim();
+            const usernameInput = document.getElementById('username');
+            if (!usernameInput) return;
             
-            // Валидация ника
+            const username = usernameInput.value.trim();
+
             if (!this.validateUsername(username)) {
                 this.showError('Никнейм должен содержать от 3 до 20 символов (буквы, цифры и _)');
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
+                if (submitBtn) {
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                }
                 return;
             }
-            
+
             result = await this.authService.signUpWithEmail(email, password, username);
         }
 
         if (result.success) {
-            // Успешная авторизация
             this.hideError();
-            // Обновление интерфейса произойдет через onAuthChange в app.js
         } else {
             this.showError(result.error);
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
+            if (submitBtn) {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
         }
     }
 
@@ -197,13 +207,18 @@ export class AuthModule {
 
     showError(message) {
         const errorDiv = document.getElementById('authError');
-        document.getElementById('authErrorMessage').textContent = message;
+        const errorMessage = document.getElementById('authErrorMessage');
+
+        if (!errorDiv || !errorMessage) return;
+
+        errorMessage.textContent = message;
         errorDiv.classList.remove('d-none');
-        errorDiv.classList.add('fade-in-up');
     }
 
     hideError() {
         const errorDiv = document.getElementById('authError');
-        errorDiv.classList.add('d-none');
+        if (errorDiv) {
+            errorDiv.classList.add('d-none');
+        }
     }
 }

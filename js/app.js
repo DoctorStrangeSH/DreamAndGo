@@ -9,11 +9,16 @@ import { AuthModule } from './modules/auth/auth.js';
 import { ProfileModule } from './modules/profile/profile.js';
 import { TravelsModule } from './modules/travels/travels.js';
 import { MoviesModule } from './modules/movies/movies.js';
+import { RestaurantsModule } from './modules/restaurants/restaurants.js';
+import { DreamsModule } from './modules/dreams/dreams.js';
+import { BooksModule } from './modules/books/books.js';
+import { FriendsModule } from './modules/friends/friends.js';
 
 class DreamAndGo {
     constructor() {
         // Инициализация сервисов
         this.authService = new AuthService(auth, db);
+        this.db = db; // Прямой доступ к Firestore
         this.themeService = new ThemeService();
         this.router = new Router();
         this.ui = new UIComponents();
@@ -23,9 +28,9 @@ class DreamAndGo {
         this.currentUser = null;
         this.userData = null;
         this.isOnline = navigator.onLine;
-        this.authResolved = false; // Флаг: получили ли ответ от Firebase
+        this.authResolved = false;
 
-        // Делаем приложение доступным глобально для вызова из HTML
+        // Делаем приложение доступным глобально
         window.app = this;
 
         // Запускаем инициализацию
@@ -79,7 +84,7 @@ class DreamAndGo {
                 this.showAuth();
             }
 
-            // Запускаем роутер ТОЛЬКО после получения статуса авторизации
+            // Запускаем роутер только если ещё не запущен
             if (!this.router.isReady) {
                 console.log('✅ Статус получен, запускаю роутер');
                 this.router.init();
@@ -139,16 +144,10 @@ class DreamAndGo {
             showInNav: true
         });
 
-        // Еда
-        this.router.register('food', {
-            render: () => this.renderPlaceholder(
-                'Еда и рестораны 🍽️',
-                'egg-fried',
-                'Твои любимые рестораны, блюда и кулинарные открытия'
-            )
-        }, {
-            title: 'Еда',
-            icon: 'bi-egg-fried',
+        // Рестораны
+        this.router.register('food', new RestaurantsModule(), {
+            title: 'Рестораны',
+            icon: 'bi-shop',
             showInNav: true
         });
 
@@ -159,39 +158,21 @@ class DreamAndGo {
             showInNav: true
         });
         // Книги
-        this.router.register('books', {
-            render: () => this.renderPlaceholder(
-                'Книги 📚',
-                'book',
-                'Твоя библиотека: прочитанные и желаемые книги'
-            )
-        }, {
+        this.router.register('books', new BooksModule(), {
             title: 'Книги',
             icon: 'bi-book',
             showInNav: true
         });
 
         // Мечты
-        this.router.register('dreams', {
-            render: () => this.renderPlaceholder(
-                'Мечты и цели ⭐',
-                'star',
-                'Твои мечты, планы и всё, к чему ты стремишься'
-            )
-        }, {
+        this.router.register('dreams', new DreamsModule(), {
             title: 'Мечты',
             icon: 'bi-star',
             showInNav: true
         });
 
         // Друзья
-        this.router.register('friends', {
-            render: () => this.renderPlaceholder(
-                'Друзья 👥',
-                'people',
-                'Твои друзья и совместные приключения'
-            )
-        }, {
+        this.router.register('friends', new FriendsModule(), {
             title: 'Друзья',
             icon: 'bi-people',
             showInNav: true
@@ -299,6 +280,10 @@ class DreamAndGo {
         // Не перерисовываем, если приложение уже показано
         if (!appContainer.classList.contains('d-none') && document.getElementById('main-content')) {
             console.log('📱 Приложение уже отрендерено');
+            // Но роутер всё равно запускаем
+            if (!this.router.isReady) {
+                this.router.init();
+            }
             return;
         }
 
@@ -318,6 +303,11 @@ class DreamAndGo {
         appContainer.appendChild(mainContent);
 
         console.log('✅ Приложение отрендерено');
+
+        // Запускаем роутер после рендера
+        if (!this.router.isReady) {
+            this.router.init();
+        }
     }
 
     showAuth() {

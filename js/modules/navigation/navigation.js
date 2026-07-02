@@ -29,10 +29,10 @@ export class Navigation {
             </nav>
             <div style="padding-top: 70px;"></div>
         `;
-        
+
         // Добавляем обработчики после рендера
         setTimeout(() => this.attachEventListeners(), 0);
-        
+
         return navHTML;
     }
 
@@ -94,9 +94,9 @@ export class Navigation {
                         </a>
                     </li>
                     <li>
-                        <a class="dropdown-item" href="#profile/settings">
-                            <i class="bi bi-gear me-2"></i>Настройки
-                        </a>
+                       <a class="dropdown-item" href="#profile">
+    <i class="bi bi-gear me-2"></i>Настройки
+</a>
                     </li>
                     <li><hr class="dropdown-divider"></li>
                     <li>

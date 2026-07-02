@@ -1,0 +1,70 @@
+.travel-card {
+    transition: all var(--transition-smooth);
+}
+
+.travel-card .card-premium {
+    overflow: hidden;
+}
+
+.travel-card-image {
+    height: 200px;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    transition: transform 0.3s ease;
+}
+
+.travel-card:hover .travel-card-image {
+    transform: scale(1.05);
+}
+
+.travel-card-placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--gradient-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.travel-card-badges {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+}
+
+.travel-card-actions {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.travel-card:hover .travel-card-actions {
+    opacity: 1;
+}
+
+.star-rating i {
+    cursor: pointer;
+    transition: transform var(--transition-fast);
+}
+
+.star-rating i:hover {
+    transform: scale(1.2);
+}
+
+/* Анимация */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

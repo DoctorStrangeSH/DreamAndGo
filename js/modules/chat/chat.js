@@ -480,7 +480,7 @@ export class ChatModule {
         if (!this.currentChat || !confirm('Удалить весь диалог у обоих участников? Это действие может быть необратимым.')) return;
         const result = await this.chatService.deleteChat(window.app.currentUser.uid, this.currentChat);
         if (!result.success) {
-            window.app.ui.showToast('Не удалось удалить диалог у всех', 'error');
+            window.app.ui.showToast(result.error || 'Не удалось удалить диалог у всех', 'error');
             return;
         }
         this.closeChat();

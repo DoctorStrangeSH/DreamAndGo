@@ -14,10 +14,22 @@ export class AuthModule {
 
     getTemplate() {
         return `
-            <div class="auth-container min-vh-100 d-flex align-items-center justify-content-center">
-                <div class="container">
-                    <div class="row justify-content-center">
-                        <div class="col-11 col-sm-8 col-md-6 col-lg-4">
+            <div class="auth-container dream-welcome min-vh-100 d-flex align-items-center">
+                <div class="container dream-welcome-shell">
+                    <div class="row align-items-center justify-content-center g-4 g-xl-5">
+                        <section class="col-12 col-lg-7 dream-welcome-intro" aria-labelledby="dream-welcome-title">
+                            <div class="dream-welcome-kicker"><i class="bi bi-stars" aria-hidden="true"></i> Пространство для твоих открытий</div>
+                            <h2 id="dream-welcome-title">Не откладывай жизнь <span>на потом.</span></h2>
+                            <p class="dream-welcome-lead">Собирай мечты, планируй приключения и сохраняй то, что делает каждый день особенным.</p>
+                            <div class="dream-welcome-grid">
+                                <div class="dream-welcome-feature"><i class="bi bi-compass" aria-hidden="true"></i><div><strong>Открывай мир</strong><span>Путешествия, места и впечатления</span></div></div>
+                                <div class="dream-welcome-feature"><i class="bi bi-stars" aria-hidden="true"></i><div><strong>Двигайся к мечтам</strong><span>Сохраняй идеи и отмечай достижения</span></div></div>
+                                <div class="dream-welcome-feature"><i class="bi bi-people" aria-hidden="true"></i><div><strong>Находи своих</strong><span>Друзья и общение по интересам</span></div></div>
+                                <div class="dream-welcome-feature"><i class="bi bi-journal-heart" aria-hidden="true"></i><div><strong>Сохраняй любимое</strong><span>Книги, фильмы и рестораны</span></div></div>
+                            </div>
+                            <p class="dream-welcome-note"><i class="bi bi-heart-fill" aria-hidden="true"></i> Твоя история начинается здесь.</p>
+                        </section>
+                        <div class="col-12 col-sm-10 col-md-8 col-lg-5">
                             <div class="text-center mb-4 fade-in-up">
                                 <div class="auth-logo mb-3">
                                     <i class="bi bi-rocket-takeoff display-4 text-primary"></i>
@@ -26,7 +38,7 @@ export class AuthModule {
                                 <p class="text-muted">${this.mode === 'login' ? 'С возвращением!' : 'Создай свой мир мечты'}</p>
                             </div>
 
-                            <div class="card-premium p-4 fade-in-up" style="animation-delay: 0.2s">
+                            <div class="card-premium dream-auth-card p-4 fade-in-up" style="animation-delay: 0.2s">
                                 <form id="authForm" class="auth-form">
                                     <div class="mb-3">
                                         <label class="form-label fw-semibold">
@@ -39,6 +51,7 @@ export class AuthModule {
                                             <input type="email" 
                                                    class="form-control" 
                                                    id="email" 
+                                                   autocomplete="email"
                                                    placeholder="your@email.com" 
                                                    required>
                                         </div>
@@ -54,6 +67,7 @@ export class AuthModule {
                                                 <input type="text" 
                                                        class="form-control" 
                                                        id="username" 
+                                                       autocomplete="username"
                                                        placeholder="your_nickname" 
                                                        minlength="3"
                                                        maxlength="20"
@@ -77,12 +91,13 @@ export class AuthModule {
                                             <input type="password" 
                                                    class="form-control" 
                                                    id="password" 
+                                                   autocomplete="${this.mode === 'login' ? 'current-password' : 'new-password'}"
                                                    placeholder="Минимум 6 символов" 
                                                    minlength="6"
                                                    required>
                                             <button class="btn btn-outline-secondary" 
                                                     type="button" 
-                                                    id="togglePassword">
+                                                    id="togglePassword" aria-label="Показать пароль" aria-pressed="false">
                                                 <i class="bi bi-eye"></i>
                                             </button>
                                         </div>
@@ -126,9 +141,13 @@ export class AuthModule {
                     if (passwordInput.type === 'password') {
                         passwordInput.type = 'text';
                         icon.className = 'bi bi-eye-slash';
+                        togglePassword.setAttribute('aria-label', 'Скрыть пароль');
+                        togglePassword.setAttribute('aria-pressed', 'true');
                     } else {
                         passwordInput.type = 'password';
                         icon.className = 'bi bi-eye';
+                        togglePassword.setAttribute('aria-label', 'Показать пароль');
+                        togglePassword.setAttribute('aria-pressed', 'false');
                     }
                 }
             });

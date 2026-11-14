@@ -4,7 +4,7 @@
  * Default: dry run. --apply only creates missing publicProfiles docs.
  * Does not delete or overwrite existing documents.
  */
-import { toPublicProfile } from '../js/core/public-profile.js';
+import { planPublicProfileMigration } from '../js/core/public-profile-migration.js';
 
 const args = process.argv.slice(2);
 const projectIndex = args.indexOf('--project');
@@ -20,25 +20,17 @@ if (!projectId || projectId.startsWith('--') || (apply && !args.includes('--conf
         initializeApp({ credential: applicationDefault(), projectId });
         const database = getFirestore();
         const users = await database.collection('users').get();
-        const candidates = [];
-        const reservedNames = new Map();
-        const conflicts = new Set();
-
-        for (const item of users.docs) {
-            const profile = toPublicProfile(item.id, item.data());
-            if (!profile.usernameNormalized) continue;
-            const existing = reservedNames.get(profile.usernameNormalized);
-            if (existing && existing !== item.id) conflicts.add(profile.usernameNormalized);
-            reservedNames.set(profile.usernameNormalized, item.id);
-            candidates.push(profile);
-        }
+        const { profiles: candidates, conflictCount, invalidCount } = planPublicProfileMigration(
+            users.docs.map(item => ({ id: item.id, data: item.data() }))
+        );
 
         console.log('Project:', projectId);
         console.log('Mode:', apply ? 'create missing only' : 'dry run');
         console.log('Profiles to inspect:', candidates.length);
-        console.log('Username collision count:', conflicts.size);
-        if (conflicts.size) {
-            console.error('Username collisions detected; resolve them before migration.');
+        console.log('Username collision count:', conflictCount);
+        console.log('Invalid or missing username count:', invalidCount);
+        if (conflictCount || invalidCount) {
+            console.error('Preflight failed: resolve collisions and invalid legacy usernames before migration.');
             process.exitCode = 1;
         } else {
             let created = 0;

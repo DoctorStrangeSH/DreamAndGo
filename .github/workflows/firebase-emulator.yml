@@ -38,3 +38,5 @@ jobs:
         run: npx -y firebase-tools@latest emulators:exec --project demo-dreamandgo-chat-rules --only firestore --config firebase.json "node --test ../../server/backup-restore-rehearsal.emulator.test.mjs"
       - name: Test chat send versus write-freeze race
         run: npx -y firebase-tools@latest emulators:exec --project demo-dreamandgo-chat-rules --only firestore --config firebase.json "node --test ../../server/chat-cutover-race.emulator.test.mjs"
+      - name: Test emulator-only chat rollback preflight
+        run: npx -y firebase-tools@latest emulators:exec --project demo-dreamandgo-chat-rules --only firestore --config firebase.json "node --test ../../server/chat-rollback-rehearsal.emulator.test.mjs"

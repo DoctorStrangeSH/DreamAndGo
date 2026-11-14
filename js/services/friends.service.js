@@ -1,7 +1,8 @@
 import { db } from '../config/firebase.js';
+import { normalizeUsername, isValidUsername } from '../core/username.js';
 import { 
     collection, doc, getDocs, getDoc, updateDoc,
-    query, where, serverTimestamp, writeBatch, setDoc
+    query, where, limit, serverTimestamp, writeBatch, setDoc
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 export class FriendsService {
@@ -10,21 +11,28 @@ export class FriendsService {
     }
 
     async getUserByUsername(username) {
+        const normalized = normalizeUsername(username);
+        if (!isValidUsername(normalized)) return null;
+
         try {
             const usersRef = collection(this.db, 'users');
-            const searchName = username.toLowerCase();
-            const snapshot = await getDocs(usersRef);
-            
-            let foundUser = null;
-            
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                if (data.username && data.username.toLowerCase() === searchName) {
-                    foundUser = { uid: doc.id, ...data };
-                }
-            });
-            
-            return foundUser;
+            // New profiles use the canonical key. Legacy profiles are still
+            // available via exact-case username until a safe backfill exists.
+            const [indexed, legacy] = await Promise.all([
+                getDocs(query(usersRef, where('usernameNormalized', '==', normalized), limit(1))),
+                getDocs(query(usersRef, where('username', '==', String(username).trim()), limit(1)))
+            ]);
+            const match = indexed.docs[0] || legacy.docs[0];
+            if (!match) return null;
+            const data = match.data();
+            // Return only the fields that friend cards need.
+            return {
+                uid: match.id,
+                username: data.username || '',
+                displayName: data.displayName || data.username || '',
+                avatar: data.avatar || null,
+                stats: data.stats || {}
+            };
         } catch (error) {
             console.error('Ошибка поиска пользователя:', error);
             return null;

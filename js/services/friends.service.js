@@ -1,5 +1,6 @@
 import { db } from '../config/firebase.js';
 import { normalizeUsername, isValidUsername } from '../core/username.js';
+import { toPublicProfile } from '../core/public-profile.js';
 import { 
     collection, doc, getDocs, getDoc, updateDoc,
     query, where, limit, serverTimestamp, writeBatch, setDoc
@@ -25,15 +26,7 @@ export class FriendsService {
                 match = legacy.docs[0];
             }
             if (!match) return null;
-            const data = match.data();
-            // Return only the fields that friend cards need.
-            return {
-                uid: match.id,
-                username: data.username || '',
-                displayName: data.displayName || data.username || '',
-                avatar: data.avatar || null,
-                stats: data.stats || {}
-            };
+            return toPublicProfile(match.id, match.data());
         } catch (error) {
             console.error('Ошибка поиска пользователя:', error);
             return null;
@@ -211,14 +204,7 @@ export class FriendsService {
         try {
             const userDoc = await getDoc(doc(this.db, 'users', uid));
             if (userDoc.exists()) {
-                const data = userDoc.data();
-                return {
-                    username: data.username,
-                    displayName: data.displayName || data.username,
-                    avatar: data.avatar,
-                    bio: data.bio || '',
-                    stats: data.stats || {}
-                };
+                return toPublicProfile(uid, userDoc.data());
             }
             return null;
         } catch (error) {

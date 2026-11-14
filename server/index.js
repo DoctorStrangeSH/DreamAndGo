@@ -3,6 +3,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { conversationPairKey } from './chat-pair.js';
+import { normalizeChatMessage, otherChatParticipant } from './message-policy.js';
 
 if (getApps().length === 0) initializeApp();
 
@@ -61,4 +62,47 @@ export const createPrivateChatV2 = onCall({ region: 'europe-west3' }, async requ
     });
 
     return { chatId, version: 2 };
+});
+
+ 
+// Candidate v2 sending protocol: one transaction checks membership/state and
+// writes both the message and participants' previews. Not yet wired to the UI.
+export const sendPrivateMessageV2 = onCall({ region: 'europe-west3' }, async request => {
+    const uid = request.auth?.uid;
+    if (!uid) throw new HttpsError('unauthenticated', 'Требуется вход в аккаунт');
+
+    const chatId = request.data?.chatId;
+    const text = normalizeChatMessage(request.data?.text);
+    if (typeof chatId !== 'string' || !chatId || chatId.includes('/') || chatId.length > 128 ||
+        !text) {
+        throw new HttpsError('invalid-argument', 'Некорректное сообщение');
+    }
+
+    const db = getFirestore();
+    const chatRef = db.collection('chats').doc(chatId);
+    const messageRef = chatRef.collection('messages').doc();
+
+    await db.runTransaction(async tx => {
+        const snapshot = await tx.get(chatRef);
+        if (!snapshot.exists || snapshot.get('version') !== 2 || snapshot.get('state') !== 'active') {
+            throw new HttpsError('failed-precondition', 'Диалог недоступен');
+        }
+        const partnerId = otherChatParticipant(snapshot.get('participants'), uid);
+        if (!partnerId) throw new HttpsError('permission-denied', 'Нет доступа к переписке');
+
+        const createdAt = FieldValue.serverTimestamp();
+        const preview = { lastMessage: text.slice(0, 100), lastMessageTime: createdAt };
+        tx.create(messageRef, {
+            senderId: uid, text, createdAt, read: false, edited: false
+        });
+        // Preserve the sender's unread count: sending does not read incoming messages.
+        tx.set(db.collection('users').doc(uid).collection('chats').doc(partnerId), {
+            partnerId, chatId, ...preview
+        }, { merge: true });
+        tx.set(db.collection('users').doc(partnerId).collection('chats').doc(uid), {
+            partnerId: uid, chatId, ...preview, unread: FieldValue.increment(1)
+        }, { merge: true });
+    });
+
+    return { messageId: messageRef.id, chatId };
 });

@@ -33,5 +33,5 @@ export async function getPrivateMessageStatus(db, uid, chatId, clientMessageId) 
     if (message.get('senderId') !== uid || message.get('clientMessageId') !== normalizedId) {
         throw new HttpsError('failed-precondition', 'Повреждён идентификатор сообщения');
     }
-    return { status: 'sent', messageId };
+    return { status: 'sent', messageId, read: message.get('read') === true };
 }

@@ -32,3 +32,5 @@ jobs:
         run: npx -y firebase-tools@latest emulators:exec --project demo-dreamandgo-chat-rules --only firestore --config firebase.json "npm test"
       - name: Test candidate server transactions against Firestore Emulator
         run: npx -y firebase-tools@latest emulators:exec --project demo-dreamandgo-chat-rules --only firestore --config firebase.json "node --test ../../server/chat-transactions.emulator.test.mjs"
+      - name: Test interrupted migration rehearsal on isolated emulator
+        run: npx -y firebase-tools@latest emulators:exec --project demo-dreamandgo-chat-rules --only firestore --config firebase.json "node --test ../../server/migration-rehearsal.emulator.test.mjs"

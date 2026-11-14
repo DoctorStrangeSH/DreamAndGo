@@ -13,16 +13,40 @@ export class ChatModule {
         this.editMessageId = null;
     }
 
-    async render() {
+    async render(params = {}) {
         const mainContent = document.getElementById('main-content');
         if (!mainContent) return;
 
         const userId = window.app.currentUser?.uid;
         if (!userId) return;
 
+        // A fresh render must not keep the previous conversation's listener.
+        if (this.unsubscribeMessages) this.unsubscribeMessages();
+        if (this.unsubscribeChats) this.unsubscribeChats();
+        this.unsubscribeMessages = null;
+        this.unsubscribeChats = null;
+        this.currentChat = null;
+
         mainContent.innerHTML = this.getTemplate();
         this.subscribeToChats();
         this.attachEventListeners();
+
+        const partnerId = params.id;
+        if (!partnerId || partnerId === userId) return;
+        try {
+            const chatId = await this.chatService.getOrCreateChat(userId, partnerId);
+            if (!chatId) throw new Error('Не удалось создать диалог');
+            if (window.app.currentUser?.uid !== userId ||
+                window.app.router.getCurrentRoute() !== 'chat' ||
+                window.location.hash.split('/')[1] !== partnerId) return;
+            await this.openChat(partnerId);
+        } catch (error) {
+            console.error('Не удалось открыть диалог из профиля:', error);
+            if (window.app.currentUser?.uid === userId &&
+                window.app.router.getCurrentRoute() === 'chat') {
+                window.app.ui.showToast('Не удалось открыть чат. Попробуй ещё раз.', 'error');
+            }
+        }
     }
 
     getTemplate() {
@@ -116,7 +140,8 @@ export class ChatModule {
                             <p class="mt-2">Нет диалогов</p>
                         </div>
                     `;
-                    this.closeChat();
+                    // Empty initial snapshots can arrive while a new conversation is opening.
+                    if (!this.currentChat) this.closeChat();
                     return;
                 }
 

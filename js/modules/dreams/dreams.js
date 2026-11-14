@@ -1,4 +1,5 @@
 import { DreamsService } from '../../services/dreams.service.js';
+import { escapeHTML } from '../../core/escape-html.js';
 
 export class DreamsModule {
     constructor() {
@@ -102,6 +103,8 @@ export class DreamsModule {
             completed: { badge: 'Сбылось!', color: 'success' }
         };
         const status = statuses[dream.status] || statuses.dreaming;
+        const progress = Math.max(0, Math.min(100, Number(dream.progress) || 0));
+        const safeSteps = Array.isArray(dream.steps) ? dream.steps : [];
 
         return `
             <div class="col-12 col-md-6 col-lg-4 fade-in-up" style="animation-delay: ${index * 0.06}s">
@@ -109,42 +112,42 @@ export class DreamsModule {
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <span class="badge bg-${status.color} bg-opacity-10 text-${status.color}">${status.badge}</span>
                         <div class="dream-card-actions">
-                            <button class="btn btn-sm btn-outline-secondary rounded-circle me-1 edit-btn" data-id="${dream.id}">
+                            <button class="btn btn-sm btn-outline-secondary rounded-circle me-1 edit-btn" data-id="${escapeHTML(dream.id)}">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="${dream.id}">
+                            <button class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="${escapeHTML(dream.id)}">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </div>
                     </div>
-                    <h6 class="fw-bold mb-1">${dream.title || 'Без названия'}</h6>
+                    <h6 class="fw-bold mb-1">${escapeHTML(dream.title || 'Без названия')}</h6>
                     ${dream.category
-                ? `<span class="badge bg-light text-dark me-1"><i class="bi bi-tag me-1"></i>${dream.category}</span>`
+                ? `<span class="badge bg-light text-dark me-1"><i class="bi bi-tag me-1"></i>${escapeHTML(dream.category)}</span>`
                 : ''
             }
                     ${dream.description
-                ? `<p class="text-muted small mt-2 mb-2">${dream.description.substring(0, 100)}...</p>`
+                ? `<p class="text-muted small mt-2 mb-2">${escapeHTML(String(dream.description).substring(0, 100))}...</p>`
                 : ''
             }
                     ${dream.status !== 'completed'
                 ? `<div class="mb-2">
                             <div class="d-flex justify-content-between small">
                                 <span>Прогресс</span>
-                                <span>${dream.progress || 0}%</span>
+                                <span>${progress}%</span>
                             </div>
                             <div class="progress" style="height: 5px;">
-                                <div class="progress-bar bg-${status.color}" style="width: ${dream.progress || 0}%"></div>
+                                <div class="progress-bar bg-${status.color}" style="width: ${progress}%"></div>
                             </div>
                         </div>`
                 : ''
             }
                     ${dream.deadline
-                ? `<small class="text-muted d-block"><i class="bi bi-calendar me-1"></i>${this.formatDate(dream.deadline)}</small>`
+                ? `<small class="text-muted d-block"><i class="bi bi-calendar me-1"></i>${escapeHTML(this.formatDate(dream.deadline))}</small>`
                 : ''
             }
-                    ${dream.steps && dream.steps.length
+                    ${safeSteps.length
                 ? `<small class="text-muted d-block mt-1">
-                            <i class="bi bi-list-check me-1"></i>${dream.steps.filter(s => s.done).length}/${dream.steps.length} шагов
+                            <i class="bi bi-list-check me-1"></i>${safeSteps.filter(s => s.done).length}/${safeSteps.length} шагов
                         </small>`
                 : ''
             }
@@ -198,7 +201,8 @@ export class DreamsModule {
         const dream = dreamId ? await this.dreamsService.getDream(userId, dreamId) : null;
         const isEdit = !!dream;
         const categories = ['Путешествия', 'Карьера', 'Творчество', 'Спорт', 'Отношения', 'Знания', 'Материальное', 'Другое'];
-        const steps = dream?.steps || [{ text: '', done: false }, { text: '', done: false }];
+        const steps = Array.isArray(dream?.steps) ? dream.steps : [{ text: '', done: false }, { text: '', done: false }];
+        const progress = Math.max(0, Math.min(100, Number(dream?.progress) || 0));
 
         const container = document.createElement('div');
         container.id = 'dreamModalContainer';
@@ -221,7 +225,7 @@ export class DreamsModule {
                                     <div class="col-md-8">
                                         <label class="form-label fw-semibold small">Название мечты *</label>
                                         <input type="text" class="form-control" name="title"
-                                               value="${dream?.title || ''}" placeholder="О чём ты мечтаешь?" required>
+                                               value="${escapeHTML(dream?.title || '')}" placeholder="О чём ты мечтаешь?" required>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Категория</label>
@@ -244,20 +248,20 @@ export class DreamsModule {
                                         <label class="form-label fw-semibold small">Прогресс</label>
                                         <div class="d-flex align-items-center gap-2 pt-2">
                                             <input type="range" class="form-range" name="progress"
-                                                   min="0" max="100" value="${dream?.progress || 0}"
+                                                   min="0" max="100" value="${progress}"
                                                    id="progressSlider" style="flex: 1;">
-                                            <span class="badge bg-primary" id="progressValue">${dream?.progress || 0}%</span>
+                                            <span class="badge bg-primary" id="progressValue">${progress}%</span>
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Срок</label>
                                         <input type="date" class="form-control" name="deadline"
-                                               value="${dream?.deadline || ''}">
+                                               value="${escapeHTML(dream?.deadline || '')}">
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label fw-semibold small">Описание</label>
                                         <textarea class="form-control" name="description" rows="3"
-                                                  placeholder="Опиши свою мечту...">${dream?.description || ''}</textarea>
+                                                  placeholder="Опиши свою мечту...">${escapeHTML(dream?.description || '')}</textarea>
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label fw-semibold small">
@@ -270,7 +274,7 @@ export class DreamsModule {
                                                         <input type="checkbox" ${step.done ? 'checked' : ''} class="step-done">
                                                     </span>
                                                     <input type="text" class="form-control step-text"
-                                                           value="${step.text || ''}" placeholder="Шаг ${i + 1}">
+                                                           value="${escapeHTML(step.text || '')}" placeholder="Шаг ${i + 1}">
                                                     <button type="button" class="btn btn-outline-danger btn-sm remove-step">
                                                         <i class="bi bi-x"></i>
                                                     </button>

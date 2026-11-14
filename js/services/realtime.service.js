@@ -36,7 +36,7 @@ export class RealtimeService {
         });
 
         this.listeners[key] = unsubscribe;
-        return unsubscribe;
+        return () => this.unsubscribe(key);
     }
 
     subscribeToChats(userId, callback) {
@@ -76,7 +76,7 @@ export class RealtimeService {
         });
 
         this.listeners[key] = unsubscribe;
-        return unsubscribe;
+        return () => this.unsubscribe(key);
     }
 
     subscribeToFriends(userId, callback) {
@@ -109,7 +109,7 @@ export class RealtimeService {
         });
 
         this.listeners[key] = unsubscribe;
-        return unsubscribe;
+        return () => this.unsubscribe(key);
     }
 
     subscribeToFriendRequests(userId, callback) {
@@ -142,7 +142,7 @@ export class RealtimeService {
         });
 
         this.listeners[key] = unsubscribe;
-        return unsubscribe;
+        return () => this.unsubscribe(key);
     }
 
     subscribeToSentRequests(userId, callback) {
@@ -175,7 +175,7 @@ export class RealtimeService {
         });
 
         this.listeners[key] = unsubscribe;
-        return unsubscribe;
+        return () => this.unsubscribe(key);
     }
 
     async getUserProfile(uid) {

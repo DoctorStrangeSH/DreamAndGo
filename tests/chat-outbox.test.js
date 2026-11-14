@@ -107,3 +107,54 @@ test('restoration refuses changed text, reused UUID for a different chat and inv
     assert.throws(() => outbox.restore('chat-1', ' Hello ', '650e8400-e29b-41d4-a716-446655440000'));
     assert.throws(() => outbox.restore('chat-1', 'Hello', 'not-a-uuid'));
 });
+
+test('reconciliation acknowledges committed message without sending again', async () => {
+    let sends = 0;
+    const outbox = new ChatOutbox(async () => { sends++; return { messageId: 'm' }; }, () => id);
+    outbox.prepare('chat-1', 'Hello');
+    assert.deepEqual(await outbox.reconcile(id, async payload => {
+        assert.equal(payload.clientMessageId, id);
+        return { status: 'sent', messageId: 'existing-message' };
+    }), { status: 'sent', messageId: 'existing-message' });
+    assert.equal(outbox.get(id), null);
+    assert.equal(sends, 0);
+});
+
+test('missing or failed status checks preserve original intent for deliberate retry', async () => {
+    const outbox = new ChatOutbox(async () => ({ messageId: 'created' }), () => id);
+    const intent = outbox.prepare('chat-1', 'Hello');
+    assert.deepEqual(await outbox.reconcile(id, async () => ({ status: 'missing' })), { status: 'missing' });
+    assert.deepEqual(await outbox.reconcile(id, async () => { throw new Error('offline'); }), { status: 'unknown' });
+    assert.strictEqual(outbox.get(id), intent);
+    assert.deepEqual(await outbox.deliver(id), { success: true, messageId: 'created' });
+});
+
+test('status checks are deduplicated and cannot race with retry or discard', async () => {
+    let resolve;
+    let calls = 0;
+    const outbox = new ChatOutbox(async () => ({ messageId: 'created' }), () => id);
+    outbox.prepare('chat-1', 'Hello');
+    const lookup = () => { calls++; return new Promise(done => { resolve = done; }); };
+    const first = outbox.reconcile(id, lookup);
+    assert.strictEqual(outbox.reconcile(id, lookup), first);
+    await Promise.resolve();
+    assert.equal(calls, 1);
+    assert.equal(outbox.discard(id), false);
+    assert.equal((await outbox.deliver(id)).success, false);
+    resolve({ status: 'missing' });
+    assert.deepEqual(await first, { status: 'missing' });
+    assert.ok(outbox.get(id));
+});
+
+test('logout invalidates an in-progress server status response', async () => {
+    let resolve;
+    const outbox = new ChatOutbox(async () => ({ messageId: 'new' }), () => id);
+    outbox.prepare('chat-1', 'Old');
+    const checking = outbox.reconcile(id, () => new Promise(done => { resolve = done; }));
+    await Promise.resolve();
+    outbox.clear();
+    outbox.restore('chat-1', 'New', id);
+    resolve({ status: 'sent', messageId: 'old' });
+    assert.deepEqual(await checking, { status: 'stale' });
+    assert.equal(outbox.get(id)?.text, 'New');
+});

@@ -1,3 +1,4 @@
+import { normalizeUsername } from '../core/username.js';
 import { 
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
@@ -73,6 +74,7 @@ export class AuthService {
             await this.createUserProfile(result.user.uid, {
                 email: email,
                 username: username,
+                usernameNormalized: normalizeUsername(username),
                 displayName: username,
                 createdAt: serverTimestamp(),
                 lastLogin: serverTimestamp(),
@@ -130,9 +132,12 @@ export class AuthService {
     async checkUsernameUnique(username) {
         try {
             const usersRef = collection(this.db, 'users');
-            const q = query(usersRef, where('username', '==', username.toLowerCase()));
-            const querySnapshot = await getDocs(q);
-            const isUnique = querySnapshot.empty;
+            const normalized = normalizeUsername(username);
+            const [indexed, legacy] = await Promise.all([
+                getDocs(query(usersRef, where('usernameNormalized', '==', normalized))),
+                getDocs(query(usersRef, where('username', '==', username.trim())))
+            ]);
+            const isUnique = indexed.empty && legacy.empty;
             
             console.log(`🔍 Проверка ника "${username}":`, isUnique ? 'свободен' : 'занят');
             return isUnique;

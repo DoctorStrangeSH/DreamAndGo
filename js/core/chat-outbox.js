@@ -67,6 +67,7 @@ export class ChatOutbox {
     deliver(clientMessageId) {
         const pending = this.pending.get(clientMessageId);
         if (!pending) return Promise.resolve({ success: false, error: 'Сообщение отсутствует в очереди' });
+        if (this.checking.has(clientMessageId)) return Promise.resolve({ success: false, error: 'Проверяется статус сообщения' });
         const existing = this.inFlight.get(clientMessageId);
         if (existing) return existing;
         const generation = this.generation;

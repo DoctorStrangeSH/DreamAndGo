@@ -1,4 +1,6 @@
 import { ChatService } from '../../services/chat.service.js';
+import { escapeHTML } from '../../core/escape-html.js';
+import { safeCount } from '../../core/home-snapshot.js';
 import { FriendsService } from '../../services/friends.service.js';
 
 export class ChatModule {
@@ -73,7 +75,7 @@ export class ChatModule {
                                 <div class="flex-grow-1 p-3 overflow-auto" id="chatMessages" style="background: var(--bg-secondary);">
                                     <div class="text-center text-muted py-5">
                                         <i class="bi bi-lock display-4 opacity-25"></i>
-                                        <p class="mt-2">Сообщения защищены</p>
+                                        <p class="mt-2">Сообщения диалога</p>
                                     </div>
                                 </div>
 
@@ -121,25 +123,25 @@ export class ChatModule {
                 chatList.innerHTML = chats.map(chat => {
                     const time = this.formatTime(chat.lastMessageTime);
                     const unreadBadge = chat.unread > 0
-                        ? `<span class="badge bg-primary rounded-pill">${chat.unread}</span>`
+                        ? `<span class="badge bg-primary rounded-pill">${safeCount(chat.unread)}</span>`
                         : '';
                     const isActive = this.currentChat === chat.partnerId;
 
                     return `
                         <div class="chat-list-item p-3 border-bottom ${isActive ? 'active' : ''}"
-                             data-partner-id="${chat.partnerId}">
+                             data-partner-id="${escapeHTML(chat.partnerId)}">
                             <div class="d-flex align-items-center gap-2">
                                 <div class="chat-avatar-placeholder">
-                                    ${(chat.partnerName || 'U')[0].toUpperCase()}
+                                    ${escapeHTML(String(chat.partnerName || 'U').charAt(0).toUpperCase())}
                                 </div>
                                 <div class="flex-grow-1 min-width-0">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <h6 class="fw-bold mb-0 text-truncate">${chat.partnerName}</h6>
+                                        <h6 class="fw-bold mb-0 text-truncate">${escapeHTML(chat.partnerName || 'Пользователь')}</h6>
                                         <small class="text-muted">${time}</small>
                                     </div>
                                     <div class="d-flex justify-content-between align-items-center">
                                         <small class="text-muted text-truncate">
-                                            ${chat.lastMessage || 'Нет сообщений'}
+                                            ${escapeHTML(chat.lastMessage || 'Нет сообщений')}
                                         </small>
                                         ${unreadBadge}
                                     </div>
@@ -205,17 +207,17 @@ export class ChatModule {
         return `
             <div class="message-wrapper ${isMine ? 'message-mine' : 'message-theirs'}">
                 <div class="message-bubble">
-                    <div class="message-text">${this.escapeHtml(message.text)}</div>
+                    <div class="message-text">${escapeHTML(message.text)}</div>
                     <div class="message-meta">
                         <small class="message-time">${time}</small>
                         ${message.edited ? '<small class="text-muted ms-1">изм.</small>' : ''}
                     </div>
                     ${isMine ? `
                         <div class="message-actions">
-                            <button class="btn btn-sm btn-link p-0 edit-msg-btn" data-msg-id="${message.id}">
+                            <button class="btn btn-sm btn-link p-0 edit-msg-btn" data-msg-id="${escapeHTML(message.id)}">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <button class="btn btn-sm btn-link p-0 text-danger delete-msg-btn" data-msg-id="${message.id}">
+                            <button class="btn btn-sm btn-link p-0 text-danger delete-msg-btn" data-msg-id="${escapeHTML(message.id)}">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </div>
@@ -223,12 +225,6 @@ export class ChatModule {
                 </div>
             </div>
         `;
-    }
-
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
     }
 
     async sendMessage() {
@@ -377,12 +373,12 @@ export class ChatModule {
                                 </div>`
                                 : friends.map(f => `
                                     <div class="d-flex align-items-center gap-2 p-2 friend-item"
-                                         data-uid="${f.uid}"
+                                         data-uid="${escapeHTML(f.uid)}"
                                          style="cursor: pointer; border-radius: 8px;">
                                         <div class="chat-avatar-placeholder" style="width: 36px; height: 36px; font-size: 14px;">
-                                            ${(f.username || 'U')[0].toUpperCase()}
+                                            ${escapeHTML(String(f.username || 'U').charAt(0).toUpperCase())}
                                         </div>
-                                        <span class="fw-semibold">@${f.username}</span>
+                                        <span class="fw-semibold">@${escapeHTML(f.username || 'Пользователь')}</span>
                                     </div>
                                 `).join('')
                             }

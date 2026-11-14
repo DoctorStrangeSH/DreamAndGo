@@ -6,7 +6,7 @@ import { otherChatParticipant, serverMessageDocumentId } from './message-policy.
 
 // Shared implementation for the callable wrapper and Firestore emulator tests.
 // Call only with an already authenticated sender and validated message fields.
-export async function sendPrivateMessageTransaction(db, uid, chatId, text, clientMessageId) {
+export async function sendPrivateMessageTransaction(db, uid, chatId, text, clientMessageId, now = Date.now) {
     const chatRef = db.collection('chats').doc(chatId);
     const messageId = serverMessageDocumentId(chatId, uid, clientMessageId);
     const messageRef = chatRef.collection('messages').doc(messageId);
@@ -42,7 +42,7 @@ export async function sendPrivateMessageTransaction(db, uid, chatId, text, clien
         // Read the user's global cooldown record before any transaction writes.
         // Concurrent sends to different chats contend on this one document.
         const cooldownSnapshot = await tx.get(cooldownRef);
-        const nowMillis = Date.now();
+        const nowMillis = now();
         const lastSentAt = cooldownSnapshot.exists ? cooldownSnapshot.get('lastSentAt') : null;
         if (!canSendChatMessage(lastSentAt, nowMillis)) {
             throw new HttpsError('resource-exhausted', 'Слишком частая отправка сообщений. Подожди немного.');

@@ -20,19 +20,24 @@ export function auditLegacyChatSnapshot(snapshot) {
     const pairs = new Map();
     const chats = new Map();
     const idToPairs = new Map();
+    const invalidChats = new Set();
+    const duplicateViews = new Set();
 
     for (const [position, row] of snapshot.legacyChats.entries()) {
         if (!row || typeof row.id !== 'string' || !row.id || row.id.includes('/') || chats.has(row.id)) {
             issues.push({ code: 'invalid_or_duplicate_chat', position });
+            if (typeof row?.id === 'string' && chats.has(row.id)) invalidChats.add(row.id);
             continue;
         }
         if (row.messageCount !== undefined &&
             (!Number.isSafeInteger(row.messageCount) || row.messageCount < 0)) {
             issues.push({ code: 'invalid_message_count', chatId: row.id });
+            invalidChats.add(row.id);
         }
         if (row.senderIds !== undefined &&
             (!Array.isArray(row.senderIds) || !row.senderIds.every(validUid))) {
             issues.push({ code: 'invalid_sender_list', chatId: row.id });
+            invalidChats.add(row.id);
         }
         chats.set(row.id, row);
     }
@@ -54,6 +59,7 @@ export function auditLegacyChatSnapshot(snapshot) {
         const record = pairs.get(key);
         if (record.views.has(owner)) {
             issues.push({ code: 'duplicate_index_view', chatId: id, ownerUid: owner });
+            duplicateViews.add(key);
         }
         record.views.add(owner);
         if (!idToPairs.has(id)) idToPairs.set(id, new Set());
@@ -67,6 +73,8 @@ export function auditLegacyChatSnapshot(snapshot) {
         const [first, second] = record.members;
         if (!record.views.has(first) || !record.views.has(second)) reasons.push('missing_reciprocal_index');
         if (!chats.has(record.chatId)) reasons.push('missing_legacy_chat_document');
+        if (invalidChats.has(record.chatId)) reasons.push('invalid_legacy_chat_metadata');
+        if (duplicateViews.has(key)) reasons.push('duplicate_index_view');
         if (idToPairs.get(record.chatId).size > 1) reasons.push('ambiguous_legacy_chat_id');
         const chat = chats.get(record.chatId);
         if (Array.isArray(chat?.senderIds) && chat.senderIds.some(uid => !record.members.includes(uid))) {

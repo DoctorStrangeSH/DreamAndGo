@@ -1,7 +1,7 @@
 import { db } from '../config/firebase.js';
 import {
     collection, doc, getDocs, getDoc, updateDoc, deleteDoc,
-    query, orderBy, serverTimestamp, writeBatch, setDoc, increment
+    query, orderBy, serverTimestamp, writeBatch, setDoc, increment, runTransaction
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 export class ChatService {
@@ -49,23 +49,22 @@ export class ChatService {
         if (!userId || !partnerId || userId === partnerId) return null;
         try {
             const ownRef = doc(this.db, 'users', userId, 'chats', partnerId);
-            const own = await getDoc(ownRef);
-            if (own.exists()) return partnerId;
-
             const peerRef = doc(this.db, 'users', partnerId, 'chats', userId);
-            const batch = writeBatch(this.db);
-            batch.set(ownRef, {
-                partnerId,
-                lastMessage: '',
-                lastMessageTime: serverTimestamp(),
-                unread: 0,
-                createdAt: serverTimestamp()
+            await runTransaction(this.db, async transaction => {
+                // Read only our own document. Concurrent attempts retry safely.
+                const own = await transaction.get(ownRef);
+                if (own.exists()) return;
+                transaction.set(ownRef, {
+                    partnerId,
+                    lastMessage: '',
+                    lastMessageTime: serverTimestamp(),
+                    unread: 0,
+                    createdAt: serverTimestamp()
+                });
+                // Preserve the recipient's existing preview, timestamp and unread count.
+                // The first actual message populates them if the record was absent.
+                transaction.set(peerRef, { partnerId: userId }, { merge: true });
             });
-            // The peer's private chats are not readable by this user.
-            // Merge only the relationship field so existing message previews,
-            // timestamps and unread counts cannot be reset.
-            batch.set(peerRef, { partnerId: userId }, { merge: true });
-            await batch.commit();
             return partnerId;
         } catch (error) {
             console.error('Ошибка создания чата:', error);

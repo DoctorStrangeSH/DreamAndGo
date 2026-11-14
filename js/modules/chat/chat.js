@@ -300,6 +300,50 @@ export class ChatModule {
         }
     }
 
+    showDeleteChatDialog() {
+        if (!this.currentChat) return;
+        const selectedChat = this.currentChat;
+        document.getElementById('deleteChatConfirmModal')?.remove();
+
+        const wrapper = document.createElement('div');
+        wrapper.id = 'deleteChatConfirmModal';
+        wrapper.className = 'modal fade';
+        wrapper.tabIndex = -1;
+        wrapper.setAttribute('aria-labelledby', 'deleteChatConfirmTitle');
+        wrapper.innerHTML = `
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="deleteChatConfirmTitle">Удалить диалог?</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Выбери, что именно удалить. Это разные действия.</p>
+                        <p class="small text-muted mb-0">Удаление у всех затрагивает переписку другого участника и может быть необратимым.</p>
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="button" class="btn btn-outline-primary" data-action="local">Только у меня</button>
+                        <button type="button" class="btn btn-outline-danger" data-action="everyone">У всех</button>
+                    </div>
+                </div>
+            </div>`;
+        document.body.appendChild(wrapper);
+        const modal = new bootstrap.Modal(wrapper);
+        wrapper.addEventListener('hidden.bs.modal', () => wrapper.remove());
+        wrapper.querySelector('[data-action="local"]').addEventListener('click', async () => {
+            if (this.currentChat !== selectedChat) return;
+            modal.hide();
+            await this.deleteChatLocal();
+        });
+        wrapper.querySelector('[data-action="everyone"]').addEventListener('click', async () => {
+            if (this.currentChat !== selectedChat) return;
+            modal.hide();
+            await this.deleteChatFull();
+        });
+        modal.show();
+    }
+
     attachEventListeners() {
         document.getElementById('chatList')?.addEventListener('click', async (e) => {
             const item = e.target.closest('.chat-list-item');
@@ -332,13 +376,7 @@ export class ChatModule {
 
         document.getElementById('backToChatList')?.addEventListener('click', () => this.closeChat());
 
-        document.getElementById('deleteChatBtn')?.addEventListener('click', () => {
-            if (confirm('OK — удалить у себя\nОтмена — удалить полностью')) {
-                this.deleteChatLocal();
-            } else {
-                this.deleteChatFull();
-            }
-        });
+        document.getElementById('deleteChatBtn')?.addEventListener('click', () => this.showDeleteChatDialog());
 
         document.getElementById('chatMessages')?.addEventListener('click', async (e) => {
             const editBtn = e.target.closest('.edit-msg-btn');

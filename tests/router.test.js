@@ -57,6 +57,9 @@ test('unauthenticated visitors cannot render private routes', async () => {
         assert.equal(privateRenders, 0);
         assert.notEqual(router.getCurrentRoute(), 'private');
         assert.equal(window.location.hash, 'auth');
+        // Browser location.hash normalizes assignments by adding '#'.
+        // Our minimal mock needs that normalization explicitly.
+        window.location.hash = '#auth';
         await router.handleRoute();
         assert.equal(router.getCurrentRoute(), 'auth');
         await new Promise(resolve => setTimeout(resolve, 60));

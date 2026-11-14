@@ -1,6 +1,7 @@
 import { db } from '../config/firebase.js';
 import { SubscriptionVersions } from '../core/subscription-versions.js';
 import { SnapshotGate } from '../core/snapshot-gate.js';
+import { toPublicProfile } from '../core/public-profile.js';
 import { 
     collection, doc, query, orderBy, limit,
     onSnapshot, getDoc
@@ -202,14 +203,7 @@ export class RealtimeService {
         try {
             const userDoc = await getDoc(doc(this.db, 'users', uid));
             if (userDoc.exists()) {
-                const data = userDoc.data();
-                return {
-                    username: data.username,
-                    displayName: data.displayName || data.username,
-                    avatar: data.avatar,
-                    bio: data.bio || '',
-                    stats: data.stats || {}
-                };
+                return toPublicProfile(uid, userDoc.data());
             }
             return null;
         } catch (error) {

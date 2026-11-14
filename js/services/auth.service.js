@@ -138,8 +138,8 @@ export class AuthService {
             return isUnique;
         } catch (error) {
             console.error('❌ Ошибка проверки ника:', error);
-            // В случае ошибки лучше разрешить регистрацию
-            return true;
+            // При ошибке проверки уникальность не подтверждена
+            return false;
         }
     }
 

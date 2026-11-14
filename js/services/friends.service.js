@@ -30,7 +30,7 @@ export class FriendsService {
             return toPublicProfile(match.id, match.data());
         } catch (error) {
             console.error('Ошибка поиска пользователя:', error);
-            return null;
+            throw new Error('Не удалось выполнить поиск. Проверь подключение к интернету и повтори попытку.');
         }
     }
 

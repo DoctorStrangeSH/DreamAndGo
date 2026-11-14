@@ -327,8 +327,20 @@ export class ProfileModule {
                     e.preventDefault();
                     window.app.router.navigate('chat');
                     setTimeout(async () => {
+                        if (window.app.currentUser?.uid !== currentUserId) return;
                         const cm = window.app.router.routes['chat']?.component;
-                        if (cm) { await cm.chatService.getOrCreateChat(currentUserId, profileUserId); cm.openChat(profileUserId); }
+                        if (!cm) return;
+                        try {
+                            const chatId = await cm.chatService.getOrCreateChat(currentUserId, profileUserId);
+                            if (!chatId) {
+                                window.app.ui.showToast('Не удалось открыть чат. Попробуй ещё раз.', 'error');
+                                return;
+                            }
+                            if (window.app.currentUser?.uid === currentUserId) await cm.openChat(profileUserId);
+                        } catch (error) {
+                            console.error('Не удалось открыть чат:', error);
+                            window.app.ui.showToast('Не удалось открыть чат', 'error');
+                        }
                     }, 500);
                 });
             } else if (sentDoc.exists()) {

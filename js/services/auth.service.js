@@ -2,6 +2,7 @@ import { normalizeUsername } from '../core/username.js';
 import { 
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
+    deleteUser,
     signOut,
     onAuthStateChanged
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
@@ -61,6 +62,9 @@ export class AuthService {
             
             // Проверяем уникальность ника
             const isUnique = await this.checkUsernameUnique(username);
+            if (isUnique === null) {
+                return { success: false, error: 'Не удалось проверить никнейм. Проверь подключение и попробуй ещё раз.' };
+            }
             if (!isUnique) {
                 console.warn('⚠️ Ник уже занят:', username);
                 return { success: false, error: 'Этот ник уже занят 😔 Придумай другой!' };
@@ -71,7 +75,8 @@ export class AuthService {
             console.log('✅ Аккаунт создан');
             
             // Создаём профиль пользователя в Firestore
-            await this.createUserProfile(result.user.uid, {
+            try {
+                await this.createUserProfile(result.user.uid, {
                 email: email,
                 username: username,
                 usernameNormalized: normalizeUsername(username),
@@ -103,7 +108,18 @@ export class AuthService {
                     theme: 'light',
                     language: 'ru'
                 }
-            });
+                });
+            } catch (profileError) {
+                console.error("Не удалось создать профиль после регистрации:", profileError);
+                try {
+                    // Откатываем только что созданный пустой аккаунт.
+                    await deleteUser(result.user);
+                } catch (cleanupError) {
+                    console.error("Не удалось откатить незавершённую регистрацию:", cleanupError);
+                    try { await signOut(this.auth); } catch (signOutError) { console.error(signOutError); }
+                }
+                return { success: false, error: "Не удалось сохранить профиль. Попробуй зарегистрироваться ещё раз." };
+            }
 
             return { success: true, user: result.user };
         } catch (error) {
@@ -143,8 +159,8 @@ export class AuthService {
             return isUnique;
         } catch (error) {
             console.error('❌ Ошибка проверки ника:', error);
-            // При ошибке проверки уникальность не подтверждена
-            return false;
+            // Не путаем сбой Firestore с действительно занятым ником.
+            return null;
         }
     }
 

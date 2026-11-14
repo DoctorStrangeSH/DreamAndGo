@@ -66,6 +66,11 @@ export class ChatModule {
                                 <i class="bi bi-plus-lg"></i>
                             </button>
                         </div>
+                        <div class="px-3 py-2 border-bottom">
+                            <label class="visually-hidden" for="chatSearchInput">Поиск по диалогам</label>
+                            <input id="chatSearchInput" type="search" class="form-control form-control-sm"
+                                   placeholder="Найти переписку…" autocomplete="off" maxlength="100">
+                        </div>
                         <div id="chatList" class="flex-grow-1 overflow-auto"></div>
                     </div>
 
@@ -198,8 +203,33 @@ export class ChatModule {
                         .find(item => item.dataset.partnerId === this.currentChat);
                     if (activeItem) activeItem.classList.add('active');
                 }
+                this.filterChatList();
             }
         );
+    }
+
+    filterChatList() {
+        const chatList = document.getElementById('chatList');
+        const search = document.getElementById('chatSearchInput');
+        if (!chatList || !search) return;
+        const query = search.value.trim().toLocaleLowerCase('ru-RU');
+        let visible = 0;
+        chatList.querySelectorAll('.chat-list-item').forEach(item => {
+            const searchable = (item.querySelector('h6')?.textContent || '') + ' ' +
+                (item.querySelector('.text-truncate.small, small.text-truncate')?.textContent || '');
+            const matched = searchable.toLocaleLowerCase('ru-RU').includes(query);
+            item.hidden = !matched;
+            item.style.display = matched ? '' : 'none';
+            if (matched) visible++;
+        });
+        chatList.querySelector('#chatSearchEmpty')?.remove();
+        if (query && !visible && chatList.querySelector('.chat-list-item')) {
+            const empty = document.createElement('p');
+            empty.id = 'chatSearchEmpty';
+            empty.className = 'text-center text-muted small py-4 px-2';
+            empty.textContent = 'Ничего не найдено';
+            chatList.appendChild(empty);
+        }
     }
 
     async openChat(partnerId) {
@@ -431,6 +461,7 @@ export class ChatModule {
     }
 
     attachEventListeners() {
+        document.getElementById('chatSearchInput')?.addEventListener('input', () => this.filterChatList());
         document.getElementById('chatList')?.addEventListener('click', async (e) => {
             const item = e.target.closest('.chat-list-item');
             if (!item) return;

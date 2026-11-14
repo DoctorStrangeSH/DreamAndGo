@@ -1712,3 +1712,101 @@ h6 {
         transition-duration: .01ms !important;
     }
 }
+
+/* ========== ЛИЧНЫЙ КАБИНЕТ: ОБЗОР ДНЯ ========== */
+.home-dashboard-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(320px, 1fr);
+    gap: clamp(1rem, 3vw, 2.5rem);
+    align-items: center;
+    padding: clamp(1.4rem, 3.3vw, 3.2rem);
+    border-radius: 28px;
+    color: #fff;
+    background:
+        radial-gradient(circle at 10% 10%, rgba(255, 255, 255, .16), transparent 35%),
+        radial-gradient(circle at 90% 100%, rgba(61, 210, 195, .23), transparent 40%),
+        linear-gradient(125deg, #34236e 0%, #6744c6 58%, #8f55c8 100%);
+    box-shadow: 0 18px 45px rgba(78, 55, 159, .2);
+}
+.home-dashboard-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    padding: .45rem .8rem;
+    border: 1px solid rgba(255,255,255,.25);
+    border-radius: 999px;
+    background: rgba(255,255,255,.11);
+    font-size: .78rem;
+    font-weight: 600;
+    margin-bottom: 1.15rem;
+}
+.home-dashboard-copy h1 {
+    font-size: clamp(1.8rem, 3.4vw, 3.25rem);
+    line-height: 1.15;
+    letter-spacing: -.04em;
+    overflow-wrap: anywhere;
+    margin-bottom: .8rem;
+}
+.home-dashboard-copy h1 span { color: #f9d58b; }
+.home-dashboard-copy > p {
+    color: rgba(255,255,255,.82);
+    font-size: 1.05rem;
+    max-width: 480px;
+    margin-bottom: 1.7rem;
+}
+.home-dashboard-actions { display: flex; flex-wrap: wrap; gap: .6rem; }
+.home-dashboard-actions .btn {
+    border-radius: 12px;
+    padding: .7rem 1rem;
+}
+.home-dashboard-progress {
+    padding: clamp(1.25rem, 2vw, 1.8rem);
+    border: 1px solid rgba(255,255,255,.23);
+    border-radius: 22px;
+    background: rgba(255,255,255,.12);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+}
+.home-dashboard-progress-label { font-size: .91rem; font-weight: 700; }
+.home-dashboard-progress-track {
+    height: 9px;
+    background: rgba(255,255,255,.24);
+    border-radius: 999px;
+    margin-bottom: .6rem;
+}
+.home-dashboard-progress-track .progress-bar {
+    background: linear-gradient(90deg, #f8cf80, #fff2c8);
+    border-radius: inherit;
+}
+.home-dashboard-progress p { color: rgba(255,255,255,.83); }
+.home-dashboard-dreams {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .5rem;
+    padding: 1rem 0;
+    border-top: 1px solid rgba(255,255,255,.2);
+    border-bottom: 1px solid rgba(255,255,255,.2);
+}
+.home-dashboard-dreams strong,
+.home-dashboard-dreams span { display: block; }
+.home-dashboard-dreams strong { font-size: clamp(1.25rem, 2vw, 1.7rem); }
+.home-dashboard-dreams span { color: rgba(255,255,255,.75); font-size: .77rem; }
+.home-dashboard-progress-link {
+    display: inline-flex;
+    gap: .5rem;
+    align-items: center;
+    margin-top: 1rem;
+    color: #fff;
+    font-weight: 700;
+    text-decoration: none;
+}
+.home-dashboard-progress-link:hover { color: #f9d58b; }
+@media (max-width: 991.98px) {
+    .home-dashboard-hero { grid-template-columns: 1fr; }
+}
+@media (max-width: 575.98px) {
+    .home-dashboard-hero { border-radius: 20px; }
+    .home-dashboard-actions .btn { width: 100%; }
+    .home-dashboard-progress { padding: 1.1rem; }
+    .home-dashboard-dreams span { font-size: .7rem; }
+}

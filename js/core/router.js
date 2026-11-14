@@ -9,6 +9,7 @@ export class Router {
         this.afterHooks = [];
         this.isReady = false;
         this.isProcessing = false; // Защита от повторных вызовов
+        this.hasPendingRoute = false;
         
         console.log('🛠️ Роутер создан (ожидает инициализации)');
     }
@@ -61,7 +62,8 @@ export class Router {
     async handleRoute() {
         // Защита от одновременных вызовов
         if (this.isProcessing) {
-            console.log('⏳ Роутер занят, пропускаю вызов');
+            console.log('⏳ Роутер занят, запоминаю следующий переход');
+            this.hasPendingRoute = true;
             return;
         }
         
@@ -142,6 +144,10 @@ export class Router {
             }
         } finally {
             this.isProcessing = false;
+            if (this.hasPendingRoute) {
+                this.hasPendingRoute = false;
+                queueMicrotask(() => this.handleRoute());
+            }
         }
     }
 

@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 export function normalizeChatMessage(value) {
     if (typeof value !== 'string') return null;
     const text = value.trim();
@@ -11,4 +13,20 @@ export function otherChatParticipant(participants, uid) {
         participants[0] === participants[1] ||
         !participants.includes(uid)) return null;
     return participants.find(x => x !== uid);
+}
+
+export function normalizeClientMessageId(value) {
+    if (typeof value !== 'string') return null;
+    // A fresh UUID for each user action; retrying that action must reuse it.
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+        ? value.toLowerCase() : null;
+}
+
+export function serverMessageDocumentId(chatId, senderId, clientMessageId) {
+    if (typeof chatId !== 'string' || !chatId ||
+        typeof senderId !== 'string' || !senderId ||
+        !normalizeClientMessageId(clientMessageId)) return null;
+    const fields = [chatId, senderId, clientMessageId.toLowerCase()];
+    const framed = fields.map(value => `${Buffer.byteLength(value, 'utf8')}:${value}`).join('');
+    return createHash('sha256').update(framed).digest('hex');
 }

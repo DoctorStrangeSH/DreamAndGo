@@ -36,7 +36,9 @@ export class RealtimeService {
         });
 
         this.listeners[key] = unsubscribe;
-        return () => this.unsubscribe(key);
+        return () => {
+            if (this.listenerVersions[key] === token) this.unsubscribe(key);
+        };
     }
 
     subscribeToChats(userId, callback) {
@@ -76,7 +78,9 @@ export class RealtimeService {
         });
 
         this.listeners[key] = unsubscribe;
-        return () => this.unsubscribe(key);
+        return () => {
+            if (this.listenerVersions[key] === token) this.unsubscribe(key);
+        };
     }
 
     subscribeToFriends(userId, callback) {
@@ -109,7 +113,9 @@ export class RealtimeService {
         });
 
         this.listeners[key] = unsubscribe;
-        return () => this.unsubscribe(key);
+        return () => {
+            if (this.listenerVersions[key] === token) this.unsubscribe(key);
+        };
     }
 
     subscribeToFriendRequests(userId, callback) {
@@ -142,7 +148,9 @@ export class RealtimeService {
         });
 
         this.listeners[key] = unsubscribe;
-        return () => this.unsubscribe(key);
+        return () => {
+            if (this.listenerVersions[key] === token) this.unsubscribe(key);
+        };
     }
 
     subscribeToSentRequests(userId, callback) {
@@ -175,7 +183,9 @@ export class RealtimeService {
         });
 
         this.listeners[key] = unsubscribe;
-        return () => this.unsubscribe(key);
+        return () => {
+            if (this.listenerVersions[key] === token) this.unsubscribe(key);
+        };
     }
 
     async getUserProfile(uid) {

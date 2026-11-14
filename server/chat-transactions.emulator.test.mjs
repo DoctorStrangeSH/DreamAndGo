@@ -17,8 +17,8 @@ async function makeChat() {
     });
     return chatId;
 }
-const send = (chatId, text, id, uid = 'alice') =>
-    sendPrivateMessageTransaction(db, uid, chatId, text, key(id));
+const send = (chatId, text, id, uid = 'alice', now = Date.now) =>
+    sendPrivateMessageTransaction(db, uid, chatId, text, key(id), now);
 
 test('simultaneous retries create one message and increment unread once', async () => {
     const chatId = await makeChat();
@@ -37,13 +37,13 @@ test('simultaneous retries create one message and increment unread once', async 
     await assert.rejects(send(chatId, 'Другой текст', 1), { code: 'already-exists' });
 });
 
-test('different messages sent simultaneously share the sender cooldown', async () => {
+test('different messages with the same server time share the sender cooldown', async () => {
     // Different user avoids the cooldown from the first test.
     const chatId = await makeChat();
     await db.doc(`chats/${chatId}`).update({ participants: ['bob', 'charlie'] });
     const attempts = await Promise.allSettled([
-        send(chatId, 'Один', 2, 'charlie'),
-        send(chatId, 'Два', 3, 'charlie')
+        send(chatId, 'Один', 2, 'charlie', () => 10_000),
+        send(chatId, 'Два', 3, 'charlie', () => 10_000)
     ]);
     assert.equal(attempts.filter(x => x.status === 'fulfilled').length, 1);
     assert.equal(attempts.filter(x => x.status === 'rejected').length, 1);

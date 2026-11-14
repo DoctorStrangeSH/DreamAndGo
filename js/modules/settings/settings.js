@@ -1,4 +1,6 @@
 import { db } from '../../config/firebase.js';
+import { escapeHTML } from '../../core/escape-html.js';
+import { normalizeUsername } from '../../core/username.js';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 export class SettingsModule {
@@ -33,7 +35,7 @@ export class SettingsModule {
                                     <div class="input-group">
                                         <span class="input-group-text">@</span>
                                         <input type="text" class="form-control" name="username" 
-                                               value="${userData.username || ''}" 
+                                               value="${escapeHTML(userData.username || '')}" 
                                                minlength="3" maxlength="20" required>
                                     </div>
                                     <div class="form-text">От 3 до 20 символов, только буквы, цифры и _</div>
@@ -42,20 +44,20 @@ export class SettingsModule {
                                 <div class="mb-3">
                                     <label class="form-label fw-semibold">Имя</label>
                                     <input type="text" class="form-control" name="displayName" 
-                                           value="${userData.displayName || ''}" 
+                                           value="${escapeHTML(userData.displayName || '')}" 
                                            placeholder="Как тебя зовут?">
                                 </div>
 
                                 <div class="mb-3">
                                     <label class="form-label fw-semibold">О себе</label>
                                     <textarea class="form-control" name="bio" rows="3" 
-                                              placeholder="Расскажи о себе...">${userData.bio || ''}</textarea>
+                                              placeholder="Расскажи о себе...">${escapeHTML(userData.bio || '')}</textarea>
                                 </div>
 
                                 <div class="mb-3">
                                     <label class="form-label fw-semibold">Город</label>
                                     <input type="text" class="form-control" name="location" 
-                                           value="${userData.location || ''}" 
+                                           value="${escapeHTML(userData.location || '')}" 
                                            placeholder="Твой город">
                                 </div>
 
@@ -151,10 +153,13 @@ export class SettingsModule {
 
             if (username !== currentUser?.username) {
                 const usersRef = collection(db, 'users');
-                const q = query(usersRef, where('username', '==', username.toLowerCase()));
-                const snapshot = await getDocs(q);
-
-                if (!snapshot.empty) {
+                const normalized = normalizeUsername(username);
+                const [indexed, legacy] = await Promise.all([
+                    getDocs(query(usersRef, where('usernameNormalized', '==', normalized))),
+                    getDocs(query(usersRef, where('username', '==', username)))
+                ]);
+                const matches = [...indexed.docs, ...legacy.docs];
+                if (matches.some(docSnap => docSnap.id !== window.app.currentUser.uid)) {
                     window.app.ui.showToast('Этот ник уже занят 😔', 'warning');
                     submitBtn.innerHTML = originalText;
                     submitBtn.disabled = false;
@@ -165,6 +170,7 @@ export class SettingsModule {
             const userRef = doc(db, 'users', window.app.currentUser.uid);
             await updateDoc(userRef, {
                 username: username,
+                usernameNormalized: normalizeUsername(username),
                 displayName: displayName,
                 bio: bio,
                 location: location

@@ -1,4 +1,7 @@
 import { db } from '../../config/firebase.js';
+import { escapeHTML } from '../../core/escape-html.js';
+import { safeAvatarURL } from '../../core/safe-avatar-url.js';
+import { getHomeSnapshot } from '../../core/home-snapshot.js';
 import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 export class ProfileModule {
@@ -40,8 +43,9 @@ export class ProfileModule {
 
     getProfileTemplate(userData, isOwnProfile) {
         const coverGradient = this.getRandomGradient();
-        const stats = userData.stats || {};
-        const initials = (userData.username || 'U')[0].toUpperCase();
+        const stats = getHomeSnapshot(userData);
+        const initials = String(userData.username || 'U').charAt(0).toUpperCase();
+        const avatarURL = safeAvatarURL(userData.avatar);
 
         return `
             <div class="profile-page fade-in-up">
@@ -53,25 +57,25 @@ export class ProfileModule {
                     <div class="profile-header">
                         <div class="profile-avatar-wrapper">
                             <div class="profile-avatar">
-                                ${userData.avatar 
-                                    ? `<img src="${userData.avatar}" alt="${userData.username}">`
-                                    : `<span class="profile-avatar-text">${initials}</span>`
+                                ${avatarURL 
+                                    ? `<img src="${escapeHTML(avatarURL)}" alt="Аватар ${escapeHTML(userData.username || 'пользователя')}">`
+                                    : `<span class="profile-avatar-text">${escapeHTML(initials)}</span>`
                                 }
                             </div>
                         </div>
 
                         <div class="profile-info">
                             <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
-                                <h2 class="profile-username">@${userData.username || 'user'}</h2>
+                                <h2 class="profile-username">@${escapeHTML(userData.username || 'user')}</h2>
                                 ${userData.displayName ? 
-                                    `<span class="profile-display-name">${userData.displayName}</span>` : ''}
+                                    `<span class="profile-display-name">${escapeHTML(userData.displayName)}</span>` : ''}
                             </div>
                             
                             ${userData.bio ? 
-                                `<p class="profile-bio text-secondary mb-2">${userData.bio}</p>` : ''}
+                                `<p class="profile-bio text-secondary mb-2">${escapeHTML(userData.bio)}</p>` : ''}
                             
                             ${userData.location ? 
-                                `<p class="text-muted small mb-2"><i class="bi bi-geo-alt me-1"></i>${userData.location}</p>` : ''}
+                                `<p class="text-muted small mb-2"><i class="bi bi-geo-alt me-1"></i>${escapeHTML(userData.location)}</p>` : ''}
 
                             <div class="profile-stats mt-2">
                                 <div class="profile-stat">
@@ -212,7 +216,7 @@ export class ProfileModule {
     }
 
     getOverviewContent(userData) {
-        const stats = userData.stats || {};
+        const stats = getHomeSnapshot(userData);
         return `
             <div class="row g-4">
                 <div class="col-md-6">
@@ -249,8 +253,8 @@ export class ProfileModule {
                 <div class="col-md-6">
                     <div class="card-premium p-4 h-100">
                         <h6 class="fw-bold mb-3"><i class="bi bi-info-circle text-info me-2"></i>Информация</h6>
-                        <p class="text-muted small mb-2"><i class="bi bi-envelope me-2"></i>${window.app.currentUser?.email || '—'}</p>
-                        <p class="text-muted small mb-2"><i class="bi bi-geo-alt me-2"></i>${userData.location || 'Не указан'}</p>
+                        <p class="text-muted small mb-2"><i class="bi bi-envelope me-2"></i>${escapeHTML(userData.email && userData.email === window.app.currentUser?.email ? userData.email : 'Скрыт')}</p>
+                        <p class="text-muted small mb-2"><i class="bi bi-geo-alt me-2"></i>${escapeHTML(userData.location || 'Не указан')}</p>
                         <p class="text-muted small mb-2"><i class="bi bi-calendar me-2"></i>На сайте с ${this.formatDate(userData.createdAt)}</p>
                         <p class="text-muted small mb-0"><i class="bi bi-clock me-2"></i>Был ${this.formatDate(userData.lastLogin)}</p>
                     </div>
@@ -260,7 +264,7 @@ export class ProfileModule {
     }
 
     getUserAchievements(userData) {
-        const achievements = userData.achievements || [];
+        const achievements = Array.isArray(userData.achievements) ? userData.achievements.filter(Boolean) : [];
         if (achievements.length === 0) {
             return `
                 <div class="text-center py-5">
@@ -277,14 +281,14 @@ export class ProfileModule {
                         <div class="card-premium p-3 achievement-earned">
                             <div class="d-flex align-items-center gap-3">
                                 <div class="achievement-icon earned">
-                                    <span>${a.emoji}</span>
+                                    <span>${escapeHTML(a.emoji)}</span>
                                 </div>
                                 <div>
-                                    <h6 class="fw-bold mb-0">${a.title}</h6>
-                                    <p class="text-muted small mb-0">${a.description}</p>
+                                    <h6 class="fw-bold mb-0">${escapeHTML(a.title)}</h6>
+                                    <p class="text-muted small mb-0">${escapeHTML(a.description)}</p>
                                     <small class="text-muted">${this.formatDate(a.awardedAt)}</small>
                                 </div>
-                                <span class="badge bg-warning ms-auto">Ур. ${a.level || 1}</span>
+                                <span class="badge bg-warning ms-auto">Ур. ${Math.min(999, Math.max(1, Number(a.level) || 1))}</span>
                             </div>
                         </div>
                     </div>
@@ -298,8 +302,8 @@ export class ProfileModule {
         const icons = { travels: 'airplane', movies: 'film', books: 'book', dreams: 'star', restaurants: 'shop' };
         return window.app.ui.createEmptyState({
             icon: `bi-${icons[tab] || 'question'}`,
-            title: `Нет ${names[tab] || 'данных'}`,
-            description: 'Здесь пока ничего нет'
+            title: `Раздел ${names[tab] || 'профиля'}`,
+            description: 'Публичное отображение этого раздела появится позже'
         });
     }
 

@@ -34,3 +34,5 @@ jobs:
         run: npx -y firebase-tools@latest emulators:exec --project demo-dreamandgo-chat-rules --only firestore --config firebase.json "node --test ../../server/chat-transactions.emulator.test.mjs"
       - name: Test interrupted migration rehearsal on isolated emulator
         run: npx -y firebase-tools@latest emulators:exec --project demo-dreamandgo-chat-rules --only firestore --config firebase.json "node --test ../../server/migration-rehearsal.emulator.test.mjs"
+      - name: Test isolated backup restore rehearsal
+        run: npx -y firebase-tools@latest emulators:exec --project demo-dreamandgo-chat-rules --only firestore --config firebase.json "node --test ../../server/backup-restore-rehearsal.emulator.test.mjs"

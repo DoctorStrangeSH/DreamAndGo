@@ -1,0 +1,9 @@
+{
+  "name": "dream-and-go",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "check": "node --check js/app.js && node --check js/core/router.js && node --check js/core/ui-components.js && node --check js/services/auth.service.js"
+  }
+}

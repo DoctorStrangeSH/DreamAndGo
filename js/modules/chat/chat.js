@@ -31,6 +31,7 @@ export class ChatModule {
         this.editMessageId = null;
 
         mainContent.innerHTML = this.getTemplate();
+        document.getElementById('chatList').innerHTML = '<p class="text-muted text-center py-5">Загружаем диалоги…</p>';
         this.subscribeToChats();
         this.attachEventListeners();
 
@@ -132,9 +133,22 @@ export class ChatModule {
     subscribeToChats() {
         this.unsubscribeChats = window.app.realtimeService.subscribeToChats(
             window.app.currentUser.uid,
-            (chats) => {
+            (chats, error) => {
                 const chatList = document.getElementById('chatList');
-                if (!chatList) return;
+                if (!chatList || !document.querySelector('.chat-page')) return;
+
+                if (error) {
+                    chatList.innerHTML = `
+                        <div class="text-center py-5 px-3">
+                            <p class="text-danger small">Не удалось загрузить диалоги</p>
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="retryChatListBtn">Повторить</button>
+                        </div>`;
+                    chatList.querySelector('#retryChatListBtn')?.addEventListener('click', () => {
+                        chatList.innerHTML = '<p class="text-muted text-center py-5">Загружаем диалоги…</p>';
+                        this.subscribeToChats();
+                    });
+                    return;
+                }
 
                 if (chats.length === 0) {
                     chatList.innerHTML = `
@@ -180,7 +194,8 @@ export class ChatModule {
                 }).join('');
 
                 if (this.currentChat) {
-                    const activeItem = document.querySelector(`[data-partner-id="${this.currentChat}"]`);
+                    const activeItem = Array.from(chatList.querySelectorAll('.chat-list-item'))
+                        .find(item => item.dataset.partnerId === this.currentChat);
                     if (activeItem) activeItem.classList.add('active');
                 }
             }
@@ -480,7 +495,17 @@ export class ChatModule {
         document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
         document.body.classList.remove('modal-open');
 
-        const friends = await this.friendsService.getFriends(window.app.currentUser.uid);
+        const userId = window.app.currentUser?.uid;
+        if (!userId) return;
+        let friends;
+        try {
+            friends = await this.friendsService.getFriends(userId);
+        } catch (error) {
+            console.error('Не удалось загрузить друзей для чата:', error);
+            window.app.ui.showToast('Не удалось загрузить список друзей', 'error');
+            return;
+        }
+        if (window.app.currentUser?.uid !== userId || !document.querySelector('.chat-page')) return;
 
         const container = document.createElement('div');
         container.id = 'newChatModalContainer';
@@ -529,9 +554,24 @@ export class ChatModule {
 
         container.querySelectorAll('.friend-item').forEach(item => {
             item.addEventListener('click', async () => {
-                await this.chatService.getOrCreateChat(window.app.currentUser.uid, item.dataset.uid);
-                modal.hide();
-                await this.openChat(item.dataset.uid);
+                if (item.dataset.busy === 'true') return;
+                item.dataset.busy = 'true';
+                item.classList.add('opacity-50');
+                const partnerId = item.dataset.uid;
+                try {
+                    const chatId = await this.chatService.getOrCreateChat(userId, partnerId);
+                    if (!chatId) throw new Error('Не удалось создать диалог');
+                    if (window.app.currentUser?.uid !== userId || !container.isConnected ||
+                        !document.querySelector('.chat-page')) return;
+                    modal.hide();
+                    await this.openChat(partnerId);
+                } catch (error) {
+                    console.error('Не удалось начать переписку:', error);
+                    if (container.isConnected) window.app.ui.showToast('Не удалось открыть чат. Попробуй ещё раз.', 'error');
+                } finally {
+                    item.dataset.busy = 'false';
+                    item.classList.remove('opacity-50');
+                }
             });
         });
     }

@@ -1,7 +1,7 @@
 import { db } from '../config/firebase.js';
 import {
     collection, doc, getDocs, getDoc, updateDoc, deleteDoc,
-    query, orderBy, serverTimestamp, writeBatch, setDoc, increment, runTransaction
+    query, orderBy, limit, serverTimestamp, writeBatch, setDoc, increment, runTransaction
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 export class ChatService {

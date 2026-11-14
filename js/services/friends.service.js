@@ -1,6 +1,7 @@
 import { db } from '../config/firebase.js';
 import { normalizeUsername, isValidUsername } from '../core/username.js';
 import { toPublicProfile } from '../core/public-profile.js';
+import { countFriendRecords } from '../core/friend-count.js';
 import { 
     collection, doc, getDocs, getDoc, updateDoc,
     query, where, limit, serverTimestamp, writeBatch, setDoc
@@ -212,9 +213,11 @@ export class FriendsService {
 
     async updateFriendsCount(userId) {
         try {
-            const friends = await this.getFriends(userId);
+            const friendsRef = collection(this.db, 'users', userId, 'friends');
+            const snapshot = await getDocs(friendsRef);
+            const count = countFriendRecords(snapshot.docs);
             const userRef = doc(this.db, 'users', userId);
-            await updateDoc(userRef, { 'stats.friends': friends.length });
+            await updateDoc(userRef, { 'stats.friends': count });
         } catch (error) {
             console.error('Ошибка обновления счётчика друзей:', error);
         }

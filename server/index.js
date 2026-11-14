@@ -89,4 +89,5 @@ export const sendPrivateMessageV2 = onCall({ region: 'europe-west3' }, async req
         throw new HttpsError('invalid-argument', 'Некорректное сообщение');
     }
 
-    return sendPrivateMessageTransaction(getFirestore(), uid, chatId, text, clientMessageId);});
+    return sendPrivateMessageTransaction(getFirestore(), uid, chatId, text, clientMessageId);
+});

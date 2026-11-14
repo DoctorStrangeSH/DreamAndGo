@@ -8,6 +8,7 @@ import { normalizeChatMessage, normalizeClientMessageId } from './message-policy
 import { sendPrivateMessageTransaction } from './chat-transactions.js';
 import { getPrivateMessageStatus } from './message-status.js';
 import { markPrivateMessageReadTransaction } from './chat-read-receipts.js';
+import { getPrivateChatUnreadCount } from './chat-unread-status.js';
 
 if (getApps().length === 0) initializeApp();
 
@@ -106,4 +107,9 @@ export const markPrivateMessageReadV2 = onCall({ region: 'europe-west3' }, async
     return markPrivateMessageReadTransaction(
         getFirestore(), request.auth?.uid, request.data?.chatId, request.data?.messageId
     );
+});
+
+// Candidate v2 only: read-only recovery after reconnect or reinstall.
+export const getPrivateChatUnreadV2 = onCall({ region: 'europe-west3' }, async request => {
+    return getPrivateChatUnreadCount(getFirestore(), request.auth?.uid, request.data?.chatId);
 });

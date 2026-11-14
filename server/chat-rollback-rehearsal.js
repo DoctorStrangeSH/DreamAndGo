@@ -17,7 +17,12 @@ export async function rehearseChatReopen(db, { projectId, chatId, expectedMessag
             throw new Error('Chat must be a frozen v2 rehearsal');
         }
         const snapshot = await tx.get(ref.collection('messages'));
-        const actual = snapshot.docs.map(doc => ({ id: doc.id, data: doc.data() }));
+        // Convert Firestore Timestamp values into the same strict JSON export format
+        // expected by chat-integrity. Reject unserializable values rather than skip fields.
+        const actual = snapshot.docs.map(doc => ({
+            id: doc.id,
+            data: JSON.parse(JSON.stringify(doc.data()))
+        }));
         const verification = compareMessageInventories(expectedMessages, actual);
         if (!verification.equal) throw new Error('Recovery blocked: message integrity mismatch');
         tx.update(ref, { state: 'active' });

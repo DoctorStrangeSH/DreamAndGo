@@ -73,3 +73,55 @@ test('failed precondition remains failed; unacknowledged messages are not read',
     assert.equal(controller.get(id).deliveryStatus, 'failed');
     assert.equal(controller.acknowledgeRead(id, 'pretend'), false);
 });
+
+test('sender-side status lookup promotes sent to read only on matching server evidence', async () => {
+    let reply = { status: 'sent', messageId: 'server-1', read: false };
+    const controller = make(async () => ({ messageId: 'server-1' }), async input => {
+        assert.deepEqual(input, { chatId: 'chat-1', clientMessageId: id });
+        return reply;
+    });
+    controller.prepare('chat-1', 'Private message');
+    await controller.send(id);
+    assert.deepEqual(await controller.refreshRead(id), { status: 'unconfirmed' });
+    assert.equal(controller.get(id).deliveryStatus, 'sent');
+    reply = { status: 'sent', messageId: 'another-message', read: true };
+    assert.deepEqual(await controller.refreshRead(id), { status: 'unconfirmed' });
+    assert.equal(controller.get(id).deliveryStatus, 'sent');
+    reply = { status: 'sent', messageId: 'server-1', read: true };
+    assert.deepEqual(await controller.refreshRead(id), { status: 'read' });
+    assert.equal(controller.get(id).deliveryStatus, 'read');
+    assert.deepEqual(await controller.refreshRead(id), { status: 'read' });
+});
+
+test('receipt lookup errors keep sent state; concurrent checks are deduplicated', async () => {
+    let finish, calls = 0;
+    const controller = make(async () => ({ messageId: 'server-1' }), () => {
+        calls++;
+        return new Promise(resolve => { finish = resolve; });
+    });
+    controller.prepare('chat-1', 'Private');
+    await controller.send(id);
+    const a = controller.refreshRead(id);
+    const b = controller.refreshRead(id);
+    assert.strictEqual(a, b);
+    await Promise.resolve();
+    assert.equal(calls, 1);
+    finish({ status: 'sent', messageId: 'server-1', read: false });
+    assert.deepEqual(await a, { status: 'unconfirmed' });
+    assert.equal(controller.get(id).deliveryStatus, 'sent');
+});
+
+test('late read receipt cannot contaminate new account view after clear', async () => {
+    let finish;
+    const controller = make(async () => ({ messageId: 'server-1' }),
+        () => new Promise(resolve => { finish = resolve; }));
+    controller.prepare('chat-1', 'Old');
+    await controller.send(id);
+    const receipt = controller.refreshRead(id);
+    await Promise.resolve();
+    controller.clear();
+    controller.restore('chat-2', 'New', id);
+    finish({ status: 'sent', messageId: 'server-1', read: true });
+    assert.deepEqual(await receipt, { status: 'stale' });
+    assert.equal(controller.get(id).deliveryStatus, 'checking');
+});

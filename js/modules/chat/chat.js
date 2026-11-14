@@ -285,19 +285,25 @@ export class ChatModule {
     }
 
     async deleteChatLocal() {
-        await this.chatService.deleteChatLocal(window.app.currentUser.uid, this.currentChat);
+        if (!this.currentChat) return;
+        const result = await this.chatService.deleteChatLocal(window.app.currentUser.uid, this.currentChat);
+        if (!result.success) {
+            window.app.ui.showToast('Не удалось удалить диалог', 'error');
+            return;
+        }
         this.closeChat();
-        this.subscribeToChats();
         window.app.ui.showToast('Диалог удалён у тебя', 'info');
     }
 
     async deleteChatFull() {
-        if (confirm('Удалить диалог и все сообщения навсегда?')) {
-            await this.chatService.deleteChat(window.app.currentUser.uid, this.currentChat);
-            this.closeChat();
-            this.subscribeToChats();
-            window.app.ui.showToast('Диалог удалён полностью', 'info');
+        if (!this.currentChat || !confirm('Удалить весь диалог у обоих участников? Это действие может быть необратимым.')) return;
+        const result = await this.chatService.deleteChat(window.app.currentUser.uid, this.currentChat);
+        if (!result.success) {
+            window.app.ui.showToast('Не удалось удалить диалог у всех', 'error');
+            return;
         }
+        this.closeChat();
+        window.app.ui.showToast('Диалог удалён полностью', 'info');
     }
 
     showDeleteChatDialog() {

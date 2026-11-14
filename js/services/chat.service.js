@@ -147,26 +147,33 @@ export class ChatService {
     }
 
     async deleteChat(userId, partnerId) {
+        if (!userId || !partnerId || userId === partnerId) {
+            return { success: false, error: 'Некорректный диалог' };
+        }
         try {
             const chatId = this.getChatId(userId, partnerId);
-            const batch = writeBatch(this.db);
+            const messagesRef = collection(this.db, 'chats', chatId, 'messages');
 
-            // Удаляем диалог у обоих
+            // Firestore batches allow at most 500 writes. Reserve two writes
+            // for conversation metadata; fail without deleting anything if
+            // the full history will not fit into the atomic batch.
+            const snapshot = await getDocs(query(messagesRef, limit(499)));
+            if (snapshot.size > 498) {
+                return {
+                    success: false,
+                    error: 'История слишком длинная для безопасного удаления. Обратись к администратору.'
+                };
+            }
+
+            const batch = writeBatch(this.db);
+            snapshot.forEach(item => batch.delete(item.ref));
             batch.delete(doc(this.db, 'users', userId, 'chats', partnerId));
             batch.delete(doc(this.db, 'users', partnerId, 'chats', userId));
-
-            // Удаляем все сообщения
-            const messagesRef = collection(this.db, 'chats', chatId, 'messages');
-            const snapshot = await getDocs(messagesRef);
-            snapshot.forEach(msgDoc => {
-                batch.delete(msgDoc.ref);
-            });
-
             await batch.commit();
             return { success: true };
         } catch (error) {
             console.error('Ошибка удаления диалога:', error);
-            return { success: false };
+            return { success: false, error: 'Не удалось удалить диалог' };
         }
     }
 

@@ -1,4 +1,6 @@
 import { FriendsService } from '../../services/friends.service.js';
+import { escapeHTML } from '../../core/escape-html.js';
+import { getHomeSnapshot } from '../../core/home-snapshot.js';
 
 export class FriendsModule {
     constructor() {
@@ -155,38 +157,38 @@ export class FriendsModule {
     }
 
     createCard(user, type) {
-        const initials = (user.username || 'U')[0].toUpperCase();
-        const stats = user.stats || {};
+        const initials = String(user.username || 'U').charAt(0).toUpperCase();
+        const stats = getHomeSnapshot(user);
 
         let actions = '';
 
         if (type === 'friend') {
             actions = `
-                <a href="#profile/${user.uid}" class="btn btn-outline-primary btn-sm" title="Профиль">
+                <a href="#profile/${escapeHTML(user.uid)}" class="btn btn-outline-primary btn-sm" title="Профиль">
                     <i class="bi bi-person"></i>
                 </a>
-                <button class="btn btn-outline-danger btn-sm remove-friend-btn" data-uid="${user.uid}" title="Удалить">
+                <button class="btn btn-outline-danger btn-sm remove-friend-btn" data-uid="${escapeHTML(user.uid)}" title="Удалить">
                     <i class="bi bi-person-x"></i>
                 </button>
             `;
         } else if (type === 'request') {
             actions = `
-                <button class="btn btn-success btn-sm accept-btn" data-uid="${user.uid}" title="Принять">
+                <button class="btn btn-success btn-sm accept-btn" data-uid="${escapeHTML(user.uid)}" title="Принять">
                     <i class="bi bi-check"></i>
                 </button>
-                <button class="btn btn-outline-danger btn-sm reject-btn" data-uid="${user.uid}" title="Отклонить">
+                <button class="btn btn-outline-danger btn-sm reject-btn" data-uid="${escapeHTML(user.uid)}" title="Отклонить">
                     <i class="bi bi-x"></i>
                 </button>
             `;
         } else if (type === 'sent') {
             actions = `
-                <button class="btn btn-outline-danger btn-sm cancel-request-btn" data-uid="${user.uid}">
+                <button class="btn btn-outline-danger btn-sm cancel-request-btn" data-uid="${escapeHTML(user.uid)}">
                     <i class="bi bi-x me-1"></i>Отменить
                 </button>
             `;
         } else if (type === 'search') {
             actions = `
-                <button class="btn btn-premium btn-sm send-request-btn" data-uid="${user.uid}">
+                <button class="btn btn-premium btn-sm send-request-btn" data-uid="${escapeHTML(user.uid)}">
                     <i class="bi bi-person-plus me-1"></i>Добавить
                 </button>
             `;
@@ -196,9 +198,9 @@ export class FriendsModule {
             <div class="col-12 col-md-6">
                 <div class="card-premium p-3">
                     <div class="d-flex align-items-center gap-3">
-                        <div class="friend-avatar-placeholder">${initials}</div>
+                        <div class="friend-avatar-placeholder">${escapeHTML(initials)}</div>
                         <div class="flex-grow-1 min-width-0">
-                            <h6 class="fw-bold mb-0">@${user.username}</h6>
+                            <h6 class="fw-bold mb-0">@${escapeHTML(user.username || 'user')}</h6>
                             <div class="d-flex gap-2 mt-1">
                                 <small class="text-muted">
                                     <i class="bi bi-airplane me-1"></i>${stats.travels || 0}
@@ -275,7 +277,7 @@ export class FriendsModule {
             results.innerHTML = `
                 <div class="text-center py-3">
                     <i class="bi bi-emoji-frown fs-3 text-muted"></i>
-                    <p class="text-muted mt-2">Пользователь @${username} не найден</p>
+                    <p class="text-muted mt-2">Пользователь @${escapeHTML(username)} не найден</p>
                 </div>
             `;
             return;

@@ -6,6 +6,7 @@ import { conversationPairKey } from './chat-pair.js';
 import { isConversationBlocked } from './block-policy.js';
 import { normalizeChatMessage, normalizeClientMessageId } from './message-policy.js';
 import { sendPrivateMessageTransaction } from './chat-transactions.js';
+import { getPrivateMessageStatus } from './message-status.js';
 
 if (getApps().length === 0) initializeApp();
 
@@ -90,4 +91,11 @@ export const sendPrivateMessageV2 = onCall({ region: 'europe-west3' }, async req
     }
 
     return sendPrivateMessageTransaction(getFirestore(), uid, chatId, text, clientMessageId);
+});
+
+// Candidate read-only v2 status check; intentionally not deployed or wired to legacy UI.
+export const getPrivateMessageStatusV2 = onCall({ region: 'europe-west3' }, async request => {
+    return getPrivateMessageStatus(
+        getFirestore(), request.auth?.uid, request.data?.chatId, request.data?.clientMessageId
+    );
 });

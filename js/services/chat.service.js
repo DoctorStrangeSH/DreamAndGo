@@ -47,7 +47,7 @@ export class ChatService {
     }
 
     async getOrCreateChat(userId, partnerId) {
-        if (!userId || !partnerId || userId === partnerId) return null;
+        if (!userId || !partnerId || userId === partnerId || auth?.currentUser?.uid !== userId) return null;
         try {
             const ownRef = doc(this.db, 'users', userId, 'chats', partnerId);
             const peerRef = doc(this.db, 'users', partnerId, 'chats', userId);
@@ -66,6 +66,7 @@ export class ChatService {
                 // The first actual message populates them if the record was absent.
                 transaction.set(peerRef, { partnerId: userId }, { merge: true });
             });
+            if (auth?.currentUser?.uid !== userId) return null;
             return partnerId;
         } catch (error) {
             console.error('Ошибка создания чата:', error);
@@ -112,6 +113,7 @@ export class ChatService {
                 unread: increment(1)
             }, { merge: true });
 
+            if (auth?.currentUser?.uid !== senderId) return { success: false, error: 'Сессия изменилась' };
             await batch.commit();
             return { success: true };
         } catch (error) {
@@ -122,10 +124,11 @@ export class ChatService {
 
     async deleteMessage(chatId, messageId) {
         try {
-            if (!auth?.currentUser?.uid || !chatId || !messageId) return { success: false };
+            const actorId = auth?.currentUser?.uid;
+            if (!actorId || !chatId || !messageId) return { success: false };
             const messageRef = doc(this.db, 'chats', chatId, 'messages', messageId);
             const existing = await getDoc(messageRef);
-            if (!existing.exists() || existing.data().senderId !== auth.currentUser.uid) return { success: false };
+            if (!existing.exists() || existing.data().senderId !== actorId || auth?.currentUser?.uid !== actorId) return { success: false };
             await deleteDoc(messageRef);
             return { success: true };
         } catch (error) {
@@ -141,7 +144,7 @@ export class ChatService {
             if (!auth?.currentUser?.uid || !chatId || !messageId) return { success: false };
             const messageRef = doc(this.db, 'chats', chatId, 'messages', messageId);
             const existing = await getDoc(messageRef);
-            if (!existing.exists() || existing.data().senderId !== auth.currentUser.uid) return { success: false };
+            if (!existing.exists() || existing.data().senderId !== actorId || auth?.currentUser?.uid !== actorId) return { success: false };
             await updateDoc(messageRef, {
                 text: validation.text,
                 edited: true,
@@ -155,6 +158,7 @@ export class ChatService {
     }
 
     async markAsRead(userId, partnerId) {
+        if (!userId || !partnerId || userId === partnerId || auth?.currentUser?.uid !== userId) return;
         try {
             const chatRef = doc(this.db, 'users', userId, 'chats', partnerId);
             await updateDoc(chatRef, { unread: 0 });
@@ -164,7 +168,7 @@ export class ChatService {
     }
 
     async deleteChat(userId, partnerId) {
-        if (!userId || !partnerId || userId === partnerId) {
+        if (!userId || !partnerId || userId === partnerId || auth?.currentUser?.uid !== userId) {
             return { success: false, error: 'Некорректный диалог' };
         }
         try {
@@ -182,6 +186,7 @@ export class ChatService {
                 };
             }
 
+            if (auth?.currentUser?.uid !== userId) return { success: false, error: 'Сессия изменилась' };
             const batch = writeBatch(this.db);
             snapshot.forEach(item => batch.delete(item.ref));
             batch.delete(doc(this.db, 'users', userId, 'chats', partnerId));
@@ -195,6 +200,9 @@ export class ChatService {
     }
 
     async deleteChatLocal(userId, partnerId) {
+        if (!userId || !partnerId || userId === partnerId || auth?.currentUser?.uid !== userId) {
+            return { success: false };
+        }
         try {
             await deleteDoc(doc(this.db, 'users', userId, 'chats', partnerId));
             return { success: true };

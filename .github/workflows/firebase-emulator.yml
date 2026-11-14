@@ -8,6 +8,7 @@ on:
   pull_request:
     paths:
       - 'tests/firebase-emulator/**'
+      - 'server/**'
       - '.github/workflows/firebase-emulator.yml'
 jobs:
   chat-rules:
@@ -28,15 +29,8 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Install candidate server dependencies
         run: npm install --prefix ../../server --no-audit --no-fund
-      - name: Test isolated candidate rules (no deploy)
-        run: npx -y firebase-tools@latest emulators:exec --project demo-dreamandgo-chat-rules --only firestore --config firebase.json "npm test"
-      - name: Test candidate server transactions against Firestore Emulator
-        run: npx -y firebase-tools@latest emulators:exec --project demo-dreamandgo-chat-rules --only firestore --config firebase.json "node --test ../../server/chat-transactions.emulator.test.mjs"
-      - name: Test interrupted migration rehearsal on isolated emulator
-        run: npx -y firebase-tools@latest emulators:exec --project demo-dreamandgo-chat-rules --only firestore --config firebase.json "node --test ../../server/migration-rehearsal.emulator.test.mjs"
-      - name: Test isolated backup restore rehearsal
-        run: npx -y firebase-tools@latest emulators:exec --project demo-dreamandgo-chat-rules --only firestore --config firebase.json "node --test ../../server/backup-restore-rehearsal.emulator.test.mjs"
-      - name: Test chat send versus write-freeze race
-        run: npx -y firebase-tools@latest emulators:exec --project demo-dreamandgo-chat-rules --only firestore --config firebase.json "node --test ../../server/chat-cutover-race.emulator.test.mjs"
-      - name: Test emulator-only chat rollback preflight
-        run: npx -y firebase-tools@latest emulators:exec --project demo-dreamandgo-chat-rules --only firestore --config firebase.json "node --test ../../server/chat-rollback-rehearsal.emulator.test.mjs"
+      - name: Run all isolated rule and transaction tests in one emulator session
+        run: >-
+          npx -y firebase-tools@latest emulators:exec
+          --project demo-dreamandgo-chat-rules --only firestore --config firebase.json
+          "npm test && node --test ../../server/*.emulator.test.mjs"

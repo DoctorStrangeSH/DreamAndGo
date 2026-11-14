@@ -42,21 +42,18 @@ export class ChatOutbox {
         const existing = this.inFlight.get(clientMessageId);
         if (existing) return existing;
         const generation = this.generation;
-        const task = (async () => {
-            try {
-                const result = await this.send(pending);
-                if (generation !== this.generation) return { success: false, error: 'Сессия изменилась' };
-                if (!result || typeof result.messageId !== 'string' || !result.messageId) {
-                    return { success: false, error: 'Нет подтверждения отправки' };
-                }
-                this.pending.delete(clientMessageId);
-                return { success: true, messageId: result.messageId };
-            } catch (error) {
-                return { success: false, error: error?.code || 'Ошибка сети', retryable: true };
-            } finally {
-                if (this.inFlight.get(clientMessageId) === task) this.inFlight.delete(clientMessageId);
+        const task = Promise.resolve().then(() => this.send(pending)).then(result => {
+            if (generation !== this.generation) return { success: false, error: 'Сессия изменилась' };
+            if (!result || typeof result.messageId !== 'string' || !result.messageId) {
+                return { success: false, error: 'Нет подтверждения отправки' };
             }
-        })();
+            this.pending.delete(clientMessageId);
+            return { success: true, messageId: result.messageId };
+        }).catch(error => ({
+            success: false, error: error?.code || 'Ошибка сети', retryable: true
+        })).finally(() => {
+            if (this.inFlight.get(clientMessageId) === task) this.inFlight.delete(clientMessageId);
+        });
         this.inFlight.set(clientMessageId, task);
         return task;
     }

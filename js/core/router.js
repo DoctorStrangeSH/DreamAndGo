@@ -1,3 +1,5 @@
+import { escapeHTML } from './escape-html.js';
+
 export class Router {
     constructor() {
         this.routes = {};
@@ -166,7 +168,7 @@ export class Router {
             <div class="container py-5 text-center">
                 <div class="display-1 text-muted mb-3">404</div>
                 <h2>Страница не найдена</h2>
-                <p class="text-muted">Маршрут "${path}" не существует</p>
+                <p class="text-muted">Маршрут "${escapeHTML(path)}" не существует</p>
                 <button class="btn btn-premium" onclick="window.app.router.navigate('home')">
                     <i class="bi bi-house me-2"></i>На главную
                 </button>
@@ -187,8 +189,8 @@ export class Router {
                     <i class="bi bi-exclamation-triangle"></i>
                 </div>
                 <h2>Ошибка загрузки</h2>
-                <p class="text-muted">Не удалось загрузить страницу "${path}"</p>
-                <p class="text-muted small">${error.message || 'Неизвестная ошибка'}</p>
+                <p class="text-muted">Не удалось загрузить страницу "${escapeHTML(path)}"</p>
+                <p class="text-muted small">${escapeHTML(error?.message || 'Неизвестная ошибка')}</p>
                 <button class="btn btn-premium" onclick="window.app.router.navigate('home')">
                     <i class="bi bi-house me-2"></i>На главную
                 </button>

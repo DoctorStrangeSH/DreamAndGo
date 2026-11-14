@@ -141,7 +141,8 @@ export class ChatService {
         const validation = validateChatMessage(newText);
         if (!validation.valid) return { success: false, error: validation.error };
         try {
-            if (!auth?.currentUser?.uid || !chatId || !messageId) return { success: false };
+            const actorId = auth?.currentUser?.uid;
+            if (!actorId || !chatId || !messageId) return { success: false };
             const messageRef = doc(this.db, 'chats', chatId, 'messages', messageId);
             const existing = await getDoc(messageRef);
             if (!existing.exists() || existing.data().senderId !== actorId || auth?.currentUser?.uid !== actorId) return { success: false };

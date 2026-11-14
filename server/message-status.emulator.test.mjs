@@ -4,6 +4,7 @@ import { initializeApp, deleteApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getPrivateMessageStatus } from './message-status.js';
 import { sendPrivateMessageTransaction } from './chat-transactions.js';
+import { markPrivateMessageReadTransaction } from './chat-read-receipts.js';
 
 assert.ok(process.env.FIRESTORE_EMULATOR_HOST, 'Emulator required');
 const app = initializeApp({ projectId: 'demo-dreamandgo-chat-rules' }, 'message-status-tests');
@@ -23,7 +24,7 @@ test('sender can distinguish missing from committed without leaking text', async
     const x = await setup();
     assert.deepEqual(await getPrivateMessageStatus(db, x.alice, x.chatId, uuid), { status: 'missing' });
     const result = await sendPrivateMessageTransaction(db, x.alice, x.chatId, 'private text', uuid, () => 120000);
-    assert.deepEqual(await getPrivateMessageStatus(db, x.alice, x.chatId, uuid), { status: 'sent', messageId: result.messageId });
+    assert.deepEqual(await getPrivateMessageStatus(db, x.alice, x.chatId, uuid), { status: 'sent', messageId: result.messageId, read: false });
     await x.ref.update({ state: 'frozen' });
     assert.equal((await getPrivateMessageStatus(db, x.alice, x.chatId, uuid)).status, 'sent');
 });
@@ -42,3 +43,13 @@ test('either direction of blocking prevents status enumeration', async () => {
     await assert.rejects(getPrivateMessageStatus(db, x.alice, x.chatId, uuid), { code: 'permission-denied' });
 });
 test.after(async () => { await deleteApp(app); });
+
+test('original sender sees verified read flag only after recipient receipt', async () => {
+    const x = await setup();
+    const saved = await sendPrivateMessageTransaction(db, x.alice, x.chatId, 'visible text', uuid, () => 124000);
+    assert.equal((await getPrivateMessageStatus(db, x.alice, x.chatId, uuid)).read, false);
+    await markPrivateMessageReadTransaction(db, x.bob, x.chatId, saved.messageId);
+    assert.deepEqual(await getPrivateMessageStatus(db, x.alice, x.chatId, uuid),
+        { status: 'sent', messageId: saved.messageId, read: true });
+    assert.deepEqual(await getPrivateMessageStatus(db, x.bob, x.chatId, uuid), { status: 'missing' });
+});

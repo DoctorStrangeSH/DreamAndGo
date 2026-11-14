@@ -284,8 +284,12 @@ export class ChatModule {
 
             const chatId = this.chatService.getChatId(userId, partnerId);
             let lastReadIncomingId = null;
-            const unsubscribe = window.app.realtimeService.subscribeToMessages(chatId, (messages) => {
+            const unsubscribe = window.app.realtimeService.subscribeToMessages(chatId, (messages, error) => {
                 if (!stillActive()) return;
+                if (error) {
+                    messagesContainer.innerHTML = '<p class="text-center text-danger py-5">Не удалось загрузить сообщения. Открой диалог ещё раз.</p>';
+                    return;
+                }
                 if (messages.length === 0) {
                     messagesContainer.innerHTML = `
                         <div class="text-center text-muted py-5">

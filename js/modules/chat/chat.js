@@ -31,6 +31,7 @@ export class ChatModule {
         this.editMessageId = null;
 
         mainContent.innerHTML = this.getTemplate();
+        this.setMobileChatView(false);
         document.getElementById('chatList').innerHTML = '<p class="text-muted text-center py-5">Загружаем диалоги…</p>';
         this.subscribeToChats();
         this.attachEventListeners();
@@ -57,7 +58,7 @@ export class ChatModule {
         return `
             <div class="chat-page fade-in-up" style="height: calc(100vh - 120px);">
                 <div class="row g-0" style="height: 100%;">
-                    <div class="col-12 col-md-4 col-lg-3 border-end d-flex flex-column" style="height: 100%;">
+                    <div id="chatSidebar" class="col-12 col-md-4 col-lg-3 border-end d-flex flex-column" style="height: 100%;">
                         <div class="d-flex justify-content-between align-items-center p-3 border-bottom flex-shrink-0">
                             <h5 class="fw-bold mb-0">
                                 <i class="bi bi-chat-dots text-primary me-2"></i>Чаты
@@ -74,7 +75,7 @@ export class ChatModule {
                         <div id="chatList" class="flex-grow-1 overflow-auto"></div>
                     </div>
 
-                    <div class="col-12 col-md-8 col-lg-9" style="height: 100%; position: relative;">
+                    <div id="chatDetail" class="col-12 col-md-8 col-lg-9" style="height: 100%; position: relative;">
                         <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center text-muted" id="noChatSelected">
                             <div class="text-center">
                                 <div class="mb-3">
@@ -233,6 +234,10 @@ export class ChatModule {
         }
     }
 
+    setMobileChatView(isOpen) {
+        document.querySelector('.chat-page')?.classList.toggle('has-active-chat', isOpen);
+    }
+
     async openChat(partnerId) {
         if (!partnerId || !window.app.currentUser?.uid) return;
         const generation = ++this.chatGeneration;
@@ -259,6 +264,7 @@ export class ChatModule {
 
         noSelection.style.display = 'none';
         activeChat.style.display = 'block';
+        this.setMobileChatView(true);
         messagesContainer.innerHTML = '<div class="text-center text-muted py-5">Загружаем сообщения…</div>';
         document.getElementById('chatPartnerName').textContent = 'Загрузка…';
         document.getElementById('chatPartnerAvatar').textContent = '';
@@ -387,6 +393,7 @@ export class ChatModule {
     }
 
     closeChat() {
+        this.setMobileChatView(false);
         this.chatGeneration++;
         this.currentChat = null;
         this.editMessageId = null;

@@ -3,12 +3,14 @@ import { ChatOutbox } from './chat-outbox.js';
 // Candidate v2 view model. No persistence, no legacy transport integration.
 // Statuses are driven by transport results, never timers or local unread counters.
 export class ChatDeliveryController {
-    constructor(send, lookup, createId, onChange = () => {}) {
-        if (typeof lookup !== 'function' || typeof onChange !== 'function') {
+    constructor(send, lookup, senderId, createId, onChange = () => {}) {
+        if (typeof lookup !== 'function' || typeof onChange !== 'function' ||
+            typeof senderId !== 'string' || !senderId) {
             throw new TypeError('Status lookup and change listener are required');
         }
         this.outbox = new ChatOutbox(send, createId);
         this.lookup = lookup;
+        this.senderId = senderId;
         this.onChange = onChange;
         this.messages = new Map();
         this.generation = 0;
@@ -16,7 +18,7 @@ export class ChatDeliveryController {
 
     prepare(chatId, text) {
         const intent = this.outbox.prepare(chatId, text);
-        this._set(intent.clientMessageId, { senderId: null, ...intent, deliveryStatus: 'sending', messageId: null });
+        this._set(intent.clientMessageId, { senderId: this.senderId, ...intent, deliveryStatus: 'sending', messageId: null });
         return intent;
     }
 
@@ -24,7 +26,7 @@ export class ChatDeliveryController {
     restore(chatId, text, clientMessageId) {
         const intent = this.outbox.restore(chatId, text, clientMessageId);
         if (!this.messages.has(intent.clientMessageId)) {
-            this._set(intent.clientMessageId, { senderId: null, ...intent, deliveryStatus: 'checking', messageId: null });
+            this._set(intent.clientMessageId, { senderId: this.senderId, ...intent, deliveryStatus: 'checking', messageId: null });
         }
         return intent;
     }

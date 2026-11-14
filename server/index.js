@@ -3,6 +3,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { conversationPairKey } from './chat-pair.js';
+import { isConversationBlocked } from './block-policy.js';
 import { normalizeChatMessage, otherChatParticipant, normalizeClientMessageId, serverMessageDocumentId } from './message-policy.js';
 
 if (getApps().length === 0) initializeApp();
@@ -30,10 +31,18 @@ export const createPrivateChatV2 = onCall({ region: 'europe-west3' }, async requ
     const db = getFirestore();
     const pairKey = conversationPairKey(uid, partnerId);
     const pairRef = db.collection('chatPairs').doc(pairKey);
+    // Each user owns their own blockedUsers list. Either direction denies contact.
+    const senderBlockRef = db.collection('users').doc(uid).collection('blockedUsers').doc(partnerId);
+    const recipientBlockRef = db.collection('users').doc(partnerId).collection('blockedUsers').doc(uid);
     const participants = [uid, partnerId].sort();
 
     const chatId = await db.runTransaction(async tx => {
-        const pair = await tx.get(pairRef);
+        const [senderBlock, recipientBlock, pair] = await Promise.all([
+            tx.get(senderBlockRef), tx.get(recipientBlockRef), tx.get(pairRef)
+        ]);
+        if (isConversationBlocked(senderBlock, recipientBlock)) {
+            throw new HttpsError('permission-denied', 'Общение с пользователем недоступно');
+        }
         if (pair.exists) {
             const existingChatId = pair.get('chatId');
             if (typeof existingChatId !== 'string' || !existingChatId) {
@@ -94,6 +103,13 @@ export const sendPrivateMessageV2 = onCall({ region: 'europe-west3' }, async req
         }
         const partnerId = otherChatParticipant(snapshot.get('participants'), uid);
         if (!partnerId) throw new HttpsError('permission-denied', 'Нет доступа к переписке');
+        const [senderBlock, recipientBlock] = await Promise.all([
+            tx.get(db.collection('users').doc(uid).collection('blockedUsers').doc(partnerId)),
+            tx.get(db.collection('users').doc(partnerId).collection('blockedUsers').doc(uid))
+        ]);
+        if (isConversationBlocked(senderBlock, recipientBlock)) {
+            throw new HttpsError('permission-denied', 'Общение с пользователем недоступно');
+        }
         if (priorMessage.exists) {
             // A reused key with different contents must not silently alter a message.
             if (priorMessage.get('senderId') !== uid || priorMessage.get('text') !== text ||

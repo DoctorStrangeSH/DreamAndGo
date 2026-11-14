@@ -13,6 +13,7 @@ export class ChatModule {
         this.unsubscribeChats = null;
         this.editMessageId = null;
         this.chatGeneration = 0;
+        this.pendingChatDeletions = new Set();
     }
 
     async render(params = {}) {
@@ -469,34 +470,48 @@ export class ChatModule {
         const partnerId = this.currentChat;
         const userId = window.app.currentUser?.uid;
         if (!partnerId || !userId) return;
+        const operationKey = `${userId}:local:${partnerId}`;
+        if (this.pendingChatDeletions.has(operationKey)) return;
+        this.pendingChatDeletions.add(operationKey);
         const generation = this.chatGeneration;
-        const result = await this.chatService.deleteChatLocal(userId, partnerId);
-        // An in-flight deletion must not close another conversation or notify another account.
-        if (this.chatGeneration !== generation || this.currentChat !== partnerId ||
-            window.app.currentUser?.uid !== userId) return;
-        if (!result.success) {
-            window.app.ui.showToast('Не удалось удалить диалог', 'error');
-            return;
+        try {
+            const result = await this.chatService.deleteChatLocal(userId, partnerId);
+            // An in-flight deletion must not close another conversation or notify another account.
+            if (this.chatGeneration !== generation || this.currentChat !== partnerId ||
+                window.app.currentUser?.uid !== userId) return;
+            if (!result.success) {
+                window.app.ui.showToast('Не удалось удалить диалог', 'error');
+                return;
+            }
+            this.closeChat();
+            window.app.ui.showToast('Диалог удалён у тебя', 'info');
+        } finally {
+            this.pendingChatDeletions.delete(operationKey);
         }
-        this.closeChat();
-        window.app.ui.showToast('Диалог удалён у тебя', 'info');
     }
 
     async deleteChatFull() {
         const partnerId = this.currentChat;
         const userId = window.app.currentUser?.uid;
-        if (!partnerId || !userId ||
-            !confirm('Удалить весь диалог у обоих участников? Это действие может быть необратимым.')) return;
+        if (!partnerId || !userId) return;
+        const operationKey = `${userId}:full:${partnerId}`;
+        if (this.pendingChatDeletions.has(operationKey)) return;
+        if (!confirm('Удалить весь диалог у обоих участников? Это действие может быть необратимым.')) return;
+        this.pendingChatDeletions.add(operationKey);
         const generation = this.chatGeneration;
-        const result = await this.chatService.deleteChat(userId, partnerId);
-        if (this.chatGeneration !== generation || this.currentChat !== partnerId ||
-            window.app.currentUser?.uid !== userId) return;
-        if (!result.success) {
-            window.app.ui.showToast(result.error || 'Не удалось удалить диалог у всех', 'error');
-            return;
+        try {
+            const result = await this.chatService.deleteChat(userId, partnerId);
+            if (this.chatGeneration !== generation || this.currentChat !== partnerId ||
+                window.app.currentUser?.uid !== userId) return;
+            if (!result.success) {
+                window.app.ui.showToast(result.error || 'Не удалось удалить диалог у всех', 'error');
+                return;
+            }
+            this.closeChat();
+            window.app.ui.showToast('Диалог удалён полностью', 'info');
+        } finally {
+            this.pendingChatDeletions.delete(operationKey);
         }
-        this.closeChat();
-        window.app.ui.showToast('Диалог удалён полностью', 'info');
     }
 
     showDeleteChatDialog() {

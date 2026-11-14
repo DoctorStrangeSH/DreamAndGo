@@ -3,8 +3,8 @@ import { SubscriptionVersions } from '../core/subscription-versions.js';
 import { SnapshotGate } from '../core/snapshot-gate.js';
 import { toPublicProfile } from '../core/public-profile.js';
 import { 
-    collection, doc, query, orderBy, limit,
-    onSnapshot, getDoc
+    collection, doc, query, orderBy, limit, startAfter,
+    onSnapshot, getDoc, getDocs
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 export class RealtimeService {
@@ -33,7 +33,10 @@ export class RealtimeService {
                     createdAt: data.createdAt?.toDate?.() || new Date()
                 });
             });
-            this.deliverIfCurrent(key, token, callback, messages.reverse());
+            this.deliverIfCurrent(key, token, callback, messages.reverse(), null, {
+                cursor: snapshot.docs[snapshot.docs.length - 1] || null,
+                hasMore: snapshot.size === 100
+            });
         }, (error) => {
             console.error('Ошибка подписки на сообщения:', error);
             this.deliverIfCurrent(key, token, callback, [], error);
@@ -42,6 +45,26 @@ export class RealtimeService {
         this.listeners[key] = unsubscribe;
         return () => {
             if (this.listenerVersions.isCurrent(key, token)) this.unsubscribe(key);
+        };
+    }
+
+    async loadOlderMessages(chatId, cursor, pageSize = 50) {
+        if (!cursor) return { messages: [], cursor: null, hasMore: false };
+        const ref = collection(this.db, 'chats', chatId, 'messages');
+        const q = query(ref, orderBy('createdAt', 'desc'), startAfter(cursor), limit(pageSize));
+        const snapshot = await getDocs(q);
+        const messages = snapshot.docs.map(item => {
+            const data = item.data();
+            return {
+                id: item.id,
+                ...data,
+                createdAt: data.createdAt?.toDate?.() || new Date()
+            };
+        }).reverse();
+        return {
+            messages,
+            cursor: snapshot.docs[snapshot.docs.length - 1] || null,
+            hasMore: snapshot.size === pageSize
         };
     }
 

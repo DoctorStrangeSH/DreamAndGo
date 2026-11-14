@@ -72,6 +72,14 @@ class DreamAndGo {
 
         this.authService.onAuthChange(async (user) => {
             const version = ++this.authVersion;
+            const previousUid = this.currentUser?.uid;
+            if (previousUid && previousUid !== user?.uid) {
+                this.realtimeService.unsubscribeAll();
+                this.userData = null;
+                this.dataLoaded = false;
+                const oldContent = document.getElementById('main-content');
+                if (oldContent) oldContent.innerHTML = this.ui.createLoader();
+            }
             this.currentUser = user;
             this.authResolved = true;
 

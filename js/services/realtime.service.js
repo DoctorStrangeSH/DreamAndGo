@@ -1,5 +1,6 @@
 import { db } from '../config/firebase.js';
 import { SubscriptionVersions } from '../core/subscription-versions.js';
+import { SnapshotGate } from '../core/snapshot-gate.js';
 import { 
     collection, doc, query, orderBy, limit,
     onSnapshot, getDoc
@@ -46,11 +47,13 @@ export class RealtimeService {
         const key = `chats_${userId}`;
         this.unsubscribe(key);
         const token = this.listenerVersions.current(key);
+        const gate = new SnapshotGate();
 
         const chatsRef = collection(this.db, 'users', userId, 'chats');
         const q = query(chatsRef, orderBy('lastMessageTime', 'desc'));
 
         const unsubscribe = onSnapshot(q, async (snapshot) => {
+            const snapshotId = gate.begin();
             const chats = [];
             
             for (const docSnap of snapshot.docs) {
@@ -72,7 +75,7 @@ export class RealtimeService {
                 });
             }
             
-            this.deliverIfCurrent(key, token, callback, chats);
+            if (gate.isLatest(snapshotId)) this.deliverIfCurrent(key, token, callback, chats);
         }, (error) => {
             console.error('Ошибка подписки на чаты:', error);
             this.deliverIfCurrent(key, token, callback, []);
@@ -88,10 +91,12 @@ export class RealtimeService {
         const key = `friends_${userId}`;
         this.unsubscribe(key);
         const token = this.listenerVersions.current(key);
+        const gate = new SnapshotGate();
 
         const friendsRef = collection(this.db, 'users', userId, 'friends');
         
         const unsubscribe = onSnapshot(friendsRef, async (snapshot) => {
+            const snapshotId = gate.begin();
             const friends = [];
             
             for (const docSnap of snapshot.docs) {
@@ -107,7 +112,7 @@ export class RealtimeService {
                 }
             }
             
-            this.deliverIfCurrent(key, token, callback, friends);
+            if (gate.isLatest(snapshotId)) this.deliverIfCurrent(key, token, callback, friends);
         }, (error) => {
             console.error('Ошибка подписки на друзей:', error);
             this.deliverIfCurrent(key, token, callback, []);
@@ -123,10 +128,12 @@ export class RealtimeService {
         const key = `friendRequests_${userId}`;
         this.unsubscribe(key);
         const token = this.listenerVersions.current(key);
+        const gate = new SnapshotGate();
 
         const requestsRef = collection(this.db, 'users', userId, 'friendRequests');
         
         const unsubscribe = onSnapshot(requestsRef, async (snapshot) => {
+            const snapshotId = gate.begin();
             const requests = [];
             
             for (const docSnap of snapshot.docs) {
@@ -142,7 +149,7 @@ export class RealtimeService {
                 }
             }
             
-            this.deliverIfCurrent(key, token, callback, requests);
+            if (gate.isLatest(snapshotId)) this.deliverIfCurrent(key, token, callback, requests);
         }, (error) => {
             console.error('Ошибка подписки на заявки:', error);
             this.deliverIfCurrent(key, token, callback, []);
@@ -158,10 +165,12 @@ export class RealtimeService {
         const key = `sentRequests_${userId}`;
         this.unsubscribe(key);
         const token = this.listenerVersions.current(key);
+        const gate = new SnapshotGate();
 
         const sentRef = collection(this.db, 'users', userId, 'sentRequests');
         
         const unsubscribe = onSnapshot(sentRef, async (snapshot) => {
+            const snapshotId = gate.begin();
             const sent = [];
             
             for (const docSnap of snapshot.docs) {
@@ -177,7 +186,7 @@ export class RealtimeService {
                 }
             }
             
-            this.deliverIfCurrent(key, token, callback, sent);
+            if (gate.isLatest(snapshotId)) this.deliverIfCurrent(key, token, callback, sent);
         }, (error) => {
             console.error('Ошибка подписки на отправленные заявки:', error);
             this.deliverIfCurrent(key, token, callback, []);

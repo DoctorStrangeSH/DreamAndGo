@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - 'tests/firebase-emulator/**'
+      - 'server/**'
       - '.github/workflows/firebase-emulator.yml'
   pull_request:
     paths:
@@ -25,5 +26,9 @@ jobs:
           java-version: '21'
       - name: Install emulator test dependencies
         run: npm install --no-audit --no-fund
+      - name: Install candidate server dependencies
+        run: npm install --prefix ../../server --no-audit --no-fund
       - name: Test isolated candidate rules (no deploy)
         run: npx -y firebase-tools@latest emulators:exec --project demo-dreamandgo-chat-rules --only firestore --config firebase.json "npm test"
+      - name: Test candidate server transactions against Firestore Emulator
+        run: npx -y firebase-tools@latest emulators:exec --project demo-dreamandgo-chat-rules --only firestore --config firebase.json "node --test ../../server/chat-transactions.emulator.test.mjs"

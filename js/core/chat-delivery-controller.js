@@ -13,6 +13,7 @@ export class ChatDeliveryController {
         this.senderId = senderId;
         this.onChange = onChange;
         this.messages = new Map();
+        this.receiptChecks = new Map();
         this.generation = 0;
     }
 
@@ -65,6 +66,37 @@ export class ChatDeliveryController {
         return result;
     }
 
+    // Poll the authenticated sender-only v2 status endpoint for an authoritative receipt.
+    // A missing, malformed, stale or offline response can never invent a read marker.
+    refreshRead(clientMessageId) {
+        const current = this.messages.get(clientMessageId);
+        if (!current || !['sent', 'read'].includes(current.deliveryStatus) || !current.messageId) {
+            return Promise.resolve({ status: 'absent' });
+        }
+        if (current.deliveryStatus === 'read') return Promise.resolve({ status: 'read' });
+        const existing = this.receiptChecks.get(clientMessageId);
+        if (existing) return existing;
+        const generation = this.generation;
+        const task = Promise.resolve().then(() => this.lookup({
+            chatId: current.chatId,
+            clientMessageId: current.clientMessageId
+        })).then(result => {
+            if (generation !== this.generation || this.messages.get(clientMessageId) !== current) {
+                return { status: 'stale' };
+            }
+            if (result?.status === 'sent' && result.messageId === current.messageId &&
+                result.read === true) {
+                this.acknowledgeRead(clientMessageId, current.messageId);
+                return { status: 'read' };
+            }
+            return { status: 'unconfirmed' };
+        }).catch(() => ({ status: 'unknown' })).finally(() => {
+            if (this.receiptChecks.get(clientMessageId) === task) this.receiptChecks.delete(clientMessageId);
+        });
+        this.receiptChecks.set(clientMessageId, task);
+        return task;
+    }
+
     // Only an authoritative per-message server receipt may call this method.
     acknowledgeRead(clientMessageId, serverMessageId) {
         const current = this.messages.get(clientMessageId);
@@ -77,6 +109,7 @@ export class ChatDeliveryController {
     discard(clientMessageId) {
         if (!this.outbox.discard(clientMessageId)) return false;
         this.messages.delete(clientMessageId);
+        this.receiptChecks.delete(clientMessageId);
         this.onChange(null, clientMessageId);
         return true;
     }
@@ -85,6 +118,7 @@ export class ChatDeliveryController {
         this.generation++;
         this.outbox.clear();
         this.messages.clear();
+        this.receiptChecks.clear();
         this.onChange(null, null);
     }
 

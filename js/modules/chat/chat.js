@@ -466,8 +466,14 @@ export class ChatModule {
     }
 
     async deleteChatLocal() {
-        if (!this.currentChat) return;
-        const result = await this.chatService.deleteChatLocal(window.app.currentUser.uid, this.currentChat);
+        const partnerId = this.currentChat;
+        const userId = window.app.currentUser?.uid;
+        if (!partnerId || !userId) return;
+        const generation = this.chatGeneration;
+        const result = await this.chatService.deleteChatLocal(userId, partnerId);
+        // An in-flight deletion must not close another conversation or notify another account.
+        if (this.chatGeneration !== generation || this.currentChat !== partnerId ||
+            window.app.currentUser?.uid !== userId) return;
         if (!result.success) {
             window.app.ui.showToast('Не удалось удалить диалог', 'error');
             return;
@@ -477,8 +483,14 @@ export class ChatModule {
     }
 
     async deleteChatFull() {
-        if (!this.currentChat || !confirm('Удалить весь диалог у обоих участников? Это действие может быть необратимым.')) return;
-        const result = await this.chatService.deleteChat(window.app.currentUser.uid, this.currentChat);
+        const partnerId = this.currentChat;
+        const userId = window.app.currentUser?.uid;
+        if (!partnerId || !userId ||
+            !confirm('Удалить весь диалог у обоих участников? Это действие может быть необратимым.')) return;
+        const generation = this.chatGeneration;
+        const result = await this.chatService.deleteChat(userId, partnerId);
+        if (this.chatGeneration !== generation || this.currentChat !== partnerId ||
+            window.app.currentUser?.uid !== userId) return;
         if (!result.success) {
             window.app.ui.showToast(result.error || 'Не удалось удалить диалог у всех', 'error');
             return;

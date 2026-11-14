@@ -11,6 +11,7 @@ export class ChatModule {
         this.unsubscribeMessages = null;
         this.unsubscribeChats = null;
         this.editMessageId = null;
+        this.chatGeneration = 0;
     }
 
     async render(params = {}) {
@@ -26,6 +27,8 @@ export class ChatModule {
         this.unsubscribeMessages = null;
         this.unsubscribeChats = null;
         this.currentChat = null;
+        this.chatGeneration++;
+        this.editMessageId = null;
 
         mainContent.innerHTML = this.getTemplate();
         this.subscribeToChats();
@@ -185,7 +188,10 @@ export class ChatModule {
     }
 
     async openChat(partnerId) {
+        if (!partnerId || !window.app.currentUser?.uid) return;
+        const generation = ++this.chatGeneration;
         this.currentChat = partnerId;
+        this.editMessageId = null;
 
         if (this.unsubscribeMessages) {
             this.unsubscribeMessages();
@@ -193,36 +199,61 @@ export class ChatModule {
         }
 
         const userId = window.app.currentUser.uid;
-
-        document.getElementById('noChatSelected').style.display = 'none';
-        document.getElementById('activeChat').style.display = 'block';
-
-        const partnerData = await window.app.realtimeService.getUserProfile(partnerId);
-        document.getElementById('chatPartnerName').textContent = '@' + (partnerData?.username || 'Пользователь');
-        document.getElementById('chatPartnerAvatar').innerHTML = `
-            <div class="chat-avatar-placeholder">${(partnerData?.username || 'U')[0].toUpperCase()}</div>
-        `;
-
-        await this.chatService.markAsRead(userId, partnerId);
-
-        const chatId = this.chatService.getChatId(userId, partnerId);
+        const noSelection = document.getElementById('noChatSelected');
+        const activeChat = document.getElementById('activeChat');
         const messagesContainer = document.getElementById('chatMessages');
+        if (!noSelection || !activeChat || !messagesContainer) return;
 
-        this.unsubscribeMessages = window.app.realtimeService.subscribeToMessages(chatId, (messages) => {
-            if (messages.length === 0) {
-                messagesContainer.innerHTML = `
-                    <div class="text-center text-muted py-5">
-                        <i class="bi bi-chat-dots display-4 opacity-25"></i>
-                        <p class="mt-2">Начните общение!</p>
-                    </div>
-                `;
-            } else {
-                messagesContainer.innerHTML = messages
-                    .map(msg => this.createMessageBubble(msg, userId))
-                    .join('');
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            }
-        });
+        const stillActive = () =>
+            this.chatGeneration === generation &&
+            this.currentChat === partnerId &&
+            window.app.currentUser?.uid === userId &&
+            activeChat.isConnected &&
+            document.getElementById('activeChat') === activeChat;
+
+        noSelection.style.display = 'none';
+        activeChat.style.display = 'block';
+        messagesContainer.innerHTML = '<div class="text-center text-muted py-5">Загружаем сообщения…</div>';
+        document.getElementById('chatPartnerName').textContent = 'Загрузка…';
+        document.getElementById('chatPartnerAvatar').textContent = '';
+
+        try {
+            const partnerData = await window.app.realtimeService.getUserProfile(partnerId);
+            if (!stillActive()) return;
+            const name = String(partnerData?.username || 'Пользователь');
+            document.getElementById('chatPartnerName').textContent = '@' + name;
+            const avatar = document.createElement('div');
+            avatar.className = 'chat-avatar-placeholder';
+            avatar.textContent = (name[0] || 'U').toUpperCase();
+            document.getElementById('chatPartnerAvatar').replaceChildren(avatar);
+
+            await this.chatService.markAsRead(userId, partnerId);
+            if (!stillActive()) return;
+
+            const chatId = this.chatService.getChatId(userId, partnerId);
+            const unsubscribe = window.app.realtimeService.subscribeToMessages(chatId, (messages) => {
+                if (!stillActive()) return;
+                if (messages.length === 0) {
+                    messagesContainer.innerHTML = `
+                        <div class="text-center text-muted py-5">
+                            <i class="bi bi-chat-dots display-4 opacity-25"></i>
+                            <p class="mt-2">Начните общение!</p>
+                        </div>
+                    `;
+                } else {
+                    messagesContainer.innerHTML = messages
+                        .map(msg => this.createMessageBubble(msg, userId))
+                        .join('');
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                }
+            });
+            if (stillActive()) this.unsubscribeMessages = unsubscribe;
+            else if (typeof unsubscribe === 'function') unsubscribe();
+        } catch (error) {
+            console.error('Ошибка открытия переписки:', error);
+            if (!stillActive()) return;
+            messagesContainer.innerHTML = '<p class="text-center text-danger py-5">Не удалось загрузить переписку. Выбери её ещё раз.</p>';
+        }
     }
 
     createMessageBubble(message, userId) {
@@ -296,7 +327,9 @@ export class ChatModule {
     }
 
     closeChat() {
+        this.chatGeneration++;
         this.currentChat = null;
+        this.editMessageId = null;
 
         if (this.unsubscribeMessages) {
             this.unsubscribeMessages();

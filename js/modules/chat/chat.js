@@ -173,9 +173,10 @@ export class ChatModule {
                         ? `<span class="badge bg-primary rounded-pill">${safeCount(chat.unread)}</span>`
                         : '';
                     const isActive = this.currentChat === chat.partnerId;
+                    const hasUnread = safeCount(chat.unread) > 0;
 
                     return `
-                        <div class="chat-list-item p-3 border-bottom ${isActive ? 'active' : ''}"
+                        <div class="chat-list-item p-3 border-bottom ${isActive ? 'active' : ''} ${hasUnread ? 'bg-primary bg-opacity-10' : ''}"
                              data-partner-id="${escapeHTML(chat.partnerId)}">
                             <div class="d-flex align-items-center gap-2">
                                 <div class="chat-avatar-placeholder">
@@ -183,11 +184,11 @@ export class ChatModule {
                                 </div>
                                 <div class="flex-grow-1 min-width-0">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <h6 class="fw-bold mb-0 text-truncate">${escapeHTML(chat.partnerName || 'Пользователь')}</h6>
+                                        <h6 class="fw-bold mb-0 text-truncate">${escapeHTML(chat.partnerName || 'Пользователь')}${hasUnread ? ' <span class="visually-hidden">Есть непрочитанные сообщения</span>' : ''}</h6>
                                         <small class="text-muted">${time}</small>
                                     </div>
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <small class="text-muted text-truncate">
+                                        <small class="${hasUnread ? 'fw-semibold text-body' : 'text-muted'} text-truncate">
                                             ${escapeHTML(chat.lastMessage || 'Нет сообщений')}
                                         </small>
                                         ${unreadBadge}
@@ -276,6 +277,7 @@ export class ChatModule {
             if (!stillActive()) return;
 
             const chatId = this.chatService.getChatId(userId, partnerId);
+            let lastReadIncomingId = null;
             const unsubscribe = window.app.realtimeService.subscribeToMessages(chatId, (messages) => {
                 if (!stillActive()) return;
                 if (messages.length === 0) {
@@ -290,6 +292,12 @@ export class ChatModule {
                         .map(msg => this.createMessageBubble(msg, userId))
                         .join('');
                     messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    const newest = messages[messages.length - 1];
+                    if (newest?.senderId === partnerId && newest.id !== lastReadIncomingId) {
+                        lastReadIncomingId = newest.id;
+                        // A message received while this dialog is open is already visible.
+                        void this.chatService.markAsRead(userId, partnerId);
+                    }
                 }
             });
             if (stillActive()) this.unsubscribeMessages = unsubscribe;

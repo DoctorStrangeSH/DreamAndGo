@@ -1,4 +1,5 @@
-import { db } from '../config/firebase.js';
+import { auth, db } from '../config/firebase.js';
+import { validateChatMessage, validChatParticipants } from '../core/chat-message-policy.js';
 import {
     collection, doc, getDocs, getDoc, updateDoc, deleteDoc,
     query, orderBy, limit, serverTimestamp, writeBatch, setDoc, increment, runTransaction
@@ -73,6 +74,12 @@ export class ChatService {
     }
 
     async sendMessage(chatId, senderId, receiverId, text) {
+        const validation = validateChatMessage(text);
+        if (!validation.valid) return { success: false, error: validation.error };
+        if (!validChatParticipants(auth?.currentUser?.uid, senderId, receiverId, chatId, this.getChatId.bind(this))) {
+            return { success: false, error: 'Некорректные участники диалога' };
+        }
+        text = validation.text;
         try {
             const messagesRef = collection(this.db, 'chats', chatId, 'messages');
 
@@ -115,7 +122,11 @@ export class ChatService {
 
     async deleteMessage(chatId, messageId) {
         try {
-            await deleteDoc(doc(this.db, 'chats', chatId, 'messages', messageId));
+            if (!auth?.currentUser?.uid || !chatId || !messageId) return { success: false };
+            const messageRef = doc(this.db, 'chats', chatId, 'messages', messageId);
+            const existing = await getDoc(messageRef);
+            if (!existing.exists() || existing.data().senderId !== auth.currentUser.uid) return { success: false };
+            await deleteDoc(messageRef);
             return { success: true };
         } catch (error) {
             console.error('Ошибка удаления сообщения:', error);
@@ -124,9 +135,15 @@ export class ChatService {
     }
 
     async editMessage(chatId, messageId, newText) {
+        const validation = validateChatMessage(newText);
+        if (!validation.valid) return { success: false, error: validation.error };
         try {
-            await updateDoc(doc(this.db, 'chats', chatId, 'messages', messageId), {
-                text: newText,
+            if (!auth?.currentUser?.uid || !chatId || !messageId) return { success: false };
+            const messageRef = doc(this.db, 'chats', chatId, 'messages', messageId);
+            const existing = await getDoc(messageRef);
+            if (!existing.exists() || existing.data().senderId !== auth.currentUser.uid) return { success: false };
+            await updateDoc(messageRef, {
+                text: validation.text,
                 edited: true,
                 editedAt: serverTimestamp()
             });

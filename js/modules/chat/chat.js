@@ -3,6 +3,7 @@ import { escapeHTML } from '../../core/escape-html.js';
 import { safeCount } from '../../core/home-snapshot.js';
 import { FriendsService } from '../../services/friends.service.js';
 import { MessageHistory } from '../../core/message-history.js';
+import { renderMessageDeliveryIndicator } from '../../core/chat-delivery-status.js';
 
 export class ChatModule {
     constructor() {
@@ -380,6 +381,7 @@ export class ChatModule {
                     <div class="message-meta">
                         <small class="message-time">${time}</small>
                         ${message.edited ? '<small class="text-muted ms-1">изм.</small>' : ''}
+                        ${renderMessageDeliveryIndicator(message, userId)}
                     </div>
                     ${isMine ? `
                         <div class="message-actions">

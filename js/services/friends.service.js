@@ -34,27 +34,25 @@ export class FriendsService {
     }
 
     async sendFriendRequest(fromUserId, toUserId) {
+        if (!fromUserId || !toUserId || fromUserId === toUserId) {
+            return { success: false, error: 'Нельзя отправить заявку самому себе.' };
+        }
         try {
-            const requestRef = doc(this.db, 'users', toUserId, 'friendRequests', fromUserId);
-            await setDoc(requestRef, {
+            // Both user-facing views must change atomically, or neither changes.
+            const batch = writeBatch(this.db);
+            const request = {
                 from: fromUserId,
                 to: toUserId,
                 status: 'pending',
                 createdAt: serverTimestamp()
-            });
-
-            const sentRef = doc(this.db, 'users', fromUserId, 'sentRequests', toUserId);
-            await setDoc(sentRef, {
-                from: fromUserId,
-                to: toUserId,
-                status: 'pending',
-                createdAt: serverTimestamp()
-            });
-
+            };
+            batch.set(doc(this.db, 'users', toUserId, 'friendRequests', fromUserId), request);
+            batch.set(doc(this.db, 'users', fromUserId, 'sentRequests', toUserId), request);
+            await batch.commit();
             return { success: true };
         } catch (error) {
             console.error('Ошибка отправки заявки:', error);
-            return { success: false, error: error.message };
+            return { success: false, error: 'Не удалось отправить заявку. Попробуй ещё раз.' };
         }
     }
 

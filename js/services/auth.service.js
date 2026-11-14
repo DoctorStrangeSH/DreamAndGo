@@ -111,14 +111,21 @@ export class AuthService {
                 });
             } catch (profileError) {
                 console.error("Не удалось создать профиль после регистрации:", profileError);
+                let rollbackFailed = false;
                 try {
                     // Откатываем только что созданный пустой аккаунт.
                     await deleteUser(result.user);
                 } catch (cleanupError) {
+                    rollbackFailed = true;
                     console.error("Не удалось откатить незавершённую регистрацию:", cleanupError);
                     try { await signOut(this.auth); } catch (signOutError) { console.error(signOutError); }
                 }
-                return { success: false, error: "Не удалось сохранить профиль. Попробуй зарегистрироваться ещё раз." };
+                return {
+                    success: false,
+                    error: rollbackFailed
+                        ? "Аккаунт создан, но профиль не сохранился. Не регистрируйся повторно с этим email: требуется восстановление профиля."
+                        : "Не удалось сохранить профиль. Попробуй зарегистрироваться ещё раз."
+                };
             }
 
             return { success: true, user: result.user };

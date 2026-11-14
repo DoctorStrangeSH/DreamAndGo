@@ -9,21 +9,19 @@ export async function rehearseChatReopen(db, { projectId, chatId, expectedMessag
         throw new Error('Recovery drill requires the isolated emulator demo project');
     }
     const ref = db.doc(`chats/${chatId}`);
-    const chat = await ref.get();
-    if (!chat.exists || chat.get('state') !== 'frozen' || chat.get('version') !== 2) {
-        throw new Error('Chat must be a frozen v2 rehearsal');
-    }
-    const snapshot = await ref.collection('messages').get();
-    const actual = snapshot.docs.map(doc => ({ id: doc.id, data: doc.data() }));
-    const result = compareMessageInventories(expectedMessages, actual);
-    if (!result.equal) throw new Error('Recovery blocked: message integrity mismatch');
-
-    await db.runTransaction(async tx => {
+    // Query and state reads belong to the SAME retryable transaction. If a
+    // document observed by the transaction changes, Firestore can retry it.
+    const result = await db.runTransaction(async tx => {
         const current = await tx.get(ref);
         if (!current.exists || current.get('state') !== 'frozen' || current.get('version') !== 2) {
-            throw new Error('Recovery blocked: chat state changed');
+            throw new Error('Chat must be a frozen v2 rehearsal');
         }
+        const snapshot = await tx.get(ref.collection('messages'));
+        const actual = snapshot.docs.map(doc => ({ id: doc.id, data: doc.data() }));
+        const verification = compareMessageInventories(expectedMessages, actual);
+        if (!verification.equal) throw new Error('Recovery blocked: message integrity mismatch');
         tx.update(ref, { state: 'active' });
+        return verification;
     });
     return {
         status: 'emulator_chat_reopened',

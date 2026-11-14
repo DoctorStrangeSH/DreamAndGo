@@ -278,6 +278,7 @@ export class FriendsModule {
                 <div class="text-center py-3">
                     <i class="bi bi-emoji-frown fs-3 text-muted"></i>
                     <p class="text-muted mt-2">Пользователь @${escapeHTML(username)} не найден</p>
+                    <p class="text-muted small">Для старых профилей попробуй точное написание никнейма, включая заглавные буквы.</p>
                 </div>
             `;
             return;

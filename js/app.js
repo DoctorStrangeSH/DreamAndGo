@@ -1,3 +1,4 @@
+import { escapeHTML } from './core/escape-html.js';
 import { auth, db, checkFirebaseConnection } from './config/firebase.js';
 import { AuthService } from './services/auth.service.js';
 import { ThemeService } from './services/theme.service.js';
@@ -256,7 +257,7 @@ class DreamAndGo {
                     <div class="card-premium p-4 p-md-5" style="background: linear-gradient(135deg, rgba(108,92,231,0.05) 0%, rgba(168,85,247,0.05) 100%);">
                         <div class="row align-items-center">
                             <div class="col-12 col-lg-7">
-                                <h1 class="display-4 fw-bold mb-2">Привет, <span class="text-gradient">@${userName}</span>! ✨</h1>
+                                <h1 class="display-4 fw-bold mb-2">Привет, <span class="text-gradient">@${escapeHTML(userName)}</span>! ✨</h1>
                                 <p class="lead text-secondary mb-3">${this.getRandomGreeting()}</p>
                                 <div class="d-flex gap-2 flex-wrap">
                                     <a href="#travels" class="btn btn-premium btn-sm"><i class="bi bi-plus-lg me-1"></i>Добавить путешествие</a>
@@ -266,7 +267,7 @@ class DreamAndGo {
                             </div>
                             <div class="col-12 col-lg-5 text-center mt-3 mt-lg-0">
                                 <div class="position-relative d-inline-block">
-                                    <div class="avatar-circle" style="width: 100px; height: 100px; font-size: 2.5rem;">${userName[0].toUpperCase()}</div>
+                                    <div class="avatar-circle" style="width: 100px; height: 100px; font-size: 2.5rem;">${escapeHTML(userName[0].toUpperCase())}</div>
                                     <span class="position-absolute bottom-0 end-0 bg-success rounded-circle p-1" style="width: 20px; height: 20px;"></span>
                                 </div>
                             </div>
@@ -333,8 +334,8 @@ class DreamAndGo {
         if (recent.length === 0) return '<p class="text-muted small mb-0">Пока нет достижений. Начни пользоваться сайтом!</p>';
         return recent.map(a => `
             <div class="d-flex align-items-center gap-2 mb-2">
-                <span style="font-size:1.2rem">${a.emoji}</span>
-                <div><small class="fw-semibold">${a.title}</small><small class="text-muted d-block" style="font-size:0.7rem">${a.description}</small></div>
+                <span style="font-size:1.2rem">${escapeHTML(a.emoji)}</span>
+                <div><small class="fw-semibold">${escapeHTML(a.title)}</small><small class="text-muted d-block" style="font-size:0.7rem">${escapeHTML(a.description)}</small></div>
             </div>`).join('');
     }
 

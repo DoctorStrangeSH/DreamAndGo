@@ -2,6 +2,7 @@ import { ChatService } from '../../services/chat.service.js';
 import { escapeHTML } from '../../core/escape-html.js';
 import { safeCount } from '../../core/home-snapshot.js';
 import { FriendsService } from '../../services/friends.service.js';
+import { MessageHistory } from '../../core/message-history.js';
 
 export class ChatModule {
     constructor() {
@@ -288,13 +289,12 @@ export class ChatModule {
             let historyCursor;
             let hasMoreHistory = false;
             let loadingOlder = false;
-            const history = new Map();
+            const history = new MessageHistory();
             const renderHistory = (preserveScroll = false) => {
                 const previousHeight = messagesContainer.scrollHeight;
                 const previousTop = messagesContainer.scrollTop;
                 const nearBottom = previousHeight - previousTop - messagesContainer.clientHeight < 100;
-                const ordered = Array.from(history.values()).sort((a, b) =>
-                    new Date(a.createdAt) - new Date(b.createdAt) || a.id.localeCompare(b.id));
+                const ordered = history.ordered();
                 const button = hasMoreHistory
                     ? '<div class="text-center mb-3"><button type="button" class="btn btn-outline-secondary btn-sm" id="loadOlderMessagesBtn">Загрузить предыдущие</button></div>'
                     : '';
@@ -307,9 +307,7 @@ export class ChatModule {
                 }
             };
             this.applyMessageMutation = (messageId, changes) => {
-                if (!stillActive() || !history.has(messageId)) return;
-                if (changes === null) history.delete(messageId);
-                else history.set(messageId, { ...history.get(messageId), ...changes });
+                if (!stillActive() || !history.change(messageId, changes)) return;
                 renderHistory(true);
             };
             this.loadPreviousMessages = async () => {
@@ -323,7 +321,7 @@ export class ChatModule {
                 try {
                     const page = await window.app.realtimeService.loadOlderMessages(chatId, historyCursor);
                     if (!stillActive()) return;
-                    page.messages.forEach(message => history.set(message.id, message));
+                    history.merge(page.messages);
                     historyCursor = page.cursor;
                     hasMoreHistory = page.hasMore;
                     renderHistory(true);
@@ -348,7 +346,7 @@ export class ChatModule {
                     historyCursor = pageInfo?.cursor || null;
                     hasMoreHistory = Boolean(pageInfo?.hasMore);
                 }
-                messages.forEach(message => history.set(message.id, message));
+                history.merge(messages);
                 if (history.size === 0) {
                     messagesContainer.innerHTML = '<div class="text-center text-muted py-5"><p>Начните общение!</p></div>';
                 } else {

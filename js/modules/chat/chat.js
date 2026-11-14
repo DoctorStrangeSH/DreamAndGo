@@ -85,7 +85,7 @@ export class ChatModule {
                                         <button class="btn btn-link btn-sm p-0" id="cancelEdit">Отмена</button>
                                     </div>
                                     <div class="input-group">
-                                        <input type="text" class="form-control" id="messageInput"
+                                        <input type="text" class="form-control" id="messageInput" maxlength="2000" aria-label="Сообщение"
                                                placeholder="Сообщение..." autocomplete="off">
                                         <button class="btn btn-primary" id="sendMessageBtn">
                                             <i class="bi bi-send"></i>
@@ -229,23 +229,42 @@ export class ChatModule {
 
     async sendMessage() {
         const input = document.getElementById('messageInput');
+        if (!input) return;
         const text = input.value.trim();
         if (!text || !this.currentChat) return;
+        if (text.length > 2000) {
+            window.app.ui.showToast('Сообщение слишком длинное (максимум 2000 символов)', 'warning');
+            return;
+        }
 
+        const sendButton = document.getElementById('sendMessageBtn');
+        if (sendButton?.disabled) return;
+        if (sendButton) sendButton.disabled = true;
         const userId = window.app.currentUser.uid;
         const chatId = this.chatService.getChatId(userId, this.currentChat);
 
-        if (this.editMessageId) {
-            await this.chatService.editMessage(chatId, this.editMessageId, text);
-            this.editMessageId = null;
-            document.getElementById('editMode').style.display = 'none';
-        } else {
-            await this.chatService.sendMessage(chatId, userId, this.currentChat, text);
-            window.app.onUserAction('send_message');
-        }
+        try {
+            const result = this.editMessageId
+                ? await this.chatService.editMessage(chatId, this.editMessageId, text)
+                : await this.chatService.sendMessage(chatId, userId, this.currentChat, text);
 
-        input.value = '';
-        input.focus();
+            if (!result?.success) {
+                window.app.ui.showToast('Не удалось отправить сообщение. Попробуй ещё раз.', 'error');
+                return; // Сохраняем введённый текст при ошибке сети.
+            }
+
+            if (this.editMessageId) {
+                this.editMessageId = null;
+                document.getElementById('editMode').style.display = 'none';
+            } else {
+                window.app.onUserAction('send_message');
+            }
+
+            input.value = '';
+            input.focus();
+        } finally {
+            if (sendButton) sendButton.disabled = false;
+        }
     }
 
     closeChat() {

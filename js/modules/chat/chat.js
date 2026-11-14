@@ -470,7 +470,7 @@ export class ChatModule {
         const partnerId = this.currentChat;
         const userId = window.app.currentUser?.uid;
         if (!partnerId || !userId) return;
-        const operationKey = JSON.stringify([userId, 'local', partnerId]);
+        const operationKey = JSON.stringify([userId, partnerId]);
         if (this.pendingChatDeletions.has(operationKey)) return;
         this.pendingChatDeletions.add(operationKey);
         const generation = this.chatGeneration;
@@ -494,7 +494,7 @@ export class ChatModule {
         const partnerId = this.currentChat;
         const userId = window.app.currentUser?.uid;
         if (!partnerId || !userId) return;
-        const operationKey = JSON.stringify([userId, 'full', partnerId]);
+        const operationKey = JSON.stringify([userId, partnerId]);
         if (this.pendingChatDeletions.has(operationKey)) return;
         if (!confirm('Удалить весь диалог у обоих участников? Это действие может быть необратимым.')) return;
         this.pendingChatDeletions.add(operationKey);

@@ -31,6 +31,33 @@ export class ChatOutbox {
         return entry;
     }
 
+    // Restore an intent only when the caller can supply the original text and UUID.
+    // The outbox NEVER persists plaintext; a caller must explicitly retain the intent.
+    restore(chatId, text, clientMessageId) {
+        const validation = validateChatMessage(text);
+        if (!validation.valid || validation.text !== text) {
+            throw new TypeError('Восстановление требует исходный текст без изменений');
+        }
+        if (typeof chatId !== 'string' || !chatId || chatId.length > 128 || chatId.includes('/')) {
+            throw new TypeError('Некорректный диалог');
+        }
+        if (typeof clientMessageId !== 'string' ||
+            !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(clientMessageId)) {
+            throw new TypeError('Некорректный идентификатор отправки');
+        }
+        const key = clientMessageId.toLowerCase();
+        const existing = this.pending.get(key);
+        if (existing) {
+            if (existing.chatId !== chatId || existing.text !== text) {
+                throw new Error('Идентификатор уже относится к другому сообщению');
+            }
+            return existing;
+        }
+        const entry = Object.freeze({ chatId, text, clientMessageId: key });
+        this.pending.set(key, entry);
+        return entry;
+    }
+
     get(clientMessageId) {
         return this.pending.get(clientMessageId) || null;
     }

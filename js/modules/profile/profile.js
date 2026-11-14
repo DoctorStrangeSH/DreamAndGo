@@ -2,6 +2,8 @@ import { db } from '../../config/firebase.js';
 import { escapeHTML } from '../../core/escape-html.js';
 import { safeAvatarURL } from '../../core/safe-avatar-url.js';
 import { getHomeSnapshot } from '../../core/home-snapshot.js';
+import { toPublicProfile } from '../../core/public-profile.js';
+import { getProfileGradient } from '../../core/profile-gradient.js';
 import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 export class ProfileModule {
@@ -32,7 +34,7 @@ export class ProfileModule {
             return;
         }
 
-        mainContent.innerHTML = this.getProfileTemplate(userData, isOwnProfile);
+        mainContent.innerHTML = this.getProfileTemplate(userData, isOwnProfile, userId);
         this.initTabs(userId);
         await this.loadTabContent(this.currentTab, userData);
         
@@ -41,8 +43,8 @@ export class ProfileModule {
         }
     }
 
-    getProfileTemplate(userData, isOwnProfile) {
-        const coverGradient = this.getRandomGradient();
+    getProfileTemplate(userData, isOwnProfile, userId) {
+        const coverGradient = getProfileGradient(userId);
         const stats = getHomeSnapshot(userData);
         const initials = String(userData.username || 'U').charAt(0).toUpperCase();
         const avatarURL = safeAvatarURL(userData.avatar);
@@ -158,20 +160,6 @@ export class ProfileModule {
                 </div>
             </div>
         `;
-    }
-
-    getRandomGradient() {
-        const gradients = [
-            'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-            'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-            'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-            'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-            'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
-            'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)'
-        ];
-        return gradients[Math.floor(Math.random() * gradients.length)];
     }
 
     initTabs(userId) {
@@ -387,7 +375,9 @@ export class ProfileModule {
         try {
             if (!userId) return null;
             const userDoc = await getDoc(doc(db, 'users', userId));
-            return userDoc.exists() ? userDoc.data() : null;
+            if (!userDoc.exists()) return null;
+            const isOwnProfile = userId === window.app.currentUser?.uid;
+            return isOwnProfile ? userDoc.data() : toPublicProfile(userId, userDoc.data());
         } catch (error) {
             return null;
         }

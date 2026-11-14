@@ -284,24 +284,68 @@ export class ChatModule {
 
             const chatId = this.chatService.getChatId(userId, partnerId);
             let lastReadIncomingId = null;
-            const unsubscribe = window.app.realtimeService.subscribeToMessages(chatId, (messages, error) => {
+            let historyCursor;
+            let hasMoreHistory = false;
+            let loadingOlder = false;
+            const history = new Map();
+            const renderHistory = (preserveScroll = false) => {
+                const previousHeight = messagesContainer.scrollHeight;
+                const previousTop = messagesContainer.scrollTop;
+                const nearBottom = previousHeight - previousTop - messagesContainer.clientHeight < 100;
+                const ordered = Array.from(history.values()).sort((a, b) =>
+                    new Date(a.createdAt) - new Date(b.createdAt) || a.id.localeCompare(b.id));
+                const button = hasMoreHistory
+                    ? '<div class="text-center mb-3"><button type="button" class="btn btn-outline-secondary btn-sm" id="loadOlderMessagesBtn">Загрузить предыдущие</button></div>'
+                    : '';
+                messagesContainer.innerHTML = button + ordered
+                    .map(msg => this.createMessageBubble(msg, userId)).join('');
+                if (preserveScroll) {
+                    messagesContainer.scrollTop = previousTop + messagesContainer.scrollHeight - previousHeight;
+                } else if (nearBottom) {
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                }
+            };
+            this.loadPreviousMessages = async () => {
+                if (!stillActive() || !hasMoreHistory || !historyCursor || loadingOlder) return;
+                loadingOlder = true;
+                const button = messagesContainer.querySelector('#loadOlderMessagesBtn');
+                if (button) {
+                    button.disabled = true;
+                    button.textContent = 'Загружаем…';
+                }
+                try {
+                    const page = await window.app.realtimeService.loadOlderMessages(chatId, historyCursor);
+                    if (!stillActive()) return;
+                    page.messages.forEach(message => history.set(message.id, message));
+                    historyCursor = page.cursor;
+                    hasMoreHistory = page.hasMore;
+                    renderHistory(true);
+                } catch (error) {
+                    console.error('Ошибка загрузки истории:', error);
+                    if (stillActive()) window.app.ui.showToast('Не удалось загрузить старые сообщения', 'error');
+                } finally {
+                    loadingOlder = false;
+                    if (button?.isConnected) {
+                        button.disabled = false;
+                        button.textContent = 'Загрузить предыдущие';
+                    }
+                }
+            };
+            const unsubscribe = window.app.realtimeService.subscribeToMessages(chatId, (messages, error, pageInfo) => {
                 if (!stillActive()) return;
                 if (error) {
                     messagesContainer.innerHTML = '<p class="text-center text-danger py-5">Не удалось загрузить сообщения. Открой диалог ещё раз.</p>';
                     return;
                 }
-                if (messages.length === 0) {
-                    messagesContainer.innerHTML = `
-                        <div class="text-center text-muted py-5">
-                            <i class="bi bi-chat-dots display-4 opacity-25"></i>
-                            <p class="mt-2">Начните общение!</p>
-                        </div>
-                    `;
+                if (historyCursor === undefined) {
+                    historyCursor = pageInfo?.cursor || null;
+                    hasMoreHistory = Boolean(pageInfo?.hasMore);
+                }
+                messages.forEach(message => history.set(message.id, message));
+                if (history.size === 0) {
+                    messagesContainer.innerHTML = '<div class="text-center text-muted py-5"><p>Начните общение!</p></div>';
                 } else {
-                    messagesContainer.innerHTML = messages
-                        .map(msg => this.createMessageBubble(msg, userId))
-                        .join('');
-                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    renderHistory();
                     const newest = messages[messages.length - 1];
                     if (newest?.senderId === partnerId && newest.id !== lastReadIncomingId) {
                         lastReadIncomingId = newest.id;
@@ -399,6 +443,7 @@ export class ChatModule {
     closeChat() {
         this.setMobileChatView(false);
         this.chatGeneration++;
+        this.loadPreviousMessages = null;
         this.currentChat = null;
         this.editMessageId = null;
 
@@ -515,6 +560,10 @@ export class ChatModule {
         document.getElementById('deleteChatBtn')?.addEventListener('click', () => this.showDeleteChatDialog());
 
         document.getElementById('chatMessages')?.addEventListener('click', async (e) => {
+            if (e.target.closest('#loadOlderMessagesBtn')) {
+                await this.loadPreviousMessages?.();
+                return;
+            }
             const editBtn = e.target.closest('.edit-msg-btn');
             const deleteBtn = e.target.closest('.delete-msg-btn');
 

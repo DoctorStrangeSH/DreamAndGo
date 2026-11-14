@@ -3,7 +3,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { conversationPairKey } from './chat-pair.js';
-import { normalizeChatMessage, otherChatParticipant } from './message-policy.js';
+import { normalizeChatMessage, otherChatParticipant, normalizeClientMessageId, serverMessageDocumentId } from './message-policy.js';
 
 if (getApps().length === 0) initializeApp();
 
@@ -73,27 +73,40 @@ export const sendPrivateMessageV2 = onCall({ region: 'europe-west3' }, async req
 
     const chatId = request.data?.chatId;
     const text = normalizeChatMessage(request.data?.text);
-    if (typeof chatId !== 'string' || !chatId || chatId.includes('/') || chatId.length > 128 ||
+    const clientMessageId = normalizeClientMessageId(request.data?.clientMessageId);
+    if (!clientMessageId || typeof chatId !== 'string' || !chatId || chatId.includes('/') || chatId.length > 128 ||
         !text) {
         throw new HttpsError('invalid-argument', 'Некорректное сообщение');
     }
 
     const db = getFirestore();
     const chatRef = db.collection('chats').doc(chatId);
-    const messageRef = chatRef.collection('messages').doc();
+    const messageId = serverMessageDocumentId(chatId, uid, clientMessageId);
+    const messageRef = chatRef.collection('messages').doc(messageId);
 
     await db.runTransaction(async tx => {
+        // Firestore requires all reads before any writes. Reading the deterministic
+        // message document also serializes concurrent retries of the same request.
         const snapshot = await tx.get(chatRef);
+        const priorMessage = await tx.get(messageRef);
         if (!snapshot.exists || snapshot.get('version') !== 2 || snapshot.get('state') !== 'active') {
             throw new HttpsError('failed-precondition', 'Диалог недоступен');
         }
         const partnerId = otherChatParticipant(snapshot.get('participants'), uid);
         if (!partnerId) throw new HttpsError('permission-denied', 'Нет доступа к переписке');
+        if (priorMessage.exists) {
+            // A reused key with different contents must not silently alter a message.
+            if (priorMessage.get('senderId') !== uid || priorMessage.get('text') !== text ||
+                priorMessage.get('clientMessageId') !== clientMessageId) {
+                throw new HttpsError('already-exists', 'Идентификатор сообщения уже использован');
+            }
+            return;
+        }
 
         const createdAt = FieldValue.serverTimestamp();
         const preview = { lastMessage: text.slice(0, 100), lastMessageTime: createdAt };
         tx.create(messageRef, {
-            senderId: uid, text, createdAt, read: false, edited: false
+            senderId: uid, clientMessageId, text, createdAt, read: false, edited: false
         });
         // Preserve the sender's unread count: sending does not read incoming messages.
         tx.set(db.collection('users').doc(uid).collection('chats').doc(partnerId), {
@@ -104,5 +117,5 @@ export const sendPrivateMessageV2 = onCall({ region: 'europe-west3' }, async req
         }, { merge: true });
     });
 
-    return { messageId: messageRef.id, chatId };
+    return { messageId, chatId };
 });

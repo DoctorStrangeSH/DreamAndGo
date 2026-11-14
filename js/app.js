@@ -1,4 +1,5 @@
 import { escapeHTML } from './core/escape-html.js';
+import { getHomeSnapshot } from './core/home-snapshot.js';
 import { auth, db, checkFirebaseConnection } from './config/firebase.js';
 import { AuthService } from './services/auth.service.js';
 import { ThemeService } from './services/theme.service.js';
@@ -212,8 +213,8 @@ class DreamAndGo {
 
     updateHomeStats() {
         if (!this.userData?.stats) return;
-        const stats = this.userData.stats;
-        ['travels', 'restaurants', 'movies', 'books'].forEach(key => {
+        const stats = getHomeSnapshot(this.userData);
+        ['travels', 'restaurants', 'movies', 'books', 'dreams'].forEach(key => {
             const el = document.querySelector(`[data-stat="${key}"]`);
             if (el) el.textContent = stats[key] || 0;
         });
@@ -249,31 +250,37 @@ class DreamAndGo {
         if (!mainContent) return;
 
         const userName = this.userData?.username || this.currentUser?.email?.split('@')[0] || 'Мечтатель';
-        const stats = this.userData?.stats || {};
+        const stats = getHomeSnapshot(this.userData);
 
         mainContent.innerHTML = `
             <div class="container py-3 py-md-4">
-                <div class="welcome-section mb-4 fade-in-up">
-                    <div class="card-premium p-4 p-md-5" style="background: linear-gradient(135deg, rgba(108,92,231,0.05) 0%, rgba(168,85,247,0.05) 100%);">
-                        <div class="row align-items-center">
-                            <div class="col-12 col-lg-7">
-                                <h1 class="display-4 fw-bold mb-2">Привет, <span class="text-gradient">@${escapeHTML(userName)}</span>! ✨</h1>
-                                <p class="lead text-secondary mb-3">${this.getRandomGreeting()}</p>
-                                <div class="d-flex gap-2 flex-wrap">
-                                    <a href="#travels" class="btn btn-premium btn-sm"><i class="bi bi-plus-lg me-1"></i>Добавить путешествие</a>
-                                    <a href="#movies" class="btn btn-outline-primary btn-sm"><i class="bi bi-search me-1"></i>Найти фильм</a>
-                                    <a href="#dreams" class="btn btn-outline-primary btn-sm"><i class="bi bi-star me-1"></i>Записать мечту</a>
-                                </div>
-                            </div>
-                            <div class="col-12 col-lg-5 text-center mt-3 mt-lg-0">
-                                <div class="position-relative d-inline-block">
-                                    <div class="avatar-circle" style="width: 100px; height: 100px; font-size: 2.5rem;">${escapeHTML(userName[0].toUpperCase())}</div>
-                                    <span class="position-absolute bottom-0 end-0 bg-success rounded-circle p-1" style="width: 20px; height: 20px;"></span>
-                                </div>
-                            </div>
+                <section class="home-dashboard-hero mb-4 fade-in-up" aria-labelledby="home-welcome-heading">
+                    <div class="home-dashboard-copy">
+                        <span class="home-dashboard-eyebrow"><i class="bi bi-stars" aria-hidden="true"></i> Твоя личная вселенная</span>
+                        <h1 id="home-welcome-heading">Привет, <span>@${escapeHTML(userName)}</span>! ✨</h1>
+                        <p>${this.getRandomGreeting()}</p>
+                        <div class="home-dashboard-actions">
+                            <a href="${stats.nextAction.href}" class="btn btn-light fw-bold"><i class="bi ${stats.nextAction.icon} me-2" aria-hidden="true"></i>${stats.nextAction.label}</a>
+                            <a href="#profile" class="btn btn-outline-light"><i class="bi bi-person me-2" aria-hidden="true"></i>Мой профиль</a>
                         </div>
                     </div>
-                </div>
+                    <div class="home-dashboard-progress">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="home-dashboard-progress-label"><i class="bi bi-compass me-2" aria-hidden="true"></i>Первые открытия</span>
+                            <strong>${stats.onboardingPercent}%</strong>
+                        </div>
+                        <div class="progress home-dashboard-progress-track" role="progressbar" aria-label="Прогресс первых шагов" aria-valuenow="${stats.onboardingPercent}" aria-valuemin="0" aria-valuemax="100">
+                            <div class="progress-bar" style="width: ${stats.onboardingPercent}%"></div>
+                        </div>
+                        <p class="small mb-3">${stats.startedTasks} из ${stats.totalTasks} первых шагов выполнено</p>
+                        <div class="home-dashboard-dreams">
+                            <div><strong data-stat="dreams">${stats.dreams}</strong><span>Мечтаний</span></div>
+                            <div><strong>${stats.dreamsInProgress}</strong><span>В процессе</span></div>
+                            <div><strong>${stats.dreamsCompleted}</strong><span>Сбылось</span></div>
+                        </div>
+                        <a href="#dreams" class="home-dashboard-progress-link">Перейти к мечтам <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+                    </div>
+                </section>
 
                 <div class="row g-3 mb-4 fade-in-up" style="animation-delay: 0.1s;">
                     <div class="col-6 col-md-3"><div class="card-premium stat-card p-3 text-center h-100"><div class="stat-icon mb-2 mx-auto" style="background: rgba(108,92,231,0.1); color: #6C5CE7;"><i class="bi bi-airplane fs-3"></i></div><h4 class="fw-bold mb-0" data-stat="travels">${stats.travels || 0}</h4><small class="text-muted">Путешествий</small></div></div>
@@ -308,7 +315,7 @@ class DreamAndGo {
     }
 
     getOnboardingSteps() {
-        const stats = this.userData?.stats || {};
+        const stats = getHomeSnapshot(this.userData);
         const steps = [
             { done: stats.travels > 0, icon: 'bi-airplane', text: 'Добавь своё первое путешествие', link: '#travels', color: 'primary' },
             { done: stats.movies > 0, icon: 'bi-film', text: 'Найди и оцени первый фильм', link: '#movies', color: 'warning' },
@@ -329,7 +336,7 @@ class DreamAndGo {
     }
 
     getRecentAchievements() {
-        const achievements = this.userData?.achievements || [];
+        const achievements = Array.isArray(this.userData?.achievements) ? this.userData.achievements : [];
         const recent = achievements.slice(-3).reverse();
         if (recent.length === 0) return '<p class="text-muted small mb-0">Пока нет достижений. Начни пользоваться сайтом!</p>';
         return recent.map(a => `

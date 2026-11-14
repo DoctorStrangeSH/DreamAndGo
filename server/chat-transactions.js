@@ -53,11 +53,20 @@ export async function sendPrivateMessageTransaction(db, uid, chatId, text, clien
             throw new HttpsError('resource-exhausted', 'Слишком частая отправка сообщений. Подожди немного.');
         }
 
+        // The chat document is the serialization point for sequence issuance.
+        // Old v2 chats without a counter start at zero; malformed counters fail closed.
+        const lastSequence = snapshot.get('nextSequence') ?? 0;
+        if (!Number.isSafeInteger(lastSequence) || lastSequence < 0 ||
+            lastSequence === Number.MAX_SAFE_INTEGER) {
+            throw new HttpsError('failed-precondition', 'Некорректный счётчик сообщений диалога');
+        }
+        const sequence = lastSequence + 1;
         const createdAt = FieldValue.serverTimestamp();
         const preview = { lastMessage: text.slice(0, 100), lastMessageTime: createdAt };
         tx.create(messageRef, {
-            senderId: uid, clientMessageId, text, createdAt, read: false, edited: false
+            senderId: uid, clientMessageId, text, sequence, createdAt, read: false, edited: false
         });
+        tx.update(chatRef, { nextSequence: sequence });
         tx.set(cooldownRef, { lastSentAt: Timestamp.fromMillis(nowMillis) });
         // Preserve the sender's unread count: sending does not read incoming messages.
         tx.set(db.collection('users').doc(uid).collection('chats').doc(partnerId), {

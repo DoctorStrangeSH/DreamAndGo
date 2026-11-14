@@ -296,7 +296,11 @@ export class FriendsModule {
     attachCardListeners() {
         document.querySelectorAll('.accept-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
-                await this.friendsService.acceptFriendRequest(window.app.currentUser.uid, btn.dataset.uid);
+                const result = await this.friendsService.acceptFriendRequest(window.app.currentUser.uid, btn.dataset.uid);
+                if (!result.success) {
+                    window.app.ui.showToast('Не удалось принять заявку', 'error');
+                    return;
+                }
                 window.app.onUserAction('add_friend');
                 window.app.ui.showToast('Друг добавлен! 🤝', 'success');
                 this.subscribeToFriends();
@@ -307,7 +311,11 @@ export class FriendsModule {
 
         document.querySelectorAll('.reject-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
-                await this.friendsService.rejectFriendRequest(window.app.currentUser.uid, btn.dataset.uid);
+                const result = await this.friendsService.rejectFriendRequest(window.app.currentUser.uid, btn.dataset.uid);
+                if (!result.success) {
+                    window.app.ui.showToast('Не удалось отклонить заявку', 'error');
+                    return;
+                }
                 window.app.ui.showToast('Заявка отклонена', 'info');
                 this.subscribeToRequests();
                 this.subscribeToSent();
@@ -316,7 +324,11 @@ export class FriendsModule {
 
         document.querySelectorAll('.cancel-request-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
-                await this.friendsService.rejectFriendRequest(btn.dataset.uid, window.app.currentUser.uid);
+                const result = await this.friendsService.rejectFriendRequest(btn.dataset.uid, window.app.currentUser.uid);
+                if (!result.success) {
+                    window.app.ui.showToast('Не удалось отменить заявку', 'error');
+                    return;
+                }
                 window.app.ui.showToast('Заявка отменена', 'info');
                 this.subscribeToSent();
             });
@@ -325,7 +337,11 @@ export class FriendsModule {
         document.querySelectorAll('.remove-friend-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
                 if (confirm('Удалить из друзей?')) {
-                    await this.friendsService.removeFriend(window.app.currentUser.uid, btn.dataset.uid);
+                    const result = await this.friendsService.removeFriend(window.app.currentUser.uid, btn.dataset.uid);
+                    if (!result.success) {
+                        window.app.ui.showToast('Не удалось удалить друга', 'error');
+                        return;
+                    }
                     window.app.ui.showToast('Друг удалён', 'info');
                     this.subscribeToFriends();
                 }
@@ -355,7 +371,7 @@ export class FriendsModule {
                     document.getElementById('searchResults').innerHTML = '';
                     this.subscribeToSent();
                 } else {
-                    window.app.ui.showToast('Ошибка', 'error');
+                    window.app.ui.showToast(result.error || 'Не удалось отправить заявку', 'error');
                     btn.disabled = false;
                     btn.innerHTML = '<i class="bi bi-person-plus me-1"></i>Добавить';
                 }

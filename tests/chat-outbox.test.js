@@ -72,3 +72,38 @@ test('missing server confirmation retains the message for manual retry', async (
     assert.equal(result.success, false);
     assert.ok(outbox.get(id));
 });
+
+test('explicitly restored intent reuses UUID after simulated restart', async () => {
+    let reachedServer = false;
+    const sent = [];
+    const transport = async intent => {
+        sent.push(intent);
+        if (!reachedServer) {
+            reachedServer = true;
+            // Simulates server commit followed by lost network acknowledgement.
+            throw Object.assign(new Error('connection lost'), { code: 'unavailable' });
+        }
+        return { messageId: 'same-server-record' };
+    };
+    const oldClient = new ChatOutbox(transport, () => id);
+    oldClient.prepare('chat-1', 'Привет');
+    assert.equal((await oldClient.deliver(id)).success, false);
+    // New instance receives intent explicitly; the outbox never wrote localStorage.
+    const restartedClient = new ChatOutbox(transport);
+    const recovered = restartedClient.restore('chat-1', 'Привет', id);
+    assert.equal(recovered.clientMessageId, id);
+    assert.deepEqual(await restartedClient.deliver(id),
+        { success: true, messageId: 'same-server-record' });
+    assert.deepEqual(sent[0], sent[1]);
+    assert.equal(restartedClient.get(id), null);
+});
+
+test('restoration refuses changed text, reused UUID for a different chat and invalid IDs', () => {
+    const outbox = new ChatOutbox(async () => ({ messageId: 'server' }));
+    const restored = outbox.restore('chat-1', 'Hello', id);
+    assert.strictEqual(outbox.restore('chat-1', 'Hello', id), restored);
+    assert.throws(() => outbox.restore('chat-2', 'Hello', id));
+    assert.throws(() => outbox.restore('chat-1', 'Changed', id));
+    assert.throws(() => outbox.restore('chat-1', ' Hello ', '650e8400-e29b-41d4-a716-446655440000'));
+    assert.throws(() => outbox.restore('chat-1', 'Hello', 'not-a-uuid'));
+});

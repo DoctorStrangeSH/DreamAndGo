@@ -9,6 +9,7 @@ export class FriendsModule {
         this.unsubscribeFriends = null;
         this.unsubscribeRequests = null;
         this.unsubscribeSent = null;
+        this.searchVersion = 0;
     }
 
     async render() {
@@ -235,6 +236,7 @@ export class FriendsModule {
     }
 
     switchTab(tab) {
+        this.searchVersion++;
         this.currentTab = tab;
 
         const searchSection = document.getElementById('searchSection');
@@ -269,7 +271,10 @@ export class FriendsModule {
         if (friendsList) friendsList.innerHTML = '';
         results.innerHTML = window.app.ui.createLoader();
 
+        const searchVersion = ++this.searchVersion;
+        const userId = window.app.currentUser?.uid;
         const user = await this.friendsService.getUserByUsername(username);
+        if (searchVersion !== this.searchVersion || this.currentTab !== 'search' || window.app.currentUser?.uid !== userId || !results.isConnected) return;
 
         if (!user) {
             results.innerHTML = `
@@ -378,6 +383,7 @@ export class FriendsModule {
     }
 
     destroy() {
+        this.searchVersion++;
         if (this.unsubscribeFriends) this.unsubscribeFriends();
         if (this.unsubscribeRequests) this.unsubscribeRequests();
         if (this.unsubscribeSent) this.unsubscribeSent();

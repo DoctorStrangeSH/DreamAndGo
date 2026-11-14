@@ -310,6 +310,8 @@ export class ProfileModule {
             const sentDoc = await getDoc(doc(window.app.db, 'users', currentUserId, 'sentRequests', profileUserId));
             const requestDoc = await getDoc(doc(window.app.db, 'users', currentUserId, 'friendRequests', profileUserId));
 
+            if (!container.isConnected || window.app.currentUser?.uid !== currentUserId) return;
+
             if (friendDoc.exists()) {
                 container.innerHTML = `
                     <span class="badge bg-success me-2"><i class="bi bi-check me-1"></i>В друзьях</span>
@@ -318,9 +320,7 @@ export class ProfileModule {
                 `;
                 document.getElementById('removeFriendBtn')?.addEventListener('click', async () => {
                     if (confirm('Удалить из друзей?')) {
-                        await fs.removeFriend(currentUserId, profileUserId);
-                        window.app.ui.showToast('Удалён из друзей', 'info');
-                        this.checkFriendshipStatus(profileUserId);
+                        await this.runFriendAction(document.getElementById('removeFriendBtn'), () => fs.removeFriend(currentUserId, profileUserId), 'Удалён из друзей', profileUserId);
                     }
                 });
                 document.getElementById('messageFriendBtn')?.addEventListener('click', (e) => {
@@ -337,9 +337,7 @@ export class ProfileModule {
                     <button class="btn btn-outline-danger btn-sm" id="cancelRequestBtn"><i class="bi bi-x me-1"></i>Отменить</button>
                 `;
                 document.getElementById('cancelRequestBtn')?.addEventListener('click', async () => {
-                    await fs.rejectFriendRequest(profileUserId, currentUserId);
-                    window.app.ui.showToast('Заявка отменена', 'info');
-                    this.checkFriendshipStatus(profileUserId);
+                    await this.runFriendAction(document.getElementById('cancelRequestBtn'), () => fs.rejectFriendRequest(profileUserId, currentUserId), 'Заявка отменена', profileUserId);
                 });
             } else if (requestDoc.exists()) {
                 container.innerHTML = `
@@ -347,27 +345,45 @@ export class ProfileModule {
                     <button class="btn btn-outline-danger btn-sm" id="declineRequestBtn"><i class="bi bi-x me-1"></i>Отклонить</button>
                 `;
                 document.getElementById('acceptRequestBtn')?.addEventListener('click', async () => {
-                    await fs.acceptFriendRequest(currentUserId, profileUserId);
-                    window.app.ui.showToast('Друг добавлен! 🤝', 'success');
-                    this.checkFriendshipStatus(profileUserId);
+                    await this.runFriendAction(document.getElementById('acceptRequestBtn'), () => fs.acceptFriendRequest(currentUserId, profileUserId), 'Друг добавлен! 🤝', profileUserId);
                 });
                 document.getElementById('declineRequestBtn')?.addEventListener('click', async () => {
-                    await fs.rejectFriendRequest(currentUserId, profileUserId);
-                    window.app.ui.showToast('Заявка отклонена', 'info');
-                    this.checkFriendshipStatus(profileUserId);
+                    await this.runFriendAction(document.getElementById('declineRequestBtn'), () => fs.rejectFriendRequest(currentUserId, profileUserId), 'Заявка отклонена', profileUserId);
                 });
             } else {
                 container.innerHTML = `
                     <button class="btn btn-premium btn-sm" id="addFriendBtn"><i class="bi bi-person-plus me-1"></i>Добавить в друзья</button>
                 `;
                 document.getElementById('addFriendBtn')?.addEventListener('click', async () => {
-                    await fs.sendFriendRequest(currentUserId, profileUserId);
-                    window.app.ui.showToast('Заявка отправлена! 🎉', 'success');
-                    this.checkFriendshipStatus(profileUserId);
+                    await this.runFriendAction(document.getElementById('addFriendBtn'), () => fs.sendFriendRequest(currentUserId, profileUserId), 'Заявка отправлена! 🎉', profileUserId);
                 });
             }
         } catch (error) {
-            container.innerHTML = `<button class="btn btn-premium btn-sm" id="addFriendBtn"><i class="bi bi-person-plus me-1"></i>Добавить в друзья</button>`;
+            console.error('Не удалось проверить статус дружбы:', error);
+            if (!container.isConnected || window.app.currentUser?.uid !== currentUserId) return;
+            container.innerHTML = `<span class="text-muted small me-2">Не удалось загрузить статус дружбы</span><button class="btn btn-outline-secondary btn-sm" id="retryFriendStatusBtn">Повторить</button>`;
+            container.querySelector('#retryFriendStatusBtn')?.addEventListener('click', () => this.checkFriendshipStatus(profileUserId));
+        }
+    }
+
+    async runFriendAction(button, task, successMessage, profileUserId) {
+        if (!button || button.disabled) return;
+        const currentUserId = window.app.currentUser?.uid;
+        button.disabled = true;
+        try {
+            const result = await task();
+            if (window.app.currentUser?.uid !== currentUserId) return;
+            if (!result?.success) {
+                window.app.ui.showToast(result?.error || 'Не удалось выполнить действие', 'error');
+                return;
+            }
+            window.app.ui.showToast(successMessage, 'success');
+            await this.checkFriendshipStatus(profileUserId);
+        } catch (error) {
+            console.error('Ошибка действия с другом:', error);
+            if (window.app.currentUser?.uid === currentUserId) window.app.ui.showToast('Не удалось выполнить действие', 'error');
+        } finally {
+            if (button.isConnected) button.disabled = false;
         }
     }
 

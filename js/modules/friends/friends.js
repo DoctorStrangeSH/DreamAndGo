@@ -273,7 +273,14 @@ export class FriendsModule {
 
         const searchVersion = ++this.searchVersion;
         const userId = window.app.currentUser?.uid;
-        const user = await this.friendsService.getUserByUsername(username);
+        let user;
+        try {
+            user = await this.friendsService.getUserByUsername(username);
+        } catch (error) {
+            if (searchVersion !== this.searchVersion || this.currentTab !== 'search' || window.app.currentUser?.uid !== userId || !results.isConnected) return;
+            results.innerHTML = `<div class="alert alert-warning" role="alert">${escapeHTML(error.message || 'Поиск временно недоступен. Попробуй ещё раз.')}</div>`;
+            return;
+        }
         if (searchVersion !== this.searchVersion || this.currentTab !== 'search' || window.app.currentUser?.uid !== userId || !results.isConnected) return;
 
         if (!user) {

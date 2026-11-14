@@ -142,7 +142,13 @@ class DreamAndGo {
 
     initEventListeners() {
         this.eventBus.on('userDataUpdated', (data) => { this.userData = { ...this.userData, ...data }; this.updateHomeStats(); });
-        this.eventBus.on('userLoggedOut', () => { this.currentUser = null; this.userData = null; this.dataLoaded = false; });
+        this.eventBus.on('userLoggedOut', () => {
+            ++this.authVersion;
+            this.realtimeService.unsubscribeAll();
+            this.currentUser = null;
+            this.userData = null;
+            this.dataLoaded = false;
+        });
     }
 
     initConnectionListeners() {

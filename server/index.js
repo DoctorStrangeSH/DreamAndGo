@@ -7,6 +7,7 @@ import { isConversationBlocked } from './block-policy.js';
 import { normalizeChatMessage, normalizeClientMessageId } from './message-policy.js';
 import { sendPrivateMessageTransaction } from './chat-transactions.js';
 import { getPrivateMessageStatus } from './message-status.js';
+import { markPrivateMessageReadTransaction } from './chat-read-receipts.js';
 
 if (getApps().length === 0) initializeApp();
 
@@ -97,5 +98,12 @@ export const sendPrivateMessageV2 = onCall({ region: 'europe-west3' }, async req
 export const getPrivateMessageStatusV2 = onCall({ region: 'europe-west3' }, async request => {
     return getPrivateMessageStatus(
         getFirestore(), request.auth?.uid, request.data?.chatId, request.data?.clientMessageId
+    );
+});
+
+// Candidate v2 only. No client-selected sender or timestamp is trusted.
+export const markPrivateMessageReadV2 = onCall({ region: 'europe-west3' }, async request => {
+    return markPrivateMessageReadTransaction(
+        getFirestore(), request.auth?.uid, request.data?.chatId, request.data?.messageId
     );
 });

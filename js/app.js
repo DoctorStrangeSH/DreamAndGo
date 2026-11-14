@@ -79,6 +79,8 @@ class DreamAndGo {
                 await this.loadUserData();
                 setTimeout(() => this.renderNavWidgets(), 500);
             } else {
+                // Снимаем слушатели предыдущего аккаунта до показа формы входа.
+                this.realtimeService.unsubscribeAll();
                 this.userData = null;
                 this.dataLoaded = false;
                 this.showAuth();

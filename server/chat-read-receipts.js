@@ -22,10 +22,12 @@ export async function markPrivateMessageReadTransaction(db, uid, chatId, message
         }
         const partnerId = otherChatParticipant(chat.get('participants'), uid);
         if (!partnerId) throw new HttpsError('permission-denied', 'Нет доступа к переписке');
-        const [message, senderBlock, recipientBlock] = await Promise.all([
+        const recipientPreviewRef = db.collection('users').doc(uid).collection('chats').doc(partnerId);
+        const [message, senderBlock, recipientBlock, recipientPreview] = await Promise.all([
             tx.get(messageRef),
             tx.get(db.collection('users').doc(uid).collection('blockedUsers').doc(partnerId)),
-            tx.get(db.collection('users').doc(partnerId).collection('blockedUsers').doc(uid))
+            tx.get(db.collection('users').doc(partnerId).collection('blockedUsers').doc(uid)),
+            tx.get(recipientPreviewRef)
         ]);
         if (isConversationBlocked(senderBlock, recipientBlock)) {
             throw new HttpsError('permission-denied', 'Общение с пользователем недоступно');
@@ -40,6 +42,15 @@ export async function markPrivateMessageReadTransaction(db, uid, chatId, message
         // A frozen chat must not change while a backup or rollback is being checked.
         if (chat.get('state') !== 'active') {
             throw new HttpsError('failed-precondition', 'Диалог временно недоступен');
+        }
+        // A receipt acknowledges exactly one message, never all earlier messages.
+        // Guard the materialized counter against duplicates, missing previews and
+        // historical mismatches; do not let an unread count become negative.
+        if (recipientPreview.exists) {
+            const unread = recipientPreview.get('unread');
+            if (Number.isSafeInteger(unread) && unread > 0) {
+                tx.update(recipientPreviewRef, { unread: unread - 1 });
+            }
         }
         tx.update(messageRef, { read: true, readAt: FieldValue.serverTimestamp() });
         return { status: 'read', messageId };

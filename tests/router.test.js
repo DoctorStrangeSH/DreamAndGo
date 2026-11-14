@@ -12,7 +12,7 @@ test('replays the latest route when navigation occurs during async render', asyn
     try {
         console.log = () => {};
         globalThis.window = { location: { hash: '#first' } };
-        globalThis.document = { title: '' };
+        globalThis.document = { title: '', querySelectorAll: () => [] };
         const router = new Router();
         router.register('first', { async render() {
             visited.push('first');
@@ -31,6 +31,7 @@ test('replays the latest route when navigation occurs during async render', asyn
         await new Promise((resolve) => setTimeout(resolve, 0));
         assert.deepEqual(visited, ['first', 'second']);
         assert.equal(router.getCurrentRoute(), 'second');
+        await new Promise((resolve) => setTimeout(resolve, 60));
     } finally {
         console.log = previousLog;
         globalThis.window = previousWindow;

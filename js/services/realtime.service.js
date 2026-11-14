@@ -8,11 +8,13 @@ export class RealtimeService {
     constructor() {
         this.db = db;
         this.listeners = {};
+        this.listenerVersions = {};
     }
 
     subscribeToMessages(chatId, callback) {
         const key = `messages_${chatId}`;
         this.unsubscribe(key);
+        const token = this.listenerVersions[key];
 
         const messagesRef = collection(this.db, 'chats', chatId, 'messages');
         const q = query(messagesRef, orderBy('createdAt', 'asc'), limit(100));
@@ -27,10 +29,10 @@ export class RealtimeService {
                     createdAt: data.createdAt?.toDate?.() || new Date()
                 });
             });
-            callback(messages);
+            this.deliverIfCurrent(key, token, callback, messages);
         }, (error) => {
             console.error('Ошибка подписки на сообщения:', error);
-            callback([]);
+            this.deliverIfCurrent(key, token, callback, []);
         });
 
         this.listeners[key] = unsubscribe;
@@ -40,6 +42,7 @@ export class RealtimeService {
     subscribeToChats(userId, callback) {
         const key = `chats_${userId}`;
         this.unsubscribe(key);
+        const token = this.listenerVersions[key];
 
         const chatsRef = collection(this.db, 'users', userId, 'chats');
         const q = query(chatsRef, orderBy('lastMessageTime', 'desc'));
@@ -66,10 +69,10 @@ export class RealtimeService {
                 });
             }
             
-            callback(chats);
+            this.deliverIfCurrent(key, token, callback, chats);
         }, (error) => {
             console.error('Ошибка подписки на чаты:', error);
-            callback([]);
+            this.deliverIfCurrent(key, token, callback, []);
         });
 
         this.listeners[key] = unsubscribe;
@@ -79,6 +82,7 @@ export class RealtimeService {
     subscribeToFriends(userId, callback) {
         const key = `friends_${userId}`;
         this.unsubscribe(key);
+        const token = this.listenerVersions[key];
 
         const friendsRef = collection(this.db, 'users', userId, 'friends');
         
@@ -98,10 +102,10 @@ export class RealtimeService {
                 }
             }
             
-            callback(friends);
+            this.deliverIfCurrent(key, token, callback, friends);
         }, (error) => {
             console.error('Ошибка подписки на друзей:', error);
-            callback([]);
+            this.deliverIfCurrent(key, token, callback, []);
         });
 
         this.listeners[key] = unsubscribe;
@@ -111,6 +115,7 @@ export class RealtimeService {
     subscribeToFriendRequests(userId, callback) {
         const key = `friendRequests_${userId}`;
         this.unsubscribe(key);
+        const token = this.listenerVersions[key];
 
         const requestsRef = collection(this.db, 'users', userId, 'friendRequests');
         
@@ -130,10 +135,10 @@ export class RealtimeService {
                 }
             }
             
-            callback(requests);
+            this.deliverIfCurrent(key, token, callback, requests);
         }, (error) => {
             console.error('Ошибка подписки на заявки:', error);
-            callback([]);
+            this.deliverIfCurrent(key, token, callback, []);
         });
 
         this.listeners[key] = unsubscribe;
@@ -143,6 +148,7 @@ export class RealtimeService {
     subscribeToSentRequests(userId, callback) {
         const key = `sentRequests_${userId}`;
         this.unsubscribe(key);
+        const token = this.listenerVersions[key];
 
         const sentRef = collection(this.db, 'users', userId, 'sentRequests');
         
@@ -162,10 +168,10 @@ export class RealtimeService {
                 }
             }
             
-            callback(sent);
+            this.deliverIfCurrent(key, token, callback, sent);
         }, (error) => {
             console.error('Ошибка подписки на отправленные заявки:', error);
-            callback([]);
+            this.deliverIfCurrent(key, token, callback, []);
         });
 
         this.listeners[key] = unsubscribe;
@@ -191,7 +197,13 @@ export class RealtimeService {
         }
     }
 
+    deliverIfCurrent(key, token, callback, value) {
+        if (this.listenerVersions[key] === token) callback(value);
+    }
+
     unsubscribe(key) {
+        // Аннулируем даже уже запущенные асинхронные обработчики snapshot.
+        this.listenerVersions[key] = (this.listenerVersions[key] || 0) + 1;
         if (this.listeners[key]) {
             this.listeners[key]();
             delete this.listeners[key];
@@ -199,9 +211,6 @@ export class RealtimeService {
     }
 
     unsubscribeAll() {
-        Object.keys(this.listeners).forEach(key => {
-            this.listeners[key]();
-        });
-        this.listeners = {};
+        Object.keys(this.listeners).forEach(key => this.unsubscribe(key));
     }
 }

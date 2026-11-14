@@ -1,7 +1,7 @@
 import { db } from '../config/firebase.js';
 import {
-    collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc,
-    query, orderBy, serverTimestamp, writeBatch, setDoc
+    collection, doc, getDocs, getDoc, updateDoc, deleteDoc,
+    query, orderBy, serverTimestamp, writeBatch, setDoc, increment
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 export class ChatService {
@@ -90,9 +90,9 @@ export class ChatService {
                 edited: false
             };
 
-            await addDoc(messagesRef, message);
-
+            // All three documents succeed or fail together.
             const batch = writeBatch(this.db);
+            batch.set(doc(messagesRef), message);
 
             const updateData = {
                 lastMessage: text.substring(0, 100),
@@ -102,15 +102,13 @@ export class ChatService {
             batch.set(doc(this.db, 'users', senderId, 'chats', receiverId), {
                 partnerId: receiverId,
                 ...updateData,
-                unread: 0,
-                createdAt: serverTimestamp()
+                unread: 0
             }, { merge: true });
 
             batch.set(doc(this.db, 'users', receiverId, 'chats', senderId), {
                 partnerId: senderId,
                 ...updateData,
-                unread: 1,
-                createdAt: serverTimestamp()
+                unread: increment(1)
             }, { merge: true });
 
             await batch.commit();

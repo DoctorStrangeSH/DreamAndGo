@@ -20,7 +20,8 @@ export class RealtimeService {
         const token = this.listenerVersions.current(key);
 
         const messagesRef = collection(this.db, 'chats', chatId, 'messages');
-        const q = query(messagesRef, orderBy('createdAt', 'asc'), limit(100));
+        // Live tail of the conversation; ascending limit would freeze after 100 messages.
+        const q = query(messagesRef, orderBy('createdAt', 'desc'), limit(100));
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const messages = [];
@@ -32,10 +33,10 @@ export class RealtimeService {
                     createdAt: data.createdAt?.toDate?.() || new Date()
                 });
             });
-            this.deliverIfCurrent(key, token, callback, messages);
+            this.deliverIfCurrent(key, token, callback, messages.reverse());
         }, (error) => {
             console.error('Ошибка подписки на сообщения:', error);
-            this.deliverIfCurrent(key, token, callback, []);
+            this.deliverIfCurrent(key, token, callback, [], error);
         });
 
         this.listeners[key] = unsubscribe;

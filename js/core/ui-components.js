@@ -1,3 +1,5 @@
+import { escapeHTML } from './escape-html.js';
+
 // Переиспользуемые UI компоненты
 export class UIComponents {
     constructor() {
@@ -52,7 +54,7 @@ export class UIComponents {
                 <div class="d-flex">
                     <div class="toast-body">
                         <i class="bi ${icons[type]} me-2"></i>
-                        ${message}
+                        ${escapeHTML(message)}
                     </div>
                     <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
                 </div>

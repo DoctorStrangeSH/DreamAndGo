@@ -55,6 +55,7 @@ class DreamAndGo {
         this.isOnline = navigator.onLine;
         this.authResolved = false;
         this.dataLoaded = false;
+        this.authVersion = 0;
 
         window.app = this;
         this.init();
@@ -70,6 +71,7 @@ class DreamAndGo {
         this.initEventListeners();
 
         this.authService.onAuthChange(async (user) => {
+            const version = ++this.authVersion;
             this.currentUser = user;
             this.authResolved = true;
 
@@ -77,7 +79,10 @@ class DreamAndGo {
                 this.showApp();
                 this.notificationsWidget.init();
                 await this.loadUserData();
-                setTimeout(() => this.renderNavWidgets(), 500);
+                if (version !== this.authVersion) return;
+                setTimeout(() => {
+                    if (version === this.authVersion && this.currentUser) this.renderNavWidgets();
+                }, 500);
             } else {
                 // Снимаем слушатели предыдущего аккаунта до показа формы входа.
                 this.realtimeService.unsubscribeAll();
@@ -173,8 +178,11 @@ class DreamAndGo {
 
     async loadUserData() {
         if (!this.currentUser) return;
+        const requestedUid = this.currentUser.uid;
+        const version = this.authVersion;
         try {
-            const result = await this.authService.getUserData(this.currentUser.uid);
+            const result = await this.authService.getUserData(requestedUid);
+            if (version !== this.authVersion || this.currentUser?.uid !== requestedUid) return;
             if (result.success) {
                 this.userData = result.data;
                 this.dataLoaded = true;
@@ -192,7 +200,10 @@ class DreamAndGo {
     async checkAchievements() {
         if (!this.currentUser) return;
         try {
-            const newAchievements = await this.achievementsService.checkAndAwardAchievements(this.currentUser.uid);
+            const requestedUid = this.currentUser.uid;
+            const version = this.authVersion;
+            const newAchievements = await this.achievementsService.checkAndAwardAchievements(requestedUid);
+            if (version !== this.authVersion || this.currentUser?.uid !== requestedUid) return;
             if (newAchievements.length > 0) {
                 newAchievements.forEach(a => this.ui.showToast(`${a.emoji} ${a.title} — ${a.description}`, 'success'));
             }

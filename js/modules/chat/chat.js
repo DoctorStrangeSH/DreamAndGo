@@ -262,6 +262,9 @@ export class ChatModule {
 
             input.value = '';
             input.focus();
+        } catch (error) {
+            console.error('Ошибка отправки сообщения:', error);
+            window.app.ui.showToast('Сообщение не отправлено. Текст сохранён.', 'error');
         } finally {
             if (sendButton) sendButton.disabled = false;
         }

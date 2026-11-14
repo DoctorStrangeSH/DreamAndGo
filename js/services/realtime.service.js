@@ -79,7 +79,7 @@ export class RealtimeService {
             if (gate.isLatest(snapshotId)) this.deliverIfCurrent(key, token, callback, chats);
         }, (error) => {
             console.error('Ошибка подписки на чаты:', error);
-            this.deliverIfCurrent(key, token, callback, []);
+            this.deliverIfCurrent(key, token, callback, [], error);
         });
 
         this.listeners[key] = unsubscribe;

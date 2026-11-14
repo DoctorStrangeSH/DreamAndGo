@@ -98,8 +98,6 @@ export class Router {
             const route = this.routes[path];
             
             if (route) {
-                this.currentRoute = path;
-                
                 // Проверяем авторизацию
                 if (route.meta.requiresAuth && !window.app?.currentUser) {
                     console.warn('🔒 Требуется авторизация, перенаправляю на auth');
@@ -107,6 +105,8 @@ export class Router {
                     return;
                 }
                 
+                this.currentRoute = path;
+
                 // Обновляем заголовок
                 document.title = `${route.meta.title} | Dream&Go`;
                 

@@ -11,6 +11,7 @@ export class ChatOutbox {
         this.createId = createId;
         this.pending = new Map();
         this.inFlight = new Map();
+        this.checking = new Map();
         this.generation = 0;
     }
 
@@ -85,8 +86,35 @@ export class ChatOutbox {
         return task;
     }
 
+    // A lookup confirms whether an earlier send committed before its ack was lost.
+    // 'missing' is NOT permission to auto-send: the caller decides when to retry.
+    reconcile(clientMessageId, lookup) {
+        const pending = this.pending.get(clientMessageId);
+        if (!pending) return Promise.resolve({ status: 'absent' });
+        if (typeof lookup !== 'function') throw new TypeError('Status lookup required');
+        if (this.inFlight.has(clientMessageId)) return Promise.resolve({ status: 'busy' });
+        const current = this.checking.get(clientMessageId);
+        if (current) return current;
+        const generation = this.generation;
+        const task = Promise.resolve().then(() => lookup(pending)).then(result => {
+            if (generation !== this.generation || this.pending.get(clientMessageId) !== pending) {
+                return { status: 'stale' };
+            }
+            if (result?.status === 'sent' && typeof result.messageId === 'string' && result.messageId) {
+                this.pending.delete(clientMessageId);
+                return { status: 'sent', messageId: result.messageId };
+            }
+            if (result?.status === 'missing') return { status: 'missing' };
+            return { status: 'unknown' };
+        }).catch(() => ({ status: 'unknown' })).finally(() => {
+            if (this.checking.get(clientMessageId) === task) this.checking.delete(clientMessageId);
+        });
+        this.checking.set(clientMessageId, task);
+        return task;
+    }
+
     discard(clientMessageId) {
-        if (this.inFlight.has(clientMessageId)) return false;
+        if (this.inFlight.has(clientMessageId) || this.checking.has(clientMessageId)) return false;
         return this.pending.delete(clientMessageId);
     }
 
@@ -95,5 +123,6 @@ export class ChatOutbox {
         this.generation += 1;
         this.pending.clear();
         this.inFlight.clear();
+        this.checking.clear();
     }
 }

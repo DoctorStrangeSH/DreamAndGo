@@ -1,7 +1,7 @@
 import { db } from '../config/firebase.js';
 import {
     collection, doc, getDocs, getDoc, updateDoc, deleteDoc,
-    query, orderBy, serverTimestamp, writeBatch, setDoc, increment, runTransaction
+    query, orderBy, serverTimestamp, writeBatch, setDoc, increment
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 export class ChatService {
@@ -49,32 +49,23 @@ export class ChatService {
         if (!userId || !partnerId || userId === partnerId) return null;
         try {
             const ownRef = doc(this.db, 'users', userId, 'chats', partnerId);
-            const peerRef = doc(this.db, 'users', partnerId, 'chats', userId);
+            const own = await getDoc(ownRef);
+            if (own.exists()) return partnerId;
 
-            // Both documents are checked in one transaction. Never reset an
-            // existing conversation's last message or unread count.
-            await runTransaction(this.db, async transaction => {
-                const own = await transaction.get(ownRef);
-                const peer = await transaction.get(peerRef);
-                if (!own.exists()) {
-                    transaction.set(ownRef, {
-                        partnerId,
-                        lastMessage: '',
-                        lastMessageTime: serverTimestamp(),
-                        unread: 0,
-                        createdAt: serverTimestamp()
-                    });
-                }
-                if (!peer.exists()) {
-                    transaction.set(peerRef, {
-                        partnerId: userId,
-                        lastMessage: '',
-                        lastMessageTime: serverTimestamp(),
-                        unread: 0,
-                        createdAt: serverTimestamp()
-                    });
-                }
+            const peerRef = doc(this.db, 'users', partnerId, 'chats', userId);
+            const batch = writeBatch(this.db);
+            batch.set(ownRef, {
+                partnerId,
+                lastMessage: '',
+                lastMessageTime: serverTimestamp(),
+                unread: 0,
+                createdAt: serverTimestamp()
             });
+            // The peer's private chats are not readable by this user.
+            // Merge only the relationship field so existing message previews,
+            // timestamps and unread counts cannot be reset.
+            batch.set(peerRef, { partnerId: userId }, { merge: true });
+            await batch.commit();
             return partnerId;
         } catch (error) {
             console.error('Ошибка создания чата:', error);

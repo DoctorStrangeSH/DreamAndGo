@@ -18,11 +18,12 @@ export class FriendsService {
             const usersRef = collection(this.db, 'users');
             // New profiles use the canonical key. Legacy profiles are still
             // available via exact-case username until a safe backfill exists.
-            const [indexed, legacy] = await Promise.all([
-                getDocs(query(usersRef, where('usernameNormalized', '==', normalized), limit(1))),
-                getDocs(query(usersRef, where('username', '==', String(username).trim()), limit(1)))
-            ]);
-            const match = indexed.docs[0] || legacy.docs[0];
+            const indexed = await getDocs(query(usersRef, where('usernameNormalized', '==', normalized), limit(1)));
+            let match = indexed.docs[0];
+            if (!match) {
+                const legacy = await getDocs(query(usersRef, where('username', '==', String(username).trim()), limit(1)));
+                match = legacy.docs[0];
+            }
             if (!match) return null;
             const data = match.data();
             // Return only the fields that friend cards need.

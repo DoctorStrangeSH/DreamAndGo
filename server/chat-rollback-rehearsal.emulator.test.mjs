@@ -38,6 +38,16 @@ test('missing message blocks reopen', async () => {
     await assert.rejects(reopen(entry), /integrity/);
     assert.equal((await entry.ref.get()).get('state'), 'frozen');
 });
+test('extra message blocks reopening without deleting anything', async () => {
+    const entry = await fixture();
+    await entry.ref.collection('messages').doc('extra').create({
+        senderId: 'bob', text: 'unexpected', createdAt: { seconds: 2 }
+    });
+    await assert.rejects(reopen(entry), /integrity/);
+    assert.equal((await entry.ref.get()).get('state'), 'frozen');
+    assert.equal((await entry.ref.collection('messages').get()).size, 2);
+});
+
 test('rejects non-demo project and untrusted chat IDs', async () => {
     const entry = await fixture();
     await assert.rejects(rehearseChatReopen(db, { projectId: 'prod', ...entry }), /isolated/);

@@ -34,7 +34,7 @@ test('simultaneous retries create one message and increment unread once', async 
     assert.deepEqual(cooldownAfter.get('lastSentAt'), cooldownBefore.get('lastSentAt'));
     const afterRetry = await db.doc('users/bob/chats/alice').get();
     assert.equal(afterRetry.get('unread'), 1);
-    await assert.rejects(send(chatId, 'Другой текст', 1), { code: 'functions/already-exists' });
+    await assert.rejects(send(chatId, 'Другой текст', 1), { code: 'already-exists' });
 });
 
 test('different messages sent simultaneously share the sender cooldown', async () => {
@@ -47,7 +47,7 @@ test('different messages sent simultaneously share the sender cooldown', async (
     ]);
     assert.equal(attempts.filter(x => x.status === 'fulfilled').length, 1);
     assert.equal(attempts.filter(x => x.status === 'rejected').length, 1);
-    assert.equal(attempts.find(x => x.status === 'rejected').reason.code, 'functions/resource-exhausted');
+    assert.equal(attempts.find(x => x.status === 'rejected').reason.code, 'resource-exhausted');
     const messages = await db.collection(`chats/${chatId}/messages`).get();
     assert.equal(messages.size, 1);
 });
@@ -55,9 +55,9 @@ test('different messages sent simultaneously share the sender cooldown', async (
 test('blocking and nonmember checks stop new writes', async () => {
     const chatId = await makeChat();
     await db.doc('users/bob/blockedUsers/alice').set({ createdBy: 'bob' });
-    await assert.rejects(send(chatId, 'Нельзя', 4), { code: 'functions/permission-denied' });
+    await assert.rejects(send(chatId, 'Нельзя', 4), { code: 'permission-denied' });
     await db.doc('users/bob/blockedUsers/alice').delete();
-    await assert.rejects(send(chatId, 'Я не участник', 5, 'mallory'), { code: 'functions/permission-denied' });
+    await assert.rejects(send(chatId, 'Я не участник', 5, 'mallory'), { code: 'permission-denied' });
     const messages = await db.collection(`chats/${chatId}/messages`).get();
     assert.equal(messages.size, 0);
 });

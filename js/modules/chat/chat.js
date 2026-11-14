@@ -297,30 +297,37 @@ export class ChatModule {
         if (sendButton?.disabled) return;
         if (sendButton) sendButton.disabled = true;
         const userId = window.app.currentUser.uid;
-        const chatId = this.chatService.getChatId(userId, this.currentChat);
+        const partnerId = this.currentChat;
+        const generation = this.chatGeneration;
+        const editId = this.editMessageId;
+        const chatId = this.chatService.getChatId(userId, partnerId);
+        const sameConversation = () => this.chatGeneration === generation &&
+            this.currentChat === partnerId && window.app.currentUser?.uid === userId &&
+            input.isConnected && document.getElementById('messageInput') === input;
 
         try {
-            const result = this.editMessageId
-                ? await this.chatService.editMessage(chatId, this.editMessageId, text)
-                : await this.chatService.sendMessage(chatId, userId, this.currentChat, text);
+            const result = editId
+                ? await this.chatService.editMessage(chatId, editId, text)
+                : await this.chatService.sendMessage(chatId, userId, partnerId, text);
 
             if (!result?.success) {
-                window.app.ui.showToast('Не удалось отправить сообщение. Попробуй ещё раз.', 'error');
-                return; // Сохраняем введённый текст при ошибке сети.
+                if (sameConversation()) window.app.ui.showToast('Не удалось отправить сообщение. Попробуй ещё раз.', 'error');
+                return; // Текст остаётся в поле при ошибке сети.
             }
 
-            if (this.editMessageId) {
+            if (!editId) window.app.onUserAction('send_message');
+            if (!sameConversation()) return;
+            if (editId) {
                 this.editMessageId = null;
                 document.getElementById('editMode').style.display = 'none';
-            } else {
-                window.app.onUserAction('send_message');
             }
 
-            input.value = '';
+            // Do not erase a newer draft typed while the request was in flight.
+            if (input.value.trim() === text) input.value = '';
             input.focus();
         } catch (error) {
             console.error('Ошибка отправки сообщения:', error);
-            window.app.ui.showToast('Сообщение не отправлено. Текст сохранён.', 'error');
+            if (sameConversation()) window.app.ui.showToast('Сообщение не отправлено. Текст сохранён.', 'error');
         } finally {
             if (sendButton) sendButton.disabled = false;
         }

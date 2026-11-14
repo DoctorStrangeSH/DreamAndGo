@@ -235,8 +235,8 @@ export class RealtimeService {
         }
     }
 
-    deliverIfCurrent(key, token, callback, value) {
-        if (this.listenerVersions.isCurrent(key, token)) callback(value);
+    deliverIfCurrent(key, token, callback, ...values) {
+        if (this.listenerVersions.isCurrent(key, token)) callback(...values);
     }
 
     unsubscribe(key) {

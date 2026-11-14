@@ -1,7 +1,7 @@
 import { db } from '../config/firebase.js';
 import {
     collection, doc, getDocs, getDoc, updateDoc, deleteDoc,
-    query, orderBy, serverTimestamp, writeBatch, setDoc, increment
+    query, orderBy, serverTimestamp, writeBatch, setDoc, increment, runTransaction
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 export class ChatService {
@@ -46,31 +46,35 @@ export class ChatService {
     }
 
     async getOrCreateChat(userId, partnerId) {
+        if (!userId || !partnerId || userId === partnerId) return null;
         try {
-            const userChatRef = doc(this.db, 'users', userId, 'chats', partnerId);
-            const userChatDoc = await getDoc(userChatRef);
+            const ownRef = doc(this.db, 'users', userId, 'chats', partnerId);
+            const peerRef = doc(this.db, 'users', partnerId, 'chats', userId);
 
-            if (userChatDoc.exists()) {
-                return partnerId;
-            }
-
-            const batch = writeBatch(this.db);
-
-            const chatData = {
-                partnerId: partnerId,
-                lastMessage: '',
-                lastMessageTime: serverTimestamp(),
-                unread: 0,
-                createdAt: serverTimestamp()
-            };
-
-            batch.set(doc(this.db, 'users', userId, 'chats', partnerId), chatData);
-            batch.set(doc(this.db, 'users', partnerId, 'chats', userId), {
-                ...chatData,
-                partnerId: userId
+            // Both documents are checked in one transaction. Never reset an
+            // existing conversation's last message or unread count.
+            await runTransaction(this.db, async transaction => {
+                const own = await transaction.get(ownRef);
+                const peer = await transaction.get(peerRef);
+                if (!own.exists()) {
+                    transaction.set(ownRef, {
+                        partnerId,
+                        lastMessage: '',
+                        lastMessageTime: serverTimestamp(),
+                        unread: 0,
+                        createdAt: serverTimestamp()
+                    });
+                }
+                if (!peer.exists()) {
+                    transaction.set(peerRef, {
+                        partnerId: userId,
+                        lastMessage: '',
+                        lastMessageTime: serverTimestamp(),
+                        unread: 0,
+                        createdAt: serverTimestamp()
+                    });
+                }
             });
-
-            await batch.commit();
             return partnerId;
         } catch (error) {
             console.error('Ошибка создания чата:', error);

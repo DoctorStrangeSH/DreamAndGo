@@ -27,10 +27,12 @@ test('only recipient can mark incoming v2 message read, repeated call preserves 
     assert.deepEqual(ack, { status: 'read', messageId: x.messageId });
     const first = await messageRef.get();
     assert.equal(first.get('read'), true);
+    assert.equal((await db.doc(`users/${x.bob}/chats/${x.alice}`).get()).get('unread'), 0);
     assert.ok(first.get('readAt'));
     assert.deepEqual(await markPrivateMessageReadTransaction(db, x.bob, x.chatId, x.messageId), ack);
     const second = await messageRef.get();
     assert.ok(first.get('readAt').isEqual(second.get('readAt')));
+    assert.equal((await db.doc(`users/${x.bob}/chats/${x.alice}`).get()).get('unread'), 0);
 });
 test('sender, outsider and unauthenticated user cannot forge read receipt', async () => {
     const x = await setup();
@@ -55,4 +57,31 @@ test('blocks and frozen state prevent new read receipts', async () => {
     await assert.rejects(markPrivateMessageReadTransaction(db, x.bob, x.chatId, x.messageId), { code: 'failed-precondition' });
     assert.equal((await x.ref.collection('messages').doc(x.messageId).get()).get('read'), false);
 });
+
+test('two devices cannot double-decrement unread on concurrent acknowledgements', async () => {
+    const x = await setup();
+    const [a, b, c] = await Promise.all([
+        markPrivateMessageReadTransaction(db, x.bob, x.chatId, x.messageId),
+        markPrivateMessageReadTransaction(db, x.bob, x.chatId, x.messageId),
+        markPrivateMessageReadTransaction(db, x.bob, x.chatId, x.messageId)
+    ]);
+    assert.deepEqual(a, b);
+    assert.deepEqual(b, c);
+    assert.equal((await db.doc(`users/${x.bob}/chats/${x.alice}`).get()).get('unread'), 0);
+});
+
+test('reading a later message leaves earlier incoming messages unread', async () => {
+    const x = await setup();
+    const later = await sendPrivateMessageTransaction(
+        db, x.alice, x.chatId, 'second', uuid(1000 + counter), () => 200_000 + counter * 2000
+    );
+    const previewRef = db.doc(`users/${x.bob}/chats/${x.alice}`);
+    assert.equal((await previewRef.get()).get('unread'), 2);
+    await markPrivateMessageReadTransaction(db, x.bob, x.chatId, later.messageId);
+    assert.equal((await previewRef.get()).get('unread'), 1);
+    assert.equal((await x.ref.collection('messages').doc(x.messageId).get()).get('read'), false);
+    await markPrivateMessageReadTransaction(db, x.bob, x.chatId, x.messageId);
+    assert.equal((await previewRef.get()).get('unread'), 0);
+});
+
 test.after(async () => { await deleteApp(app); });

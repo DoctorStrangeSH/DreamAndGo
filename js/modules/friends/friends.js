@@ -22,8 +22,6 @@ export class FriendsModule {
         this.attachEventListeners();
 
         this.subscribeToFriends();
-        this.subscribeToRequests();
-        this.subscribeToSent();
     }
 
     getTemplate() {
@@ -224,8 +222,8 @@ export class FriendsModule {
         document.querySelectorAll('.friends-tabs [data-tab]').forEach(tab => {
             tab.addEventListener('click', (e) => {
                 document.querySelectorAll('.friends-tabs [data-tab]').forEach(t => t.classList.remove('active'));
-                e.target.classList.add('active');
-                this.switchTab(e.target.dataset.tab);
+                tab.classList.add('active');
+                this.switchTab(tab.dataset.tab);
             });
         });
 

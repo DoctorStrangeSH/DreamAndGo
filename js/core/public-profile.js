@@ -1,5 +1,5 @@
 import { normalizeUsername } from './username.js';
-import { safeAvatarUrl } from './safe-avatar-url.js';
+import { safeAvatarURL } from './safe-avatar-url.js';
 
 // Explicit allowlist: never spread raw Firestore user data into a public view.
 // This projection does not itself enforce database read permissions.
@@ -16,7 +16,7 @@ export function toPublicProfile(uid, source = {}) {
         username,
         usernameNormalized: normalizeUsername(username),
         displayName,
-        avatar: safeAvatarUrl(data.avatar),
+        avatar: safeAvatarURL(data.avatar),
         bio: typeof data.bio === 'string' ? data.bio.slice(0, 500) : '',
         stats: {
             travels: count('travels'),

@@ -29,6 +29,7 @@ export class ChatModule {
         this.currentChat = null;
         this.chatGeneration++;
         this.editMessageId = null;
+        this.applyMessageMutation = null;
 
         mainContent.innerHTML = this.getTemplate();
         this.setMobileChatView(false);
@@ -305,6 +306,12 @@ export class ChatModule {
                     messagesContainer.scrollTop = messagesContainer.scrollHeight;
                 }
             };
+            this.applyMessageMutation = (messageId, changes) => {
+                if (!stillActive() || !history.has(messageId)) return;
+                if (changes === null) history.delete(messageId);
+                else history.set(messageId, { ...history.get(messageId), ...changes });
+                renderHistory(true);
+            };
             this.loadPreviousMessages = async () => {
                 if (!stillActive() || !hasMoreHistory || !historyCursor || loadingOlder) return;
                 loadingOlder = true;
@@ -425,6 +432,7 @@ export class ChatModule {
             if (!editId) window.app.onUserAction('send_message');
             if (!sameConversation()) return;
             if (editId) {
+                this.applyMessageMutation?.(editId, { text, edited: true });
                 this.editMessageId = null;
                 document.getElementById('editMode').style.display = 'none';
             }
@@ -444,6 +452,7 @@ export class ChatModule {
         this.setMobileChatView(false);
         this.chatGeneration++;
         this.loadPreviousMessages = null;
+        this.applyMessageMutation = null;
         this.currentChat = null;
         this.editMessageId = null;
 
@@ -578,12 +587,28 @@ export class ChatModule {
             }
 
             if (deleteBtn) {
-                if (confirm('Удалить сообщение?')) {
-                    const chatId = this.chatService.getChatId(
-                        window.app.currentUser.uid,
-                        this.currentChat
-                    );
-                    await this.chatService.deleteMessage(chatId, deleteBtn.dataset.msgId);
+                const partnerId = this.currentChat;
+                const userId = window.app.currentUser?.uid;
+                const generation = this.chatGeneration;
+                const messageId = deleteBtn.dataset.msgId;
+                if (!partnerId || !userId || !confirm('Удалить сообщение?')) return;
+                if (this.currentChat !== partnerId || this.chatGeneration !== generation) return;
+                deleteBtn.disabled = true;
+                try {
+                    const chatId = this.chatService.getChatId(userId, partnerId);
+                    const result = await this.chatService.deleteMessage(chatId, messageId);
+                    if (this.currentChat !== partnerId || this.chatGeneration !== generation ||
+                        window.app.currentUser?.uid !== userId) return;
+                    if (!result?.success) {
+                        window.app.ui.showToast('Не удалось удалить сообщение', 'error');
+                        return;
+                    }
+                    this.applyMessageMutation?.(messageId, null);
+                } catch (error) {
+                    console.error('Ошибка удаления сообщения:', error);
+                    if (this.chatGeneration === generation) window.app.ui.showToast('Не удалось удалить сообщение', 'error');
+                } finally {
+                    if (deleteBtn.isConnected) deleteBtn.disabled = false;
                 }
             }
         });

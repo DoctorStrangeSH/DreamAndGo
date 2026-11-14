@@ -1,4 +1,5 @@
 import { db } from '../config/firebase.js';
+import { SubscriptionVersions } from '../core/subscription-versions.js';
 import { 
     collection, doc, query, orderBy, limit,
     onSnapshot, getDoc
@@ -8,13 +9,13 @@ export class RealtimeService {
     constructor() {
         this.db = db;
         this.listeners = {};
-        this.listenerVersions = {};
+        this.listenerVersions = new SubscriptionVersions();
     }
 
     subscribeToMessages(chatId, callback) {
         const key = `messages_${chatId}`;
         this.unsubscribe(key);
-        const token = this.listenerVersions[key];
+        const token = this.listenerVersions.current(key);
 
         const messagesRef = collection(this.db, 'chats', chatId, 'messages');
         const q = query(messagesRef, orderBy('createdAt', 'asc'), limit(100));
@@ -37,14 +38,14 @@ export class RealtimeService {
 
         this.listeners[key] = unsubscribe;
         return () => {
-            if (this.listenerVersions[key] === token) this.unsubscribe(key);
+            if (this.listenerVersions.isCurrent(key, token)) this.unsubscribe(key);
         };
     }
 
     subscribeToChats(userId, callback) {
         const key = `chats_${userId}`;
         this.unsubscribe(key);
-        const token = this.listenerVersions[key];
+        const token = this.listenerVersions.current(key);
 
         const chatsRef = collection(this.db, 'users', userId, 'chats');
         const q = query(chatsRef, orderBy('lastMessageTime', 'desc'));
@@ -79,14 +80,14 @@ export class RealtimeService {
 
         this.listeners[key] = unsubscribe;
         return () => {
-            if (this.listenerVersions[key] === token) this.unsubscribe(key);
+            if (this.listenerVersions.isCurrent(key, token)) this.unsubscribe(key);
         };
     }
 
     subscribeToFriends(userId, callback) {
         const key = `friends_${userId}`;
         this.unsubscribe(key);
-        const token = this.listenerVersions[key];
+        const token = this.listenerVersions.current(key);
 
         const friendsRef = collection(this.db, 'users', userId, 'friends');
         
@@ -114,14 +115,14 @@ export class RealtimeService {
 
         this.listeners[key] = unsubscribe;
         return () => {
-            if (this.listenerVersions[key] === token) this.unsubscribe(key);
+            if (this.listenerVersions.isCurrent(key, token)) this.unsubscribe(key);
         };
     }
 
     subscribeToFriendRequests(userId, callback) {
         const key = `friendRequests_${userId}`;
         this.unsubscribe(key);
-        const token = this.listenerVersions[key];
+        const token = this.listenerVersions.current(key);
 
         const requestsRef = collection(this.db, 'users', userId, 'friendRequests');
         
@@ -149,14 +150,14 @@ export class RealtimeService {
 
         this.listeners[key] = unsubscribe;
         return () => {
-            if (this.listenerVersions[key] === token) this.unsubscribe(key);
+            if (this.listenerVersions.isCurrent(key, token)) this.unsubscribe(key);
         };
     }
 
     subscribeToSentRequests(userId, callback) {
         const key = `sentRequests_${userId}`;
         this.unsubscribe(key);
-        const token = this.listenerVersions[key];
+        const token = this.listenerVersions.current(key);
 
         const sentRef = collection(this.db, 'users', userId, 'sentRequests');
         
@@ -184,7 +185,7 @@ export class RealtimeService {
 
         this.listeners[key] = unsubscribe;
         return () => {
-            if (this.listenerVersions[key] === token) this.unsubscribe(key);
+            if (this.listenerVersions.isCurrent(key, token)) this.unsubscribe(key);
         };
     }
 
@@ -208,12 +209,12 @@ export class RealtimeService {
     }
 
     deliverIfCurrent(key, token, callback, value) {
-        if (this.listenerVersions[key] === token) callback(value);
+        if (this.listenerVersions.isCurrent(key, token)) callback(value);
     }
 
     unsubscribe(key) {
         // Аннулируем даже уже запущенные асинхронные обработчики snapshot.
-        this.listenerVersions[key] = (this.listenerVersions[key] || 0) + 1;
+        this.listenerVersions.invalidate(key);
         if (this.listeners[key]) {
             this.listeners[key]();
             delete this.listeners[key];

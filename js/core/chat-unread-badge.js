@@ -11,12 +11,9 @@ export function getChatUnreadDisplay(state) {
     if (state.status !== 'ready' || !Number.isSafeInteger(state.unread) || state.unread < 0) return null;
     if (state.unread === 0) return null;
     const n = state.unread;
-    const ending = n % 100 >= 11 && n % 100 <= 14 ? 'сообщений'
-        : n % 10 === 1 ? 'сообщение'
-        : n % 10 >= 2 && n % 10 <= 4 ? 'сообщения' : 'сообщений';
     return Object.freeze({
         kind: 'count',
-        label: `${n} непрочитанных ${ending}`,
+        label: `Непрочитанных сообщений: ${n}`,
         text: n > 99 ? '99+' : String(n)
     });
 }

@@ -18,7 +18,7 @@ export async function sendPrivateMessageTransaction(db, uid, chatId, text, clien
         // message document also serializes concurrent retries of the same request.
         const snapshot = await tx.get(chatRef);
         const priorMessage = await tx.get(messageRef);
-        if (!snapshot.exists || snapshot.get('version') !== 2 || snapshot.get('state') !== 'active') {
+        if (!snapshot.exists || snapshot.get('version') !== 2) {
             throw new HttpsError('failed-precondition', 'Диалог недоступен');
         }
         const partnerId = otherChatParticipant(snapshot.get('participants'), uid);
@@ -37,6 +37,11 @@ export async function sendPrivateMessageTransaction(db, uid, chatId, text, clien
                 throw new HttpsError('already-exists', 'Идентификатор сообщения уже использован');
             }
             return;
+        }
+
+        // A frozen chat may acknowledge an identical prior retry, but never create a new message.
+        if (snapshot.get('state') !== 'active') {
+            throw new HttpsError('failed-precondition', 'Диалог временно недоступен для отправки');
         }
 
         // Read the user's global cooldown record before any transaction writes.

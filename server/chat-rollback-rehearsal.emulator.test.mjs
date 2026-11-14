@@ -48,6 +48,16 @@ test('extra message blocks reopening without deleting anything', async () => {
     assert.equal((await entry.ref.collection('messages').get()).size, 2);
 });
 
+test('concurrent recovery requests allow exactly one state transition', async () => {
+    const entry = await fixture();
+    const results = await Promise.allSettled([reopen(entry), reopen(entry)]);
+    assert.equal(results.filter(row => row.status === 'fulfilled').length, 1);
+    assert.equal(results.filter(row => row.status === 'rejected').length, 1);
+    assert.match(results.find(row => row.status === 'rejected').reason.message, /frozen/);
+    assert.equal((await entry.ref.get()).get('state'), 'active');
+    assert.equal((await entry.ref.collection('messages').get()).size, 1);
+});
+
 test('rejects non-demo project and untrusted chat IDs', async () => {
     const entry = await fixture();
     await assert.rejects(rehearseChatReopen(db, { projectId: 'prod', ...entry }), /isolated/);

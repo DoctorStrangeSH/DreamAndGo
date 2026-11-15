@@ -215,7 +215,7 @@ test('book cards and editing form safely render private library content', () => 
   assert.match(source, /escapeHTML\(Array\.isArray\(book\?\.quotes\)/);
   assert.match(source, /Object\.hasOwn\(statuses, book\.status\)/);
   assert.match(source, /Math\.min\(safeTotalPages, Math\.floor\(currentPage\)\)/);
-  assert.match(source, /safeCurrentPage\/safeTotalPages/);
+  assert.ok(source.includes('${safeCurrentPage}/${safeTotalPages}'));
   assert.match(source, /data-id="\$\{escapeHTML\(String\(book\.id\)\)\}"/);
   assert.doesNotMatch(source, /<h6 class="fw-bold mb-1">\$\{book\.title/);
 });

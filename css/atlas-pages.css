@@ -175,3 +175,44 @@
  .card-premium,.atlas-empty,.filter-bar {border-width:2px}
  .btn-outline-secondary,.btn-outline-primary {border-width:2px}
 }
+
+/* Profile identity and activity — the same Atlas language as the design preview. */
+.profile-page .profile-header {gap:1.35rem;align-items:flex-end;min-width:0}
+.profile-page .profile-info {min-width:0}
+.profile-page .profile-avatar {
+  width:108px;height:108px;border-radius:29px;
+  border:5px solid var(--bg-card);box-shadow:var(--shadow-lg)
+}
+.profile-page .profile-avatar-text {font-weight:850}
+.profile-page .profile-username {overflow-wrap:anywhere;line-height:1.25}
+.profile-page .profile-display-name {
+  border:1px solid var(--border-color);background:var(--bg-tertiary);
+  color:var(--primary);font-weight:800
+}
+.profile-page .profile-stats {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.65rem;padding:1rem}
+.profile-page .profile-stat {
+  min-width:0;padding:.9rem .55rem;background:var(--bg-secondary);
+  border:1px solid var(--border-light);border-radius:15px
+}
+.profile-page .profile-stat strong {font-size:1.4rem;line-height:1.25;font-weight:850}
+.profile-page .profile-stat span {display:block;font-size:.76rem;overflow-wrap:anywhere}
+.profile-page .profile-tabs {scrollbar-width:thin;scrollbar-color:var(--border-color) transparent;gap:.35rem}
+.profile-page .profile-tabs .nav-link {min-height:44px;padding:.72rem 1rem}
+.profile-page .profile-tabs .nav-link[aria-selected="true"] {
+  background:var(--bg-tertiary);color:var(--primary);border-radius:12px 12px 0 0
+}
+.profile-page .profile-tab-content .card-premium {border-radius:21px}
+.profile-page .achievement-earned .badge {background:var(--bg-tertiary)!important;color:var(--primary)!important}
+@media(min-width:1200px) {
+  .profile-page .profile-stats {grid-template-columns:repeat(6,minmax(0,1fr))}
+}
+@media(max-width:767.98px) {
+  .profile-page .profile-header {align-items:flex-start;flex-wrap:wrap;margin-top:-38px}
+  .profile-page .profile-avatar {width:88px;height:88px;border-radius:23px}
+  .profile-page .profile-info {flex:1 1 100%;padding-inline:.25rem}
+  .profile-page .profile-stats {grid-template-columns:repeat(3,minmax(0,1fr));padding:.65rem}
+}
+@media(max-width:380px) {
+  .profile-page .profile-stats {grid-template-columns:repeat(2,minmax(0,1fr))}
+  .profile-page .profile-stat {padding:.7rem .4rem}
+}

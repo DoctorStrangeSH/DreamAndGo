@@ -42,9 +42,7 @@ export class ChatV2PilotConversation {
 
     refreshLatest() {
         if (this.disposed) return Promise.resolve({ status: 'stale' });
-        // Re-open at the newest page after a confirmed send. The history
-        // controller invalidates any previous in-flight older-page request.
-        return this.history.open(this.chatId);
+        return this.history.refreshLatest();
     }
 
     loadOlder() {

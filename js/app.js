@@ -9,6 +9,8 @@ import { EventBus } from './core/event-bus.js';
 import { RealtimeService } from './services/realtime.service.js';
 import { Navigation } from './modules/navigation/navigation.js';
 import { AuthModule } from './modules/auth/auth.js';
+import { RegistrationRecoveryModule } from './modules/auth/registration-recovery.js';
+import { canUseSignupV2 } from './core/signup-v2-policy.js';
 import { ProfileModule } from './modules/profile/profile.js';
 import { TravelsModule } from './modules/travels/travels.js';
 import { RestaurantsModule } from './modules/restaurants/restaurants.js';
@@ -60,6 +62,8 @@ class DreamAndGo {
         this.authResolved = false;
         this.dataLoaded = false;
         this.authVersion = 0;
+        this.registrationRecoveryPending = false;
+        this.registrationRecoveryStatus = 'complete';
 
         window.app = this;
         this.init();
@@ -88,18 +92,35 @@ class DreamAndGo {
             this.authResolved = true;
 
             if (user) {
+                if (canUseSignupV2(this.authService.signupV2Rollout)) {
+                    const recovery = await this.authService.getRegistrationStateV2();
+                    if (version !== this.authVersion) return;
+                    this.registrationRecoveryStatus = recovery.success
+                        ? recovery.status : 'temporarily-unavailable';
+                    this.registrationRecoveryPending = this.registrationRecoveryStatus !== 'complete';
+                } else {
+                    this.registrationRecoveryStatus = 'complete';
+                    this.registrationRecoveryPending = false;
+                }
                 this.showApp();
-                this.notificationsWidget.init();
-                await this.loadUserData();
-                if (version !== this.authVersion) return;
-                setTimeout(() => {
-                    if (version === this.authVersion && this.currentUser) this.renderNavWidgets();
-                }, 500);
+                if (this.registrationRecoveryPending) {
+                    this.router.navigate('recovery');
+                } else {
+                    if (window.location.hash === '#recovery') this.router.navigate('home');
+                    this.notificationsWidget.init();
+                    await this.loadUserData();
+                    if (version !== this.authVersion) return;
+                    setTimeout(() => {
+                        if (version === this.authVersion && this.currentUser) this.renderNavWidgets();
+                    }, 500);
+                }
             } else {
                 // Снимаем слушатели предыдущего аккаунта до показа формы входа.
                 this.realtimeService.unsubscribeAll();
                 this.userData = null;
                 this.dataLoaded = false;
+                this.registrationRecoveryPending = false;
+                this.registrationRecoveryStatus = 'complete';
                 this.showAuth();
             }
 
@@ -128,6 +149,12 @@ class DreamAndGo {
 
     registerRoutes() {
         this.router.register('auth', new AuthModule(this.authService), { title: 'Вход', requiresAuth: false, showInNav: false });
+        this.router.register('recovery', new RegistrationRecoveryModule(this.authService, async () => {
+            this.registrationRecoveryPending = false;
+            this.registrationRecoveryStatus = 'complete';
+            await this.loadUserData();
+            this.router.navigate('home');
+        }), { title: 'Восстановление аккаунта', requiresAuth: true, showInNav: false });
         this.router.register('home', { render: () => this.renderHomePage() }, { title: 'Главная', icon: 'bi-house-heart', showInNav: true });
         this.router.register('travels', new TravelsModule(), { title: 'Путешествия', icon: 'bi-airplane', showInNav: true });
         this.router.register('food', new RestaurantsModule(), { title: 'Рестораны', icon: 'bi-shop', showInNav: true });
@@ -141,6 +168,14 @@ class DreamAndGo {
         this.router.register('achievements', new AchievementsModule(), { title: 'Достижения', icon: 'bi-trophy', showInNav: true });
 
         this.router.beforeEach((path) => {
+            if (this.registrationRecoveryPending && this.currentUser && path !== 'recovery') {
+                this.router.navigate('recovery');
+                return false;
+            }
+            if (path === 'recovery' && !this.registrationRecoveryPending) {
+                this.router.navigate('home');
+                return false;
+            }
             if (path === 'auth') {
                 if (this.currentUser && this.authResolved) { this.router.navigate('home'); return false; }
                 return true;

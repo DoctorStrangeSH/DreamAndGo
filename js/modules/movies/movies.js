@@ -436,11 +436,19 @@ export class MoviesModule {
         document.querySelectorAll('.delete-movie-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                if (confirm('Удалить фильм?')) {
-                    await this.movieService.deleteMovie(window.app.currentUser.uid, btn.dataset.movieId);
+                if (btn.disabled || !confirm('Удалить фильм?')) return;
+                btn.disabled = true;
+                try {
+                    const result = await this.movieService.deleteMovie(window.app.currentUser.uid, btn.dataset.movieId);
+                    if (!result?.success) throw new Error('Удаление не выполнено');
                     window.app.ui.showToast('Фильм удалён', 'info');
                     await this.loadMyMovies();
                     window.app.refreshUserData();
+                } catch (error) {
+                    console.error('Не удалось удалить фильм:', error);
+                    window.app.ui.showToast('Не удалось удалить фильм. Попробуй снова.', 'error');
+                } finally {
+                    btn.disabled = false;
                 }
             });
         });
@@ -563,7 +571,9 @@ export class MoviesModule {
             });
         }
 
-        document.getElementById('saveMovieBtn').addEventListener('click', async () => {
+        document.getElementById('saveMovieBtn').addEventListener('click', async (event) => {
+            const saveButton = event.currentTarget;
+            if (saveButton.disabled) return;
             const form = document.getElementById('movieForm');
             const formData = new FormData(form);
 
@@ -591,7 +601,10 @@ export class MoviesModule {
                 review: formData.get('review')
             };
 
+            saveButton.disabled = true;
+            saveButton.setAttribute('aria-busy', 'true');
             const userId = window.app.currentUser.uid;
+            try {
             const result = isEdit
                 ? await this.movieService.updateMovie(userId, existingId, moviePayload)
                 : await this.movieService.addMovie(userId, moviePayload);
@@ -607,7 +620,14 @@ export class MoviesModule {
                     await this.render();
                 }, 300);
             } else {
-                window.app.ui.showToast('Ошибка сохранения', 'error');
+                window.app.ui.showToast('Не удалось сохранить фильм. Попробуй снова.', 'error');
+            }
+            } catch (error) {
+                console.error('Ошибка сохранения фильма:', error);
+                window.app.ui.showToast('Не удалось сохранить фильм. Попробуй снова.', 'error');
+            } finally {
+                saveButton.disabled = false;
+                saveButton.removeAttribute('aria-busy');
             }
         });
     }

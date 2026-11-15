@@ -80,3 +80,20 @@ test('pilot markup includes semantic Load older control and status message', () 
     assert.match(html, /Загрузить ранние/);
     assert.match(html, /chat-v2-pilot__history-status/);
 });
+
+test('confirmed send reopens newest history and invalidates older pagination', async () => {
+    const requests = [];
+    const h = harness(async req => {
+        requests.push(req);
+        return requests.length === 1
+            ? { chatId: 'chat-a', messages: [message(2), message(1)],
+                hasMore: false, nextBeforeSequence: null }
+            : { chatId: 'chat-a', messages: [message(3), message(2)],
+                hasMore: true, nextBeforeSequence: 2 };
+    });
+    await h.conversation.mount();
+    await h.view.options.onSent();
+    assert.deepEqual(requests.map(req => req.beforeSequence), [null, null]);
+    assert.deepEqual(h.snapshots.at(-1).messages.map(row => row.sequence), [2, 3]);
+    h.conversation.dispose();
+});

@@ -54,7 +54,7 @@ export class DreamsService {
                 status: data.status || 'dreaming',
                 progress: data.progress || 0,
                 steps: data.steps || [],
-                isPublic: data.isPublic !== false
+                isPublic: false
             };
 
             const docRef = await addDoc(dreamsRef, newDream);

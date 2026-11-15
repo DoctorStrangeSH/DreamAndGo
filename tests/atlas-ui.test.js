@@ -311,3 +311,33 @@ test('collection load failures show retry controls without rendering empty-state
     assert.match(section, /requestId !== this\.requestId \|\| window\.app\.currentUser\?\.uid !== userId/g);
   }
 });
+
+test('movie service distinguishes remote failures from empty results when requested', () => {
+  const source = read('js/services/movie.service.js');
+  for (const method of ['searchMovies', 'getPopularMovies', 'getUserMovies']) {
+    const start = source.indexOf('async ' + method + '(');
+    assert.ok(start >= 0);
+    const section = source.slice(start, source.indexOf('\n    async ', start + 8));
+    assert.match(section, /throwOnError = false/);
+    assert.match(section, /if \(throwOnError\) throw error;/);
+  }
+});
+
+test('movie tabs show accessible retry actions for failed loads and searches', () => {
+  const source = read('js/modules/movies/movies.js');
+  const cases = [
+    ['loadMyMovies', 'loadPopularMovies', 'data-retry-movies'],
+    ['loadPopularMovies', 'searchMovies', 'data-retry-popular'],
+    ['searchMovies', 'createCard', 'data-retry-search']
+  ];
+  for (const [method, next, retry] of cases) {
+    const section = source.slice(source.indexOf('async ' + method + '('), source.indexOf(next === 'createCard' ? '\n    createCard(' : '\n    async ' + next + '(', source.indexOf('async ' + method + '(') + 10));
+    assert.match(section, /throwOnError: true/);
+    assert.match(section, /catch \(error\)/);
+    assert.match(section, /role="alert"/);
+    assert.match(section, /Повторить/);
+    assert.ok(section.includes(retry));
+    assert.match(section, /requestId !== this\.requestId/);
+    assert.match(section, /\.addEventListener\('click', \(\) => this\./);
+  }
+});

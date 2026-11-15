@@ -35,7 +35,7 @@
 .profile-cover {
   min-height:210px;
   background:radial-gradient(circle at 75% 15%,rgba(249,186,125,.65),transparent 32%),
-             linear-gradient(120deg,#153e58,#187a7b 58%,#75c4a8)!important;
+             linear-gradient(120deg,#153e58,#187a7b 58%,#75c4a8);
   border:1px solid var(--border-color);box-shadow:var(--shadow-md)!important
 }
 .profile-cover-overlay {background:linear-gradient(0deg,rgba(13,44,56,.2),transparent 55%)}

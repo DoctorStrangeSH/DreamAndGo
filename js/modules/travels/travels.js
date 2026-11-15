@@ -7,6 +7,7 @@ export class TravelsModule {
     constructor() {
         this.travelService = new TravelService();
         this.currentFilter = { type: 'all', status: 'all' };
+        this.requestId = 0;
     }
 
     async render() {
@@ -16,9 +17,13 @@ export class TravelsModule {
         const userId = window.app.currentUser?.uid;
         if (!userId) return;
 
-        mainContent.innerHTML = window.app.ui.createLoader();
+        const requestId = ++this.requestId;
+        mainContent.innerHTML = `<div data-collection-request="travels-${requestId}">${window.app.ui.createLoader()}</div>`;
 
         const travels = await this.travelService.getTravels(userId, this.currentFilter);
+
+        if (requestId !== this.requestId || window.app.currentUser?.uid !== userId ||
+            !mainContent.isConnected || !mainContent.querySelector('[data-collection-request="travels-' + requestId + '"]')) return;
 
         mainContent.innerHTML = this.getTemplate(travels);
         this.attachEventListeners();

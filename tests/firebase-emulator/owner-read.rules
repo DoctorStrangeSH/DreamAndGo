@@ -46,6 +46,118 @@ service cloud.firestore {
       return data is map && data.keys().size() <= 40;
     }
 
+
+    // Dream schema: title:string(1..120), category:enum, status:enum,
+    // description:string(0..4000), progress:int(0..100),
+    // deadline:null|YYYY-MM-DD (format only), steps:list<=20 of
+    // {text:string(1..200), done:bool}, isPublic:false on create,
+    // createdAt/updatedAt:timestamp. Legacy documents may require migration.
+    function isValidDreamStep(step) {
+      return step is map &&
+        step.keys().hasAll(['text', 'done']) &&
+        step.keys().hasOnly(['text', 'done']) &&
+        step.text is string && step.text.size() > 0 &&
+        step.text.size() <= 200 &&
+        step.done is bool;
+    }
+
+    function areValidDreamSteps(steps) {
+      return steps is list && steps.size() <= 20 &&
+        (steps.size() <= 0 || isValidDreamStep(steps[0])) &&
+        (steps.size() <= 1 || isValidDreamStep(steps[1])) &&
+        (steps.size() <= 2 || isValidDreamStep(steps[2])) &&
+        (steps.size() <= 3 || isValidDreamStep(steps[3])) &&
+        (steps.size() <= 4 || isValidDreamStep(steps[4])) &&
+        (steps.size() <= 5 || isValidDreamStep(steps[5])) &&
+        (steps.size() <= 6 || isValidDreamStep(steps[6])) &&
+        (steps.size() <= 7 || isValidDreamStep(steps[7])) &&
+        (steps.size() <= 8 || isValidDreamStep(steps[8])) &&
+        (steps.size() <= 9 || isValidDreamStep(steps[9])) &&
+        (steps.size() <= 10 || isValidDreamStep(steps[10])) &&
+        (steps.size() <= 11 || isValidDreamStep(steps[11])) &&
+        (steps.size() <= 12 || isValidDreamStep(steps[12])) &&
+        (steps.size() <= 13 || isValidDreamStep(steps[13])) &&
+        (steps.size() <= 14 || isValidDreamStep(steps[14])) &&
+        (steps.size() <= 15 || isValidDreamStep(steps[15])) &&
+        (steps.size() <= 16 || isValidDreamStep(steps[16])) &&
+        (steps.size() <= 17 || isValidDreamStep(steps[17])) &&
+        (steps.size() <= 18 || isValidDreamStep(steps[18])) &&
+        (steps.size() <= 19 || isValidDreamStep(steps[19]));
+    }
+
+    function isValidDream(data) {
+      return data is map &&
+        data.keys().hasAll([
+          'title', 'category', 'status', 'description', 'progress',
+          'deadline', 'steps', 'isPublic', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'title', 'category', 'status', 'description', 'progress',
+          'deadline', 'steps', 'isPublic', 'createdAt', 'updatedAt'
+        ]) &&
+        data.title is string && data.title.size() > 0 &&
+        data.title.size() <= 120 &&
+        data.category in ['', 'Путешествия', 'Карьера', 'Творчество',
+          'Спорт', 'Отношения', 'Знания', 'Материальное', 'Другое'] &&
+        data.status in ['dreaming', 'in_progress', 'completed'] &&
+        data.description is string && data.description.size() <= 4000 &&
+        data.progress is int && data.progress >= 0 &&
+        data.progress <= 100 &&
+        (data.deadline == null ||
+          (data.deadline is string &&
+           data.deadline.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}
+      allow get: if isOwner(uid);
+      allow list: if false;
+      allow create: if false && isOwner(uid) && uidUnchanged(uid) &&
+        isValidUser(request.resource.data);
+      allow update: if false && isOwner(uid) && uidNotModified() &&
+        isValidUser(request.resource.data);
+      allow delete: if false;
+
+
+      match /dreams/{dreamId} {
+        allow create: if isOwner(uid) &&
+          exists(/databases/$(database)/documents/users/$(uid)) &&
+          isValidDream(request.resource.data) &&
+          request.resource.data.isPublic == false &&
+          request.resource.data.createdAt == request.time &&
+          request.resource.data.updatedAt == request.time;
+        allow update: if isOwner(uid) &&
+          isValidDream(request.resource.data) &&
+          request.resource.data.createdAt == resource.data.createdAt &&
+          request.resource.data.isPublic == resource.data.isPublic &&
+          request.resource.data.updatedAt == request.time;
+        allow delete: if isOwner(uid);
+      }
+
+      match /{category}/{id} {
+        allow get, list: if isOwner(uid) &&
+          category in [
+            'travels', 'restaurants', 'movies', 'books', 'dreams',
+            'dailyTasks', 'notifications', 'friends',
+            'friendRequests', 'sentRequests', 'chats', 'messages'
+          ] &&
+          exists(/databases/$(database)/documents/users/$(uid));
+        allow create: if false && isOwner(uid) &&
+          isValidOwnedDocument(request.resource.data);
+        allow update: if false && isOwner(uid) &&
+          isValidOwnedDocument(request.resource.data);
+        allow delete: if false;
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+))) &&
+        areValidDreamSteps(data.steps) &&
+        data.isPublic is bool &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
     match /users/{uid} {
       allow get: if isOwner(uid);
       allow list: if false;

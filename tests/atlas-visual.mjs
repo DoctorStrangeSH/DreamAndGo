@@ -24,6 +24,10 @@ try {
     if (theme !== 'dark') errors.push(target.name + ': theme did not switch');
     await page.screenshot({ path: path.join(root, 'atlas-screenshots', target.name + '-dark.png'), fullPage: true });
     if (target.name === 'desktop') {
+      await page.getByRole('button', { name: 'Мой профиль' }).click();
+      await page.getByRole('tab', { name: 'Достижения' }).click();
+      await page.getByRole('heading', { name: '🏆 Первые открытия' }).waitFor();
+      await page.getByRole('tab', { name: 'Обзор' }).click();
       await page.getByRole('textbox', { name: 'Название' }).fill('Проверка интерфейса');
       await page.getByRole('button', { name: 'Добавить в макет' }).click();
       await page.getByRole('heading', { name: 'Проверка интерфейса' }).waitFor();

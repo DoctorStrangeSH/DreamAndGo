@@ -119,3 +119,16 @@ test('pilot refreshes history exactly once after acknowledgement, never on failu
     assert.equal(refreshes, 1);
     retryView.destroy();
 });
+
+test('history refresh failure does not mislabel a confirmed message as failed', async () => {
+    const h = createHarness({ success: true });
+    const view = new ChatV2PilotView({
+        root: h.root, session: h.session, chatId: 'chat-a',
+        onSent: async () => { throw new Error('offline'); }
+    }).mount();
+    await h.events.get('submit')({ preventDefault() {} });
+    assert.equal(h.input.value, '');
+    assert.match(h.feedback.textContent, /Отправлено/);
+    assert.doesNotMatch(h.feedback.textContent, /Не удалось отправить/);
+    view.destroy();
+});

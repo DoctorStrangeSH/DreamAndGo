@@ -219,6 +219,12 @@ export class ProfileModule {
             case 'travels':
                 await this.loadOwnTravels(container, requestId);
                 break;
+            case 'movies':
+                await this.loadOwnMovies(container, requestId);
+                break;
+            case 'books':
+                await this.loadOwnBooks(container, requestId);
+                break;
             case 'dreams':
                 await this.loadOwnDreams(container, requestId);
                 break;
@@ -272,6 +278,95 @@ export class ProfileModule {
             if (requestId !== this.tabRequestId || !container.isConnected) return;
             console.error('Не удалось загрузить путешествия профиля:', error);
             container.innerHTML = '<div class="alert alert-warning" role="status">Не удалось загрузить путешествия. Попробуй открыть раздел позже.</div>';
+        }
+    }
+
+    async loadOwnMovies(container, requestId) {
+        if (!this.profileIsOwn || window.app.currentUser?.uid !== this.profileUserId) {
+            container.innerHTML = this.getPlaceholder('movies');
+            return;
+        }
+        container.innerHTML = window.app.ui.createLoader();
+        try {
+            const { MovieService } = await import('../../services/movie.service.js');
+            const movies = await new MovieService().getUserMovies(this.profileUserId);
+            if (requestId !== this.tabRequestId || !container.isConnected ||
+                window.app.currentUser?.uid !== this.profileUserId) return;
+            if (!movies.length) {
+                container.innerHTML = `
+                    <section class="atlas-empty atlas-empty--movie">
+                        <div class="atlas-empty-art" aria-hidden="true"><i class="bi bi-film"></i></div>
+                        <h3>Твоя киноколлекция ждёт первой истории</h3>
+                        <p>Добавь фильм, который хочется посмотреть или уже полюбил.</p>
+                    </section>`;
+                return;
+            }
+            container.innerHTML = `
+                <div class="row g-3">
+                    ${movies.slice(0, 12).map(movie => `
+                        <div class="col-12 col-md-6 col-lg-4">
+                            <article class="card-premium profile-collection-card p-3 h-100">
+                                <span class="profile-collection-kicker">
+                                    ${movie.status === 'watched' ? '✓ Просмотрен' : '✦ Хочу посмотреть'}
+                                </span>
+                                <h3 class="h6 mt-2 mb-2">${escapeHTML(String(movie.title || 'Без названия'))}</h3>
+                                <p class="text-muted small mb-0">${escapeHTML(String(movie.releaseDate || 'Дата выхода не указана'))}</p>
+                            </article>
+                        </div>`).join('')}
+                </div>
+                <p class="text-muted small mt-3">
+                    Показаны первые ${Math.min(movies.length, 12)} из ${movies.length} фильмов.
+                    Полный список доступен в разделе «Кино».
+                </p>`;
+        } catch (error) {
+            if (requestId !== this.tabRequestId || !container.isConnected) return;
+            console.error('Не удалось загрузить фильмы профиля:', error);
+            container.innerHTML = '<div class="alert alert-warning" role="status">Не удалось загрузить фильмы. Попробуй открыть раздел позже.</div>';
+        }
+    }
+
+    async loadOwnBooks(container, requestId) {
+        if (!this.profileIsOwn || window.app.currentUser?.uid !== this.profileUserId) {
+            container.innerHTML = this.getPlaceholder('books');
+            return;
+        }
+        container.innerHTML = window.app.ui.createLoader();
+        try {
+            const { BookService } = await import('../../services/book.service.js');
+            const books = await new BookService().getBooks(this.profileUserId);
+            if (requestId !== this.tabRequestId || !container.isConnected ||
+                window.app.currentUser?.uid !== this.profileUserId) return;
+            if (!books.length) {
+                container.innerHTML = `
+                    <section class="atlas-empty atlas-empty--book">
+                        <div class="atlas-empty-art" aria-hidden="true"><i class="bi bi-book"></i></div>
+                        <h3>Первая глава ещё впереди</h3>
+                        <p>Добавь книгу в личную библиотеку — прочитанную или из списка желаний.</p>
+                    </section>`;
+                return;
+            }
+            const statusLabels = { read: '✓ Прочитана', reading: '↗ Читаю', want_to_read: '✦ Хочу прочитать' };
+            container.innerHTML = `
+                <div class="row g-3">
+                    ${books.slice(0, 12).map(book => `
+                        <div class="col-12 col-md-6 col-lg-4">
+                            <article class="card-premium profile-collection-card p-3 h-100">
+                                <span class="profile-collection-kicker">
+                                    ${Object.hasOwn(statusLabels, book.status) ? statusLabels[book.status] : '✦ В библиотеке'}
+                                </span>
+                                <h3 class="h6 mt-2 mb-2">${escapeHTML(String(book.title || 'Без названия'))}</h3>
+                                <p class="text-muted small mb-0">${escapeHTML(String(book.author || 'Автор не указан'))}</p>
+                            </article>
+                        </div>`).join('')}
+                </div>
+                <p class="text-muted small mt-3">
+                    Показаны первые ${Math.min(books.length, 12)} из ${books.length} книг.
+                    Полный список доступен в разделе «Книги».
+                </p>`;
+        } catch (error) {
+            if (requestId !== this.tabRequestId || !container.isConnected) return;
+            console.error('Не удалось загрузить книги профиля:', error);
+            container.innerHTML = '<div class="alert alert-warning" role="status">Не удалось загрузить книги. Попробуй открыть раздел позже.</div>';
         }
     }
 

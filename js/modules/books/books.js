@@ -1,4 +1,5 @@
 import { BookService } from '../../services/book.service.js';
+import { escapeHTML } from '../../core/escape-html.js';
 
 export class BooksModule {
     constructor() {
@@ -51,8 +52,8 @@ export class BooksModule {
                         <div class="col-auto">
                             <select class="form-select form-select-sm" id="genreFilter" style="min-width: 130px;">
                                 ${genres.map(g => `
-                                    <option value="${g}" ${activeGenre === g ? 'selected' : ''}>
-                                        ${g === 'all' ? 'Все жанры' : g}
+                                    <option value="${escapeHTML(g)}" ${activeGenre === g ? 'selected' : ''}>
+                                        ${escapeHTML(g === 'all' ? 'Все жанры' : g)}
                                     </option>
                                 `).join('')}
                             </select>
@@ -113,35 +114,40 @@ export class BooksModule {
             reading: { badge: 'Читаю', color: 'primary' },
             want_to_read: { badge: 'Хочу прочитать', color: 'warning' }
         };
-        const status = statuses[book.status] || statuses.want_to_read;
-        const progress = book.totalPages && book.currentPage
-            ? Math.round((book.currentPage / book.totalPages) * 100)
-            : 0;
+        const status = Object.hasOwn(statuses, book.status) ? statuses[book.status] : statuses.want_to_read;
+        const totalPages = Number(book.totalPages);
+        const currentPage = Number(book.currentPage);
+        const safeTotalPages = Number.isFinite(totalPages) && totalPages > 0 ? Math.floor(totalPages) : 0;
+        const safeCurrentPage = Number.isFinite(currentPage) && currentPage > 0
+            ? Math.min(safeTotalPages, Math.floor(currentPage)) : 0;
+        const progress = safeTotalPages ? Math.round((safeCurrentPage / safeTotalPages) * 100) : 0;
+        const rating = Number(book.userRating);
+        const safeRating = Number.isFinite(rating) && rating > 0 ? Math.min(10, Math.max(0, rating)) : 0;
 
         return `
-            <div class="col-12 col-md-6 col-lg-4 fade-in-up" style="animation-delay: ${index * 0.06}s">
+            <div class="col-12 col-md-6 col-lg-4 fade-in-up" style="animation-delay: ${Math.min(index, 12) * 0.06}s">
                 <div class="card-premium h-100 book-card p-3">
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <span class="badge bg-${status.color} bg-opacity-10 text-${status.color}">${status.badge}</span>
                         <div class="book-card-actions">
-                            <button class="btn btn-sm btn-outline-secondary rounded-circle me-1 edit-btn" aria-label="Редактировать запись" title="Редактировать" data-id="${book.id}">
+                            <button class="btn btn-sm btn-outline-secondary rounded-circle me-1 edit-btn" aria-label="Редактировать запись" title="Редактировать" data-id="${escapeHTML(String(book.id))}">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-danger rounded-circle delete-btn" aria-label="Удалить запись" title="Удалить" data-id="${book.id}">
+                            <button class="btn btn-sm btn-outline-danger rounded-circle delete-btn" aria-label="Удалить запись" title="Удалить" data-id="${escapeHTML(String(book.id))}">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </div>
                     </div>
-                    <h6 class="fw-bold mb-1">${book.title || 'Без названия'}</h6>
-                    <p class="text-muted small mb-2">${book.author || 'Автор не указан'}</p>
-                    ${book.genres && book.genres.length
-                ? `<div class="mb-2">${book.genres.map(g => `<span class="badge bg-light text-dark me-1">${g}</span>`).join('')}</div>`
+                    <h6 class="fw-bold mb-1">${escapeHTML(String(book.title || 'Без названия'))}</h6>
+                    <p class="text-muted small mb-2">${escapeHTML(String(book.author || 'Автор не указан'))}</p>
+                    ${Array.isArray(book.genres) && book.genres.length
+                ? `<div class="mb-2">${book.genres.map(g => `<span class="badge bg-light text-dark me-1">${escapeHTML(String(g))}</span>`).join('')}</div>`
                 : ''
             }
                     ${book.status === 'reading' && progress > 0
                 ? `<div class="mb-2">
                             <div class="d-flex justify-content-between small">
-                                <span>${book.currentPage}/${book.totalPages} стр.</span>
+                                <span>${safeCurrentPage}/${safeTotalPages} стр.</span>
                                 <span>${progress}%</span>
                             </div>
                             <div class="progress" style="height: 4px;">
@@ -151,8 +157,8 @@ export class BooksModule {
                 : ''
             }
                     <div class="d-flex justify-content-between align-items-center">
-                        ${book.userRating
-                ? `<span class="badge bg-primary">${book.userRating}/10</span>`
+                        ${safeRating
+                ? `<span class="badge bg-primary">${safeRating}/10</span>`
                 : '<span></span>'
             }
                         <small class="text-muted">${this.formatDate(book.createdAt)}</small>
@@ -230,12 +236,12 @@ export class BooksModule {
                                     <div class="col-md-8">
                                         <label class="form-label fw-semibold small">Название *</label>
                                         <input type="text" class="form-control" name="title"
-                                               value="${book?.title || ''}" required>
+                                               value="${escapeHTML(String(book?.title || ''))}" required>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Автор *</label>
                                         <input type="text" class="form-control" name="author"
-                                               value="${book?.author || ''}" required>
+                                               value="${escapeHTML(String(book?.author || ''))}" required>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Статус</label>
@@ -249,7 +255,7 @@ export class BooksModule {
                                         <label class="form-label fw-semibold small">Жанры</label>
                                         <select class="form-select" name="genres" multiple size="3">
                                             ${genres.map(g => `
-                                                <option value="${g}" ${book?.genres?.includes(g) ? 'selected' : ''}>${g}</option>
+                                                <option value="${escapeHTML(g)}" ${book?.genres?.includes(g) ? 'selected' : ''}>${escapeHTML(g)}</option>
                                             `).join('')}
                                         </select>
                                         <small class="text-muted">Ctrl+клик для нескольких</small>
@@ -257,38 +263,38 @@ export class BooksModule {
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Год издания</label>
                                         <input type="number" class="form-control" name="year"
-                                               value="${book?.year || ''}" min="1000" max="2099">
+                                               value="${escapeHTML(String(book?.year || ''))}" min="1000" max="2099">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Всего страниц</label>
                                         <input type="number" class="form-control" name="totalPages"
-                                               value="${book?.totalPages || ''}">
+                                               value="${escapeHTML(String(book?.totalPages || ''))}">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Прочитано</label>
                                         <input type="number" class="form-control" name="currentPage"
-                                               value="${book?.currentPage || ''}">
+                                               value="${escapeHTML(String(book?.currentPage || ''))}">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Моя оценка</label>
                                         <div class="d-flex align-items-center gap-2 pt-2">
                                             <input type="range" class="form-range" name="userRating"
-                                                   min="0" max="10" value="${book?.userRating || 0}"
+                                                   min="0" max="10" value="${Number.isFinite(Number(book?.userRating)) ? Math.min(10, Math.max(0, Number(book.userRating))) : 0}"
                                                    id="ratingSlider" style="flex: 1;">
-                                            <span class="badge bg-primary" id="ratingValue">${book?.userRating || 0}/10</span>
+                                            <span class="badge bg-primary" id="ratingValue">${Number.isFinite(Number(book?.userRating)) ? Math.min(10, Math.max(0, Number(book.userRating))) : 0}/10</span>
                                         </div>
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label fw-semibold small">Рецензия</label>
                                         <textarea class="form-control" name="review" rows="3"
-                                                  placeholder="Твои мысли о книге...">${book?.review || ''}</textarea>
+                                                  placeholder="Твои мысли о книге...">${escapeHTML(String(book?.review || ''))}</textarea>
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label fw-semibold small">
                                             <i class="bi bi-chat-quote me-1"></i>Любимые цитаты
                                         </label>
                                         <textarea class="form-control" name="quotes" rows="2"
-                                                  placeholder="Разделяй цитаты символом |">${book?.quotes?.join('|') || ''}</textarea>
+                                                  placeholder="Разделяй цитаты символом |">${escapeHTML(Array.isArray(book?.quotes) ? book.quotes.join('|') : '')}</textarea>
                                     </div>
                                 </div>
                             </form>

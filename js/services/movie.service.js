@@ -21,7 +21,7 @@ export class MovieService {
         this.cache = new Map();
     }
 
-    async searchMovies(query, page = 1) {
+    async searchMovies(query, page = 1, { throwOnError = false } = {}) {
         try {
             const cacheKey = `search_${query}_${page}`;
             
@@ -69,11 +69,12 @@ export class MovieService {
             return result;
         } catch (error) {
             console.error('Ошибка поиска фильмов:', error);
+            if (throwOnError) throw error;
             return { movies: [], totalPages: 0, totalResults: 0, page: 1 };
         }
     }
 
-    async getPopularMovies(page = 1) {
+    async getPopularMovies(page = 1, { throwOnError = false } = {}) {
         try {
             const cacheKey = `popular_${page}`;
             
@@ -119,6 +120,7 @@ export class MovieService {
             return result;
         } catch (error) {
             console.error('Ошибка загрузки популярных фильмов:', error);
+            if (throwOnError) throw error;
             return { movies: [], totalPages: 0, page: 1 };
         }
     }
@@ -189,7 +191,7 @@ export class MovieService {
         }
     }
 
-    async getUserMovies(userId, filters = {}) {
+    async getUserMovies(userId, filters = {}, { throwOnError = false } = {}) {
         try {
             const moviesRef = collection(this.db, 'users', userId, 'movies');
             let q = query(moviesRef, orderBy('createdAt', 'desc'));
@@ -219,6 +221,7 @@ export class MovieService {
             return movies;
         } catch (error) {
             console.error('Ошибка загрузки фильмов пользователя:', error);
+            if (throwOnError) throw error;
             return [];
         }
     }

@@ -18,13 +18,26 @@ export class BooksModule {
         const requestId = ++this.requestId;
         mainContent.innerHTML = `<div data-collection-request="books-${requestId}">${window.app.ui.createLoader()}</div>`;
 
-        const books = await this.bookService.getBooks(userId, this.currentFilter);
+        try {
+            const books = await this.bookService.getBooks(userId, this.currentFilter, { throwOnError: true });
 
-        if (requestId !== this.requestId || window.app.currentUser?.uid !== userId ||
-            !mainContent.isConnected || !mainContent.querySelector('[data-collection-request="books-' + requestId + '"]')) return;
+            if (requestId !== this.requestId || window.app.currentUser?.uid !== userId ||
+                !mainContent.isConnected || !mainContent.querySelector('[data-collection-request="books-' + requestId + '"]')) return;
 
-        mainContent.innerHTML = this.getTemplate(books);
-        this.attachEventListeners();
+            mainContent.innerHTML = this.getTemplate(books);
+            this.attachEventListeners();
+        } catch (error) {
+            console.error('Не удалось загрузить коллекцию книг:', error);
+            if (requestId !== this.requestId || window.app.currentUser?.uid !== userId ||
+                !mainContent.isConnected || !mainContent.querySelector('[data-collection-request="books-' + requestId + '"]')) return;
+
+            mainContent.innerHTML = `<section class="atlas-empty" role="alert">
+                <h2>Не удалось загрузить книги</h2>
+                <p>Проверь подключение к интернету и попробуй ещё раз.</p>
+                <button class="btn btn-premium" type="button" data-retry-books>Повторить</button>
+            </section>`;
+            mainContent.querySelector('[data-retry-books]')?.addEventListener('click', () => this.render());
+        }
     }
 
     getTemplate(books) {

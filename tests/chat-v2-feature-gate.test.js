@@ -45,7 +45,7 @@ test('approved pilot creates a v2 session without touching legacy UI', async () 
     session.dispose();
 });
 
-test('callable invoker exposes exactly five named endpoints and rejects arbitrary calls', async () => {
+test('callable invoker exposes exactly six named endpoints and rejects arbitrary calls', async () => {
     const names = [], payloads = [], functions = {};
     const invoke = createChatV2CallableInvoker((instance, name) => {
         assert.equal(instance, functions);

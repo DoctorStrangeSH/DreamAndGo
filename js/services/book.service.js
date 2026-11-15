@@ -9,7 +9,7 @@ export class BookService {
         this.db = db;
     }
 
-    async getBooks(userId, filters = {}) {
+    async getBooks(userId, filters = {}, { throwOnError = false } = {}) {
         try {
             const booksRef = collection(this.db, 'users', userId, 'books');
             let q = query(booksRef, orderBy('createdAt', 'desc'));
@@ -43,6 +43,7 @@ export class BookService {
             return books;
         } catch (error) {
             console.error('Ошибка загрузки книг:', error);
+            if (throwOnError) throw error;
             return [];
         }
     }

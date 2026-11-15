@@ -92,3 +92,11 @@ node scripts/backfill-username-reservations.mjs --project dream-and-go --apply -
 Добавлен `server/username-reservation.emulator.test.mjs`. Тест использует **реальные Firestore-транзакции в эмуляторе**, а не мок: одновременно три новых UID конкурируют за один никнейм в разном регистре; проверяет строго одного победителя, отсутствие чужих профилей, повтор после потерянного ответа без перезаписи полей, закрытый флаг миграции и завершение Auth-only профиля после повторного подключения. GitHub Actions запускает этот файл в существующей job `chat-rules` по шаблону `server/*.emulator.test.mjs`.
 
 Остаётся отдельно провести браузерный e2e с **Firebase Auth Emulator + Firestore Emulator**, проверкой App Check и истинного жизненного цикла регистрации. Этот набор проверяет Firestore и серверную транзакцию, а не настоящий UI и Firebase Auth.
+
+## Firebase Auth + Firestore Emulator (дополнительный сквозной тест)
+
+`tests/firebase-emulator/auth-signup.journey.test.mjs` запускает **оба изолированных эмулятора** в CI. Создаёт тестовый email/password-аккаунт через Firebase Auth SDK, проверяет закрытый миграционный флаг, завершает профиль серверной Firestore-транзакцией, выходит, снова входит с теми же учётными данными и подтверждает сохранность UID. Второй тестовый аккаунт не может занять уже зарезервированный никнейм.
+
+CI запускает `--only auth,firestore` в `tests/firebase-emulator/firebase.json`; тест аварийно прекращается без обоих `*_EMULATOR_HOST`. Никогда не используйте эти сквозные тесты с production credentials.
+
+Этот тест ещё **не проверяет браузерный экран и App Check**, поскольку callable обёртка вызывается напрямую через сервис, а не через настоящий клиентский HTTPS-запрос. Для production дополнительно нужен пилотный браузерный прогон на staging.

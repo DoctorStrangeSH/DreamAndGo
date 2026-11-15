@@ -86,6 +86,14 @@ export class BooksModule {
     }
 
     getEmptyState() {
+        const hasFilter = this.currentFilter.status !== 'all' || this.currentFilter.genre !== 'all';
+        if (hasFilter) return `
+            <div class="col-12"><section class="atlas-empty atlas-empty--book" aria-label="Нет результатов по фильтрам">
+                <div class="atlas-empty-art" aria-hidden="true"><i class="bi bi-funnel"></i></div>
+                <h3>По этим фильтрам пока ничего нет</h3>
+                <p>Попробуй выбрать другой статус или категорию — твои записи никуда не исчезли.</p>
+            </section></div>
+        `;
         return `
             <div class="col-12">
                 <section class="atlas-empty atlas-empty--book" aria-labelledby="book-empty-title">
@@ -93,7 +101,7 @@ export class BooksModule {
                     <span class="atlas-empty-kicker">Твоя библиотека</span>
                     <h3 id="book-empty-title">Время открыть новую страницу</h3>
                     <p>Собери любимые истории и книги, которые хочется прочитать однажды.</p>
-                    <button type="button" class="btn btn-premium atlas-empty-action" onclick="document.getElementById('addBookBtn')?.click()"><i class="bi bi-plus-lg me-2"></i>Добавить книгу</button>
+                    <button type="button" class="btn btn-premium atlas-empty-action" id="emptyAddBookBtn"><i class="bi bi-plus-lg me-2"></i>Добавить книгу</button>
                 </section>
             </div>
         `;
@@ -156,6 +164,7 @@ export class BooksModule {
 
     attachEventListeners() {
         document.getElementById('addBookBtn')?.addEventListener('click', () => this.showModal(null));
+        document.getElementById('emptyAddBookBtn')?.addEventListener('click', () => this.showModal(null));
 
         document.querySelectorAll('.edit-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {

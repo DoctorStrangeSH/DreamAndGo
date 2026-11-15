@@ -124,10 +124,10 @@ export class TravelsModule {
             }
                         <div class="position-absolute top-0 start-0 p-2">${statusBadge}</div>
                         <div class="restaurant-card-actions">
-                            <button class="btn btn-light btn-sm rounded-circle me-1 edit-btn" data-id="${escapeHTML(travel.id)}">
+                            <button class="btn btn-light btn-sm rounded-circle me-1 edit-btn" aria-label="Редактировать запись" title="Редактировать" data-id="${escapeHTML(travel.id)}">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <button class="btn btn-light btn-sm rounded-circle delete-btn" data-id="${escapeHTML(travel.id)}">
+                            <button class="btn btn-light btn-sm rounded-circle delete-btn" aria-label="Удалить запись" title="Удалить" data-id="${escapeHTML(travel.id)}">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </div>

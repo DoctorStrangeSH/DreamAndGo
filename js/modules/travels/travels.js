@@ -1,4 +1,5 @@
 import { TravelService } from '../../services/travel.service.js';
+import { escapeHTML } from '../../core/escape-html.js';
 import { APP_CONFIG } from '../../config/constants.js';
 
 export class TravelsModule {
@@ -116,44 +117,44 @@ export class TravelsModule {
                 <div class="card-premium h-100 travel-card">
                     <div class="restaurant-card-header">
                         ${travel.photos && travel.photos[0]
-                ? `<img src="${travel.photos[0]}" class="restaurant-photo" alt="${travel.title}">`
+                ? `<img src="${escapeHTML(travel.photos[0])}" class="restaurant-photo" alt="${escapeHTML(travel.title)}">`
                 : `<div class="restaurant-placeholder">
                                 <i class="bi ${typeInfo.icon} display-4 text-white opacity-25"></i>
                             </div>`
             }
                         <div class="position-absolute top-0 start-0 p-2">${statusBadge}</div>
                         <div class="restaurant-card-actions">
-                            <button class="btn btn-light btn-sm rounded-circle me-1 edit-btn" data-id="${travel.id}">
+                            <button class="btn btn-light btn-sm rounded-circle me-1 edit-btn" data-id="${escapeHTML(travel.id)}">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <button class="btn btn-light btn-sm rounded-circle delete-btn" data-id="${travel.id}">
+                            <button class="btn btn-light btn-sm rounded-circle delete-btn" data-id="${escapeHTML(travel.id)}">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </div>
                     </div>
                     <div class="p-3">
                         <div class="d-flex justify-content-between align-items-start mb-1">
-                            <h6 class="fw-bold mb-0">${travel.title || 'Без названия'}</h6>
+                            <h6 class="fw-bold mb-0">${escapeHTML(travel.title || 'Без названия')}</h6>
                             ${travel.rating
-                ? `<span class="badge" style="background: var(--primary);">${travel.rating}/10</span>`
+                ? `<span class="badge" style="background: var(--primary);">${escapeHTML(travel.rating)}/10</span>`
                 : ''
             }
                         </div>
                         <p class="text-muted small mb-2">
-                            <i class="bi ${typeInfo.icon} text-primary me-1"></i>${typeInfo.label}
+                            <i class="bi ${typeInfo.icon} text-primary me-1"></i>${escapeHTML(typeInfo.label)}
                             ${travel.location
-                ? `<span class="mx-1">·</span><i class="bi bi-geo-alt text-danger me-1"></i>${travel.location}`
+                ? `<span class="mx-1">·</span><i class="bi bi-geo-alt text-danger me-1"></i>${escapeHTML(travel.location)}`
                 : ''
             }
                         </p>
                         ${travel.description
-                ? `<p class="text-muted small mb-2">${travel.description.substring(0, 100)}...</p>`
+                ? `<p class="text-muted small mb-2">${escapeHTML(String(travel.description).substring(0, 100))}${String(travel.description).length > 100 ? '…' : ''}</p>`
                 : ''
             }
                         <div class="d-flex justify-content-between align-items-center">
                             <small class="text-muted">
                                 <i class="bi bi-wallet2 me-1"></i>
-                                ${travel.budget?.planned || 0} ${travel.budget?.currency || 'RUB'}
+                                ${escapeHTML(travel.budget?.planned || 0)} ${escapeHTML(travel.budget?.currency || 'RUB')}
                             </small>
                             <small class="text-muted">${this.formatDate(travel.createdAt)}</small>
                         </div>

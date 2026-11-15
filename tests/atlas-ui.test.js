@@ -244,3 +244,14 @@ test('collection deletion prevents repeated clicks and reports failed requests',
     assert.match(source, /finally \{\s*btn\.disabled = false/);
   }
 });
+
+test('movie save and delete handlers prevent duplicate writes and show failures', () => {
+  const source = read('js/modules/movies/movies.js');
+  assert.match(source, /if \(btn\.disabled \|\| !confirm\('Удалить фильм\?'\)\) return/);
+  assert.match(source, /if \(!result\?\.success\) throw new Error\('Удаление не выполнено'\)/);
+  assert.match(source, /Не удалось удалить фильм\. Попробуй снова\./);
+  assert.match(source, /if \(saveButton\.disabled\) return/);
+  assert.match(source, /saveButton\.setAttribute\('aria-busy', 'true'\)/);
+  assert.match(source, /saveButton\.removeAttribute\('aria-busy'\)/);
+  assert.match(source, /Не удалось сохранить фильм\. Попробуй снова\./);
+});

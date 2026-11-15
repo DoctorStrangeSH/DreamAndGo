@@ -14,6 +14,7 @@ import { createFirestoreHistoryAdapter } from './chat-history-firestore.js';
 import { loadPublicProfile, findPublicProfileByUsername } from './public-profile-service.js';
 import { consumeProfileLookupQuota } from './profile-lookup-quota.js';
 import { registerProfileWithReservedUsername } from './username-reservation.js';
+import { getRegistrationState } from './registration-state.js';
 
 if (getApps().length === 0) initializeApp();
 
@@ -198,4 +199,11 @@ export const registerProfileV2 = onCall({ region: 'europe-west3', enforceAppChec
         throw new HttpsError(result.code, message);
     }
     return { username: result.username, recovered: result.recovered === true };
+});
+
+// Read-only, own-account recovery state. No private profile data is returned.
+export const getRegistrationStateV2 = onCall({ region: 'europe-west3', enforceAppCheck: true }, async request => {
+    const result = await getRegistrationState(getFirestore(), request.auth?.uid);
+    if (!result.ok) throw new HttpsError(result.code, 'Требуется вход в аккаунт');
+    return { status: result.status };
 });

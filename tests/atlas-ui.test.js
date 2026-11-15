@@ -56,3 +56,14 @@ test('icon-only card actions have accessible labels', () => {
     assert.match(remove[0], /aria-label="Удалить запись"/);
   }
 });
+
+
+test('design preview is isolated from production services', () => {
+  const html = read('design/atlas-preview.html');
+  assert.match(html, /Atlas/);
+  for (const stylesheet of ['atlas-theme.css', 'atlas-pages.css', 'atlas-illustrations.css', 'atlas-dialogs.css']) {
+    assert.ok(html.includes('../css/' + stylesheet), stylesheet + ' is included');
+  }
+  assert.doesNotMatch(html, /(?:firebase|https?:\/\/|<script\s+src=)/i);
+  assert.doesNotMatch(html, /(?:fetch\s*\(|XMLHttpRequest|localStorage|indexedDB)/);
+});

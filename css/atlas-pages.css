@@ -216,3 +216,12 @@
   .profile-page .profile-stats {grid-template-columns:repeat(2,minmax(0,1fr))}
   .profile-page .profile-stat {padding:.7rem .4rem}
 }
+
+/* Read-only owner collection inside profile; never exposes edit actions. */
+.profile-collection-card {min-width:0;overflow:hidden}
+.profile-collection-card h3,.profile-collection-card p {overflow-wrap:anywhere}
+.profile-collection-kicker {
+  display:inline-flex;align-self:flex-start;padding:.33rem .65rem;
+  background:var(--bg-tertiary);border:1px solid var(--border-color);
+  border-radius:10px;color:var(--primary);font-size:.73rem;font-weight:800
+}

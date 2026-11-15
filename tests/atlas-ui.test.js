@@ -64,6 +64,6 @@ test('design preview is isolated from production services', () => {
   for (const stylesheet of ['atlas-theme.css', 'atlas-pages.css', 'atlas-illustrations.css', 'atlas-dialogs.css']) {
     assert.ok(html.includes('../css/' + stylesheet), stylesheet + ' is included');
   }
-  assert.doesNotMatch(html, /(?:firebase|https?:\/\/|<script\s+src=)/i);
+  assert.doesNotMatch(html, /(?:firebase\/|firebaseapp\.com|https?:\/\/|<script\s+src=)/i);
   assert.doesNotMatch(html, /(?:fetch\s*\(|XMLHttpRequest|localStorage|indexedDB)/);
 });

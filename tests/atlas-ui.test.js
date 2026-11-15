@@ -203,3 +203,19 @@ test('movie cards and dialogs escape text and validate poster URLs', () => {
   assert.doesNotMatch(source, /<img src="\$\{movie\.poster\}/);
   assert.doesNotMatch(source, /<img src="\$\{details\.poster\}/);
 });
+
+test('book cards and editing form safely render private library content', () => {
+  const source = read('js/modules/books/books.js');
+  assert.match(source, /import \{ escapeHTML \} from '\.\.\/\.\.\/core\/escape-html\.js'/);
+  assert.match(source, /escapeHTML\(String\(book\.title \|\| 'Без названия'\)\)/);
+  assert.match(source, /escapeHTML\(String\(book\.author \|\| 'Автор не указан'\)\)/);
+  assert.match(source, /escapeHTML\(String\(g\)\)/);
+  assert.match(source, /escapeHTML\(String\(book\?\.title \|\| ''\)\)/);
+  assert.match(source, /escapeHTML\(String\(book\?\.review \|\| ''\)\)/);
+  assert.match(source, /escapeHTML\(Array\.isArray\(book\?\.quotes\)/);
+  assert.match(source, /Object\.hasOwn\(statuses, book\.status\)/);
+  assert.match(source, /Math\.min\(safeTotalPages, Math\.floor\(currentPage\)\)/);
+  assert.match(source, /safeCurrentPage\/safeTotalPages/);
+  assert.match(source, /data-id="\$\{escapeHTML\(String\(book\.id\)\)\}"/);
+  assert.doesNotMatch(source, /<h6 class="fw-bold mb-1">\$\{book\.title/);
+});

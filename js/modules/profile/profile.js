@@ -219,6 +219,9 @@ export class ProfileModule {
             case 'travels':
                 await this.loadOwnTravels(container, requestId);
                 break;
+            case 'dreams':
+                await this.loadOwnDreams(container, requestId);
+                break;
             case 'achievements':
                 container.innerHTML = this.getUserAchievements(userData);
                 break;
@@ -269,6 +272,51 @@ export class ProfileModule {
             if (requestId !== this.tabRequestId || !container.isConnected) return;
             console.error('Не удалось загрузить путешествия профиля:', error);
             container.innerHTML = '<div class="alert alert-warning" role="status">Не удалось загрузить путешествия. Попробуй открыть раздел позже.</div>';
+        }
+    }
+
+    async loadOwnDreams(container, requestId) {
+        if (!this.profileIsOwn || window.app.currentUser?.uid !== this.profileUserId) {
+            container.innerHTML = this.getPlaceholder('dreams');
+            return;
+        }
+        container.innerHTML = window.app.ui.createLoader();
+        try {
+            const { DreamsService } = await import('../../services/dreams.service.js');
+            const dreams = await new DreamsService().getDreams(this.profileUserId);
+            if (requestId !== this.tabRequestId || !container.isConnected ||
+                window.app.currentUser?.uid !== this.profileUserId) return;
+            if (!dreams.length) {
+                container.innerHTML = `
+                    <section class="atlas-empty atlas-empty--dream">
+                        <div class="atlas-empty-art" aria-hidden="true"><i class="bi bi-stars"></i></div>
+                        <h3>Всё начинается с мечты</h3>
+                        <p>Запиши то, чего по-настоящему хочется достичь, в разделе «Мечты».</p>
+                    </section>`;
+                return;
+            }
+            const statusLabels = { completed: '✓ Сбылось', in_progress: '↗ В процессе', dreaming: '✦ Мечтаю' };
+            container.innerHTML = `
+                <div class="row g-3">
+                    ${dreams.slice(0, 12).map(dream => `
+                        <div class="col-12 col-md-6 col-lg-4">
+                            <article class="card-premium profile-collection-card p-3 h-100">
+                                <span class="profile-collection-kicker">
+                                    ${statusLabels[dream.status] || statusLabels.dreaming}
+                                </span>
+                                <h3 class="h6 mt-2 mb-2">${escapeHTML(String(dream.title || 'Без названия'))}</h3>
+                                <p class="text-muted small mb-0">${escapeHTML(String(dream.category || 'Личная мечта'))}</p>
+                            </article>
+                        </div>`).join('')}
+                </div>
+                <p class="text-muted small mt-3">
+                    Показаны первые ${Math.min(dreams.length, 12)} из ${dreams.length} мечт.
+                    Полный список доступен в разделе «Мечты».
+                </p>`;
+        } catch (error) {
+            if (requestId !== this.tabRequestId || !container.isConnected) return;
+            console.error('Не удалось загрузить мечты профиля:', error);
+            container.innerHTML = '<div class="alert alert-warning" role="status">Не удалось загрузить мечты. Попробуй открыть раздел позже.</div>';
         }
     }
 

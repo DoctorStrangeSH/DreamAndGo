@@ -82,6 +82,14 @@ export class TravelsModule {
     }
 
     getEmptyState() {
+        const hasFilter = this.currentFilter.status !== 'all' || this.currentFilter.type !== 'all';
+        if (hasFilter) return `
+            <div class="col-12"><section class="atlas-empty atlas-empty--travel" aria-label="Нет результатов по фильтрам">
+                <div class="atlas-empty-art" aria-hidden="true"><i class="bi bi-funnel"></i></div>
+                <h3>По этим фильтрам пока ничего нет</h3>
+                <p>Попробуй выбрать другой статус или категорию — твои записи никуда не исчезли.</p>
+            </section></div>
+        `;
         return `
             <div class="col-12">
                 <section class="atlas-empty atlas-empty--travel" aria-labelledby="travel-empty-title">
@@ -89,7 +97,7 @@ export class TravelsModule {
                     <span class="atlas-empty-kicker">Карта приключений</span>
                     <h3 id="travel-empty-title">Твой следующий маршрут ещё впереди</h3>
                     <p>Сохраняй места, куда мечтаешь попасть, и собирай историю своих открытий.</p>
-                    <button type="button" class="btn btn-premium atlas-empty-action" onclick="document.getElementById('addTravelBtn')?.click()"><i class="bi bi-plus-lg me-2"></i>Добавить путешествие</button>
+                    <button type="button" class="btn btn-premium atlas-empty-action" id="emptyAddTravelBtn"><i class="bi bi-plus-lg me-2"></i>Добавить путешествие</button>
                 </section>
             </div>
         `;
@@ -157,6 +165,7 @@ export class TravelsModule {
 
     attachEventListeners() {
         document.getElementById('addTravelBtn')?.addEventListener('click', () => this.showModal(null));
+        document.getElementById('emptyAddTravelBtn')?.addEventListener('click', () => this.showModal(null));
 
         document.querySelectorAll('.edit-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {

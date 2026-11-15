@@ -9,6 +9,8 @@ import { sendPrivateMessageTransaction } from './chat-transactions.js';
 import { getPrivateMessageStatus } from './message-status.js';
 import { markPrivateMessageReadTransaction } from './chat-read-receipts.js';
 import { getPrivateChatUnreadCount } from './chat-unread-status.js';
+import { loadPrivateChatHistory } from './chat-history-service.js';
+import { createFirestoreHistoryAdapter } from './chat-history-firestore.js';
 
 if (getApps().length === 0) initializeApp();
 
@@ -112,4 +114,24 @@ export const markPrivateMessageReadV2 = onCall({ region: 'europe-west3' }, async
 // Candidate v2 only: read-only recovery after reconnect or reinstall.
 export const getPrivateChatUnreadV2 = onCall({ region: 'europe-west3' }, async request => {
     return getPrivateChatUnreadCount(getFirestore(), request.auth?.uid, request.data?.chatId);
+});
+
+// Candidate v2 only: authenticated, read-only cursor-based history.
+export const getPrivateChatHistoryV2 = onCall({ region: 'europe-west3' }, async request => {
+    try {
+        const result = await loadPrivateChatHistory(
+            request.auth?.uid, request.data, createFirestoreHistoryAdapter(getFirestore())
+        );
+        if (!result.ok) {
+            throw new HttpsError(result.code, 'История диалога недоступна');
+        }
+        const { ok: _authorized, ...page } = result;
+        return page;
+    } catch (error) {
+        // Corrupted database rows must fail closed without exposing internals.
+        if (error instanceof TypeError) {
+            throw new HttpsError('internal', 'Не удалось прочитать историю диалога');
+        }
+        throw error;
+    }
 });

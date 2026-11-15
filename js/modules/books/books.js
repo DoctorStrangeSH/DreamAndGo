@@ -182,11 +182,19 @@ export class BooksModule {
         document.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                if (confirm('Удалить эту книгу?')) {
-                    await this.bookService.deleteBook(window.app.currentUser.uid, btn.dataset.id);
+                if (btn.disabled || !confirm('Удалить эту книгу?')) return;
+                btn.disabled = true;
+                try {
+                    const result = await this.bookService.deleteBook(window.app.currentUser.uid, btn.dataset.id);
+                    if (!result?.success) throw new Error('Удаление не выполнено');
                     window.app.ui.showToast('Книга удалена', 'info');
-                    this.render();
+                    await this.render();
                     window.app.refreshUserData();
+                } catch (error) {
+                    console.error('Не удалось удалить книга:', error);
+                    window.app.ui.showToast('Не удалось удалить запись. Попробуй снова.', 'error');
+                } finally {
+                    btn.disabled = false;
                 }
             });
         });

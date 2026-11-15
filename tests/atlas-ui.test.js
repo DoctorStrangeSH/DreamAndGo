@@ -168,3 +168,20 @@ test('private restaurant collection is owner-only and escapes display fields', (
   assert.match(source, /escapeHTML\(String\(restaurant\.cuisine \|\| 'Кухня не указана'\)\)/);
   assert.doesNotMatch(source, /getRestaurants\(userId\)/);
 });
+
+test('restaurant cards and edit form escape saved content and validate photos', () => {
+  const source = read('js/modules/restaurants/restaurants.js');
+  assert.match(source, /import \{ escapeHTML \} from '\.\.\/\.\.\/core\/escape-html\.js'/);
+  assert.match(source, /safeAvatarURL\(restaurant\.photos\?\.\[0\]\)/);
+  for (const field of ['name', 'cuisine', 'address']) {
+    assert.ok(source.includes('escapeHTML(String(restaurant.' + field), field + ' is escaped in cards');
+  }
+  assert.match(source, /escapeHTML\(String\(restaurant\.review\)\.substring\(0, 100\)\)/);
+  assert.match(source, /escapeHTML\(restaurant\.favoriteDishes\.slice\(0, 2\)\.join\(', '\)\)/);
+  assert.match(source, /escapeHTML\(String\(restaurant\?\.name \|\| ''\)\)/);
+  assert.match(source, /escapeHTML\(String\(restaurant\?\.review \|\| ''\)\)/);
+  assert.match(source, /aria-label="Редактировать ресторан"/);
+  assert.match(source, /aria-label="Удалить ресторан"/);
+  assert.match(source, /this\.currentFilter\.status = e\.currentTarget\.dataset\.filter/);
+  assert.doesNotMatch(source, /<img src="\$\{restaurant\.photos\[0\]\}/);
+});

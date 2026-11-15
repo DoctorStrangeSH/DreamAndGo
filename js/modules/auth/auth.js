@@ -213,7 +213,11 @@ export class AuthModule {
             // Firebase Auth может сообщить о входе раньше, чем Firestore сохранит
             // профиль. После регистрации повторно загружаем готовые данные.
             if (this.mode === 'register') {
-                window.app?.refreshUserData?.();
+                if (this.authService.signupV2Rollout?.enabled === true) {
+                    await window.app?.completeSignupV2Navigation?.();
+                } else {
+                    window.app?.refreshUserData?.();
+                }
             }
         } else {
             this.showError(result.error);

@@ -1,4 +1,5 @@
 import { db } from '../config/firebase.js';
+import { validateDreamInput } from '../core/dream-input-policy.js';
 import { 
     collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc,
     query, orderBy, serverTimestamp, where

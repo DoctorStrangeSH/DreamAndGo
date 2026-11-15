@@ -288,3 +288,26 @@ test('movie searches and collections ignore superseded results', () => {
   assert.match(search, /const requestId = \+\+this\.requestId/);
   assert.match(search, /requestId !== this\.requestId \|\| this\.currentTab !== 'search'/);
 });
+
+test('collection service loaders opt into propagating fetch errors without changing existing callers', () => {
+  for (const name of ['book', 'travel', 'restaurant']) {
+    const source = read('js/services/' + name + '.service.js');
+    assert.match(source, /throwOnError = false/);
+    assert.match(source, /if \(throwOnError\) throw error;/);
+    assert.match(source, /return \[\];/);
+  }
+});
+
+test('collection load failures show retry controls without rendering empty-state data', () => {
+  for (const name of ['books', 'travels', 'restaurants']) {
+    const source = read('js/modules/' + name + '/' + name + '.js');
+    const section = source.slice(source.indexOf('async render()'), source.indexOf('\n    getTemplate('));
+    assert.match(section, /throwOnError: true/);
+    assert.match(section, /catch \(error\)/);
+    assert.match(section, /role="alert"/);
+    assert.match(section, /Повторить/);
+    assert.match(section, /data-retry-/);
+    assert.match(section, /addEventListener\('click', \(\) => this\.render\(\)\)/);
+    assert.match(section, /requestId !== this\.requestId \|\| window\.app\.currentUser\?\.uid !== userId/g);
+  }
+});

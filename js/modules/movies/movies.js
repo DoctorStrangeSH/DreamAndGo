@@ -109,40 +109,51 @@ export class MoviesModule {
         grid.innerHTML = window.app.ui.createLoader();
 
         const userId = window.app.currentUser.uid;
-        const allMovies = await this.movieService.getUserMovies(userId, this.currentFilter);
-        if (requestId !== this.requestId || this.currentTab !== 'my' ||
-            !grid.isConnected || window.app.currentUser?.uid !== userId) return;
-
-        if (allMovies.length === 0) {
-            grid.innerHTML = `
-                <div class="col-12">
-                    <section class="atlas-empty atlas-empty--movie">
-                        <div class="atlas-empty-art" aria-hidden="true"><i class="bi bi-film"></i></div>
-                        <h3>Твоя киноколлекция ждёт первой истории</h3>
-                        <p>Найди любимый фильм или добавь то, что давно хочется посмотреть.</p>
-                    </section>
-                    <button class="btn btn-premium btn-sm" id="goToSearch">
-                        <i class="bi bi-search me-1"></i>Найти фильмы
-                    </button>
-                </div>
-            `;
-            document.getElementById('goToSearch')?.addEventListener('click', () => this.switchTab('search'));
-            return;
+        try {
+            const allMovies = await this.movieService.getUserMovies(userId, this.currentFilter, { throwOnError: true });
+            if (requestId !== this.requestId || this.currentTab !== 'my' ||
+                !grid.isConnected || window.app.currentUser?.uid !== userId) return;
+    
+            if (allMovies.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-12">
+                        <section class="atlas-empty atlas-empty--movie">
+                            <div class="atlas-empty-art" aria-hidden="true"><i class="bi bi-film"></i></div>
+                            <h3>Твоя киноколлекция ждёт первой истории</h3>
+                            <p>Найди любимый фильм или добавь то, что давно хочется посмотреть.</p>
+                        </section>
+                        <button class="btn btn-premium btn-sm" id="goToSearch">
+                            <i class="bi bi-search me-1"></i>Найти фильмы
+                        </button>
+                    </div>
+                `;
+                document.getElementById('goToSearch')?.addEventListener('click', () => this.switchTab('search'));
+                return;
+            }
+    
+            const totalPages = Math.ceil(allMovies.length / this.ITEMS_PER_PAGE);
+    
+            if (totalPages > 1) {
+                this.createPaginationElement();
+                const start = (this.myMoviesPage - 1) * this.ITEMS_PER_PAGE;
+                const pageMovies = allMovies.slice(start, start + this.ITEMS_PER_PAGE);
+                grid.innerHTML = pageMovies.map((m, i) => this.createCard(m, i)).join('');
+                this.renderPagination(totalPages, 'my');
+            } else {
+                grid.innerHTML = allMovies.map((m, i) => this.createCard(m, i)).join('');
+            }
+    
+            this.attachCardListeners();
+        } catch (error) {
+            console.error('Не удалось загрузить киноколлекцию:', error);
+            if (requestId !== this.requestId || this.currentTab !== 'my' ||
+                !grid.isConnected || window.app.currentUser?.uid !== userId) return;
+            grid.innerHTML = `<div class="col-12"><section class="atlas-empty atlas-empty--movie" role="alert">
+                <h3>Не удалось загрузить фильмы</h3><p>Проверь подключение к интернету и попробуй ещё раз.</p>
+                <button type="button" class="btn btn-premium" data-retry-movies>Повторить</button>
+            </section></div>`;
+            grid.querySelector('[data-retry-movies]')?.addEventListener('click', () => this.loadMyMovies());
         }
-
-        const totalPages = Math.ceil(allMovies.length / this.ITEMS_PER_PAGE);
-
-        if (totalPages > 1) {
-            this.createPaginationElement();
-            const start = (this.myMoviesPage - 1) * this.ITEMS_PER_PAGE;
-            const pageMovies = allMovies.slice(start, start + this.ITEMS_PER_PAGE);
-            grid.innerHTML = pageMovies.map((m, i) => this.createCard(m, i)).join('');
-            this.renderPagination(totalPages, 'my');
-        } else {
-            grid.innerHTML = allMovies.map((m, i) => this.createCard(m, i)).join('');
-        }
-
-        this.attachCardListeners();
     }
 
     async loadPopularMovies() {
@@ -155,7 +166,7 @@ export class MoviesModule {
         grid.innerHTML = window.app.ui.createLoader();
 
         try {
-            const result = await this.movieService.getPopularMovies(this.popularPage);
+            const result = await this.movieService.getPopularMovies(this.popularPage, { throwOnError: true });
 
             if (requestId !== this.requestId || this.currentTab !== 'popular' || !grid.isConnected) return;
 
@@ -174,14 +185,14 @@ export class MoviesModule {
                 }
             }
         } catch (error) {
-            if (requestId === this.requestId && this.currentTab === 'popular') {
-                grid.innerHTML = `
-                    <div class="col-12 text-center py-5">
-                        <i class="bi bi-cloud-slash display-1 text-muted opacity-25"></i>
-                        <h5 class="mt-3">Не удалось загрузить</h5>
-                    </div>
-                `;
-            }
+            console.error('Не удалось загрузить популярные фильмы:', error);
+            if (requestId !== this.requestId || this.currentTab !== 'popular' || !grid.isConnected) return;
+            grid.innerHTML = `<div class="col-12"><section class="atlas-empty atlas-empty--movie" role="alert">
+                <h3>Не удалось загрузить популярные фильмы</h3>
+                <p>Проверь подключение к интернету и попробуй ещё раз.</p>
+                <button type="button" class="btn btn-premium" data-retry-popular>Повторить</button>
+            </section></div>`;
+            grid.querySelector('[data-retry-popular]')?.addEventListener('click', () => this.loadPopularMovies());
         }
     }
 
@@ -194,23 +205,35 @@ export class MoviesModule {
 
         grid.innerHTML = window.app.ui.createLoader();
 
-        const result = await this.movieService.searchMovies(this.searchQuery, this.searchPage);
-
-        if (requestId !== this.requestId || this.currentTab !== 'search' || !grid.isConnected) return;
-
-        if (result.movies.length === 0) {
+        try {
+            const result = await this.movieService.searchMovies(this.searchQuery, this.searchPage, { throwOnError: true });
+    
+            if (requestId !== this.requestId || this.currentTab !== 'search' || !grid.isConnected) return;
+    
+            if (result.movies.length === 0) {
+                const pagination = document.getElementById('pagination');
+                if (pagination) { pagination.style.display = 'none'; pagination.innerHTML = ''; }
+                grid.innerHTML = `
+                    <div class="col-12 text-center py-5">
+                        <i class="bi bi-emoji-frown display-1 text-muted opacity-25"></i>
+                        <h5 class="mt-3">Ничего не найдено</h5>
+                    </div>
+                `;
+            } else {
+                grid.innerHTML = result.movies.map((m, i) => this.createCard(m, i, true)).join('');
+                this.attachCardListeners();
+                if (this.currentTab === 'search') this.renderPagination(result.totalPages, 'search');
+            }
+        } catch (error) {
+            console.error('Не удалось выполнить поиск фильмов:', error);
+            if (requestId !== this.requestId || this.currentTab !== 'search' || !grid.isConnected) return;
             const pagination = document.getElementById('pagination');
             if (pagination) { pagination.style.display = 'none'; pagination.innerHTML = ''; }
-            grid.innerHTML = `
-                <div class="col-12 text-center py-5">
-                    <i class="bi bi-emoji-frown display-1 text-muted opacity-25"></i>
-                    <h5 class="mt-3">Ничего не найдено</h5>
-                </div>
-            `;
-        } else {
-            grid.innerHTML = result.movies.map((m, i) => this.createCard(m, i, true)).join('');
-            this.attachCardListeners();
-            if (this.currentTab === 'search') this.renderPagination(result.totalPages, 'search');
+            grid.innerHTML = `<div class="col-12"><section class="atlas-empty atlas-empty--movie" role="alert">
+                <h3>Поиск сейчас недоступен</h3><p>Проверь подключение к интернету и попробуй ещё раз.</p>
+                <button type="button" class="btn btn-premium" data-retry-search>Повторить</button>
+            </section></div>`;
+            grid.querySelector('[data-retry-search]')?.addEventListener('click', () => this.searchMovies());
         }
     }
 

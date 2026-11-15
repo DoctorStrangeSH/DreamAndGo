@@ -99,6 +99,7 @@ export class MoviesModule {
     }
 
     async loadMyMovies() {
+        const requestId = ++this.requestId;
         const grid = document.getElementById('moviesGrid');
         if (!grid) return;
 
@@ -109,6 +110,8 @@ export class MoviesModule {
 
         const userId = window.app.currentUser.uid;
         const allMovies = await this.movieService.getUserMovies(userId, this.currentFilter);
+        if (requestId !== this.requestId || this.currentTab !== 'my' ||
+            !grid.isConnected || window.app.currentUser?.uid !== userId) return;
 
         if (allMovies.length === 0) {
             grid.innerHTML = `
@@ -154,7 +157,7 @@ export class MoviesModule {
         try {
             const result = await this.movieService.getPopularMovies(this.popularPage);
 
-            if (requestId !== this.requestId || this.currentTab !== 'popular') return;
+            if (requestId !== this.requestId || this.currentTab !== 'popular' || !grid.isConnected) return;
 
             if (result.movies.length === 0) {
                 grid.innerHTML = `
@@ -183,6 +186,7 @@ export class MoviesModule {
     }
 
     async searchMovies() {
+        const requestId = ++this.requestId;
         const grid = document.getElementById('moviesGrid');
         if (!grid || !this.searchQuery.trim()) return;
 
@@ -192,7 +196,7 @@ export class MoviesModule {
 
         const result = await this.movieService.searchMovies(this.searchQuery, this.searchPage);
 
-        if (this.currentTab !== 'search') return;
+        if (requestId !== this.requestId || this.currentTab !== 'search' || !grid.isConnected) return;
 
         if (result.movies.length === 0) {
             const pagination = document.getElementById('pagination');

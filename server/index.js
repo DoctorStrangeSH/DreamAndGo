@@ -55,8 +55,16 @@ export const createPrivateChatV2 = onCall({ region: 'europe-west3' }, async requ
                 throw new HttpsError('internal', 'Повреждённый индекс диалога');
             }
             const existingChat = await tx.get(db.collection('chats').doc(existingChatId));
-            if (!existingChat.exists || existingChat.get('state') !== 'active') {
+            if (!existingChat.exists || existingChat.get('version') !== 2 ||
+                existingChat.get('state') !== 'active') {
                 throw new HttpsError('failed-precondition', 'Диалог недоступен');
+            }
+            const existingParticipants = existingChat.get('participants');
+            if (!Array.isArray(existingParticipants) ||
+                existingParticipants.length !== 2 ||
+                existingParticipants[0] !== participants[0] ||
+                existingParticipants[1] !== participants[1]) {
+                throw new HttpsError('failed-precondition', 'Нарушена целостность диалога');
             }
             return existingChatId;
         }

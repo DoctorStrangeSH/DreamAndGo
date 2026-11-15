@@ -88,10 +88,14 @@ export class DreamsModule {
 
     getEmptyState() {
         return `
-            <div class="col-12 text-center py-5">
-                <i class="bi bi-star display-1 text-muted opacity-25"></i>
-                <h5 class="mt-3 text-muted">Нет мечт</h5>
-                <p class="text-muted small">Запиши свою первую мечту</p>
+            <div class="col-12">
+                <section class="atlas-empty atlas-empty--dream" aria-labelledby="dream-empty-title">
+                    <div class="atlas-empty-art" aria-hidden="true"><span class="atlas-empty-orbit"></span><i class="bi bi-stars"></i><span class="atlas-empty-spark atlas-empty-spark--one">✦</span><span class="atlas-empty-spark atlas-empty-spark--two">✧</span></div>
+                    <span class="atlas-empty-kicker">Начало большой истории</span>
+                    <h3 id="dream-empty-title">У каждой мечты есть первый шаг</h3>
+                    <p>Запиши то, что вдохновляет. Маленькая идея сегодня может стать большим событием завтра.</p>
+                    <button type="button" class="btn btn-premium atlas-empty-action" onclick="document.getElementById('addDreamBtn')?.click()"><i class="bi bi-plus-lg me-2"></i>Записать мечту</button>
+                </section>
             </div>
         `;
     }

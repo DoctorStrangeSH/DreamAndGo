@@ -41,6 +41,24 @@ test('owner-only read recovery: guest and other users cannot read PII or write',
         await assertFails(setDoc(doc(alice, 'users', 'charlie'), { email: 'c@example.test', username: 'c', isAdmin: true }));
         await assertFails(setDoc(doc(alice, 'users', 'alice', 'dreams', 'x'), { title: 'x'.repeat(100_000) }));
         await assertFails(setDoc(doc(alice, 'users', 'alice', 'dreams', 'x2'), { ownerId: 'bob' }));
+        await assertSucceeds(updateDoc(doc(alice, 'users', 'alice'), {
+            displayName: 'Алиса', bio: 'О себе', location: 'Москва'
+        }));
+        await assertSucceeds(updateDoc(doc(alice, 'users', 'alice'), {
+            bio: 'Обновлённая биография'
+        }));
+        await assertFails(updateDoc(doc(bob, 'users', 'alice'), { bio: 'Подмена' }));
+        await assertFails(updateDoc(doc(alice, 'users', 'alice'), {
+            username: 'taken', displayName: 'Алиса', bio: '', location: ''
+        }));
+        await assertFails(updateDoc(doc(alice, 'users', 'alice'), { usernameNormalized: 'admin' }));
+        await assertFails(updateDoc(doc(alice, 'users', 'alice'), { stats: { level: 9000 } }));
+        await assertFails(updateDoc(doc(alice, 'users', 'alice'), { achievements: ['all'] }));
+        await assertFails(updateDoc(doc(alice, 'users', 'alice'), { permissions: ['admin'] }));
+        await assertFails(updateDoc(doc(alice, 'users', 'alice'), { displayName: 'x'.repeat(81) }));
+        await assertFails(updateDoc(doc(alice, 'users', 'alice'), { bio: 'x'.repeat(501) }));
+        await assertFails(updateDoc(doc(alice, 'users', 'alice'), { location: 12 }));
+        await assertFails(updateDoc(doc(alice, 'users', 'alice'), { bio: null }));
         await assertFails(updateDoc(doc(alice, 'users', 'alice'), { email: 'changed@example.test' }));
         await assertFails(updateDoc(doc(alice, 'users', 'alice'), { role: 'admin' }));
         await assertFails(updateDoc(doc(alice, 'users', 'alice', 'dreams', 'd1'), { title: 'changed' }));

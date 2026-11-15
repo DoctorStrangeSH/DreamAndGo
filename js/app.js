@@ -150,12 +150,9 @@ class DreamAndGo {
 
     registerRoutes() {
         this.router.register('auth', new AuthModule(this.authService), { title: 'Вход', requiresAuth: false, showInNav: false });
-        this.router.register('recovery', new RegistrationRecoveryModule(this.authService, async () => {
-            this.registrationRecoveryPending = false;
-            this.registrationRecoveryStatus = 'complete';
-            await this.loadUserData();
-            this.router.navigate('home');
-        }), { title: 'Восстановление аккаунта', requiresAuth: true, showInNav: false });
+        this.router.register('recovery', new RegistrationRecoveryModule(
+            this.authService, async () => this.completeSignupV2Navigation()
+        ), { title: 'Восстановление аккаунта', requiresAuth: true, showInNav: false });
         this.router.register('home', { render: () => this.renderHomePage() }, { title: 'Главная', icon: 'bi-house-heart', showInNav: true });
         this.router.register('travels', new TravelsModule(), { title: 'Путешествия', icon: 'bi-airplane', showInNav: true });
         this.router.register('food', new RestaurantsModule(), { title: 'Рестораны', icon: 'bi-shop', showInNav: true });
@@ -229,6 +226,15 @@ class DreamAndGo {
         appContainer.classList.remove('d-none');
         appContainer.innerHTML = '';
         new AuthModule(this.authService).render();
+    }
+
+    async completeSignupV2Navigation() {
+        if (!canUseSignupV2(this.authService.signupV2Rollout) || !this.currentUser) return;
+        // Only invoked after the authenticated server callable confirms success.
+        this.registrationRecoveryPending = false;
+        this.registrationRecoveryStatus = 'complete';
+        await this.loadUserData();
+        this.router.navigate('home');
     }
 
     async loadUserData() {

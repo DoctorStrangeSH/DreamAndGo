@@ -149,7 +149,7 @@ test('private book collection is owner-only and escapes display fields', () => {
 
 test('all private profile tabs guard user identity and stale requests', () => {
   const source = read('js/modules/profile/profile.js');
-  for (const name of ['Travels', 'Dreams', 'Movies', 'Books']) {
+  for (const name of ['Travels', 'Dreams', 'Movies', 'Books', 'Restaurants']) {
     const start = source.indexOf('async loadOwn' + name + '(container, requestId)');
     assert.ok(start >= 0, name + ' loader');
     const next = source.indexOf('\n    async ', start + 10);
@@ -157,4 +157,14 @@ test('all private profile tabs guard user identity and stale requests', () => {
     assert.match(method, /if \(!this\.profileIsOwn \|\| window\.app\.currentUser\?\.uid !== this\.profileUserId\)/);
     assert.match(method, /requestId !== this\.tabRequestId \|\| !container\.isConnected/);
   }
+});
+
+test('private restaurant collection is owner-only and escapes display fields', () => {
+  const source = read('js/modules/profile/profile.js');
+  assert.match(source, /case 'restaurants':\s*await this\.loadOwnRestaurants\(container, requestId\)/);
+  assert.match(source, /async loadOwnRestaurants\(container, requestId\)/);
+  assert.match(source, /new RestaurantService\(\)\.getRestaurants\(this\.profileUserId\)/);
+  assert.match(source, /escapeHTML\(String\(restaurant\.name \|\| 'Без названия'\)\)/);
+  assert.match(source, /escapeHTML\(String\(restaurant\.cuisine \|\| 'Кухня не указана'\)\)/);
+  assert.doesNotMatch(source, /getRestaurants\(userId\)/);
 });

@@ -43,3 +43,16 @@ test('travel cards escape user-supplied attributes and text', () => {
   }
   assert.match(source, /escapeHTML\(String\(travel\.description\)\.substring\(0, 100\)\)/);
 });
+
+
+test('icon-only card actions have accessible labels', () => {
+  for (const name of ['travels', 'dreams', 'books']) {
+    const source = read('js/modules/' + name + '/' + name + '.js');
+    const edit = source.match(/<button[^>]*class="[^"]*edit-btn"[^>]*>/);
+    const remove = source.match(/<button[^>]*class="[^"]*delete-btn"[^>]*>/);
+    assert.ok(edit, name + ': edit button exists');
+    assert.ok(remove, name + ': delete button exists');
+    assert.match(edit[0], /aria-label="Редактировать запись"/);
+    assert.match(remove[0], /aria-label="Удалить запись"/);
+  }
+});

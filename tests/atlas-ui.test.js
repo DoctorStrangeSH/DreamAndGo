@@ -341,3 +341,14 @@ test('movie tabs show accessible retry actions for failed loads and searches', (
     assert.match(section, /\.addEventListener\('click', \(\) => this\./);
   }
 });
+
+test('Atlas mobile collection controls are visible and touch reachable', () => {
+  const source = read('css/atlas-pages.css');
+  assert.match(source, /@media \(hover:none\), \(pointer:coarse\)/);
+  assert.match(source, /\.movie-card \.movie-poster-overlay\s*\{\s*opacity:1/);
+  assert.match(source, /\.movie-card \.movie-poster-overlay \.btn\s*\{[^}]*min-height:40px/);
+  assert.match(source, /\.movie-card:focus-within \.movie-poster-overlay\s*\{opacity:1\}/);
+  assert.match(source, /\.movies-tabs\s*\{[^}]*overflow-x:auto/);
+  assert.match(source, /\.profile-page \.profile-tabs\s*\{[^}]*overflow-x:auto/);
+  assert.match(source, /\.filter-bar \.btn-group \.btn\s*\{min-height:44px\}/);
+});

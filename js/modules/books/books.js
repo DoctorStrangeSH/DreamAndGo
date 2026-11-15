@@ -124,10 +124,10 @@ export class BooksModule {
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <span class="badge bg-${status.color} bg-opacity-10 text-${status.color}">${status.badge}</span>
                         <div class="book-card-actions">
-                            <button class="btn btn-sm btn-outline-secondary rounded-circle me-1 edit-btn" data-id="${book.id}">
+                            <button class="btn btn-sm btn-outline-secondary rounded-circle me-1 edit-btn" aria-label="Редактировать запись" title="Редактировать" data-id="${book.id}">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="${book.id}">
+                            <button class="btn btn-sm btn-outline-danger rounded-circle delete-btn" aria-label="Удалить запись" title="Удалить" data-id="${book.id}">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </div>

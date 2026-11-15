@@ -9,6 +9,9 @@ import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-
 export class ProfileModule {
     constructor() {
         this.currentTab = 'overview';
+        this.tabRequestId = 0;
+        this.profileIsOwn = false;
+        this.profileUserId = null;
     }
 
     async render(params = {}) {
@@ -18,6 +21,9 @@ export class ProfileModule {
         const currentUserId = window.app.currentUser?.uid;
         const userId = (params.id && params.id.length > 20) ? params.id : currentUserId;
         const isOwnProfile = userId === currentUserId;
+        this.profileIsOwn = isOwnProfile;
+        this.profileUserId = userId;
+        this.tabRequestId += 1;
         if (!isOwnProfile && this.currentTab === 'achievements') this.currentTab = 'overview';
 
         mainContent.innerHTML = window.app.ui.createLoader();
@@ -205,9 +211,13 @@ export class ProfileModule {
         const container = document.getElementById('profileTabContent');
         if (!container) return;
 
+        const requestId = ++this.tabRequestId;
         switch (tab) {
             case 'overview':
                 container.innerHTML = this.getOverviewContent(userData);
+                break;
+            case 'travels':
+                await this.loadOwnTravels(container, requestId);
                 break;
             case 'achievements':
                 container.innerHTML = this.getUserAchievements(userData);
@@ -215,6 +225,50 @@ export class ProfileModule {
             default:
                 container.innerHTML = this.getPlaceholder(tab);
                 break;
+        }
+    }
+
+    async loadOwnTravels(container, requestId) {
+        if (!this.profileIsOwn || window.app.currentUser?.uid !== this.profileUserId) {
+            container.innerHTML = this.getPlaceholder('travels');
+            return;
+        }
+        container.innerHTML = window.app.ui.createLoader();
+        try {
+            const { TravelService } = await import('../../services/travel.service.js');
+            const travels = await new TravelService().getTravels(this.profileUserId);
+            if (requestId !== this.tabRequestId || !container.isConnected ||
+                window.app.currentUser?.uid !== this.profileUserId) return;
+            if (!travels.length) {
+                container.innerHTML = `
+                    <section class="atlas-empty atlas-empty--travel">
+                        <div class="atlas-empty-art" aria-hidden="true"><i class="bi bi-compass"></i></div>
+                        <h3>Твоя карта ещё ждёт открытий</h3>
+                        <p>Добавь первое путешествие в личную коллекцию.</p>
+                    </section>`;
+                return;
+            }
+            container.innerHTML = `
+                <div class="row g-3">
+                    ${travels.slice(0, 12).map(travel => `
+                        <div class="col-12 col-md-6 col-lg-4">
+                            <article class="card-premium profile-collection-card p-3 h-100">
+                                <span class="profile-collection-kicker">
+                                    ${travel.status === 'visited' ? '✓ Посетил' : '✦ Планирую'}
+                                </span>
+                                <h3 class="h6 mt-2 mb-2">${escapeHTML(String(travel.title || 'Без названия'))}</h3>
+                                <p class="text-muted small mb-0">${escapeHTML(String(travel.location || 'Место не указано'))}</p>
+                            </article>
+                        </div>`).join('')}
+                </div>
+                <p class="text-muted small mt-3">
+                    Показаны первые ${Math.min(travels.length, 12)} из ${travels.length} путешествий.
+                    Полный список доступен в разделе «Путешествия».
+                </p>`;
+        } catch (error) {
+            if (requestId !== this.tabRequestId || !container.isConnected) return;
+            console.error('Не удалось загрузить путешествия профиля:', error);
+            container.innerHTML = '<div class="alert alert-warning" role="status">Не удалось загрузить путешествия. Попробуй открыть раздел позже.</div>';
         }
     }
 

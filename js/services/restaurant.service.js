@@ -9,7 +9,7 @@ export class RestaurantService {
         this.db = db;
     }
 
-    async getRestaurants(userId, filters = {}) {
+    async getRestaurants(userId, filters = {}, { throwOnError = false } = {}) {
         try {
             const restaurantsRef = collection(this.db, 'users', userId, 'restaurants');
             let q = query(restaurantsRef, orderBy('createdAt', 'desc'));
@@ -42,6 +42,7 @@ export class RestaurantService {
             return restaurants;
         } catch (error) {
             console.error('Ошибка загрузки ресторанов:', error);
+            if (throwOnError) throw error;
             return [];
         }
     }

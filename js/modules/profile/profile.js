@@ -18,6 +18,7 @@ export class ProfileModule {
         const currentUserId = window.app.currentUser?.uid;
         const userId = (params.id && params.id.length > 20) ? params.id : currentUserId;
         const isOwnProfile = userId === currentUserId;
+        if (!isOwnProfile && this.currentTab === 'achievements') this.currentTab = 'overview';
 
         mainContent.innerHTML = window.app.ui.createLoader();
 
@@ -35,7 +36,7 @@ export class ProfileModule {
         }
 
         mainContent.innerHTML = this.getProfileTemplate(userData, isOwnProfile, userId);
-        this.initTabs(userId);
+        this.initTabs(userData);
         await this.loadTabContent(this.currentTab, userData);
         
         if (!isOwnProfile) {
@@ -114,47 +115,47 @@ export class ProfileModule {
                         </div>
                     </div>
 
-                    <ul class="nav nav-tabs profile-tabs mt-4" id="profileTabs">
+                    <ul class="nav nav-tabs profile-tabs mt-4" id="profileTabs" role="tablist" aria-label="Разделы профиля">
                         <li class="nav-item">
-                            <button class="nav-link ${this.currentTab === 'overview' ? 'active' : ''}" data-tab="overview">
+                            <button type="button" class="nav-link ${this.currentTab === 'overview' ? 'active' : ''}" role="tab" id="profile-tab-overview" aria-controls="profileTabContent" aria-selected="${this.currentTab === 'overview'}" tabindex="${this.currentTab === 'overview' ? '0' : '-1'}" data-tab="overview">
                                 <i class="bi bi-grid me-1"></i>Обзор
                             </button>
                         </li>
                         <li class="nav-item">
-                            <button class="nav-link" data-tab="travels">
+                            <button type="button" class="nav-link" role="tab" id="profile-tab-travels" aria-controls="profileTabContent" aria-selected="${this.currentTab === 'travels'}" tabindex="${this.currentTab === 'travels' ? '0' : '-1'}" data-tab="travels">
                                 <i class="bi bi-airplane me-1"></i>Путешествия
                             </button>
                         </li>
                         <li class="nav-item">
-                            <button class="nav-link" data-tab="movies">
+                            <button type="button" class="nav-link" role="tab" id="profile-tab-movies" aria-controls="profileTabContent" aria-selected="${this.currentTab === 'movies'}" tabindex="${this.currentTab === 'movies' ? '0' : '-1'}" data-tab="movies">
                                 <i class="bi bi-film me-1"></i>Кино
                             </button>
                         </li>
                         <li class="nav-item">
-                            <button class="nav-link" data-tab="books">
+                            <button type="button" class="nav-link" role="tab" id="profile-tab-books" aria-controls="profileTabContent" aria-selected="${this.currentTab === 'books'}" tabindex="${this.currentTab === 'books' ? '0' : '-1'}" data-tab="books">
                                 <i class="bi bi-book me-1"></i>Книги
                             </button>
                         </li>
                         <li class="nav-item">
-                            <button class="nav-link" data-tab="dreams">
+                            <button type="button" class="nav-link" role="tab" id="profile-tab-dreams" aria-controls="profileTabContent" aria-selected="${this.currentTab === 'dreams'}" tabindex="${this.currentTab === 'dreams' ? '0' : '-1'}" data-tab="dreams">
                                 <i class="bi bi-star me-1"></i>Мечты
                             </button>
                         </li>
                         <li class="nav-item">
-                            <button class="nav-link" data-tab="restaurants">
+                            <button type="button" class="nav-link" role="tab" id="profile-tab-restaurants" aria-controls="profileTabContent" aria-selected="${this.currentTab === 'restaurants'}" tabindex="${this.currentTab === 'restaurants' ? '0' : '-1'}" data-tab="restaurants">
                                 <i class="bi bi-shop me-1"></i>Рестораны
                             </button>
                         </li>
                         ${isOwnProfile ? `
                             <li class="nav-item ms-auto">
-                                <button class="nav-link" data-tab="achievements">
+                                <button type="button" class="nav-link" role="tab" id="profile-tab-achievements" aria-controls="profileTabContent" aria-selected="${this.currentTab === 'achievements'}" tabindex="${this.currentTab === 'achievements' ? '0' : '-1'}" data-tab="achievements">
                                     <i class="bi bi-trophy me-1"></i>Ачивки
                                 </button>
                             </li>
                         ` : ''}
                     </ul>
 
-                    <div class="profile-tab-content mt-4" id="profileTabContent">
+                    <div class="profile-tab-content mt-4" id="profileTabContent" role="tabpanel" tabindex="0" aria-labelledby="profile-tab-${this.currentTab}">
                         ${window.app.ui.createLoader()}
                     </div>
                 </div>
@@ -162,27 +163,41 @@ export class ProfileModule {
         `;
     }
 
-    initTabs(userId) {
+    initTabs(userData) {
         const tabsContainer = document.getElementById('profileTabs');
-        if (!tabsContainer) return;
+        const panel = document.getElementById('profileTabContent');
+        if (!tabsContainer || !panel) return;
 
-        const newContainer = tabsContainer.cloneNode(true);
-        tabsContainer.parentNode.replaceChild(newContainer, tabsContainer);
-
-        newContainer.addEventListener('click', async (e) => {
-            const tab = e.target.closest('[data-tab]');
-            if (!tab) return;
-            e.preventDefault();
-            e.stopPropagation();
-
-            newContainer.querySelectorAll('[data-tab]').forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
+        const tabs = Array.from(tabsContainer.querySelectorAll('[role="tab"]'));
+        const activate = (tab) => {
+            if (!tab || tab.dataset.tab === this.currentTab) return;
             this.currentTab = tab.dataset.tab;
-
-            const userData = await this.loadUserProfile(userId);
-            if (userData) {
-                await this.loadTabContent(this.currentTab, userData);
+            for (const item of tabs) {
+                const selected = item === tab;
+                item.classList.toggle('active', selected);
+                item.setAttribute('aria-selected', String(selected));
+                item.tabIndex = selected ? 0 : -1;
             }
+            panel.setAttribute('aria-labelledby', tab.id);
+            this.loadTabContent(this.currentTab, userData);
+        };
+
+        tabsContainer.addEventListener('click', (event) => {
+            const tab = event.target.closest('[role="tab"]');
+            if (tab && tabsContainer.contains(tab)) activate(tab);
+        });
+        tabsContainer.addEventListener('keydown', (event) => {
+            const index = tabs.indexOf(document.activeElement);
+            if (index < 0) return;
+            let next = -1;
+            if (event.key === 'ArrowRight') next = (index + 1) % tabs.length;
+            if (event.key === 'ArrowLeft') next = (index + tabs.length - 1) % tabs.length;
+            if (event.key === 'Home') next = 0;
+            if (event.key === 'End') next = tabs.length - 1;
+            if (next < 0) return;
+            event.preventDefault();
+            activate(tabs[next]);
+            tabs[next].focus();
         });
     }
 

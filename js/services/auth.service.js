@@ -47,7 +47,11 @@ export class AuthService {
             console.log('✅ Успешный вход');
             
             // Обновляем время последнего входа
-            await this.updateLastLogin(result.user.uid);
+            // Legacy merge writes would create an empty users/{uid} for an
+            // Auth-only account and permanently block signup recovery.
+            if (this.signupV2Rollout?.enabled !== true) {
+                await this.updateLastLogin(result.user.uid);
+            }
             
             return { success: true, user: result.user };
         } catch (error) {
@@ -74,6 +78,41 @@ export class AuthService {
             deleteAuthUser: async user => deleteUser(user),
             signOutAuth: async () => signOut(this.auth)
         });
+    }
+
+    // Candidate-only recovery after logging in to an Auth-only account.
+    // The backend reveals only own-account status, never private fields.
+    async getRegistrationStateV2() {
+        if (!canUseSignupV2(this.signupV2Rollout) || !this.auth.currentUser) {
+            return { success: false, status: 'temporarily-unavailable' };
+        }
+        try {
+            const call = httpsCallable(getFunctions(app, 'europe-west3'), 'getRegistrationStateV2');
+            const result = await call({});
+            const status = result.data?.status;
+            if (!['complete', 'needs-profile', 'temporarily-unavailable'].includes(status)) {
+                return { success: false, status: 'temporarily-unavailable' };
+            }
+            return { success: true, status };
+        } catch {
+            return { success: false, status: 'temporarily-unavailable' };
+        }
+    }
+
+    async recoverRegistrationV2(username) {
+        if (!canUseSignupV2(this.signupV2Rollout) || !this.auth.currentUser) {
+            return { success: false, error: 'Восстановление временно недоступно.' };
+        }
+        try {
+            const call = httpsCallable(getFunctions(app, 'europe-west3'), 'registerProfileV2');
+            const response = await call({ username });
+            return { success: true, recovered: response.data?.recovered === true };
+        } catch (error) {
+            return {
+                success: false, code: error?.code,
+                error: 'Не удалось завершить профиль. Проверь никнейм или попробуй позднее.'
+            };
+        }
     }
 
     // Регистрация

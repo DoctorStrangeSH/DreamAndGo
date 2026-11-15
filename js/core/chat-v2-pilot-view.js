@@ -47,10 +47,10 @@ export function renderChatV2Pilot({ title = 'Тестовый диалог', mes
 }
 
 export class ChatV2PilotView {
-    constructor({ root, session, chatId, title, onLoadOlder = () => {} }) {
+    constructor({ root, session, chatId, title, onLoadOlder = () => {}, onSent = () => {} }) {
         if (!root || typeof root.querySelector !== 'function' ||
             !session || typeof session.prepare !== 'function' ||
-            typeof session.send !== 'function' || !isChatId(chatId) || typeof onLoadOlder !== 'function') {
+            typeof session.send !== 'function' || !isChatId(chatId) || typeof onLoadOlder !== 'function' || typeof onSent !== 'function') {
             throw new TypeError('Некорректная конфигурация тестового чата');
         }
         this.root = root;
@@ -59,6 +59,7 @@ export class ChatV2PilotView {
         this.title = title;
         this.messages = [];
         this.onLoadOlder = onLoadOlder;
+        this.onSent = onSent;
         this._older = () => this.onLoadOlder();
         this.destroyed = false;
         this.busy = false;
@@ -126,7 +127,8 @@ export class ChatV2PilotView {
             if (this.destroyed) return;
             if (result.success) {
                 input.value = '';
-                if (feedback) feedback.textContent = 'Отправлено. Ожидаем обновления переписки.';
+                if (feedback) feedback.textContent = 'Отправлено. Обновляем переписку…';
+                await this.onSent();
             } else if (feedback) {
                 feedback.textContent = 'Отправка не подтверждена. Проверьте её статус перед повтором.';
             }

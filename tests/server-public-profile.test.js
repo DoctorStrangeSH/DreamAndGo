@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { publicProfileFromPrivate, loadPublicProfile } from '../server/public-profile-service.js';
+import { publicProfileFromPrivate, loadPublicProfile, findPublicProfileByUsername } from '../server/public-profile-service.js';
 
 const privateUser = {
     username: 'Sherlock', displayName: ' Sherlock ',
@@ -60,4 +60,46 @@ test('authenticated lookup reads one document and returns only public fields', a
 test('missing users return a generic not-found status', async () => {
     const db = { collection: () => ({ doc: () => ({ get: async () => ({ exists: false }) }) }) };
     assert.deepEqual(await loadPublicProfile(db, 'bob', 'alice'), { ok: false, code: 'not-found' });
+});
+
+test('username lookup rejects unauthenticated and non-exact searches', async () => {
+    let count = 0;
+    const db = { collection: () => { count++; throw Error('must not query'); } };
+    assert.deepEqual(await findPublicProfileByUsername(db, null, 'alice'),
+        { ok: false, code: 'unauthenticated' });
+    assert.deepEqual(await findPublicProfileByUsername(db, 'bob', 'al*'),
+        { ok: false, code: 'invalid-argument' });
+    assert.equal(count, 0);
+});
+
+test('username lookup returns sanitized profile and never raw email', async () => {
+    const operations = [];
+    const db = { collection(name) {
+        assert.equal(name, 'users');
+        return { where(field, operator, value) {
+            operations.push([field, operator, value]);
+            return { limit(n) {
+                assert.equal(n, 1);
+                return { get: async () => ({ docs: [{ id: 'alice', data: () => privateUser }] }) };
+            } };
+        } };
+    } };
+    const found = await findPublicProfileByUsername(db, 'bob', ' SHERLOCK ');
+    assert.equal(found.ok, true);
+    assert.equal(found.profile.uid, 'alice');
+    assert.equal('email' in found.profile, false);
+    assert.deepEqual(operations, [['usernameNormalized', '==', 'sherlock']]);
+});
+
+test('username lookup supports exact legacy fallback and missing users', async () => {
+    const operations = [];
+    const db = { collection: () => ({ where(field, op, value) {
+        operations.push([field, value]);
+        return { limit: () => ({ get: async () => ({ docs: [] }) }) };
+    } }) };
+    const result = await findPublicProfileByUsername(db, 'bob', 'Sherlock');
+    assert.deepEqual(result, { ok: true, profile: null });
+    assert.deepEqual(operations, [
+        ['usernameNormalized', 'sherlock'], ['username', 'Sherlock']
+    ]);
 });

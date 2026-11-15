@@ -103,6 +103,43 @@ export class ChatV2HistoryController {
         return task;
     }
 
+    // Refresh only the newest page. Identical pages leave DOM and scroll alone.
+    // Longer paginated histories stay intact until the user explicitly reopens.
+    refreshLatest() {
+        if (!this.chatId) return Promise.resolve(this.snapshot());
+        if (this.messages.length > this.limit) return Promise.resolve(this.snapshot());
+        if (this.inFlight) return this.inFlight;
+        const generation = this.generation, chatId = this.chatId;
+        const task = Promise.resolve().then(() => this.lookup({
+            chatId, beforeSequence: null, limit: this.limit
+        })).then(reply => {
+            if (generation !== this.generation) return { status: 'stale' };
+            const page = normalizePage(reply, chatId, null, this.limit);
+            const unchanged = this.messages.length === page.messages.length &&
+                this.messages.every((item, index) => {
+                    const next = page.messages[index];
+                    return item.id === next.id && item.sequence === next.sequence &&
+                        item.senderId === next.senderId && item.text === next.text &&
+                        item.read === next.read;
+                }) && this.hasMore === page.hasMore && this.cursor === page.nextBeforeSequence;
+            if (!unchanged) {
+                this.messages = page.messages;
+                this.cursor = page.nextBeforeSequence;
+                this.hasMore = page.hasMore;
+                this.status = 'ready';
+                this.onChange(this.snapshot());
+            }
+            return this.snapshot();
+        }).catch(() => {
+            // Keep already displayed messages and allow a later retry.
+            return generation === this.generation ? this.snapshot() : { status: 'stale' };
+        }).finally(() => {
+            if (this.inFlight === task) this.inFlight = null;
+        });
+        this.inFlight = task;
+        return task;
+    }
+
     clear() {
         this.generation++;
         this.chatId = null;

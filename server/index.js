@@ -11,6 +11,7 @@ import { markPrivateMessageReadTransaction } from './chat-read-receipts.js';
 import { getPrivateChatUnreadCount } from './chat-unread-status.js';
 import { loadPrivateChatHistory } from './chat-history-service.js';
 import { createFirestoreHistoryAdapter } from './chat-history-firestore.js';
+import { loadPublicProfile } from './public-profile-service.js';
 
 if (getApps().length === 0) initializeApp();
 
@@ -142,4 +143,13 @@ export const getPrivateChatHistoryV2 = onCall({ region: 'europe-west3' }, async 
         }
         throw error;
     }
+});
+
+// Candidate read-only profile endpoint. Allows future clients to find a public
+// profile without reading the private users/{uid} Firestore document.
+// Not enabled in the existing UI; keep production rules locked until rollout.
+export const getPublicProfileV2 = onCall({ region: 'europe-west3' }, async request => {
+    const result = await loadPublicProfile(getFirestore(), request.auth?.uid, request.data?.userId);
+    if (!result.ok) throw new HttpsError(result.code, 'Профиль недоступен');
+    return result.profile;
 });

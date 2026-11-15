@@ -5,7 +5,8 @@ export const CHAT_V2_ENDPOINTS = Object.freeze([
     'sendPrivateMessageV2',
     'getPrivateMessageStatusV2',
     'markPrivateMessageReadV2',
-    'getPrivateChatUnreadV2'
+    'getPrivateChatUnreadV2',
+    'getPrivateChatHistoryV2'
 ]);
 
 export function createChatV2CallableInvoker(httpsCallable, functionsInstance) {

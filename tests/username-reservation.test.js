@@ -58,6 +58,12 @@ test('normalizes case and creates private profile plus reservation atomically', 
     assert.equal(profile.usernameNormalized, 'alice_1');
     assert.equal(profile.email, 'example@test.invalid');
     assert.equal(profile.stats.friends, 0);
+    // Idempotent replay after lost response must not create any new documents.
+    const beforeRetry = structuredClone([...db.documents.entries()]);
+    assert.deepEqual(await signup(db, 'alice', 'ALICE_1'), {
+        ok: true, username: 'alice_1', recovered: true
+    });
+    assert.deepEqual([...db.documents.entries()], beforeRetry);
     assert.equal((await signup(db, 'bob', 'ALICE_1')).code, 'already-exists');
     assert.equal((await signup(db, 'alice', 'another')).code, 'already-exists');
     assert.equal(db.documents.has('users/bob'), false);
@@ -88,4 +94,22 @@ test('never overwrites existing profile or legacy reservation', async () => {
     assert.equal((await signup(db, 'older', 'fresh')).code, 'already-exists');
     assert.equal(db.documents.get('users/older').email, 'secret@example.test');
     assert.equal(db.documents.size, 3);
+});
+
+test('cannot recover when reservation points to another uid', async () => {
+    const db = fakeDb({ ready: true, legacyBackfillComplete: true });
+    db.documents.set('users/alice', {
+        email: 'secret@example.test', username: 'Alice', usernameNormalized: 'alice'
+    });
+    db.documents.set('usernameReservations/alice', { uid: 'attacker' });
+    const result = await signup(db, 'alice', 'alice');
+    assert.deepEqual(result, { ok: false, code: 'already-exists' });
+    assert.equal(db.documents.get('usernameReservations/alice').uid, 'attacker');
+});
+
+test('cannot recover a legacy profile without a verified reservation', async () => {
+    const db = fakeDb({ ready: true, legacyBackfillComplete: true });
+    db.documents.set('users/alice', { email: 'secret@example.test', username: 'Alice' });
+    assert.equal((await signup(db, 'alice', 'Alice')).code, 'already-exists');
+    assert.equal(db.documents.has('usernameReservations/alice'), false);
 });

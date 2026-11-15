@@ -32,6 +32,25 @@
 .preview-field textarea{min-height:90px}
 .preview-theme{min-height:44px}
 .preview-tabs{display:flex;gap:8px;flex-wrap:wrap}
+.preview-profile{margin:38px 0 46px}
+.preview-profile .profile-cover{height:190px;border-radius:26px 26px 0 0!important}
+.preview-profile-body{position:relative;background:var(--bg-card);border:1px solid var(--border-color);border-top:0;border-radius:0 0 26px 26px;padding:0 28px 28px;box-shadow:var(--shadow-sm)}
+.preview-identity{display:flex;align-items:flex-end;gap:19px;transform:translateY(-34px);margin-bottom:-18px;flex-wrap:wrap}
+.preview-avatar{display:grid;place-items:center;flex:none;width:104px;height:104px;border:5px solid var(--bg-card);border-radius:28px;background:var(--gradient-primary);color:white;font-size:2.6rem;font-weight:900;box-shadow:var(--shadow-md)}
+.preview-identity h3{margin:0;color:var(--text-primary);font-weight:850}
+.preview-identity p{margin:6px 0 0;color:var(--text-secondary)}
+.preview-profile-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:22px 0}
+.preview-profile-stats div{background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:16px;text-align:center;padding:15px 8px}
+.preview-profile-stats strong{display:block;color:var(--primary);font-size:1.5rem}
+.preview-profile-stats span{color:var(--text-secondary);font-size:.78rem}
+.preview-profile .profile-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.preview-profile .profile-tabs button{border:0;background:transparent;min-height:44px;padding:9px 15px;border-radius:12px;color:var(--text-secondary);font-weight:800}
+.preview-profile .profile-tabs button[aria-selected="true"]{color:var(--primary);background:var(--bg-tertiary)}
+.preview-profile-panel{background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:17px;padding:22px}
+.preview-profile-panel h4{font-size:1.04rem;color:var(--text-primary)}
+.preview-profile-panel p{color:var(--text-secondary)}
+.preview-profile-panel[hidden]{display:none}
+@media(max-width:560px){.preview-profile-body{padding:0 16px 18px}.preview-profile-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.preview-avatar{width:86px;height:86px;font-size:2rem}.preview-identity{gap:12px}}
 .preview-feedback{min-height:2em;max-width:750px;margin:16px auto;color:var(--primary);font-weight:700}
 .preview-card--added{border:2px solid var(--primary);animation:preview-reveal .28s ease-out}
 @keyframes preview-reveal{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
@@ -63,6 +82,38 @@
   <article class="card-premium dream-card"><span class="badge" style="background:var(--bg-tertiary);color:var(--primary);align-self:start">В процессе</span><h3>Увидеть северное сияние</h3><p class="text-muted">Один маленький шаг за другим — и мечта становится планом.</p><div class="progress"><div class="progress-bar" style="width:48%"></div></div><small class="text-muted">48% · 2 из 4 шагов</small></article>
   <section class="atlas-empty atlas-empty--book"><div class="atlas-empty-art" aria-hidden="true"><span class="atlas-empty-orbit"></span><span style="color:var(--primary);font-size:3rem">▤</span></div><span class="atlas-empty-kicker">Твоя библиотека</span><h3>Время открыть новую страницу</h3><p>Собери любимые истории и книги на будущее.</p><button type="button" class="btn btn-premium" data-preview-action="new-book">Добавить книгу</button></section>
 </div>
+<section class="preview-profile" id="profilePreview" aria-labelledby="profileHeading">
+  <h2 id="profileHeading">Профиль путешественника</h2>
+  <p class="preview-intro">Единый стиль обложки, личности, статистики и достижений.</p>
+  <div class="profile-cover" aria-hidden="true"></div>
+  <div class="preview-profile-body">
+    <div class="preview-identity">
+      <div class="preview-avatar" aria-label="Аватар пользователя">D</div>
+      <div><h3>Александр Мечтатель</h3><p>@dreamer · 📍 Санкт-Петербург</p></div>
+    </div>
+    <p class="profile-bio">Коллекционирую моменты, маршруты и истории, которые хочется запомнить.</p>
+    <div class="preview-profile-stats" aria-label="Статистика профиля">
+      <div><strong>12</strong><span>путешествий</span></div>
+      <div><strong>7</strong><span>мечт</span></div>
+      <div><strong>24</strong><span>книги</span></div>
+      <div><strong>18</strong><span>друзей</span></div>
+    </div>
+    <div class="profile-tabs" role="tablist" aria-label="Демо-разделы профиля">
+      <button type="button" role="tab" id="previewTabOverview" aria-controls="previewPanelOverview" aria-selected="true" tabindex="0">Обзор</button>
+      <button type="button" role="tab" id="previewTabAchievements" aria-controls="previewPanelAchievements" aria-selected="false" tabindex="-1">Достижения</button>
+    </div>
+    <div id="previewPanelOverview" class="preview-profile-panel" role="tabpanel" aria-labelledby="previewTabOverview">
+      <h4>Моя история открытий</h4>
+      <p>Путешествия превращают планы в воспоминания. Следующая цель — увидеть полярное сияние.</p>
+      <div class="progress" role="progressbar" aria-label="Прогресс мечты" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar" style="width:65%"></div></div>
+    </div>
+    <div id="previewPanelAchievements" class="preview-profile-panel" role="tabpanel" aria-labelledby="previewTabAchievements" hidden>
+      <h4>🏆 Первые открытия</h4>
+      <p>Первое путешествие завершено. Это только начало большой истории!</p>
+      <span class="badge" style="background:var(--bg-tertiary);color:var(--primary)">Уровень 1</span>
+    </div>
+  </div>
+</section>
 <h2 id="formHeading">Формы и модальные окна</h2>
 <p class="preview-intro">Поля, подписи и основные действия.</p>
 <form class="modal-content preview-modal" id="previewTravelForm" aria-label="Демонстрационная форма">
@@ -94,12 +145,30 @@ document.querySelector('[data-preview-action="new-travel"]').addEventListener('c
   form.elements.title.focus({preventScroll:true});
 });
 document.querySelector('[data-preview-action="profile"]').addEventListener('click',()=>{
-  document.getElementById('collectionHeading').scrollIntoView({behavior:'smooth',block:'start'});
-  showFeedback('В полноценной версии здесь откроется профиль. В этом макете показана коллекция.');
+  document.getElementById('profileHeading').scrollIntoView({behavior:'smooth',block:'start'});
 });
 document.querySelector('[data-preview-action="new-book"]').addEventListener('click',()=>{
   showFeedback('Книжная полка пока демонстрационная. Добавление путешествия можно попробовать в форме ниже.');
   document.getElementById('formHeading').scrollIntoView({behavior:'smooth',block:'start'});
+});
+const profileTabs=[...document.querySelectorAll('.preview-profile [role="tab"]')];
+function activateProfileTab(tab){
+  profileTabs.forEach(item=>{
+    const selected=item===tab;
+    item.setAttribute('aria-selected',String(selected));
+    item.tabIndex=selected?0:-1;
+    document.getElementById(item.getAttribute('aria-controls')).hidden=!selected;
+  });
+}
+profileTabs.forEach((tab,index)=>{
+  tab.addEventListener('click',()=>activateProfileTab(tab));
+  tab.addEventListener('keydown',event=>{
+    const next=event.key==='ArrowRight'?(index+1)%profileTabs.length:event.key==='ArrowLeft'?(index+profileTabs.length-1)%profileTabs.length:null;
+    if(next===null)return;
+    event.preventDefault();
+    activateProfileTab(profileTabs[next]);
+    profileTabs[next].focus();
+  });
 });
 form.addEventListener('reset',()=>showFeedback('Форма очищена.'));
 form.addEventListener('submit',(event)=>{

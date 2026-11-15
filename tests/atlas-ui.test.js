@@ -38,9 +38,11 @@ test('Atlas empty states connect their actions without inline scripts', () => {
 
 test('travel cards escape user-supplied attributes and text', () => {
   const source = read('js/modules/travels/travels.js');
-  for (const field of ['travel.title', 'travel.location', 'travel.photos[0]', 'travel.id']) {
-    assert.ok(source.includes('escapeHTML(' + field + ')'), field + ' must be escaped');
+  for (const field of ["travel.title || 'Без названия'", 'travel.location', 'travel.id']) {
+    assert.ok(source.includes('escapeHTML(' + field + ')') ||
+      source.includes('escapeHTML(String(' + field + '))'), field + ' must be escaped');
   }
+  assert.match(source, /escapeHTML\(photoURL\)/);
   assert.match(source, /escapeHTML\(String\(travel\.description\)\.substring\(0, 100\)\)/);
 });
 

@@ -106,3 +106,13 @@ test('real profile uses Atlas cards and achievement empty state', () => {
   assert.match(pages, /\.profile-page \.profile-tabs \.nav-link\[aria-selected="true"\]/);
   assert.match(art, /\.atlas-empty--achievement/);
 });
+
+test('profile travel collection only reads for its authenticated owner', () => {
+  const profile = read('js/modules/profile/profile.js');
+  assert.match(profile, /if \(!this\.profileIsOwn \|\| window\.app\.currentUser\?\.uid !== this\.profileUserId\)/);
+  assert.match(profile, /new TravelService\(\)\.getTravels\(this\.profileUserId\)/);
+  assert.match(profile, /requestId !== this\.tabRequestId/);
+  assert.match(profile, /escapeHTML\(String\(travel\.title \|\| 'Без названия'\)\)/);
+  assert.match(profile, /escapeHTML\(String\(travel\.location \|\| 'Место не указано'\)\)/);
+  assert.doesNotMatch(profile, /getTravels\(userId\)/);
+});

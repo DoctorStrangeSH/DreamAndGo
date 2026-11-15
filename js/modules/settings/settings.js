@@ -1,7 +1,7 @@
 import { db } from '../../config/firebase.js';
 import { escapeHTML } from '../../core/escape-html.js';
-import { normalizeUsername } from '../../core/username.js';
-import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { validateProfileSettings } from '../../core/profile-settings-policy.js';
+import { doc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 export class SettingsModule {
     async render() {
@@ -36,9 +36,9 @@ export class SettingsModule {
                                         <span class="input-group-text">@</span>
                                         <input type="text" class="form-control" name="username" 
                                                value="${escapeHTML(userData.username || '')}" 
-                                               minlength="3" maxlength="20" required>
+                                               minlength="3" maxlength="20" readonly required>
                                     </div>
-                                    <div class="form-text">От 3 до 20 символов, только буквы, цифры и _</div>
+                                    <div class="form-text">Смена никнейма временно закрыта до запуска безопасной проверки уникальности.</div>
                                 </div>
 
                                 <div class="mb-3">
@@ -138,8 +138,14 @@ export class SettingsModule {
         const bio = formData.get('bio').trim();
         const location = formData.get('location').trim();
 
-        if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
-            window.app.ui.showToast('Никнейм: от 3 до 20 символов (буквы, цифры, _)', 'warning');
+        let settings;
+        try {
+            settings = validateProfileSettings(
+                { username, displayName, bio, location },
+                window.app.userData?.username
+            );
+        } catch (error) {
+            window.app.ui.showToast(error.message, 'warning');
             return;
         }
 
@@ -149,34 +155,10 @@ export class SettingsModule {
         submitBtn.disabled = true;
 
         try {
-            const currentUser = window.app.userData;
-
-            if (username !== currentUser?.username) {
-                const usersRef = collection(db, 'users');
-                const normalized = normalizeUsername(username);
-                const [indexed, legacy] = await Promise.all([
-                    getDocs(query(usersRef, where('usernameNormalized', '==', normalized))),
-                    getDocs(query(usersRef, where('username', '==', username)))
-                ]);
-                const matches = [...indexed.docs, ...legacy.docs];
-                if (matches.some(docSnap => docSnap.id !== window.app.currentUser.uid)) {
-                    window.app.ui.showToast('Этот ник уже занят 😔', 'warning');
-                    submitBtn.innerHTML = originalText;
-                    submitBtn.disabled = false;
-                    return;
-                }
-            }
-
             const userRef = doc(db, 'users', window.app.currentUser.uid);
-            await updateDoc(userRef, {
-                username: username,
-                usernameNormalized: normalizeUsername(username),
-                displayName: displayName,
-                bio: bio,
-                location: location
-            });
+            await updateDoc(userRef, settings);
 
-            window.app.userData = { ...window.app.userData, username, displayName, bio, location };
+            window.app.userData = { ...window.app.userData, ...settings };
             window.app.ui.showToast('Настройки сохранены! ✨', 'success');
         } catch (error) {
             console.error('Ошибка сохранения:', error);

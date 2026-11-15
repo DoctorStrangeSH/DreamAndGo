@@ -324,7 +324,9 @@ export class RestaurantsModule {
             });
         }
 
-        document.getElementById('saveRestaurantBtn').addEventListener('click', async () => {
+        document.getElementById('saveRestaurantBtn').addEventListener('click', async (event) => {
+            const saveButton = event.currentTarget;
+            if (saveButton.disabled) return;
             const form = document.getElementById('restaurantForm');
             const formData = new FormData(form);
 
@@ -349,6 +351,9 @@ export class RestaurantsModule {
                 return;
             }
 
+            saveButton.disabled = true;
+            saveButton.setAttribute('aria-busy', 'true');
+            try {
             const result = isEdit
                 ? await this.restaurantService.updateRestaurant(userId, restaurantId, data)
                 : await this.restaurantService.addRestaurant(userId, data);
@@ -364,7 +369,14 @@ export class RestaurantsModule {
                     await this.render();
                 }, 300);
             } else {
-                window.app.ui.showToast('Ошибка сохранения', 'error');
+                window.app.ui.showToast('Не удалось сохранить ресторан. Попробуй снова.', 'error');
+            }
+            } catch (error) {
+                console.error('Ошибка сохранения ресторан:', error);
+                window.app.ui.showToast('Не удалось сохранить ресторан. Попробуй снова.', 'error');
+            } finally {
+                saveButton.disabled = false;
+                saveButton.removeAttribute('aria-busy');
             }
         });
     }

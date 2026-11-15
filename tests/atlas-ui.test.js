@@ -67,3 +67,16 @@ test('design preview is isolated from production services', () => {
   assert.doesNotMatch(html, /(?:firebase\/|firebaseapp\.com|https?:\/\/|<script\s+src=)/i);
   assert.doesNotMatch(html, /(?:fetch\s*\(|XMLHttpRequest|localStorage|indexedDB)/);
 });
+
+test('offline preview buttons support a non-persistent interactive walkthrough', () => {
+  const html = read('design/atlas-preview.html');
+  assert.match(html, /id="previewTravelForm"/);
+  assert.match(html, /data-preview-action="new-travel"/);
+  assert.match(html, /data-preview-action="new-book"/);
+  assert.match(html, /id="previewFeedback"[^>]*role="status"/);
+  assert.match(html, /form\.addEventListener\('submit'/);
+  assert.match(html, /event\.preventDefault\(\)/);
+  assert.match(html, /heading\.textContent=title/);
+  assert.match(html, /description\.textContent=note/);
+  assert.doesNotMatch(html, /innerHTML\s*=/);
+});

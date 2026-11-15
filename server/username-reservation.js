@@ -26,7 +26,15 @@ export async function registerProfileWithReservedUsername(db, uid, username, ema
             return { ok: false, code: 'failed-precondition' };
         }
         if (existingProfile.exists) {
-            // Do not overwrite old accounts, even after a retry.
+            // Retry after an uncertain network outcome: a completed registration
+            // may have committed even when its callable response was lost.
+            // Never update or replace an existing profile on this path.
+            const sameProfile = existingProfile.get('usernameNormalized') === canonical &&
+                normalizeUsername(existingProfile.get('username')) === canonical;
+            const sameReservation = reserved.exists && reserved.get('uid') === uid;
+            if (sameProfile && sameReservation) {
+                return { ok: true, username: canonical, recovered: true };
+            }
             return { ok: false, code: 'already-exists' };
         }
         if (reserved.exists) return { ok: false, code: 'already-exists' };

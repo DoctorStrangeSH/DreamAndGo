@@ -233,3 +233,14 @@ test('travel photo sources and edit dialog fields are safe', () => {
   assert.match(source, /safeRating = Number\.isFinite\(rawRating\)/);
   assert.doesNotMatch(source, /<img src="\$\{escapeHTML\(travel\.photos\[0\]\)/);
 });
+
+test('collection deletion prevents repeated clicks and reports failed requests', () => {
+  for (const name of ['books', 'travels', 'restaurants']) {
+    const source = read('js/modules/' + name + '/' + name + '.js');
+    assert.match(source, /if \(btn\.disabled \|\| !confirm\(/);
+    assert.match(source, /btn\.disabled = true/);
+    assert.match(source, /if \(!result\?\.success\) throw new Error/);
+    assert.match(source, /Не удалось удалить запись\. Попробуй снова\./);
+    assert.match(source, /finally \{\s*btn\.disabled = false/);
+  }
+});

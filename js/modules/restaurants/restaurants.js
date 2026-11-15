@@ -170,11 +170,19 @@ export class RestaurantsModule {
         document.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                if (confirm('Удалить ресторан?')) {
-                    await this.restaurantService.deleteRestaurant(window.app.currentUser.uid, btn.dataset.id);
+                if (btn.disabled || !confirm('Удалить ресторан?')) return;
+                btn.disabled = true;
+                try {
+                    const result = await this.restaurantService.deleteRestaurant(window.app.currentUser.uid, btn.dataset.id);
+                    if (!result?.success) throw new Error('Удаление не выполнено');
                     window.app.ui.showToast('Ресторан удалён', 'info');
-                    this.render();
+                    await this.render();
                     window.app.refreshUserData();
+                } catch (error) {
+                    console.error('Не удалось удалить ресторан:', error);
+                    window.app.ui.showToast('Не удалось удалить запись. Попробуй снова.', 'error');
+                } finally {
+                    btn.disabled = false;
                 }
             });
         });

@@ -80,3 +80,18 @@ test('offline preview buttons support a non-persistent interactive walkthrough',
   assert.match(html, /description\.textContent=note/);
   assert.doesNotMatch(html, /innerHTML\s*=/);
 });
+
+test('real profile provides keyboard accessible tabs without refetching on each switch', () => {
+  const source = read('js/modules/profile/profile.js');
+  assert.match(source, /role="tablist" aria-label="Разделы профиля"/);
+  assert.match(source, /role="tabpanel" tabindex="0"/);
+  for (const tab of ['overview', 'travels', 'movies', 'books', 'dreams', 'restaurants', 'achievements']) {
+    assert.ok(source.includes('id="profile-tab-' + tab + '"'), tab + ': tab ID');
+  }
+  for (const key of ['ArrowLeft', 'ArrowRight', 'Home', 'End']) {
+    assert.ok(source.includes("event.key === '" + key + "'"), key + ': keyboard navigation');
+  }
+  assert.match(source, /setAttribute\('aria-selected', String\(selected\)\)/);
+  assert.match(source, /this\.initTabs\(userData\)/);
+  assert.doesNotMatch(source, /this\.loadUserProfile\(userId\);\s*if \(userData\)/);
+});

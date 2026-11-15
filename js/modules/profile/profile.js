@@ -270,11 +270,16 @@ export class ProfileModule {
         const achievements = Array.isArray(userData.achievements) ? userData.achievements.filter(Boolean) : [];
         if (achievements.length === 0) {
             return `
-                <div class="text-center py-5">
-                    <i class="bi bi-trophy display-1 text-muted opacity-25"></i>
-                    <h5 class="mt-3 text-muted">Нет достижений</h5>
-                    <p class="text-muted small">Пользуйся сайтом чтобы получать ачивки</p>
-                </div>
+                <section class="atlas-empty atlas-empty--achievement" aria-label="Достижения пока не получены">
+                    <div class="atlas-empty-art" aria-hidden="true">
+                        <span class="atlas-empty-orbit"></span>
+                        <i class="bi bi-trophy"></i>
+                        <span class="atlas-empty-spark atlas-empty-spark--one">✦</span>
+                    </div>
+                    <span class="atlas-empty-kicker">Путь открытий</span>
+                    <h3>Первая награда впереди</h3>
+                    <p>Продолжай исследовать Dream&Go, записывать мечты и открытия — здесь появятся твои достижения.</p>
+                </section>
             `;
         }
         return `

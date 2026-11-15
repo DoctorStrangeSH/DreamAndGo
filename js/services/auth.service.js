@@ -1,3 +1,7 @@
+import { app } from '../config/firebase.js';
+import { completeSignupV2 } from '../core/signup-v2-flow.js';
+import { canUseSignupV2 } from '../core/signup-v2-policy.js';
+import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
 import { normalizeUsername } from '../core/username.js';
 import { 
     signInWithEmailAndPassword,
@@ -18,9 +22,10 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 export class AuthService {
-    constructor(auth, db) {
+    constructor(auth, db, signupV2Rollout = { enabled: false }) {
         this.auth = auth;
         this.db = db;
+        this.signupV2Rollout = signupV2Rollout;
     }
 
     // Отслеживание состояния авторизации
@@ -55,8 +60,27 @@ export class AuthService {
         }
     }
 
+    // Candidate server-backed signup, unreachable unless explicitly opted in.
+    async signUpWithEmailV2(email, password, username) {
+        if (!canUseSignupV2(this.signupV2Rollout)) {
+            return { success: false, error: 'Регистрация временно недоступна до проверки безопасности.' };
+        }
+        const register = httpsCallable(getFunctions(app, 'europe-west3'), 'registerProfileV2');
+        return completeSignupV2({
+            email, password, username,
+            createAuthUser: async (newEmail, newPassword) =>
+                (await createUserWithEmailAndPassword(this.auth, newEmail, newPassword)).user,
+            registerProfile: async newUsername => register({ username: newUsername }),
+            deleteAuthUser: async user => deleteUser(user),
+            signOutAuth: async () => signOut(this.auth)
+        });
+    }
+
     // Регистрация
     async signUpWithEmail(email, password, username) {
+        if (this.signupV2Rollout?.enabled === true) {
+            return this.signUpWithEmailV2(email, password, username);
+        }
         try {
             console.log('📝 Попытка регистрации:', email, username);
             

@@ -230,3 +230,19 @@ input:focus-visible,select:focus-visible,textarea:focus-visible {
 @media (prefers-reduced-motion:reduce) {
   *,*::before,*::after {scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}
 }
+
+/* Atlas navigation: comfortable tap targets, zoom and readable focus states. */
+.navbar-premium .navbar-toggler {
+  min-width:44px;min-height:44px;border:1px solid var(--border-color);
+  border-radius:13px;background:var(--bg-card);box-shadow:var(--shadow-xs)
+}
+.navbar-premium .dropdown-item {min-height:44px;display:flex;align-items:center;gap:.5rem}
+.navbar-premium .nav-link-premium {min-height:44px;display:flex;align-items:center;gap:.35rem}
+.navbar-premium .nav-link-premium:focus-visible,
+.navbar-premium .dropdown-item:focus-visible {outline:3px solid var(--accent)!important;outline-offset:2px}
+@media(max-width:991.98px) {
+  html {scroll-padding-top:76px}
+  .navbar-premium .navbar-collapse {overscroll-behavior:contain}
+  .navbar-premium .nav-link-premium {white-space:normal;overflow-wrap:anywhere}
+  .navbar-premium .dropdown-menu {max-width:100%}
+}

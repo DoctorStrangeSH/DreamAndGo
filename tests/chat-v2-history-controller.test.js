@@ -82,3 +82,50 @@ test('message snapshot is immutable and forged HTML stays inert data', async () 
     assert.equal(Object.isFrozen(state.messages), true);
     assert.equal(Object.isFrozen(state.messages[0]), true);
 });
+
+test('identical background history avoids UI churn; changed read flags update in place', async () => {
+    let page = { chatId: 'chat-a', messages: [msg(2), msg(1)],
+        hasMore: false, nextBeforeSequence: null };
+    const events = [];
+    const history = new ChatV2HistoryController(async () => page, state => {
+        events.push(state);
+    }, 2);
+    await history.open('chat-a');
+    const before = events.length;
+    await history.refreshLatest();
+    assert.equal(events.length, before);
+    page = { ...page, messages: [{ ...msg(2), read: true }, msg(1)] };
+    await history.refreshLatest();
+    assert.equal(events.length, before + 1);
+    assert.equal(history.snapshot().messages.at(-1).read, true);
+});
+test('background history failure preserves already shown messages and next refresh recovers', async () => {
+    let fail = false;
+    const history = new ChatV2HistoryController(async () => {
+        if (fail) throw new Error('offline');
+        return { chatId: 'chat-a', messages: [msg(1)], hasMore: false,
+            nextBeforeSequence: null };
+    });
+    await history.open('chat-a');
+    fail = true;
+    assert.equal((await history.refreshLatest()).status, 'ready');
+    assert.deepEqual(history.snapshot().messages.map(x => x.sequence), [1]);
+    fail = false;
+    assert.equal((await history.refreshLatest()).status, 'ready');
+});
+test('background refresh does not discard already loaded older pages', async () => {
+    const pages = [
+        { chatId: 'chat-a', messages: [msg(4), msg(3)], hasMore: true, nextBeforeSequence: 3 },
+        { chatId: 'chat-a', messages: [msg(2), msg(1)], hasMore: false, nextBeforeSequence: null }
+    ];
+    let calls = 0;
+    const history = new ChatV2HistoryController(async () => {
+        calls++;
+        return pages.shift();
+    }, () => {}, 2);
+    await history.open('chat-a');
+    await history.loadOlder();
+    await history.refreshLatest();
+    assert.equal(calls, 2);
+    assert.deepEqual(history.snapshot().messages.map(x => x.sequence), [1, 2, 3, 4]);
+});

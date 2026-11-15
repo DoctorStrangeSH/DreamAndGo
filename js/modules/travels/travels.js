@@ -183,11 +183,19 @@ export class TravelsModule {
         document.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                if (confirm('Удалить это путешествие?')) {
-                    await this.travelService.deleteTravel(window.app.currentUser.uid, btn.dataset.id);
+                if (btn.disabled || !confirm('Удалить это путешествие?')) return;
+                btn.disabled = true;
+                try {
+                    const result = await this.travelService.deleteTravel(window.app.currentUser.uid, btn.dataset.id);
+                    if (!result?.success) throw new Error('Удаление не выполнено');
                     window.app.ui.showToast('Путешествие удалено', 'info');
-                    this.render();
+                    await this.render();
                     window.app.refreshUserData();
+                } catch (error) {
+                    console.error('Не удалось удалить путешествие:', error);
+                    window.app.ui.showToast('Не удалось удалить запись. Попробуй снова.', 'error');
+                } finally {
+                    btn.disabled = false;
                 }
             });
         });

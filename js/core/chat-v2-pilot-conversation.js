@@ -15,7 +15,8 @@ export class ChatV2PilotConversation {
         const createView = viewFactory || (options => new ChatV2PilotView(options));
         this.view = createView({
             root, session, chatId, title,
-            onLoadOlder: () => this.loadOlder()
+            onLoadOlder: () => this.loadOlder(),
+            onSent: () => this.refreshLatest()
         });
         this.chatId = chatId;
     }
@@ -23,6 +24,13 @@ export class ChatV2PilotConversation {
     async mount() {
         if (this.disposed) throw new Error('Диалог закрыт');
         this.view.mount();
+        return this.history.open(this.chatId);
+    }
+
+    refreshLatest() {
+        if (this.disposed) return Promise.resolve({ status: 'stale' });
+        // Re-open at the newest page after a confirmed send. The history
+        // controller invalidates any previous in-flight older-page request.
         return this.history.open(this.chatId);
     }
 

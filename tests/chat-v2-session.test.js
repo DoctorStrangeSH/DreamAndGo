@@ -1,0 +1,161 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { ChatV2Session } from '../js/core/chat-v2-session.js';
+
+const uuid = '550e8400-e29b-41d4-a716-446655440000';
+const messageId = 'a'.repeat(64);
+const tick = () => new Promise(resolve => setImmediate(resolve));
+
+function fakeServer() {
+    const calls = [];
+    const messages = new Map();
+    const invokeFor = userId => async (name, payload) => {
+        calls.push({ userId, name, payload });
+        switch (name) {
+            case 'createPrivateChatV2':
+                return { data: { chatId: 'chat-a', version: 2 } };
+            case 'sendPrivateMessageV2': {
+                if (userId !== 'alice') throw new Error('wrong sender');
+                if (!messages.has(payload.clientMessageId)) {
+                    messages.set(payload.clientMessageId, { id: messageId, sender: userId, read: false });
+                }
+                return { data: { chatId: payload.chatId, messageId } };
+            }
+            case 'getPrivateMessageStatusV2': {
+                if (userId !== 'alice') throw new Error('sender only');
+                const record = messages.get(payload.clientMessageId);
+                return { data: record
+                    ? { status: 'sent', messageId: record.id, read: record.read }
+                    : { status: 'missing' } };
+            }
+            case 'getPrivateChatUnreadV2':
+                return { data: { chatId: payload.chatId, unread: [...messages.values()]
+                    .filter(item => item.sender !== userId && !item.read).length } };
+            case 'markPrivateMessageReadV2': {
+                if (userId !== 'bob') throw new Error('recipient only');
+                const record = [...messages.values()].find(item => item.id === payload.messageId);
+                if (!record) throw new Error('not found');
+                record.read = true;
+                return { data: { status: 'read', messageId: record.id } };
+            }
+            default:
+                throw new Error('Unexpected endpoint: ' + name);
+        }
+    };
+    return { calls, invokeFor };
+}
+
+function visibilityHarness() {
+    const elements = new Set();
+    const root = { contains: element => elements.has(element) };
+    const documentRef = {
+        visibilityState: 'visible',
+        addEventListener() {},
+        removeEventListener() {}
+    };
+    let notify, disconnected = false;
+    const observerFactory = callback => {
+        notify = callback;
+        return { observe() {}, unobserve() {}, disconnect() { disconnected = true; } };
+    };
+    const element = { isConnected: true };
+    elements.add(element);
+    return {
+        root, documentRef, observerFactory, element,
+        visible: ratio => notify([{ target: element, isIntersecting: ratio > 0, intersectionRatio: ratio }]),
+        disconnected: () => disconnected
+    };
+}
+
+test('candidate two-user flow: create → send → unread → visible receipt → sender read', async () => {
+    const server = fakeServer();
+    const deliveryEvents = [], unreadEvents = [];
+    const alice = new ChatV2Session({
+        invoke: server.invokeFor('alice'), getUserId: () => 'alice',
+        createId: () => uuid, onDeliveryChange: state => deliveryEvents.push(state)
+    });
+    const bob = new ChatV2Session({
+        invoke: server.invokeFor('bob'), getUserId: () => 'bob',
+        onUnreadChange: state => unreadEvents.push(state)
+    });
+    assert.deepEqual(await alice.createChat('bob'), { chatId: 'chat-a', version: 2 });
+    const intent = alice.prepare('chat-a', 'Привет!');
+    assert.equal(alice.delivery.get(uuid).deliveryStatus, 'sending');
+    assert.equal((await alice.send(intent.clientMessageId)).success, true);
+    assert.equal(alice.delivery.get(uuid).deliveryStatus, 'sent');
+    assert.deepEqual(await bob.refreshUnread('chat-a'), { status: 'ready', unread: 1 });
+    assert.equal((await alice.refreshRead(uuid)).status, 'unconfirmed');
+
+    const dom = visibilityHarness();
+    const tracker = bob.watchIncoming({ chatId: 'chat-a', ...dom, isActive: () => true });
+    assert.equal(tracker.observe(dom.element, { id: messageId, senderId: 'alice' }), true);
+    dom.visible(0.5);
+    await tick();
+    assert.equal(server.calls.filter(item => item.name === 'markPrivateMessageReadV2').length, 0);
+    dom.visible(1);
+    await tick();
+    await tick();
+    assert.equal(server.calls.filter(item => item.name === 'markPrivateMessageReadV2').length, 1);
+    assert.deepEqual(bob.unread.get('chat-a'), { chatId: 'chat-a', status: 'ready', unread: 0 });
+    assert.equal((await alice.refreshRead(uuid)).status, 'read');
+    assert.equal(alice.delivery.get(uuid).deliveryStatus, 'read');
+    assert.equal(unreadEvents.at(-1).unread, 0);
+    assert.equal(deliveryEvents.at(-1).deliveryStatus, 'read');
+    alice.dispose();
+    bob.dispose();
+    assert.equal(dom.disconnected(), true);
+});
+
+test('inactive or hidden conversations cannot mark incoming messages read', async () => {
+    const server = fakeServer();
+    const bob = new ChatV2Session({ invoke: server.invokeFor('bob'), getUserId: () => 'bob' });
+    const dom = visibilityHarness();
+    let active = false;
+    const tracker = bob.watchIncoming({ chatId: 'chat-a', ...dom, isActive: () => active });
+    tracker.observe(dom.element, { id: messageId, senderId: 'alice' });
+    dom.visible(1);
+    await tick();
+    active = true;
+    dom.documentRef.visibilityState = 'hidden';
+    dom.visible(1);
+    await tick();
+    assert.equal(server.calls.length, 0);
+    bob.dispose();
+});
+
+test('logout clears view models, blocks new calls and suppresses late acknowledgements', async () => {
+    let resolveSend, userId = 'alice';
+    const session = new ChatV2Session({
+        getUserId: () => userId, createId: () => uuid,
+        invoke: () => new Promise(resolve => { resolveSend = resolve; })
+    });
+    session.prepare('chat-a', 'Секрет');
+    const pending = session.send(uuid);
+    await tick();
+    session.dispose();
+    resolveSend({ data: { chatId: 'chat-a', messageId } });
+    const result = await pending;
+    assert.equal(result.success, false);
+    assert.equal(session.delivery.get(uuid), null);
+    await assert.rejects(async () => session.createChat('bob'), /Сессия изменилась/);
+    userId = 'bob';
+    assert.throws(() => session.prepare('chat-a', 'Нельзя'), /Сессия изменилась/);
+    session.dispose();
+});
+
+test('stale authenticated identity cannot create trackers or send pending intents', async () => {
+    let userId = 'alice', called = 0;
+    const session = new ChatV2Session({
+        getUserId: () => userId,
+        invoke: async () => { called++; return { data: {} }; },
+        createId: () => uuid
+    });
+    session.prepare('chat-a', 'Текст');
+    userId = 'bob';
+    assert.throws(() => session.send(uuid), /Сессия изменилась/);
+    assert.throws(() => session.watchIncoming({
+        chatId: 'chat-a', root: { contains: () => true }, isActive: () => true
+    }), /Сессия изменилась/);
+    assert.equal(called, 0);
+    session.dispose();
+});

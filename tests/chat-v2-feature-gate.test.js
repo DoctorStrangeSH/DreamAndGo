@@ -70,3 +70,58 @@ test('invalid SDK adapter dependencies are rejected early', () => {
     const call = createChatV2CallableInvoker(() => null, {});
     assert.throws(() => call('getPrivateChatUnreadV2', {}), /Недоступная/);
 });
+
+test('revoking a pilot rollout blocks later actions and does not invoke a callable', async () => {
+    let activeRollout = allowed;
+    const calls = [];
+    const session = createGatedChatV2Session({
+        rollout: allowed,
+        getRollout: () => activeRollout,
+        getUserId: () => 'alice',
+        invoke: async name => {
+            calls.push(name);
+            return { data: { chatId: 'chat-a', version: 2 } };
+        }
+    });
+    assert.ok(session);
+    activeRollout = { ...allowed, backendReady: false };
+    assert.throws(() => session.createChat('bob'), /Сессия изменилась/);
+    assert.equal(calls.length, 0);
+    session.dispose();
+});
+
+test('revocation while a callable is pending discards its response', async () => {
+    let activeRollout = allowed;
+    let finish;
+    const pending = new Promise(resolve => { finish = resolve; });
+    const session = createGatedChatV2Session({
+        rollout: allowed,
+        getRollout: () => activeRollout,
+        getUserId: () => 'alice',
+        invoke: () => pending
+    });
+    const request = session.createChat('bob');
+    activeRollout = { ...allowed, enabled: false };
+    finish({ data: { chatId: 'chat-a', version: 2 } });
+    await assert.rejects(request, /Сессия изменилась/);
+    session.dispose();
+});
+
+test('account switching invalidates a gated pilot session', () => {
+    let userId = 'alice';
+    const session = createGatedChatV2Session({
+        rollout: allowed,
+        getUserId: () => userId,
+        invoke: async () => ({ data: {} })
+    });
+    userId = 'bob';
+    assert.throws(() => session.createChat('charlie'), /Сессия изменилась/);
+    session.dispose();
+});
+
+test('invalid dynamic rollout provider is rejected', () => {
+    assert.throws(() => createGatedChatV2Session({
+        rollout: allowed, getRollout: true, getUserId: () => 'alice',
+        invoke: async () => ({ data: {} })
+    }), TypeError);
+});

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { initializeTestEnvironment, assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
-import { doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, collection, query, orderBy } from 'firebase/firestore';
+import { doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, collection, query, orderBy, serverTimestamp } from 'firebase/firestore';
 
 const projectId = 'demo-dreamandgo-owner-read';
 const rules = readFileSync(new URL('./owner-read.rules', import.meta.url), 'utf8');
@@ -45,10 +45,41 @@ test('owner-only read recovery: guest and other users cannot read PII or write',
         await assertFails(updateDoc(doc(alice, 'users', 'alice'), { role: 'admin' }));
         await assertFails(updateDoc(doc(alice, 'users', 'alice', 'dreams', 'd1'), { title: 'changed' }));
         await assertFails(updateDoc(doc(alice, 'users', 'alice', 'dreams', 'd1'), { createdAt: new Date(0) }));
-        await assertFails(deleteDoc(doc(alice, 'users', 'alice', 'dreams', 'd1')));
+        await assertFails(deleteDoc(doc(bob, 'users', 'alice', 'dreams', 'd1')));
         await assertFails(deleteDoc(doc(alice, 'users', 'alice')));
         await assertFails(setDoc(doc(bob, 'users', 'alice', 'friends', 'bob'), { friendId: 'bob' }));
         await assertFails(setDoc(doc(alice, 'chats', 'room-1', 'messages', 'msg'), { text: 'forged' }));
+
+        const validDream = () => ({
+            title: 'Моя мечта', category: 'Знания', status: 'dreaming',
+            description: 'Учиться', progress: 0, deadline: null,
+            steps: [{ text: 'Первый шаг', done: false }],
+            isPublic: false, createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        });
+        const newDream = doc(alice, 'users', 'alice', 'dreams', 'new');
+        await assertSucceeds(setDoc(newDream, validDream()));
+        await assertSucceeds(updateDoc(newDream, {
+            title: 'Моя новая мечта', updatedAt: serverTimestamp()
+        }));
+        await assertFails(setDoc(doc(bob, 'users', 'alice', 'dreams', 'forged'), validDream()));
+        await assertFails(setDoc(doc(alice, 'users', 'alice', 'dreams', 'public'), {
+            ...validDream(), isPublic: true
+        }));
+        await assertFails(setDoc(doc(alice, 'users', 'alice', 'dreams', 'role'), {
+            ...validDream(), role: 'admin'
+        }));
+        await assertFails(setDoc(doc(alice, 'users', 'alice', 'dreams', 'nested'), {
+            ...validDream(), steps: [{ text: 'ok', done: false, role: 'admin' }]
+        }));
+        await assertFails(setDoc(doc(alice, 'users', 'alice', 'dreams', 'overflow'), {
+            ...validDream(), steps: [{ text: 'x'.repeat(201), done: false }]
+        }));
+        await assertFails(updateDoc(newDream, { createdAt: serverTimestamp() }));
+        await assertFails(updateDoc(newDream, { title: 'x'.repeat(121), updatedAt: serverTimestamp() }));
+        await assertFails(updateDoc(newDream, { isPublic: true, updatedAt: serverTimestamp() }));
+        await assertSucceeds(deleteDoc(newDream));
+
     } finally {
         await env.cleanup();
     }

@@ -1,0 +1,63 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { publicProfileFromPrivate, loadPublicProfile } from '../server/public-profile-service.js';
+
+const privateUser = {
+    username: 'Sherlock', displayName: ' Sherlock ',
+    email: 'private@example.com', phone: '+7-000', roles: ['admin'],
+    preferences: { private: true }, privacy: { dreams: 'private' },
+    avatar: 'https://example.com/avatar.png', bio: 'Hello',
+    stats: { friends: 2, dreams: 4, secretBalance: 999 }
+};
+
+test('server projection never returns email, roles or arbitrary nested data', () => {
+    const result = publicProfileFromPrivate('alice', privateUser);
+    assert.deepEqual(Object.keys(result).sort(),
+        ['uid', 'username', 'displayName', 'avatar', 'bio', 'stats'].sort());
+    assert.deepEqual(result.stats, { travels: 0, restaurants: 0, movies: 0,
+        books: 0, dreams: 4, friends: 2 });
+    assert.equal(JSON.stringify(result).includes('private@example.com'), false);
+    assert.equal(JSON.stringify(result).includes('secretBalance'), false);
+});
+
+test('malformed public fields are bounded or rejected', () => {
+    const result = publicProfileFromPrivate('alice', {
+        username: 'x'.repeat(200), displayName: [], avatar: 'javascript:alert(1)',
+        bio: 'b'.repeat(2000), stats: { friends: -1, dreams: '400' }
+    });
+    assert.equal(result.username.length, 40);
+    assert.equal(result.bio.length, 500);
+    assert.equal(result.avatar, '');
+    assert.equal(result.stats.friends, 0);
+    assert.equal(result.stats.dreams, 0);
+    assert.equal(publicProfileFromPrivate('bad/id', {}), null);
+});
+
+test('profile lookup denies anonymous and invalid input without querying Firestore', async () => {
+    let calls = 0;
+    const db = { collection: () => { calls++; throw Error('must not query'); } };
+    assert.deepEqual(await loadPublicProfile(db, null, 'alice'), { ok: false, code: 'unauthenticated' });
+    assert.deepEqual(await loadPublicProfile(db, 'bob', 'bad/id'), { ok: false, code: 'invalid-argument' });
+    assert.equal(calls, 0);
+});
+
+test('authenticated lookup reads one document and returns only public fields', async () => {
+    const ids = [];
+    const db = { collection(name) {
+        assert.equal(name, 'users');
+        return { doc(uid) {
+            ids.push(uid);
+            return { async get() { return { exists: true, data: () => privateUser }; } };
+        } };
+    } };
+    const result = await loadPublicProfile(db, 'bob', 'alice');
+    assert.equal(result.ok, true);
+    assert.equal(result.profile.username, 'Sherlock');
+    assert.equal('email' in result.profile, false);
+    assert.deepEqual(ids, ['alice']);
+});
+
+test('missing users return a generic not-found status', async () => {
+    const db = { collection: () => ({ doc: () => ({ get: async () => ({ exists: false }) }) }) };
+    assert.deepEqual(await loadPublicProfile(db, 'bob', 'alice'), { ok: false, code: 'not-found' });
+});

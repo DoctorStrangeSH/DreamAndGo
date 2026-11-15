@@ -20,13 +20,26 @@ export class TravelsModule {
         const requestId = ++this.requestId;
         mainContent.innerHTML = `<div data-collection-request="travels-${requestId}">${window.app.ui.createLoader()}</div>`;
 
-        const travels = await this.travelService.getTravels(userId, this.currentFilter);
+        try {
+            const travels = await this.travelService.getTravels(userId, this.currentFilter, { throwOnError: true });
 
-        if (requestId !== this.requestId || window.app.currentUser?.uid !== userId ||
-            !mainContent.isConnected || !mainContent.querySelector('[data-collection-request="travels-' + requestId + '"]')) return;
+            if (requestId !== this.requestId || window.app.currentUser?.uid !== userId ||
+                !mainContent.isConnected || !mainContent.querySelector('[data-collection-request="travels-' + requestId + '"]')) return;
 
-        mainContent.innerHTML = this.getTemplate(travels);
-        this.attachEventListeners();
+            mainContent.innerHTML = this.getTemplate(travels);
+            this.attachEventListeners();
+        } catch (error) {
+            console.error('Не удалось загрузить коллекцию путешествий:', error);
+            if (requestId !== this.requestId || window.app.currentUser?.uid !== userId ||
+                !mainContent.isConnected || !mainContent.querySelector('[data-collection-request="travels-' + requestId + '"]')) return;
+
+            mainContent.innerHTML = `<section class="atlas-empty" role="alert">
+                <h2>Не удалось загрузить путешествия</h2>
+                <p>Проверь подключение к интернету и попробуй ещё раз.</p>
+                <button class="btn btn-premium" type="button" data-retry-travels>Повторить</button>
+            </section>`;
+            mainContent.querySelector('[data-retry-travels]')?.addEventListener('click', () => this.render());
+        }
     }
 
     getTemplate(travels) {

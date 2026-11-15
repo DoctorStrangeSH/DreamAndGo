@@ -116,3 +116,13 @@ test('profile travel collection only reads for its authenticated owner', () => {
   assert.match(profile, /escapeHTML\(String\(travel\.location \|\| 'Место не указано'\)\)/);
   assert.doesNotMatch(profile, /getTravels\(userId\)/);
 });
+
+test('private dreams collection is owner-only and escapes display fields', () => {
+  const source = read('js/modules/profile/profile.js');
+  assert.match(source, /case 'dreams':\s*await this\.loadOwnDreams\(container, requestId\)/);
+  assert.match(source, /async loadOwnDreams\(container, requestId\)/);
+  assert.match(source, /if \(!this\.profileIsOwn \|\| window\.app\.currentUser\?\.uid !== this\.profileUserId\)/);
+  assert.match(source, /new DreamsService\(\)\.getDreams\(this\.profileUserId\)/);
+  assert.match(source, /escapeHTML\(String\(dream\.title \|\| 'Без названия'\)\)/);
+  assert.match(source, /escapeHTML\(String\(dream\.category \|\| 'Личная мечта'\)\)/);
+});

@@ -147,3 +147,31 @@
  .filter-bar .btn-group .btn {font-size:.77rem}
  .travel-card .restaurant-photo,.travel-card .restaurant-placeholder {height:180px}
 }
+
+
+/* Resilience under real user content, zoom and keyboard navigation */
+.travel-card,.dream-card,.book-card,.restaurant-card,.movie-card {min-width:0}
+.travel-card h6,.dream-card h6,.book-card h6,.restaurant-card h6,.movie-card h6 {
+  overflow-wrap:anywhere;word-break:normal
+}
+.travel-card p,.dream-card p,.book-card p {overflow-wrap:anywhere}
+.travel-card .restaurant-photo,.restaurant-card .restaurant-photo {aspect-ratio:16/10;object-fit:cover}
+.card-premium:focus-within {box-shadow:0 0 0 3px rgba(38,170,161,.16),var(--shadow-md)}
+.travel-card-actions .btn:focus-visible,.dream-card-actions .btn:focus-visible {
+  outline:3px solid var(--accent)!important;outline-offset:2px;opacity:1
+}
+.filter-bar .btn-group .btn {white-space:normal;line-height:1.3}
+.filter-bar .btn-group .btn:focus-visible {position:relative;z-index:2}
+@media(max-width:575.98px) {
+  .filter-bar .row {display:flex;gap:.65rem}
+  .filter-bar .row>[class*="col-"] {width:100%;max-width:100%}
+  .filter-bar .btn-group {width:100%;flex-wrap:wrap}
+  .filter-bar .btn-group .btn {flex:1 1 auto;min-height:42px}
+  .filter-bar .form-select {width:100%!important;min-width:0!important}
+  .travel-card>.p-3,.dream-card {padding:1.1rem!important}
+  .travel-card>.p-3>div:last-child {gap:.6rem;flex-wrap:wrap}
+}
+@media(prefers-contrast:more) {
+ .card-premium,.atlas-empty,.filter-bar {border-width:2px}
+ .btn-outline-secondary,.btn-outline-primary {border-width:2px}
+}

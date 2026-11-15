@@ -98,3 +98,24 @@ test('destroyed view cannot be reused or send a message', () => {
     assert.equal(h.events.size, 0);
     assert.equal(h.intents.length, 0);
 });
+
+test('pilot refreshes history exactly once after acknowledgement, never on failure', async () => {
+    const ok = createHarness({ success: true });
+    let refreshes = 0;
+    const view = new ChatV2PilotView({
+        root: ok.root, session: ok.session, chatId: 'chat-a',
+        onSent: async () => { refreshes++; }
+    }).mount();
+    await ok.events.get('submit')({ preventDefault() {} });
+    assert.equal(refreshes, 1);
+    view.destroy();
+
+    const failed = createHarness({ success: false });
+    const retryView = new ChatV2PilotView({
+        root: failed.root, session: failed.session, chatId: 'chat-a',
+        onSent: async () => { refreshes++; }
+    }).mount();
+    await failed.events.get('submit')({ preventDefault() {} });
+    assert.equal(refreshes, 1);
+    retryView.destroy();
+});

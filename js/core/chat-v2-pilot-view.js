@@ -29,6 +29,10 @@ export function renderChatV2Pilot({ title = 'Тестовый диалог', mes
             <div><span class="chat-v2-pilot__eyebrow">Приватный чат · тестовый режим</span>
             <h2 class="chat-v2-pilot__title">${escapeHTML(title)}</h2></div>
         </header>
+        <div class="chat-v2-pilot__history">
+            <button type="button" class="chat-v2-pilot__older" hidden>Загрузить ранние</button>
+            <span class="chat-v2-pilot__history-status" role="status" aria-live="polite"></span>
+        </div>
         <ul class="chat-v2-pilot__messages" aria-label="Сообщения" aria-live="polite">
             ${items || '<li class="chat-v2-pilot__empty">Здесь появятся сообщения после загрузки переписки.</li>'}
         </ul>
@@ -43,10 +47,10 @@ export function renderChatV2Pilot({ title = 'Тестовый диалог', mes
 }
 
 export class ChatV2PilotView {
-    constructor({ root, session, chatId, title }) {
+    constructor({ root, session, chatId, title, onLoadOlder = () => {} }) {
         if (!root || typeof root.querySelector !== 'function' ||
             !session || typeof session.prepare !== 'function' ||
-            typeof session.send !== 'function' || !isChatId(chatId)) {
+            typeof session.send !== 'function' || !isChatId(chatId) || typeof onLoadOlder !== 'function') {
             throw new TypeError('Некорректная конфигурация тестового чата');
         }
         this.root = root;
@@ -54,6 +58,8 @@ export class ChatV2PilotView {
         this.chatId = chatId;
         this.title = title;
         this.messages = [];
+        this.onLoadOlder = onLoadOlder;
+        this._older = () => this.onLoadOlder();
         this.destroyed = false;
         this.busy = false;
         this._submit = event => this._onSubmit(event);
@@ -61,11 +67,15 @@ export class ChatV2PilotView {
 
     mount() {
         if (this.destroyed) throw new Error('Экран закрыт');
+        this.form?.removeEventListener('submit', this._submit);
+        this.olderButton?.removeEventListener('click', this._older);
         this.root.innerHTML = renderChatV2Pilot({
             title: this.title, messages: this.messages, userId: this.session.userId
         });
         this.form = this.root.querySelector('.chat-v2-pilot__composer');
         this.form?.addEventListener('submit', this._submit);
+        this.olderButton = this.root.querySelector('.chat-v2-pilot__older');
+        this.olderButton?.addEventListener('click', this._older);
         return this;
     }
 
@@ -82,6 +92,22 @@ export class ChatV2PilotView {
         const template = this.root.ownerDocument.createElement('template');
         template.innerHTML = holder;
         panel.replaceChildren(...template.content.querySelector('.chat-v2-pilot__messages').childNodes);
+    }
+
+    setHistoryState(state) {
+        if (this.destroyed) return;
+        if (!state || state.chatId !== this.chatId || !Array.isArray(state.messages)) return;
+        this.setMessages(state.messages);
+        const button = this.root.querySelector('.chat-v2-pilot__older');
+        const label = this.root.querySelector('.chat-v2-pilot__history-status');
+        if (button) {
+            button.hidden = !state.hasMore;
+            button.disabled = state.status === 'loading';
+        }
+        if (label) {
+            label.textContent = state.status === 'loading' ? 'Загружаем историю…' :
+                state.status === 'error' ? 'Не удалось загрузить историю. Попробуйте ещё раз.' : '';
+        }
     }
 
     async _onSubmit(event) {
@@ -116,6 +142,7 @@ export class ChatV2PilotView {
         if (this.destroyed) return;
         this.destroyed = true;
         this.form?.removeEventListener('submit', this._submit);
+        this.olderButton?.removeEventListener('click', this._older);
         this.root.replaceChildren();
     }
 }

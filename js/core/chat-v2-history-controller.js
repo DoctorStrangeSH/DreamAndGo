@@ -115,7 +115,8 @@ export class ChatV2HistoryController {
         })).then(reply => {
             if (generation !== this.generation) return { status: 'stale' };
             const page = normalizePage(reply, chatId, null, this.limit);
-            const unchanged = this.messages.length === page.messages.length &&
+            const unchanged = this.status === 'ready' &&
+                this.messages.length === page.messages.length &&
                 this.messages.every((item, index) => {
                     const next = page.messages[index];
                     return item.id === next.id && item.sequence === next.sequence &&

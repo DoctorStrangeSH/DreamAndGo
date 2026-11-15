@@ -336,7 +336,9 @@ export class BooksModule {
             });
         }
 
-        document.getElementById('saveBookBtn').addEventListener('click', async () => {
+        document.getElementById('saveBookBtn').addEventListener('click', async (event) => {
+            const saveButton = event.currentTarget;
+            if (saveButton.disabled) return;
             const form = document.getElementById('bookForm');
             const formData = new FormData(form);
 
@@ -358,6 +360,9 @@ export class BooksModule {
                 return;
             }
 
+            saveButton.disabled = true;
+            saveButton.setAttribute('aria-busy', 'true');
+            try {
             const result = isEdit
                 ? await this.bookService.updateBook(userId, bookId, data)
                 : await this.bookService.addBook(userId, data);
@@ -373,7 +378,14 @@ export class BooksModule {
                     await this.render();
                 }, 300);
             } else {
-                window.app.ui.showToast('Ошибка сохранения', 'error');
+                window.app.ui.showToast('Не удалось сохранить книгу. Попробуй снова.', 'error');
+            }
+            } catch (error) {
+                console.error('Ошибка сохранения книгу:', error);
+                window.app.ui.showToast('Не удалось сохранить книгу. Попробуй снова.', 'error');
+            } finally {
+                saveButton.disabled = false;
+                saveButton.removeAttribute('aria-busy');
             }
         });
     }

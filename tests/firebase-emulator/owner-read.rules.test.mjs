@@ -39,7 +39,7 @@ test('owner-only read recovery: guest and other users cannot read PII or write',
         await assertFails(getDoc(doc(alice, 'users', 'alice', 'unknownCollection', 'x')));
 
         await assertFails(setDoc(doc(alice, 'users', 'charlie'), { email: 'c@example.test', username: 'c', isAdmin: true }));
-        await assertFails(setDoc(doc(alice, 'users', 'alice', 'dreams', 'x'), { title: 'x'.repeat(1024 * 1024) }));
+        await assertFails(setDoc(doc(alice, 'users', 'alice', 'dreams', 'x'), { title: 'x'.repeat(100_000) }));
         await assertFails(setDoc(doc(alice, 'users', 'alice', 'dreams', 'x2'), { ownerId: 'bob' }));
         await assertFails(updateDoc(doc(alice, 'users', 'alice'), { email: 'changed@example.test' }));
         await assertFails(updateDoc(doc(alice, 'users', 'alice'), { role: 'admin' }));

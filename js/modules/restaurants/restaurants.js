@@ -7,6 +7,7 @@ export class RestaurantsModule {
     constructor() {
         this.restaurantService = new RestaurantService();
         this.currentFilter = { cuisine: 'all', status: 'all', rating: 0 };
+        this.requestId = 0;
     }
 
     async render() {
@@ -16,9 +17,13 @@ export class RestaurantsModule {
         const userId = window.app.currentUser?.uid;
         if (!userId) return;
 
-        mainContent.innerHTML = window.app.ui.createLoader();
+        const requestId = ++this.requestId;
+        mainContent.innerHTML = `<div data-collection-request="restaurants-${requestId}">${window.app.ui.createLoader()}</div>`;
 
         const restaurants = await this.restaurantService.getRestaurants(userId, this.currentFilter);
+
+        if (requestId !== this.requestId || window.app.currentUser?.uid !== userId ||
+            !mainContent.isConnected || !mainContent.querySelector('[data-collection-request="restaurants-' + requestId + '"]')) return;
 
         mainContent.innerHTML = this.getTemplate(restaurants);
         this.attachEventListeners();

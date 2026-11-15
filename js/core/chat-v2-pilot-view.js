@@ -128,7 +128,15 @@ export class ChatV2PilotView {
             if (result.success) {
                 input.value = '';
                 if (feedback) feedback.textContent = 'Отправлено. Обновляем переписку…';
-                await this.onSent();
+                try {
+                    await this.onSent();
+                } catch {
+                    // The server already acknowledged the send. A failed
+                    // history refresh must never suggest sending it again.
+                    if (!this.destroyed && feedback) {
+                        feedback.textContent = 'Отправлено. Историю пока не удалось обновить.';
+                    }
+                }
             } else if (feedback) {
                 feedback.textContent = 'Отправка не подтверждена. Проверьте её статус перед повтором.';
             }

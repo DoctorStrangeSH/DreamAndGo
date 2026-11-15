@@ -32,7 +32,11 @@ import { DailyTasksWidget } from './modules/daily-tasks/daily-tasks.js';
 
 class DreamAndGo {
     constructor() {
-        this.authService = new AuthService(auth, db);
+        // Candidate registration v2 requires verified legacy migration and backend rollout.
+        // Keep disabled until staging tests and production rules have been reviewed.
+        this.authService = new AuthService(auth, db, Object.freeze({
+            enabled: false, backendReady: false, legacyMigrationVerified: false
+        }));
         this.db = db;
         this.themeService = new ThemeService();
         this.router = new Router();

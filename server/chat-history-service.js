@@ -33,6 +33,13 @@ export async function loadPrivateChatHistory(uid, data, adapter) {
         beforeSequence: input.beforeSequence,
         limit: input.limit + 1
     });
+    // Fail closed if an inconsistent/corrupted message claims another sender.
+    // Inspect even the extra pagination row: it is not returned but still
+    // originates from the same supposedly private conversation.
+    if (!Array.isArray(rows) || rows.some(row =>
+        !row || (row.senderId !== uid && row.senderId !== partnerId))) {
+        throw new TypeError('История содержит сообщение постороннего отправителя');
+    }
     return {
         ok: true,
         ...buildHistoryPage(input.chatId, rows, input.beforeSequence, input.limit)

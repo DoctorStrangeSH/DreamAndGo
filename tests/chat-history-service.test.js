@@ -81,3 +81,26 @@ test('history service rejects corrupted message order and oversized fetch result
     await assert.rejects(loadPrivateChatHistory('alice',
         { chatId: 'chat-a', limit: 2 }, tooMany.adapter), TypeError);
 });
+
+test('history service never exposes messages from a forged third-party sender', async () => {
+    for (const rows of [
+        [msg(5), { ...msg(4), senderId: 'mallory' }, msg(3)],
+        [msg(5), msg(4), { ...msg(3), senderId: 'mallory' }]
+    ]) {
+        const { adapter } = fixture({
+            async listMessages() { return rows; }
+        });
+        await assert.rejects(loadPrivateChatHistory('alice',
+            { chatId: 'chat-a', limit: 2 }, adapter),
+            /постороннего отправителя/);
+    }
+});
+test('history service allows messages from either authenticated participant', async () => {
+    const { adapter } = fixture({
+        async listMessages() { return [msg(2), { ...msg(1), senderId: 'bob' }]; }
+    });
+    const page = await loadPrivateChatHistory('alice',
+        { chatId: 'chat-a', limit: 2 }, adapter);
+    assert.equal(page.ok, true);
+    assert.deepEqual(page.messages.map(row => row.senderId), ['alice', 'bob']);
+});

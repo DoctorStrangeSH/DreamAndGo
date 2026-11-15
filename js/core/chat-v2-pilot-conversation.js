@@ -5,10 +5,11 @@ import { ChatV2PilotView } from './chat-v2-pilot-view.js';
 // history endpoint; this class does not access legacy Firestore collections.
 export class ChatV2PilotConversation {
     constructor({ root, session, chatId, title, lookup, viewFactory, limit = 30 }) {
-        if (typeof lookup !== 'function') throw new TypeError('Нужен транспорт истории');
+        const historyLookup = lookup ?? session?.loadHistory?.bind(session);
+        if (typeof historyLookup !== 'function') throw new TypeError('Нужен транспорт истории');
         this.disposed = false;
         this.view = null;
-        this.history = new ChatV2HistoryController(lookup, snapshot => {
+        this.history = new ChatV2HistoryController(historyLookup, snapshot => {
             if (!this.disposed) this.view?.setHistoryState(snapshot);
         }, limit);
         const createView = viewFactory || (options => new ChatV2PilotView(options));

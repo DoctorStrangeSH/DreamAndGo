@@ -1,5 +1,7 @@
 import { MovieService } from '../../services/movie.service.js';
 import { APP_CONFIG } from '../../config/constants.js';
+import { escapeHTML } from '../../core/escape-html.js';
+import { safeAvatarURL } from '../../core/safe-avatar-url.js';
 
 export class MoviesModule {
     constructor() {
@@ -83,7 +85,7 @@ export class MoviesModule {
                             <select class="form-select form-select-sm" id="genreFilter">
                                 <option value="all">Все жанры</option>
                                 ${Object.entries(APP_CONFIG.MOVIE_GENRES).map(([id, name]) => `
-                                    <option value="${id}">${name}</option>
+                                    <option value="${escapeHTML(String(id))}">${escapeHTML(String(name))}</option>
                                 `).join('')}
                             </select>
                         </div>
@@ -110,10 +112,12 @@ export class MoviesModule {
 
         if (allMovies.length === 0) {
             grid.innerHTML = `
-                <div class="col-12 text-center py-5">
-                    <i class="bi bi-film display-1 text-muted opacity-25"></i>
-                    <h5 class="mt-3 text-muted">Нет фильмов</h5>
-                    <p class="text-muted small">Добавь фильмы в коллекцию</p>
+                <div class="col-12">
+                    <section class="atlas-empty atlas-empty--movie">
+                        <div class="atlas-empty-art" aria-hidden="true"><i class="bi bi-film"></i></div>
+                        <h3>Твоя киноколлекция ждёт первой истории</h3>
+                        <p>Найди любимый фильм или добавь то, что давно хочется посмотреть.</p>
+                    </section>
                     <button class="btn btn-premium btn-sm" id="goToSearch">
                         <i class="bi bi-search me-1"></i>Найти фильмы
                     </button>
@@ -217,14 +221,20 @@ export class MoviesModule {
                 ? '<span class="badge bg-info bg-opacity-10 text-info">☆ Буду смотреть</span>'
                 : '';
 
-        const year = movie.releaseDate ? new Date(movie.releaseDate).getFullYear() : '';
+        const posterURL = safeAvatarURL(movie.poster);
+        const yearMatch = String(movie.releaseDate || '').match(/^(\d{4})/);
+        const year = yearMatch ? yearMatch[1] : '';
+        const displayRating = Number(movie.voteAverage || movie.rating);
+        const safeRating = Number.isFinite(displayRating) && displayRating >= 0 ? Math.min(10, displayRating) : '?';
+        const ownRating = Number(movie.userRating);
+        const safeOwnRating = Number.isFinite(ownRating) && ownRating > 0 ? Math.min(10, Math.max(0, ownRating * 2)) : 0;
 
         return `
             <div class="col-6 col-md-4 col-lg-3 fade-in-up" style="animation-delay: ${index * 0.04}s">
                 <div class="card-premium h-100 movie-card">
                     <div class="movie-poster">
-                        ${movie.poster
-                ? `<img src="${movie.poster}" alt="${movie.title}" class="w-100 h-100" style="object-fit: cover;">`
+                        ${posterURL
+                ? `<img src="${escapeHTML(posterURL)}" alt="${escapeHTML(String(movie.title || 'Фильм'))}" class="w-100 h-100" style="object-fit: cover;" loading="lazy">`
                 : `<div class="movie-poster-placeholder">
                                 <i class="bi bi-film display-4 text-white opacity-25"></i>
                             </div>`
@@ -232,17 +242,17 @@ export class MoviesModule {
                         <div class="movie-poster-overlay">
                             <div class="d-flex flex-column gap-1">
                                 ${showAddButton
-                ? `<button class="btn btn-success btn-sm add-movie-btn" data-movie-id="${movie.id}">
+                ? `<button class="btn btn-success btn-sm add-movie-btn" data-movie-id="${escapeHTML(String(movie.id))}">
                                         <i class="bi bi-plus-lg"></i> Добавить
                                     </button>`
-                : `<button class="btn btn-light btn-sm edit-movie-btn" data-movie-id="${movie.id}">
+                : `<button type="button" aria-label="Редактировать фильм" class="btn btn-light btn-sm edit-movie-btn" data-movie-id="${escapeHTML(String(movie.id))}">
                                         <i class="bi bi-pencil"></i>
                                     </button>
-                                    <button class="btn btn-danger btn-sm delete-movie-btn" data-movie-id="${movie.id}">
+                                    <button type="button" aria-label="Удалить фильм" class="btn btn-danger btn-sm delete-movie-btn" data-movie-id="${escapeHTML(String(movie.id))}">
                                         <i class="bi bi-trash"></i>
                                     </button>`
             }
-                                <button class="btn btn-info btn-sm details-movie-btn" data-movie-id="${movie.id}">
+                                <button class="btn btn-info btn-sm details-movie-btn" data-movie-id="${escapeHTML(String(movie.id))}">
                                     <i class="bi bi-info-circle"></i> Детали
                                 </button>
                             </div>
@@ -250,19 +260,19 @@ export class MoviesModule {
                         ${statusBadge ? `<div class="movie-badge">${statusBadge}</div>` : ''}
                         <div class="movie-rating">
                             <i class="bi bi-star-fill text-warning"></i>
-                            <span>${movie.voteAverage || movie.rating || '?'}</span>
+                            <span>${safeRating}</span>
                         </div>
                     </div>
                     <div class="p-2">
-                        <h6 class="fw-bold mb-0 movie-title">${movie.title}</h6>
+                        <h6 class="fw-bold mb-0 movie-title">${escapeHTML(String(movie.title || 'Без названия'))}</h6>
                         <div class="d-flex justify-content-between align-items-center">
                             <small class="text-muted">${year}</small>
-                            <small class="text-muted">${genres.join(', ')}</small>
+                            <small class="text-muted">${escapeHTML(genres.join(', '))}</small>
                         </div>
-                        ${movie.userRating
+                        ${safeOwnRating
                 ? `<div class="mt-1">
                                 <span class="badge" style="background: var(--primary);">
-                                    <i class="bi bi-heart-fill me-1" style="font-size: 0.6rem;"></i>${movie.userRating * 2}/10
+                                    <i class="bi bi-heart-fill me-1" style="font-size: 0.6rem;"></i>${safeOwnRating}/10
                                 </span>
                             </div>`
                 : ''
@@ -346,16 +356,16 @@ export class MoviesModule {
         document.querySelectorAll('.movies-tabs [data-tab]').forEach(tab => {
             tab.addEventListener('click', (e) => {
                 document.querySelectorAll('.movies-tabs [data-tab]').forEach(t => t.classList.remove('active'));
-                e.target.classList.add('active');
-                this.switchTab(e.target.dataset.tab);
+                e.currentTarget.classList.add('active');
+                this.switchTab(e.currentTarget.dataset.tab);
             });
         });
 
         document.querySelectorAll('#statusFilters [data-filter]').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('#statusFilters [data-filter]').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-                this.currentFilter.status = e.target.dataset.filter;
+                e.currentTarget.classList.add('active');
+                this.currentFilter.status = e.currentTarget.dataset.filter;
                 this.myMoviesPage = 1;
                 this.loadMyMovies();
             });
@@ -456,7 +466,9 @@ export class MoviesModule {
         document.body.style.overflow = '';
 
         const isEdit = !!existingId;
-        const userRating10 = (movieData.userRating || 0) * 2;
+        const rawOwnRating = Number(movieData.userRating);
+        const userRating10 = Number.isFinite(rawOwnRating) ? Math.min(10, Math.max(0, rawOwnRating * 2)) : 0;
+        const posterURL = safeAvatarURL(movieData.poster);
 
         const container = document.createElement('div');
         container.id = 'movieModalContainer';
@@ -476,25 +488,25 @@ export class MoviesModule {
                         <div class="modal-body">
                             <div class="row">
                                 <div class="col-md-4 mb-3">
-                                    ${movieData.poster
-                ? `<img src="${movieData.poster}" alt="${movieData.title}" class="w-100 rounded">`
+                                    ${posterURL
+                ? `<img src="${escapeHTML(posterURL)}" alt="${escapeHTML(String(movieData.title || 'Фильм'))}" class="w-100 rounded">`
                 : `<div class="bg-secondary rounded w-100 d-flex align-items-center justify-content-center" style="height: 300px;">
                                             <i class="bi bi-film display-1 text-white opacity-25"></i>
                                         </div>`
             }
                                 </div>
                                 <div class="col-md-8">
-                                    <h4 class="fw-bold">${movieData.title}</h4>
-                                    ${movieData.originalTitle ? `<p class="text-muted">${movieData.originalTitle}</p>` : ''}
-                                    ${movieData.tagline ? `<p class="fst-italic text-muted">"${movieData.tagline}"</p>` : ''}
+                                    <h4 class="fw-bold">${escapeHTML(String(movieData.title || 'Без названия'))}</h4>
+                                    ${movieData.originalTitle ? `<p class="text-muted">${escapeHTML(String(movieData.originalTitle))}</p>` : ''}
+                                    ${movieData.tagline ? `<p class="fst-italic text-muted">"${escapeHTML(String(movieData.tagline))}"</p>` : ''}
 
                                     <div class="mb-2">
                                         ${movieData.genres ? movieData.genres.map(g =>
-                `<span class="badge bg-primary me-1">${g.name || g}</span>`
+                `<span class="badge bg-primary me-1">${escapeHTML(String(g.name || g))}</span>`
             ).join('') : ''}
                                     </div>
 
-                                    ${movieData.overview ? `<p class="small text-muted">${movieData.overview.substring(0, 300)}...</p>` : ''}
+                                    ${movieData.overview ? `<p class="small text-muted">${escapeHTML(String(movieData.overview).substring(0, 300))}...</p>` : ''}
 
                                     <form id="movieForm" class="mt-3">
                                         <div class="mb-2">
@@ -516,7 +528,7 @@ export class MoviesModule {
                                         <div class="mb-2">
                                             <label class="form-label fw-semibold small">Рецензия</label>
                                             <textarea class="form-control form-control-sm" name="review" rows="3"
-                                                      placeholder="Твои мысли о фильме...">${movieData.review || ''}</textarea>
+                                                      placeholder="Твои мысли о фильме...">${escapeHTML(String(movieData.review || ''))}</textarea>
                                         </div>
                                     </form>
                                 </div>
@@ -621,29 +633,29 @@ export class MoviesModule {
                 <div class="modal-dialog modal-lg modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title fw-bold">${details.title || 'Без названия'}</h5>
+                            <h5 class="modal-title fw-bold">${escapeHTML(String(details.title || 'Без названия'))}</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
                             <div class="row">
                                 <div class="col-md-4 mb-3">
-                                    ${details.poster
-                ? `<img src="${details.poster}" class="w-100 rounded">`
+                                    ${safeAvatarURL(details.poster)
+                ? `<img src="${escapeHTML(safeAvatarURL(details.poster))}" alt="Постер фильма" class="w-100 rounded">`
                 : '<div class="bg-secondary rounded w-100" style="height: 300px;"></div>'
             }
                                 </div>
                                 <div class="col-md-8">
-                                    <p><strong>Оригинальное название:</strong> ${details.originalTitle || details.title || '—'}</p>
-                                    <p><strong>Год:</strong> ${details.releaseDate ? details.releaseDate.split('-')[0] : '—'}</p>
-                                    <p><strong>Рейтинг TMDB:</strong> ⭐ ${details.voteAverage || details.rating || '—'} / 10 (${details.voteCount || '0'} голосов)</p>
-                                    <p><strong>Длительность:</strong> ${details.runtime || '—'} мин.</p>
-                                    <p><strong>Жанры:</strong> ${details.genres?.map(g => g.name).join(', ') || '—'}</p>
-                                    <p><strong>Слоган:</strong> ${details.tagline || '—'}</p>
-                                    <p><strong>Страны:</strong> ${details.productionCountries?.map(c => c.name).join(', ') || '—'}</p>
-                                    ${details.userRating ? `<p><strong>Моя оценка:</strong> ❤️ ${details.userRating * 2} / 10</p>` : ''}
-                                    ${details.review ? `<p><strong>Рецензия:</strong></p><p class="fst-italic">"${details.review}"</p>` : ''}
+                                    <p><strong>Оригинальное название:</strong> ${escapeHTML(String(details.originalTitle || details.title || '—'))}</p>
+                                    <p><strong>Год:</strong> ${escapeHTML(String(details.releaseDate || '—').split('-')[0])}</p>
+                                    <p><strong>Рейтинг TMDB:</strong> ⭐ ${Number.isFinite(Number(details.voteAverage || details.rating)) ? Math.min(10, Math.max(0, Number(details.voteAverage || details.rating))) : '—'} / 10 (${Number.isFinite(Number(details.voteCount)) ? Math.max(0, Math.floor(Number(details.voteCount))) : '0'} голосов)</p>
+                                    <p><strong>Длительность:</strong> ${Number.isFinite(Number(details.runtime)) && Number(details.runtime) > 0 ? Math.floor(Number(details.runtime)) : '—'} мин.</p>
+                                    <p><strong>Жанры:</strong> ${escapeHTML(Array.isArray(details.genres) ? details.genres.map(g => String(g.name || g)).join(', ') || '—' : '—')}</p>
+                                    <p><strong>Слоган:</strong> ${escapeHTML(String(details.tagline || '—'))}</p>
+                                    <p><strong>Страны:</strong> ${escapeHTML(Array.isArray(details.productionCountries) ? details.productionCountries.map(c => String(c.name || c)).join(', ') || '—' : '—')}</p>
+                                    ${details.userRating ? `<p><strong>Моя оценка:</strong> ❤️ ${Math.min(10, Math.max(0, Number(details.userRating) * 2))} / 10</p>` : ''}
+                                    ${details.review ? `<p><strong>Рецензия:</strong></p><p class="fst-italic">"${escapeHTML(String(details.review))}"</p>` : ''}
                                     <hr>
-                                    <p>${details.overview || ''}</p>
+                                    <p>${escapeHTML(String(details.overview || ''))}</p>
                                 </div>
                             </div>
                         </div>

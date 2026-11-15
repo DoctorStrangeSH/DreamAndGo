@@ -32,6 +32,10 @@
 .preview-field textarea{min-height:90px}
 .preview-theme{min-height:44px}
 .preview-tabs{display:flex;gap:8px;flex-wrap:wrap}
+.preview-feedback{min-height:2em;max-width:750px;margin:16px auto;color:var(--primary);font-weight:700}
+.preview-card--added{border:2px solid var(--primary);animation:preview-reveal .28s ease-out}
+@keyframes preview-reveal{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.preview-card--added{animation:none}}
 @media(max-width:800px){.preview-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.preview-dashboard{grid-template-columns:1fr}}
 @media(max-width:560px){.preview-shell{padding:20px 14px 50px}.preview-grid,.preview-row{grid-template-columns:1fr}.preview-dashboard{padding:24px 20px}.preview-card-content{padding:16px}}
 </style>
@@ -48,30 +52,31 @@
     <span class="home-dashboard-eyebrow">✦ Твоя личная вселенная</span>
     <h1>Привет, <span>@dreamer</span>!</h1>
     <p>Самое время открыть новую страницу своей истории.</p>
-    <div class="home-dashboard-actions"><button type="button" class="btn btn-light">Начать приключение</button><button type="button" class="btn btn-outline-light">Мой профиль</button></div>
+    <div class="home-dashboard-actions"><button type="button" class="btn btn-light" data-preview-action="new-travel">Начать приключение</button><button type="button" class="btn btn-outline-light" data-preview-action="profile">Мой профиль</button></div>
   </div>
   <div class="preview-stat"><strong>Первые открытия · 65%</strong><div class="progress home-dashboard-progress-track"><div class="progress-bar" style="width:65%"></div></div><p>4 из 6 шагов выполнено</p></div>
 </section>
-<h2>Коллекция впечатлений</h2>
+<h2 id="collectionHeading">Коллекция впечатлений</h2>
 <p class="preview-intro">Карточки и действия в новой дизайн-системе.</p>
-<div class="preview-grid">
+<div class="preview-grid" id="previewCollection">
   <article class="card-premium travel-card"><div class="restaurant-card-header"><div class="preview-cover" aria-hidden="true">✈</div><span class="badge" style="position:absolute;top:14px;left:14px;background:#fff;color:#185967">Планирую</span></div><div class="preview-card-content"><h3>Путешествие по Исландии</h3><p>Водопады, вулканы и северное сияние.</p><div class="meta">📍 Исландия · 80 000 RUB</div></div></article>
   <article class="card-premium dream-card"><span class="badge" style="background:var(--bg-tertiary);color:var(--primary);align-self:start">В процессе</span><h3>Увидеть северное сияние</h3><p class="text-muted">Один маленький шаг за другим — и мечта становится планом.</p><div class="progress"><div class="progress-bar" style="width:48%"></div></div><small class="text-muted">48% · 2 из 4 шагов</small></article>
-  <section class="atlas-empty atlas-empty--book"><div class="atlas-empty-art" aria-hidden="true"><span class="atlas-empty-orbit"></span><span style="color:var(--primary);font-size:3rem">▤</span></div><span class="atlas-empty-kicker">Твоя библиотека</span><h3>Время открыть новую страницу</h3><p>Собери любимые истории и книги на будущее.</p><button type="button" class="btn btn-premium">Добавить книгу</button></section>
+  <section class="atlas-empty atlas-empty--book"><div class="atlas-empty-art" aria-hidden="true"><span class="atlas-empty-orbit"></span><span style="color:var(--primary);font-size:3rem">▤</span></div><span class="atlas-empty-kicker">Твоя библиотека</span><h3>Время открыть новую страницу</h3><p>Собери любимые истории и книги на будущее.</p><button type="button" class="btn btn-premium" data-preview-action="new-book">Добавить книгу</button></section>
 </div>
-<h2>Формы и модальные окна</h2>
+<h2 id="formHeading">Формы и модальные окна</h2>
 <p class="preview-intro">Поля, подписи и основные действия.</p>
-<section class="modal-content preview-modal" aria-label="Демонстрационная форма">
+<form class="modal-content preview-modal" id="previewTravelForm" aria-label="Демонстрационная форма">
   <div class="modal-header"><h3 class="modal-title">Новое путешествие</h3></div>
   <div class="modal-body">
     <div class="preview-row">
-      <label class="preview-field">Название<input class="form-control" placeholder="Например, Португалия"></label>
-      <label class="preview-field">Статус<select class="form-select"><option>Планирую</option><option>Посетил</option></select></label>
+      <label class="preview-field">Название<input class="form-control" name="title" placeholder="Например, Португалия" maxlength="70" required></label>
+      <label class="preview-field">Статус<select class="form-select" name="status"><option>Планирую</option><option>Посетил</option></select></label>
     </div>
-    <label class="preview-field">Заметка<textarea class="form-control" placeholder="Что хочешь увидеть?"></textarea></label>
+    <label class="preview-field">Заметка<textarea class="form-control" name="note" placeholder="Что хочешь увидеть?" maxlength="180"></textarea></label>
   </div>
-  <div class="modal-footer"><button type="button" class="btn btn-secondary">Отмена</button><button type="button" class="btn btn-premium">Сохранить</button></div>
-</section>
+  <div class="modal-footer"><button type="reset" class="btn btn-secondary">Очистить</button><button type="submit" class="btn btn-premium">Добавить в макет</button></div>
+</form>
+<p class="preview-feedback" id="previewFeedback" role="status" aria-live="polite"></p>
 </div>
 <script>
 const button=document.getElementById('themeSwitch');
@@ -80,6 +85,46 @@ button.addEventListener('click',()=>{
   document.documentElement.setAttribute('data-bs-theme',dark?'dark':'light');
   button.setAttribute('aria-pressed',String(dark));
   button.textContent=dark?'☀️ Светлая тема':'🌙 Тёмная тема';
+});
+const feedback=document.getElementById('previewFeedback');
+const form=document.getElementById('previewTravelForm');
+function showFeedback(message){feedback.textContent=message;}
+document.querySelector('[data-preview-action="new-travel"]').addEventListener('click',()=>{
+  document.getElementById('formHeading').scrollIntoView({behavior:'smooth',block:'start'});
+  form.elements.title.focus({preventScroll:true});
+});
+document.querySelector('[data-preview-action="profile"]').addEventListener('click',()=>{
+  document.getElementById('collectionHeading').scrollIntoView({behavior:'smooth',block:'start'});
+  showFeedback('В полноценной версии здесь откроется профиль. В этом макете показана коллекция.');
+});
+document.querySelector('[data-preview-action="new-book"]').addEventListener('click',()=>{
+  showFeedback('Книжная полка пока демонстрационная. Добавление путешествия можно попробовать в форме ниже.');
+  document.getElementById('formHeading').scrollIntoView({behavior:'smooth',block:'start'});
+});
+form.addEventListener('reset',()=>showFeedback('Форма очищена.'));
+form.addEventListener('submit',(event)=>{
+  event.preventDefault();
+  if(!form.reportValidity())return;
+  const title=form.elements.title.value.trim();
+  const note=form.elements.note.value.trim();
+  if(!title){showFeedback('Введите название путешествия.');return;}
+  const card=document.createElement('article');
+  card.className='card-premium travel-card preview-card--added';
+  const content=document.createElement('div');
+  content.className='preview-card-content';
+  const heading=document.createElement('h3');
+  heading.textContent=title;
+  const description=document.createElement('p');
+  description.textContent=note||'Новое приключение ждёт своей истории.';
+  const meta=document.createElement('div');
+  meta.className='meta';
+  meta.textContent='✦ '+form.elements.status.value+' · только в этой демонстрации';
+  content.append(heading,description,meta);
+  card.append(content);
+  document.getElementById('previewCollection').prepend(card);
+  form.reset();
+  showFeedback('«'+title+'» добавлено в коллекцию макета. Данные не отправлялись и исчезнут при обновлении.');
+  document.getElementById('collectionHeading').scrollIntoView({behavior:'smooth',block:'start'});
 });
 </script>
 </body>

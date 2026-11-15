@@ -95,3 +95,14 @@ test('real profile provides keyboard accessible tabs without refetching on each 
   assert.match(source, /this\.initTabs\(userData\)/);
   assert.doesNotMatch(source, /this\.loadUserProfile\(userId\);\s*if \(userData\)/);
 });
+
+test('real profile uses Atlas cards and achievement empty state', () => {
+  const profile = read('js/modules/profile/profile.js');
+  const pages = read('css/atlas-pages.css');
+  const art = read('css/atlas-illustrations.css');
+  assert.match(profile, /atlas-empty--achievement/);
+  assert.match(profile, /Первая награда впереди/);
+  assert.match(pages, /\.profile-page \.profile-stats \{display:grid/);
+  assert.match(pages, /\.profile-page \.profile-tabs \.nav-link\[aria-selected="true"\]/);
+  assert.match(art, /\.atlas-empty--achievement/);
+});

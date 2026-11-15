@@ -21,7 +21,7 @@ export function createFirestoreHistoryAdapter(db) {
                 query = query.where('sequence', '<', beforeSequence);
             }
             const snapshot = await query.orderBy('sequence', 'desc').limit(limit).get();
-            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
         }
     };
 }

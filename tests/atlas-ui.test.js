@@ -185,3 +185,21 @@ test('restaurant cards and edit form escape saved content and validate photos', 
   assert.match(source, /this\.currentFilter\.status = e\.currentTarget\.dataset\.filter/);
   assert.doesNotMatch(source, /<img src="\$\{restaurant\.photos\[0\]\}/);
 });
+
+test('movie cards and dialogs escape text and validate poster URLs', () => {
+  const source = read('js/modules/movies/movies.js');
+  assert.match(source, /safeAvatarURL\(movie\.poster\)/);
+  assert.match(source, /safeAvatarURL\(movieData\.poster\)/);
+  assert.match(source, /safeAvatarURL\(details\.poster\)/);
+  assert.match(source, /escapeHTML\(String\(movie\.title \|\| 'Без названия'\)\)/);
+  assert.match(source, /escapeHTML\(String\(movieData\.review \|\| ''\)\)/);
+  assert.match(source, /escapeHTML\(String\(details\.review\)\)/);
+  assert.match(source, /escapeHTML\(String\(details\.overview \|\| ''\)\)/);
+  assert.match(source, /escapeHTML\(String\(movie\.id\)\)/);
+  assert.match(source, /aria-label="Редактировать фильм"/);
+  assert.match(source, /aria-label="Удалить фильм"/);
+  assert.match(source, /this\.switchTab\(e\.currentTarget\.dataset\.tab\)/);
+  assert.match(source, /this\.currentFilter\.status = e\.currentTarget\.dataset\.filter/);
+  assert.doesNotMatch(source, /<img src="\$\{movie\.poster\}/);
+  assert.doesNotMatch(source, /<img src="\$\{details\.poster\}/);
+});

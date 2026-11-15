@@ -8,7 +8,8 @@ const url = new URL('file://' + path.join(root, 'design/atlas-preview.html'));
 const browser = await chromium.launch({ headless: true });
 const targets = [
   { name: 'desktop', width: 1440, height: 900 },
-  { name: 'mobile', width: 390, height: 844 }
+  { name: 'mobile', width: 390, height: 844 },
+  { name: 'small-mobile', width: 320, height: 700 }
 ];
 const errors = [];
 await mkdir(path.join(root, 'atlas-screenshots'), { recursive: true });
@@ -19,6 +20,8 @@ try {
     await page.goto(url.href);
     await page.screenshot({ path: path.join(root, 'atlas-screenshots', target.name + '-light.png'), fullPage: true });
     await page.getByRole('button', { name: 'Тёмная тема' }).click();
+    const theme = await page.locator('html').getAttribute('data-bs-theme');
+    if (theme !== 'dark') errors.push(target.name + ': theme did not switch');
     await page.screenshot({ path: path.join(root, 'atlas-screenshots', target.name + '-dark.png'), fullPage: true });
     if (target.name === 'desktop') {
       await page.getByRole('textbox', { name: 'Название' }).fill('Проверка интерфейса');

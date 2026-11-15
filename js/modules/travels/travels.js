@@ -1,5 +1,6 @@
 import { TravelService } from '../../services/travel.service.js';
 import { escapeHTML } from '../../core/escape-html.js';
+import { safeAvatarURL } from '../../core/safe-avatar-url.js';
 import { APP_CONFIG } from '../../config/constants.js';
 
 export class TravelsModule {
@@ -66,7 +67,7 @@ export class TravelsModule {
                             <select class="form-select form-select-sm" id="typeFilter" style="min-width: 130px;">
                                 <option value="all" ${activeType === 'all' ? 'selected' : ''}>Все типы</option>
                                 ${APP_CONFIG.TRAVEL_TYPES.map(type => `
-                                    <option value="${type.id}" ${activeType === type.id ? 'selected' : ''}>${type.label}</option>
+                                    <option value="${escapeHTML(String(type.id))}" ${activeType === type.id ? 'selected' : ''}>${escapeHTML(String(type.label))}</option>
                                 `).join('')}
                             </select>
                         </div>
@@ -108,16 +109,20 @@ export class TravelsModule {
         const typeInfo = APP_CONFIG.TRAVEL_TYPES.find(t => t.id === travel.type)
             || { icon: 'bi-geo-alt', label: 'Другое' };
 
+        const photoURL = safeAvatarURL(Array.isArray(travel.photos) ? travel.photos[0] : '');
+        const rawRating = Number(travel.rating);
+        const safeRating = Number.isFinite(rawRating) && rawRating > 0 ? Math.min(10, Math.max(0, rawRating)) : 0;
+
         const statusBadge = travel.status === 'visited'
             ? '<span class="badge bg-success bg-opacity-10 text-success">✓ Посетил</span>'
             : '<span class="badge bg-warning bg-opacity-10 text-warning">☆ Планирую</span>';
 
         return `
-            <div class="col-12 col-md-6 col-lg-4 fade-in-up" style="animation-delay: ${index * 0.06}s">
+            <div class="col-12 col-md-6 col-lg-4 fade-in-up" style="animation-delay: ${Math.min(index, 12) * 0.06}s">
                 <div class="card-premium h-100 travel-card">
                     <div class="restaurant-card-header">
-                        ${travel.photos && travel.photos[0]
-                ? `<img src="${escapeHTML(travel.photos[0])}" class="restaurant-photo" alt="${escapeHTML(travel.title)}">`
+                        ${photoURL
+                ? `<img src="${escapeHTML(photoURL)}" class="restaurant-photo" alt="${escapeHTML(String(travel.title || 'Путешествие'))}" loading="lazy">`
                 : `<div class="restaurant-placeholder">
                                 <i class="bi ${typeInfo.icon} display-4 text-white opacity-25"></i>
                             </div>`
@@ -135,8 +140,8 @@ export class TravelsModule {
                     <div class="p-3">
                         <div class="d-flex justify-content-between align-items-start mb-1">
                             <h6 class="fw-bold mb-0">${escapeHTML(travel.title || 'Без названия')}</h6>
-                            ${travel.rating
-                ? `<span class="badge" style="background: var(--primary);">${escapeHTML(travel.rating)}/10</span>`
+                            ${safeRating
+                ? `<span class="badge" style="background: var(--primary);">${safeRating}/10</span>`
                 : ''
             }
                         </div>
@@ -231,13 +236,13 @@ export class TravelsModule {
                                     <div class="col-md-8">
                                         <label class="form-label fw-semibold small">Название *</label>
                                         <input type="text" class="form-control" name="title"
-                                               value="${travel?.title || ''}" placeholder="Например: Париж, Франция" required>
+                                               value="${escapeHTML(String(travel?.title || ''))}" placeholder="Например: Париж, Франция" required>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Тип</label>
                                         <select class="form-select" name="type">
                                             ${APP_CONFIG.TRAVEL_TYPES.map(type => `
-                                                <option value="${type.id}" ${travel?.type === type.id ? 'selected' : ''}>${type.label}</option>
+                                                <option value="${escapeHTML(String(type.id))}" ${travel?.type === type.id ? 'selected' : ''}>${escapeHTML(String(type.label))}</option>
                                             `).join('')}
                                         </select>
                                     </div>
@@ -251,26 +256,26 @@ export class TravelsModule {
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Местоположение</label>
                                         <input type="text" class="form-control" name="location"
-                                               value="${travel?.location || ''}" placeholder="Страна, город">
+                                               value="${escapeHTML(String(travel?.location || ''))}" placeholder="Страна, город">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Оценка</label>
                                         <div class="d-flex align-items-center gap-2 pt-2">
                                             <input type="range" class="form-range" name="rating"
-                                                   min="0" max="10" value="${travel?.rating || 0}"
+                                                   min="0" max="10" value="${Number.isFinite(Number(travel?.rating)) ? Math.min(10, Math.max(0, Number(travel.rating))) : 0}"
                                                    id="ratingSlider" style="flex: 1;">
-                                            <span class="badge bg-primary" id="ratingValue">${travel?.rating || 0}/10</span>
+                                            <span class="badge bg-primary" id="ratingValue">${Number.isFinite(Number(travel?.rating)) ? Math.min(10, Math.max(0, Number(travel.rating))) : 0}/10</span>
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Бюджет (план)</label>
                                         <input type="number" class="form-control" name="budgetPlanned"
-                                               value="${travel?.budget?.planned || ''}" placeholder="0">
+                                               value="${escapeHTML(String(travel?.budget?.planned || ''))}" placeholder="0">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Потрачено</label>
                                         <input type="number" class="form-control" name="budgetSpent"
-                                               value="${travel?.budget?.spent || ''}" placeholder="0">
+                                               value="${escapeHTML(String(travel?.budget?.spent || ''))}" placeholder="0">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Валюта</label>
@@ -283,14 +288,14 @@ export class TravelsModule {
                                     <div class="col-12">
                                         <label class="form-label fw-semibold small">Описание</label>
                                         <textarea class="form-control" name="description" rows="3"
-                                                  placeholder="Опиши свои впечатления или планы...">${travel?.description || ''}</textarea>
+                                                  placeholder="Опиши свои впечатления или планы...">${escapeHTML(String(travel?.description || ''))}</textarea>
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label fw-semibold small">
                                             <i class="bi bi-journal-text me-1"></i>Заметки / Дневник
                                         </label>
                                         <textarea class="form-control" name="notes" rows="2"
-                                                  placeholder="Личные заметки...">${travel?.notes || ''}</textarea>
+                                                  placeholder="Личные заметки...">${escapeHTML(String(travel?.notes || ''))}</textarea>
                                     </div>
                                 </div>
                             </form>

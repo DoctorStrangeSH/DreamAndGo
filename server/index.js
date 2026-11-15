@@ -197,5 +197,5 @@ export const registerProfileV2 = onCall({ region: 'europe-west3', enforceAppChec
                 : 'Некорректный никнейм';
         throw new HttpsError(result.code, message);
     }
-    return { username: result.username };
+    return { username: result.username, recovered: result.recovered === true };
 });

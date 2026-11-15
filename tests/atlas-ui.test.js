@@ -255,3 +255,15 @@ test('movie save and delete handlers prevent duplicate writes and show failures'
   assert.match(source, /saveButton\.removeAttribute\('aria-busy'\)/);
   assert.match(source, /Не удалось сохранить фильм\. Попробуй снова\./);
 });
+
+test('collection save forms show progress and remain retryable on failure', () => {
+  for (const name of ['books', 'travels', 'restaurants']) {
+    const source = read('js/modules/' + name + '/' + name + '.js');
+    assert.match(source, /if \(saveButton\.disabled\) return/);
+    assert.match(source, /saveButton\.disabled = true/);
+    assert.match(source, /saveButton\.setAttribute\('aria-busy', 'true'\)/);
+    assert.match(source, /saveButton\.removeAttribute\('aria-busy'\)/);
+    assert.match(source, /finally \{\s*saveButton\.disabled = false/);
+    assert.match(source, /Попробуй снова\./);
+  }
+});

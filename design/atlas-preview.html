@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ru" data-bs-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="color-scheme" content="light dark">
+<title>Dream&Go · Atlas — демонстрация дизайна</title>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/atlas-theme.css">
+<link rel="stylesheet" href="../css/atlas-pages.css">
+<link rel="stylesheet" href="../css/atlas-illustrations.css">
+<link rel="stylesheet" href="../css/atlas-dialogs.css">
+<style>
+.preview-shell{max-width:1140px;margin:auto;padding:28px 22px 70px}
+.preview-top{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.preview-brand{font-weight:900;font-size:1.5rem;color:var(--text-primary);letter-spacing:-.06em}
+.preview-intro{color:var(--text-secondary);margin:6px 0 24px}
+.preview-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:20px 0 40px}
+.preview-dashboard{display:grid;grid-template-columns:1.3fr 1fr;gap:24px;padding:35px;margin:30px 0 35px}
+.preview-dashboard p{color:rgba(255,255,255,.86)}
+.preview-stat{padding:25px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:22px}
+.preview-stat .progress{margin:14px 0}
+.preview-cover{height:205px;display:grid;place-items:center;font-size:4rem;color:#e5fff9;background:radial-gradient(circle at 72% 23%,#eaba81aa,transparent 39%),linear-gradient(120deg,#19576e,#1d9887)}
+.preview-card-content{padding:20px;display:flex;flex-direction:column;gap:8px}
+.preview-card-content h3{font-size:1.16rem;letter-spacing:-.03em}
+.preview-card-content p{font-size:.9rem;color:var(--text-secondary)}
+.preview-card-content .meta{border-top:1px solid var(--border-light);padding-top:12px;color:var(--text-secondary);font-size:.8rem}
+.preview-modal{width:min(100%,750px);margin:auto}
+.preview-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.preview-field{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;font-weight:700;font-size:.85rem}
+.preview-field textarea{min-height:90px}
+.preview-theme{min-height:44px}
+.preview-tabs{display:flex;gap:8px;flex-wrap:wrap}
+@media(max-width:800px){.preview-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.preview-dashboard{grid-template-columns:1fr}}
+@media(max-width:560px){.preview-shell{padding:20px 14px 50px}.preview-grid,.preview-row{grid-template-columns:1fr}.preview-dashboard{padding:24px 20px}.preview-card-content{padding:16px}}
+</style>
+</head>
+<body>
+<div class="preview-shell">
+<header class="preview-top">
+  <span class="preview-brand">✦ Dream<span class="text-accent">&</span>Go</span>
+  <button type="button" class="btn btn-outline-primary preview-theme" id="themeSwitch" aria-pressed="false">🌙 Тёмная тема</button>
+</header>
+<p class="preview-intro">Атлас впечатлений · автономный макет. Вымышленные данные; Firebase и вход не используются.</p>
+<section class="home-dashboard-hero preview-dashboard">
+  <div class="home-dashboard-copy">
+    <span class="home-dashboard-eyebrow">✦ Твоя личная вселенная</span>
+    <h1>Привет, <span>@dreamer</span>!</h1>
+    <p>Самое время открыть новую страницу своей истории.</p>
+    <div class="home-dashboard-actions"><button type="button" class="btn btn-light">Начать приключение</button><button type="button" class="btn btn-outline-light">Мой профиль</button></div>
+  </div>
+  <div class="preview-stat"><strong>Первые открытия · 65%</strong><div class="progress home-dashboard-progress-track"><div class="progress-bar" style="width:65%"></div></div><p>4 из 6 шагов выполнено</p></div>
+</section>
+<h2>Коллекция впечатлений</h2>
+<p class="preview-intro">Карточки и действия в новой дизайн-системе.</p>
+<div class="preview-grid">
+  <article class="card-premium travel-card"><div class="restaurant-card-header"><div class="preview-cover" aria-hidden="true">✈</div><span class="badge" style="position:absolute;top:14px;left:14px;background:#fff;color:#185967">Планирую</span></div><div class="preview-card-content"><h3>Путешествие по Исландии</h3><p>Водопады, вулканы и северное сияние.</p><div class="meta">📍 Исландия · 80 000 RUB</div></div></article>
+  <article class="card-premium dream-card"><span class="badge" style="background:var(--bg-tertiary);color:var(--primary);align-self:start">В процессе</span><h3>Увидеть северное сияние</h3><p class="text-muted">Один маленький шаг за другим — и мечта становится планом.</p><div class="progress"><div class="progress-bar" style="width:48%"></div></div><small class="text-muted">48% · 2 из 4 шагов</small></article>
+  <section class="atlas-empty atlas-empty--book"><div class="atlas-empty-art" aria-hidden="true"><span class="atlas-empty-orbit"></span><span style="color:var(--primary);font-size:3rem">▤</span></div><span class="atlas-empty-kicker">Твоя библиотека</span><h3>Время открыть новую страницу</h3><p>Собери любимые истории и книги на будущее.</p><button type="button" class="btn btn-premium">Добавить книгу</button></section>
+</div>
+<h2>Формы и модальные окна</h2>
+<p class="preview-intro">Поля, подписи и основные действия.</p>
+<section class="modal-content preview-modal" aria-label="Демонстрационная форма">
+  <div class="modal-header"><h3 class="modal-title">Новое путешествие</h3></div>
+  <div class="modal-body">
+    <div class="preview-row">
+      <label class="preview-field">Название<input class="form-control" placeholder="Например, Португалия"></label>
+      <label class="preview-field">Статус<select class="form-select"><option>Планирую</option><option>Посетил</option></select></label>
+    </div>
+    <label class="preview-field">Заметка<textarea class="form-control" placeholder="Что хочешь увидеть?"></textarea></label>
+  </div>
+  <div class="modal-footer"><button type="button" class="btn btn-secondary">Отмена</button><button type="button" class="btn btn-premium">Сохранить</button></div>
+</section>
+</div>
+<script>
+const button=document.getElementById('themeSwitch');
+button.addEventListener('click',()=>{
+  const dark=document.documentElement.getAttribute('data-bs-theme')!=='dark';
+  document.documentElement.setAttribute('data-bs-theme',dark?'dark':'light');
+  button.setAttribute('aria-pressed',String(dark));
+  button.textContent=dark?'☀️ Светлая тема':'🌙 Тёмная тема';
+});
+</script>
+</body>
+</html>

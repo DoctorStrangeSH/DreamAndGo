@@ -1,5 +1,7 @@
 import { RestaurantService } from '../../services/restaurant.service.js';
 import { APP_CONFIG } from '../../config/constants.js';
+import { escapeHTML } from '../../core/escape-html.js';
+import { safeAvatarURL } from '../../core/safe-avatar-url.js';
 
 export class RestaurantsModule {
     constructor() {
@@ -52,8 +54,8 @@ export class RestaurantsModule {
                         <div class="col-auto">
                             <select class="form-select form-select-sm" id="cuisineFilter" style="min-width: 140px;">
                                 ${cuisines.map(c => `
-                                    <option value="${c}" ${activeCuisine === c ? 'selected' : ''}>
-                                        ${c === 'all' ? 'Все кухни' : c}
+                                    <option value="${escapeHTML(c)}" ${activeCuisine === c ? 'selected' : ''}>
+                                        ${escapeHTML(c === 'all' ? 'Все кухни' : c)}
                                     </option>
                                 `).join('')}
                             </select>
@@ -85,10 +87,12 @@ export class RestaurantsModule {
 
     getEmptyState() {
         return `
-            <div class="col-12 text-center py-5">
-                <i class="bi bi-shop display-1 text-muted opacity-25"></i>
-                <h5 class="mt-3 text-muted">Нет ресторанов</h5>
-                <p class="text-muted small">Добавь свой первый ресторан</p>
+            <div class="col-12">
+                <section class="atlas-empty atlas-empty--restaurant">
+                    <div class="atlas-empty-art" aria-hidden="true"><i class="bi bi-cup-hot"></i></div>
+                    <h3>Впереди много вкусных открытий</h3>
+                    <p>Добавь любимое заведение или место, куда давно хочется заглянуть.</p>
+                </section>
             </div>
         `;
     }
@@ -98,48 +102,52 @@ export class RestaurantsModule {
             ? '<span class="badge bg-success bg-opacity-10 text-success">✓ Посетил</span>'
             : '<span class="badge bg-warning bg-opacity-10 text-warning">☆ Хочу</span>';
 
+        const imageURL = safeAvatarURL(restaurant.photos?.[0]);
+        const rating = Number(restaurant.userRating);
+        const safeRating = Number.isFinite(rating) && rating > 0 ? Math.min(10, Math.max(0, rating)) : 0;
+
         return `
-            <div class="col-12 col-md-6 col-lg-4 fade-in-up" style="animation-delay: ${index * 0.06}s">
+            <div class="col-12 col-md-6 col-lg-4 fade-in-up" style="animation-delay: ${Math.min(index, 12) * 0.06}s">
                 <div class="card-premium h-100 restaurant-card">
                     <div class="restaurant-card-header">
-                        ${restaurant.photos && restaurant.photos[0]
-                ? `<img src="${restaurant.photos[0]}" class="restaurant-photo" alt="${restaurant.name}">`
+                        ${imageURL
+                ? `<img src="${escapeHTML(imageURL)}" class="restaurant-photo" alt="${escapeHTML(String(restaurant.name || 'Ресторан'))}" loading="lazy">`
                 : `<div class="restaurant-placeholder">
                                 <i class="bi bi-shop display-4 text-white opacity-25"></i>
                             </div>`
             }
                         <div class="position-absolute top-0 start-0 p-2">${statusBadge}</div>
                         <div class="restaurant-card-actions">
-                            <button class="btn btn-light btn-sm rounded-circle me-1 edit-btn" data-id="${restaurant.id}">
+                            <button type="button" class="btn btn-light btn-sm rounded-circle me-1 edit-btn" aria-label="Редактировать ресторан" data-id="${escapeHTML(String(restaurant.id))}">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <button class="btn btn-light btn-sm rounded-circle delete-btn" data-id="${restaurant.id}">
+                            <button type="button" class="btn btn-light btn-sm rounded-circle delete-btn" aria-label="Удалить ресторан" data-id="${escapeHTML(String(restaurant.id))}">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </div>
                     </div>
                     <div class="p-3">
                         <div class="d-flex justify-content-between align-items-start mb-1">
-                            <h6 class="fw-bold mb-0">${restaurant.name || 'Без названия'}</h6>
-                            ${restaurant.userRating
-                ? `<span class="badge" style="background: var(--primary);">${restaurant.userRating}/10</span>`
+                            <h6 class="fw-bold mb-0">${escapeHTML(String(restaurant.name || 'Без названия'))}</h6>
+                            ${safeRating
+                ? `<span class="badge" style="background: var(--primary);">${safeRating}/10</span>`
                 : ''
             }
                         </div>
                         <p class="text-muted small mb-2">
-                            <i class="bi bi-egg-fried me-1"></i>${restaurant.cuisine || 'Кухня не указана'}
+                            <i class="bi bi-egg-fried me-1"></i>${escapeHTML(String(restaurant.cuisine || 'Кухня не указана'))}
                             ${restaurant.address
-                ? `<span class="mx-1">·</span><i class="bi bi-geo-alt me-1"></i>${restaurant.address}`
+                ? `<span class="mx-1">·</span><i class="bi bi-geo-alt me-1"></i>${escapeHTML(String(restaurant.address))}`
                 : ''
             }
                         </p>
                         ${restaurant.review
-                ? `<p class="text-muted small mb-2">${restaurant.review.substring(0, 100)}...</p>`
+                ? `<p class="text-muted small mb-2">${escapeHTML(String(restaurant.review).substring(0, 100))}...</p>`
                 : ''
             }
                         ${restaurant.favoriteDishes && restaurant.favoriteDishes.length
                 ? `<p class="small mb-0">
-                                <i class="bi bi-heart me-1 text-danger"></i>${restaurant.favoriteDishes.slice(0, 2).join(', ')}
+                                <i class="bi bi-heart me-1 text-danger"></i>${escapeHTML(restaurant.favoriteDishes.slice(0, 2).join(', '))}
                             </p>`
                 : ''
             }
@@ -173,7 +181,7 @@ export class RestaurantsModule {
 
         document.querySelectorAll('#statusFilters [data-filter]').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                this.currentFilter.status = e.target.dataset.filter;
+                this.currentFilter.status = e.currentTarget.dataset.filter;
                 this.render();
             });
         });
@@ -217,14 +225,14 @@ export class RestaurantsModule {
                                     <div class="col-md-8">
                                         <label class="form-label fw-semibold small">Название *</label>
                                         <input type="text" class="form-control" name="name"
-                                               value="${restaurant?.name || ''}" required>
+                                               value="${escapeHTML(String(restaurant?.name || ''))}" required>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Кухня</label>
                                         <select class="form-select" name="cuisine">
                                             <option value="">Выбери кухню</option>
                                             ${APP_CONFIG.CUISINE_TYPES.map(c => `
-                                                <option value="${c}" ${restaurant?.cuisine === c ? 'selected' : ''}>${c}</option>
+                                                <option value="${escapeHTML(c)}" ${restaurant?.cuisine === c ? 'selected' : ''}>${escapeHTML(c)}</option>
                                             `).join('')}
                                         </select>
                                     </div>
@@ -242,39 +250,39 @@ export class RestaurantsModule {
                                     <div class="col-md-6">
                                         <label class="form-label fw-semibold small">Адрес</label>
                                         <input type="text" class="form-control" name="address"
-                                               value="${restaurant?.address || ''}">
+                                               value="${escapeHTML(String(restaurant?.address || ''))}">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Дата посещения</label>
                                         <input type="date" class="form-control" name="visitDate"
-                                               value="${restaurant?.visitDate || ''}">
+                                               value="${escapeHTML(String(restaurant?.visitDate || ''))}">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Средний чек</label>
                                         <input type="number" class="form-control" name="avgBill"
-                                               value="${restaurant?.avgBill || ''}" placeholder="₽">
+                                               value="${escapeHTML(String(restaurant?.avgBill || ''))}" placeholder="₽">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Моя оценка</label>
                                         <div class="d-flex align-items-center gap-2 pt-2">
                                             <input type="range" class="form-range" name="userRating"
-                                                   min="0" max="10" value="${restaurant?.userRating || 0}"
+                                                   min="0" max="10" value="${Number.isFinite(Number(restaurant?.userRating)) ? Math.min(10, Math.max(0, Number(restaurant.userRating))) : 0}"
                                                    id="ratingSlider" style="flex: 1;">
                                             <span class="badge bg-primary" id="ratingValue">
-                                                ${restaurant?.userRating || 0}/10
+                                                ${Number.isFinite(Number(restaurant?.userRating)) ? Math.min(10, Math.max(0, Number(restaurant.userRating))) : 0}/10
                                             </span>
                                         </div>
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label fw-semibold small">Любимые блюда</label>
                                         <input type="text" class="form-control" name="favoriteDishes"
-                                               value="${restaurant?.favoriteDishes?.join(', ') || ''}"
+                                               value="${escapeHTML(Array.isArray(restaurant?.favoriteDishes) ? restaurant.favoriteDishes.join(', ') : '')}"
                                                placeholder="Через запятую: паста, пицца, тирамису">
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label fw-semibold small">Рецензия</label>
                                         <textarea class="form-control" name="review" rows="3"
-                                                  placeholder="Твои впечатления...">${restaurant?.review || ''}</textarea>
+                                                  placeholder="Твои впечатления...">${escapeHTML(String(restaurant?.review || ''))}</textarea>
                                     </div>
                                 </div>
                             </form>

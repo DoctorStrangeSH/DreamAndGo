@@ -105,7 +105,14 @@ service cloud.firestore {
         data.progress <= 100 &&
         (data.deadline == null ||
           (data.deadline is string &&
-           data.deadline.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}
+           data.deadline.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$'))) &&
+        areValidDreamSteps(data.steps) &&
+        data.isPublic is bool &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    match /users/{uid} {
       allow get: if isOwner(uid);
       allow list: if false;
       allow create: if false && isOwner(uid) && uidUnchanged(uid) &&
@@ -129,43 +136,6 @@ service cloud.firestore {
           request.resource.data.updatedAt == request.time;
         allow delete: if isOwner(uid);
       }
-
-      match /{category}/{id} {
-        allow get, list: if isOwner(uid) &&
-          category in [
-            'travels', 'restaurants', 'movies', 'books', 'dreams',
-            'dailyTasks', 'notifications', 'friends',
-            'friendRequests', 'sentRequests', 'chats', 'messages'
-          ] &&
-          exists(/databases/$(database)/documents/users/$(uid));
-        allow create: if false && isOwner(uid) &&
-          isValidOwnedDocument(request.resource.data);
-        allow update: if false && isOwner(uid) &&
-          isValidOwnedDocument(request.resource.data);
-        allow delete: if false;
-      }
-    }
-
-    match /{document=**} {
-      allow read, write: if false;
-    }
-  }
-}
-))) &&
-        areValidDreamSteps(data.steps) &&
-        data.isPublic is bool &&
-        data.createdAt is timestamp &&
-        data.updatedAt is timestamp;
-    }
-
-    match /users/{uid} {
-      allow get: if isOwner(uid);
-      allow list: if false;
-      allow create: if false && isOwner(uid) && uidUnchanged(uid) &&
-        isValidUser(request.resource.data);
-      allow update: if false && isOwner(uid) && uidNotModified() &&
-        isValidUser(request.resource.data);
-      allow delete: if false;
 
       match /{category}/{id} {
         allow get, list: if isOwner(uid) &&

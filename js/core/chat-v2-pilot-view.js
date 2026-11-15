@@ -11,7 +11,7 @@ export function renderChatV2Pilot({ title = 'Тестовый диалог', mes
     if (typeof userId !== 'string' || !userId || !Array.isArray(messages)) {
         throw new TypeError('Некорректные данные тестового чата');
     }
-    const items = messages.slice(-100).map(message => {
+    const items = messages.map(message => {
         if (!message || typeof message !== 'object' ||
             typeof message.senderId !== 'string' || typeof message.text !== 'string') return '';
         const own = message.senderId === userId;
@@ -83,7 +83,7 @@ export class ChatV2PilotView {
     setMessages(messages) {
         if (this.destroyed) return;
         if (!Array.isArray(messages)) throw new TypeError('Ожидался список сообщений');
-        this.messages = messages.slice(-100);
+        this.messages = [...messages];
         const panel = this.root.querySelector('.chat-v2-pilot__messages');
         if (!panel) return;
         const holder = renderChatV2Pilot({ title: this.title, messages: this.messages,

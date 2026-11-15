@@ -11,7 +11,7 @@ import { markPrivateMessageReadTransaction } from './chat-read-receipts.js';
 import { getPrivateChatUnreadCount } from './chat-unread-status.js';
 import { loadPrivateChatHistory } from './chat-history-service.js';
 import { createFirestoreHistoryAdapter } from './chat-history-firestore.js';
-import { loadPublicProfile } from './public-profile-service.js';
+import { loadPublicProfile, findPublicProfileByUsername } from './public-profile-service.js';
 
 if (getApps().length === 0) initializeApp();
 
@@ -152,4 +152,14 @@ export const getPublicProfileV2 = onCall({ region: 'europe-west3' }, async reque
     const result = await loadPublicProfile(getFirestore(), request.auth?.uid, request.data?.userId);
     if (!result.ok) throw new HttpsError(result.code, 'Профиль недоступен');
     return result.profile;
+});
+
+// Exact-match username lookup; never sends private users/{uid} documents.
+// Do not deploy until App Check, per-user quotas and client switch are ready.
+export const findPublicProfileByUsernameV2 = onCall({ region: 'europe-west3' }, async request => {
+    const result = await findPublicProfileByUsername(
+        getFirestore(), request.auth?.uid, request.data?.username
+    );
+    if (!result.ok) throw new HttpsError(result.code, 'Поиск пользователя недоступен');
+    return { profile: result.profile };
 });

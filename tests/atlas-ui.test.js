@@ -267,3 +267,24 @@ test('collection save forms show progress and remain retryable on failure', () =
     assert.match(source, /Попробуй снова\./);
   }
 });
+
+test('collection pages ignore obsolete responses after filter or route changes', () => {
+  for (const name of ['books', 'travels', 'restaurants']) {
+    const source = read('js/modules/' + name + '/' + name + '.js');
+    assert.match(source, /this\.requestId = 0/);
+    assert.match(source, /const requestId = \+\+this\.requestId/);
+    assert.match(source, /data-collection-request=/);
+    assert.match(source, /requestId !== this\.requestId \|\| window\.app\.currentUser\?\.uid !== userId/);
+    assert.match(source, /!mainContent\.isConnected/);
+  }
+});
+
+test('movie searches and collections ignore superseded results', () => {
+  const source = read('js/modules/movies/movies.js');
+  const my = source.slice(source.indexOf('async loadMyMovies()'), source.indexOf('async loadPopularMovies()'));
+  const search = source.slice(source.indexOf('async searchMovies()'), source.indexOf('createCard(movie'));
+  assert.match(my, /const requestId = \+\+this\.requestId/);
+  assert.match(my, /requestId !== this\.requestId \|\| this\.currentTab !== 'my'/);
+  assert.match(search, /const requestId = \+\+this\.requestId/);
+  assert.match(search, /requestId !== this\.requestId \|\| this\.currentTab !== 'search'/);
+});

@@ -32,5 +32,5 @@ jobs:
       - name: Run all isolated rule and transaction tests in one emulator session
         run: >-
           npx -y firebase-tools@latest emulators:exec
-          --project demo-dreamandgo-chat-rules --only firestore --config firebase.json
+          --project demo-dreamandgo-chat-rules --only auth,firestore --config firebase.json
           "npm test && node --test ../../server/*.emulator.test.mjs"

@@ -11,6 +11,7 @@ import { Navigation } from './modules/navigation/navigation.js';
 import { AuthModule } from './modules/auth/auth.js';
 import { RegistrationRecoveryModule } from './modules/auth/registration-recovery.js';
 import { canUseSignupV2 } from './core/signup-v2-policy.js';
+import { recoveryRouteRedirect } from './core/registration-recovery-route.js';
 import { ProfileModule } from './modules/profile/profile.js';
 import { TravelsModule } from './modules/travels/travels.js';
 import { RestaurantsModule } from './modules/restaurants/restaurants.js';
@@ -168,12 +169,13 @@ class DreamAndGo {
         this.router.register('achievements', new AchievementsModule(), { title: 'Достижения', icon: 'bi-trophy', showInNav: true });
 
         this.router.beforeEach((path) => {
-            if (this.registrationRecoveryPending && this.currentUser && path !== 'recovery') {
-                this.router.navigate('recovery');
-                return false;
-            }
-            if (path === 'recovery' && !this.registrationRecoveryPending) {
-                this.router.navigate('home');
+            const recoveryTarget = recoveryRouteRedirect({
+                pending: this.registrationRecoveryPending,
+                signedIn: Boolean(this.currentUser),
+                path
+            });
+            if (recoveryTarget) {
+                this.router.navigate(recoveryTarget);
                 return false;
             }
             if (path === 'auth') {

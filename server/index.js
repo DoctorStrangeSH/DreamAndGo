@@ -13,6 +13,7 @@ import { loadPrivateChatHistory } from './chat-history-service.js';
 import { createFirestoreHistoryAdapter } from './chat-history-firestore.js';
 import { loadPublicProfile, findPublicProfileByUsername } from './public-profile-service.js';
 import { consumeProfileLookupQuota } from './profile-lookup-quota.js';
+import { registerProfileWithReservedUsername } from './username-reservation.js';
 
 if (getApps().length === 0) initializeApp();
 
@@ -173,4 +174,28 @@ export const findPublicProfileByUsernameV2 = onCall({ region: 'europe-west3', en
     const result = await findPublicProfileByUsername(db, uid, request.data?.username);
     if (!result.ok) throw new HttpsError(result.code, 'Поиск пользователя недоступен');
     return { profile: result.profile };
+});
+
+// Candidate secure signup finalization. This does NOT bypass the mandatory
+// legacy migration gate at system/usernameRegistry, and is not wired to the UI.
+export const registerProfileV2 = onCall({ region: 'europe-west3', enforceAppCheck: true }, async request => {
+    const uid = request.auth?.uid;
+    if (!uid) throw new HttpsError('unauthenticated', 'Требуется вход в аккаунт');
+    const account = await getAuth().getUser(uid);
+    if (!account.email || account.disabled) {
+        throw new HttpsError('failed-precondition', 'Нужен действующий аккаунт с email');
+    }
+    const result = await registerProfileWithReservedUsername(
+        getFirestore(), uid, request.data?.username, account.email,
+        () => FieldValue.serverTimestamp()
+    );
+    if (!result.ok) {
+        const message = result.code === 'already-exists'
+            ? 'Никнейм занят или профиль уже существует'
+            : result.code === 'failed-precondition'
+                ? 'Регистрация временно недоступна до безопасной миграции'
+                : 'Некорректный никнейм';
+        throw new HttpsError(result.code, message);
+    }
+    return { username: result.username };
 });

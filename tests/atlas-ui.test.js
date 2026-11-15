@@ -126,3 +126,35 @@ test('private dreams collection is owner-only and escapes display fields', () =>
   assert.match(source, /escapeHTML\(String\(dream\.title \|\| 'Без названия'\)\)/);
   assert.match(source, /escapeHTML\(String\(dream\.category \|\| 'Личная мечта'\)\)/);
 });
+
+test('private movie collection is owner-only and escapes display fields', () => {
+  const source = read('js/modules/profile/profile.js');
+  assert.match(source, /case 'movies':\s*await this\.loadOwnMovies\(container, requestId\)/);
+  assert.match(source, /async loadOwnMovies\(container, requestId\)/);
+  assert.match(source, /new MovieService\(\)\.getUserMovies\(this\.profileUserId\)/);
+  assert.match(source, /escapeHTML\(String\(movie\.title \|\| 'Без названия'\)\)/);
+  assert.match(source, /escapeHTML\(String\(movie\.releaseDate \|\| 'Дата выхода не указана'\)\)/);
+  assert.doesNotMatch(source, /getUserMovies\(userId\)/);
+});
+
+test('private book collection is owner-only and escapes display fields', () => {
+  const source = read('js/modules/profile/profile.js');
+  assert.match(source, /case 'books':\s*await this\.loadOwnBooks\(container, requestId\)/);
+  assert.match(source, /async loadOwnBooks\(container, requestId\)/);
+  assert.match(source, /new BookService\(\)\.getBooks\(this\.profileUserId\)/);
+  assert.match(source, /escapeHTML\(String\(book\.title \|\| 'Без названия'\)\)/);
+  assert.match(source, /escapeHTML\(String\(book\.author \|\| 'Автор не указан'\)\)/);
+  assert.doesNotMatch(source, /getBooks\(userId\)/);
+});
+
+test('all private profile tabs guard user identity and stale requests', () => {
+  const source = read('js/modules/profile/profile.js');
+  for (const name of ['Travels', 'Dreams', 'Movies', 'Books']) {
+    const start = source.indexOf('async loadOwn' + name + '(container, requestId)');
+    assert.ok(start >= 0, name + ' loader');
+    const next = source.indexOf('\n    async ', start + 10);
+    const method = source.slice(start, next < 0 ? undefined : next);
+    assert.match(method, /if \(!this\.profileIsOwn \|\| window\.app\.currentUser\?\.uid !== this\.profileUserId\)/);
+    assert.match(method, /requestId !== this\.tabRequestId \|\| !container\.isConnected/);
+  }
+});

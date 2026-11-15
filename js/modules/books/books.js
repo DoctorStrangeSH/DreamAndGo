@@ -5,6 +5,7 @@ export class BooksModule {
     constructor() {
         this.bookService = new BookService();
         this.currentFilter = { status: 'all', genre: 'all', rating: 0 };
+        this.requestId = 0;
     }
 
     async render() {
@@ -14,9 +15,13 @@ export class BooksModule {
         const userId = window.app.currentUser?.uid;
         if (!userId) return;
 
-        mainContent.innerHTML = window.app.ui.createLoader();
+        const requestId = ++this.requestId;
+        mainContent.innerHTML = `<div data-collection-request="books-${requestId}">${window.app.ui.createLoader()}</div>`;
 
         const books = await this.bookService.getBooks(userId, this.currentFilter);
+
+        if (requestId !== this.requestId || window.app.currentUser?.uid !== userId ||
+            !mainContent.isConnected || !mainContent.querySelector('[data-collection-request="books-' + requestId + '"]')) return;
 
         mainContent.innerHTML = this.getTemplate(books);
         this.attachEventListeners();

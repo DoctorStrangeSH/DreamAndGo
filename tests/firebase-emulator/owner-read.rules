@@ -32,14 +32,28 @@ service cloud.firestore {
         request.resource.data.uid == resource.data.uid;
     }
 
-    // Validator contract for a future write-enabled revision.
-    // Writes are intentionally disabled until schemas are audited.
+    // Private profiles: only bounded self-service display fields are editable.
+    // Creation, privileges, metrics and nickname changes remain denied.
     function isValidUser(data) {
       return data is map &&
         data.keys().hasAll(['email', 'username']) &&
         data.email is string && data.email.size() <= 254 &&
         data.username is string && data.username.size() <= 60 &&
         !data.keys().hasAny(['isAdmin', 'role', 'permissions']);
+    }
+
+    // Owner-editable profile fields are isolated from identity, role and stats.
+    // Other existing legacy fields may remain unchanged, but cannot be written.
+    function isValidProfileEdit(data) {
+      return data is map &&
+        data.keys().hasAll(['displayName', 'bio', 'location']) &&
+        data.displayName is string &&
+        data.displayName.size() > 0 &&
+        data.displayName.size() <= 80 &&
+        data.bio is string && data.bio.size() <= 500 &&
+        data.location is string && data.location.size() <= 120 &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['displayName', 'bio', 'location']);
     }
 
     function isValidOwnedDocument(data) {
@@ -117,8 +131,9 @@ service cloud.firestore {
       allow list: if false;
       allow create: if false && isOwner(uid) && uidUnchanged(uid) &&
         isValidUser(request.resource.data);
-      allow update: if false && isOwner(uid) && uidNotModified() &&
-        isValidUser(request.resource.data);
+      allow update: if isOwner(uid) && uidNotModified() &&
+        isValidUser(request.resource.data) &&
+        isValidProfileEdit(request.resource.data);
       allow delete: if false;
 
 

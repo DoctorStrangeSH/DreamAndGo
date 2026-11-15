@@ -20,7 +20,7 @@ export class TravelService {
         this.cache = new Map();
     }
 
-    async getTravels(userId, filters = {}) {
+    async getTravels(userId, filters = {}, { throwOnError = false } = {}) {
         try {
             const cacheKey = `travels_${userId}_${JSON.stringify(filters)}`;
             
@@ -66,6 +66,7 @@ export class TravelService {
             return travels;
         } catch (error) {
             console.error('Ошибка загрузки путешествий:', error);
+            if (throwOnError) throw error;
             return [];
         }
     }

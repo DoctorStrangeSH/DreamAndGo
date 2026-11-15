@@ -149,7 +149,7 @@ export const getPrivateChatHistoryV2 = onCall({ region: 'europe-west3' }, async 
 // Candidate read-only profile endpoint. Allows future clients to find a public
 // profile without reading the private users/{uid} Firestore document.
 // Not enabled in the existing UI; keep production rules locked until rollout.
-export const getPublicProfileV2 = onCall({ region: 'europe-west3' }, async request => {
+export const getPublicProfileV2 = onCall({ region: 'europe-west3', enforceAppCheck: true }, async request => {
     const db = getFirestore();
     const uid = request.auth?.uid;
     if (!uid) throw new HttpsError('unauthenticated', 'Требуется вход в аккаунт');
@@ -163,7 +163,7 @@ export const getPublicProfileV2 = onCall({ region: 'europe-west3' }, async reque
 
 // Exact-match username lookup; never sends private users/{uid} documents.
 // Do not deploy until App Check, per-user quotas and client switch are ready.
-export const findPublicProfileByUsernameV2 = onCall({ region: 'europe-west3' }, async request => {
+export const findPublicProfileByUsernameV2 = onCall({ region: 'europe-west3', enforceAppCheck: true }, async request => {
     const db = getFirestore();
     const uid = request.auth?.uid;
     if (!uid) throw new HttpsError('unauthenticated', 'Требуется вход в аккаунт');

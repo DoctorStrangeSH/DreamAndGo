@@ -12,6 +12,7 @@ import { getPrivateChatUnreadCount } from './chat-unread-status.js';
 import { loadPrivateChatHistory } from './chat-history-service.js';
 import { createFirestoreHistoryAdapter } from './chat-history-firestore.js';
 import { loadPublicProfile, findPublicProfileByUsername } from './public-profile-service.js';
+import { consumeProfileLookupQuota } from './profile-lookup-quota.js';
 
 if (getApps().length === 0) initializeApp();
 
@@ -149,7 +150,13 @@ export const getPrivateChatHistoryV2 = onCall({ region: 'europe-west3' }, async 
 // profile without reading the private users/{uid} Firestore document.
 // Not enabled in the existing UI; keep production rules locked until rollout.
 export const getPublicProfileV2 = onCall({ region: 'europe-west3' }, async request => {
-    const result = await loadPublicProfile(getFirestore(), request.auth?.uid, request.data?.userId);
+    const db = getFirestore();
+    const uid = request.auth?.uid;
+    if (!uid) throw new HttpsError('unauthenticated', 'Требуется вход в аккаунт');
+    if (!await consumeProfileLookupQuota(db, uid)) {
+        throw new HttpsError('resource-exhausted', 'Слишком много запросов к профилям');
+    }
+    const result = await loadPublicProfile(db, uid, request.data?.userId);
     if (!result.ok) throw new HttpsError(result.code, 'Профиль недоступен');
     return result.profile;
 });
@@ -157,9 +164,13 @@ export const getPublicProfileV2 = onCall({ region: 'europe-west3' }, async reque
 // Exact-match username lookup; never sends private users/{uid} documents.
 // Do not deploy until App Check, per-user quotas and client switch are ready.
 export const findPublicProfileByUsernameV2 = onCall({ region: 'europe-west3' }, async request => {
-    const result = await findPublicProfileByUsername(
-        getFirestore(), request.auth?.uid, request.data?.username
-    );
+    const db = getFirestore();
+    const uid = request.auth?.uid;
+    if (!uid) throw new HttpsError('unauthenticated', 'Требуется вход в аккаунт');
+    if (!await consumeProfileLookupQuota(db, uid)) {
+        throw new HttpsError('resource-exhausted', 'Слишком много запросов к профилям');
+    }
+    const result = await findPublicProfileByUsername(db, uid, request.data?.username);
     if (!result.ok) throw new HttpsError(result.code, 'Поиск пользователя недоступен');
     return { profile: result.profile };
 });

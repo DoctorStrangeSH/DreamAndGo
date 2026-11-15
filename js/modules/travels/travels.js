@@ -337,7 +337,9 @@ export class TravelsModule {
             });
         }
 
-        document.getElementById('saveTravelBtn').addEventListener('click', async () => {
+        document.getElementById('saveTravelBtn').addEventListener('click', async (event) => {
+            const saveButton = event.currentTarget;
+            if (saveButton.disabled) return;
             const form = document.getElementById('travelForm');
             const formData = new FormData(form);
 
@@ -362,6 +364,9 @@ export class TravelsModule {
                 return;
             }
 
+            saveButton.disabled = true;
+            saveButton.setAttribute('aria-busy', 'true');
+            try {
             const result = isEdit
                 ? await this.travelService.updateTravel(userId, travelId, data)
                 : await this.travelService.addTravel(userId, data);
@@ -377,7 +382,14 @@ export class TravelsModule {
                     await this.render();
                 }, 300);
             } else {
-                window.app.ui.showToast('Ошибка сохранения', 'error');
+                window.app.ui.showToast('Не удалось сохранить путешествие. Попробуй снова.', 'error');
+            }
+            } catch (error) {
+                console.error('Ошибка сохранения путешествие:', error);
+                window.app.ui.showToast('Не удалось сохранить путешествие. Попробуй снова.', 'error');
+            } finally {
+                saveButton.disabled = false;
+                saveButton.removeAttribute('aria-busy');
             }
         });
     }

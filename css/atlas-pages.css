@@ -225,3 +225,47 @@
   background:var(--bg-tertiary);border:1px solid var(--border-color);
   border-radius:10px;color:var(--primary);font-size:.73rem;font-weight:800
 }
+
+
+/* Atlas mobile usability: reachable actions, readable cards and compact controls. */
+.movie-card:focus-within .movie-poster-overlay {opacity:1}
+.movie-card .movie-poster-overlay .btn:focus-visible {outline:3px solid #ffcf9a;outline-offset:2px}
+@media (hover:none), (pointer:coarse) {
+  .travel-card:hover,.restaurant-card:hover,.movie-card:hover,.book-card:hover {transform:none}
+  .movie-card .movie-poster-overlay {
+    opacity:1;top:auto;bottom:0;min-height:52px;padding:.65rem;
+    align-items:flex-end;justify-content:center;
+    background:linear-gradient(0deg,rgba(8,26,32,.92),rgba(8,26,32,.48) 75%,transparent)
+  }
+  .movie-card .movie-poster-overlay>div {width:100%}
+  .movie-card .movie-poster-overlay .btn {
+    min-height:40px;max-width:100%;width:100%;
+    display:flex;align-items:center;justify-content:center;gap:.35rem;
+    white-space:normal;line-height:1.2
+  }
+  .travel-card-actions .btn,.restaurant-card-actions .btn,
+  .book-card-actions .btn,.dream-card-actions .btn {
+    min-width:40px;min-height:40px
+  }
+}
+@media (max-width:575.98px) {
+  .page-header {margin-bottom:1rem}
+  .page-header>.d-flex {align-items:flex-start!important;gap:.75rem}
+  .page-header>.d-flex>.btn,.page-header>.d-flex>button {
+    max-width:100%;min-height:44px;white-space:normal
+  }
+  .movies-tabs {display:flex;flex-wrap:nowrap;gap:.35rem;overflow-x:auto;
+    overscroll-behavior-inline:contain;scrollbar-width:thin;padding-bottom:.35rem}
+  .movies-tabs .nav-item {flex:0 0 auto}
+  .movies-tabs .nav-link {min-height:44px;white-space:nowrap}
+  .movie-poster {height:clamp(185px,58vw,250px)}
+  .movie-card .movie-title {-webkit-line-clamp:2;line-height:1.4;min-height:2.8em}
+  .movie-card .card-body {padding:.75rem}
+  .filter-bar .btn-group .btn {min-height:44px}
+  .filter-bar .form-control,.filter-bar .form-select {min-height:44px}
+  .profile-page .profile-tabs {overflow-x:auto;flex-wrap:nowrap;overscroll-behavior-inline:contain}
+  .profile-page .profile-tabs .nav-item {flex:0 0 auto}
+  .profile-page .profile-tabs .nav-link {white-space:nowrap}
+  .modal-footer {gap:.55rem}
+  .modal-footer .btn {min-height:44px}
+}

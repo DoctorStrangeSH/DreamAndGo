@@ -39,3 +39,27 @@ export async function loadPublicProfile(db, actorUid, requestedUid) {
     if (!profile) return { ok: false, code: 'internal' };
     return { ok: true, profile };
 }
+
+// Exact username lookup only. No prefix scans or bulk user enumeration.
+// This is a candidate endpoint; enable only with App Check and request quotas.
+export async function findPublicProfileByUsername(db, actorUid, username) {
+    if (typeof actorUid !== 'string' || !actorUid) {
+        return { ok: false, code: 'unauthenticated' };
+    }
+    if (typeof username !== 'string') return { ok: false, code: 'invalid-argument' };
+    const normalized = username.trim().toLowerCase();
+    if (!/^[a-z0-9_]{3,20}$/.test(normalized)) {
+        return { ok: false, code: 'invalid-argument' };
+    }
+    const users = db.collection('users');
+    const indexed = await users.where('usernameNormalized', '==', normalized).limit(1).get();
+    let document = indexed.docs[0];
+    if (!document) {
+        // Legacy profiles may lack the normalized field. Preserve exact-case
+        // lookup without exposing raw documents in the callable result.
+        const legacy = await users.where('username', '==', username.trim()).limit(1).get();
+        document = legacy.docs[0];
+    }
+    if (!document) return { ok: true, profile: null };
+    return { ok: true, profile: publicProfileFromPrivate(document.id, document.data()) };
+}

@@ -225,6 +225,9 @@ export class ProfileModule {
             case 'books':
                 await this.loadOwnBooks(container, requestId);
                 break;
+            case 'restaurants':
+                await this.loadOwnRestaurants(container, requestId);
+                break;
             case 'dreams':
                 await this.loadOwnDreams(container, requestId);
                 break;
@@ -367,6 +370,50 @@ export class ProfileModule {
             if (requestId !== this.tabRequestId || !container.isConnected) return;
             console.error('Не удалось загрузить книги профиля:', error);
             container.innerHTML = '<div class="alert alert-warning" role="status">Не удалось загрузить книги. Попробуй открыть раздел позже.</div>';
+        }
+    }
+
+    async loadOwnRestaurants(container, requestId) {
+        if (!this.profileIsOwn || window.app.currentUser?.uid !== this.profileUserId) {
+            container.innerHTML = this.getPlaceholder('restaurants');
+            return;
+        }
+        container.innerHTML = window.app.ui.createLoader();
+        try {
+            const { RestaurantService } = await import('../../services/restaurant.service.js');
+            const restaurants = await new RestaurantService().getRestaurants(this.profileUserId);
+            if (requestId !== this.tabRequestId || !container.isConnected ||
+                window.app.currentUser?.uid !== this.profileUserId) return;
+            if (!restaurants.length) {
+                container.innerHTML = `
+                    <section class="atlas-empty atlas-empty--restaurant">
+                        <div class="atlas-empty-art" aria-hidden="true"><i class="bi bi-cup-hot"></i></div>
+                        <h3>Впереди много вкусных открытий</h3>
+                        <p>Сохрани первое любимое место или ресторан, в который хочется заглянуть.</p>
+                    </section>`;
+                return;
+            }
+            container.innerHTML = `
+                <div class="row g-3">
+                    ${restaurants.slice(0, 12).map(restaurant => `
+                        <div class="col-12 col-md-6 col-lg-4">
+                            <article class="card-premium profile-collection-card p-3 h-100">
+                                <span class="profile-collection-kicker">
+                                    ${restaurant.status === 'visited' ? '✓ Побывал' : '✦ Хочу посетить'}
+                                </span>
+                                <h3 class="h6 mt-2 mb-2">${escapeHTML(String(restaurant.name || 'Без названия'))}</h3>
+                                <p class="text-muted small mb-0">${escapeHTML(String(restaurant.cuisine || 'Кухня не указана'))}</p>
+                            </article>
+                        </div>`).join('')}
+                </div>
+                <p class="text-muted small mt-3">
+                    Показаны первые ${Math.min(restaurants.length, 12)} из ${restaurants.length} ресторанов.
+                    Полный список доступен в разделе «Рестораны».
+                </p>`;
+        } catch (error) {
+            if (requestId !== this.tabRequestId || !container.isConnected) return;
+            console.error('Не удалось загрузить рестораны профиля:', error);
+            container.innerHTML = '<div class="alert alert-warning" role="status">Не удалось загрузить рестораны. Попробуй открыть раздел позже.</div>';
         }
     }
 

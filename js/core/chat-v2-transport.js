@@ -85,4 +85,44 @@ export class ChatV2Transport {
         }
         return { chatId, unread: result.unread };
     }
+    // Candidate history callable contract. The backend is not yet deployed.
+    // Validate the complete page before exposing it to UI pagination state.
+    async history({ chatId, beforeSequence = null, limit = 30 }) {
+        if (!isChatId(chatId) || (beforeSequence !== null &&
+            (!Number.isSafeInteger(beforeSequence) || beforeSequence <= 0)) ||
+            !Number.isSafeInteger(limit) || limit < 1 || limit > 50) {
+            throw new TypeError('Некорректный запрос истории');
+        }
+        const result = await this._call('getPrivateChatHistoryV2',
+            { chatId, beforeSequence, limit });
+        if (result.chatId !== chatId || !Array.isArray(result.messages) ||
+            result.messages.length > limit || typeof result.hasMore !== 'boolean') {
+            throw new Error('Некорректная история сообщений');
+        }
+        const seen = new Set();
+        let previous = beforeSequence ?? Number.MAX_SAFE_INTEGER;
+        const messages = result.messages.map(message => {
+            if (!message || !isMessageId(message.id) ||
+                !Number.isSafeInteger(message.sequence) || message.sequence <= 0 ||
+                message.sequence >= previous || seen.has(message.id) ||
+                typeof message.senderId !== 'string' || !message.senderId ||
+                typeof message.text !== 'string' || message.text.length > 2000 ||
+                typeof message.read !== 'boolean') {
+                throw new Error('Некорректная история сообщений');
+            }
+            seen.add(message.id);
+            previous = message.sequence;
+            return Object.freeze({
+                id: message.id, sequence: message.sequence, senderId: message.senderId,
+                text: message.text, read: message.read
+            });
+        });
+        const cursor = result.hasMore && messages.length ? messages.at(-1).sequence : null;
+        if ((result.hasMore && messages.length === 0) ||
+            result.nextBeforeSequence !== cursor) {
+            throw new Error('Некорректный курсор истории');
+        }
+        return { chatId, messages, hasMore: result.hasMore, nextBeforeSequence: cursor };
+    }
+
 }

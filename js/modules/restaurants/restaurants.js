@@ -20,13 +20,26 @@ export class RestaurantsModule {
         const requestId = ++this.requestId;
         mainContent.innerHTML = `<div data-collection-request="restaurants-${requestId}">${window.app.ui.createLoader()}</div>`;
 
-        const restaurants = await this.restaurantService.getRestaurants(userId, this.currentFilter);
+        try {
+            const restaurants = await this.restaurantService.getRestaurants(userId, this.currentFilter, { throwOnError: true });
 
-        if (requestId !== this.requestId || window.app.currentUser?.uid !== userId ||
-            !mainContent.isConnected || !mainContent.querySelector('[data-collection-request="restaurants-' + requestId + '"]')) return;
+            if (requestId !== this.requestId || window.app.currentUser?.uid !== userId ||
+                !mainContent.isConnected || !mainContent.querySelector('[data-collection-request="restaurants-' + requestId + '"]')) return;
 
-        mainContent.innerHTML = this.getTemplate(restaurants);
-        this.attachEventListeners();
+            mainContent.innerHTML = this.getTemplate(restaurants);
+            this.attachEventListeners();
+        } catch (error) {
+            console.error('Не удалось загрузить коллекцию ресторанов:', error);
+            if (requestId !== this.requestId || window.app.currentUser?.uid !== userId ||
+                !mainContent.isConnected || !mainContent.querySelector('[data-collection-request="restaurants-' + requestId + '"]')) return;
+
+            mainContent.innerHTML = `<section class="atlas-empty" role="alert">
+                <h2>Не удалось загрузить рестораны</h2>
+                <p>Проверь подключение к интернету и попробуй ещё раз.</p>
+                <button class="btn btn-premium" type="button" data-retry-restaurants>Повторить</button>
+            </section>`;
+            mainContent.querySelector('[data-retry-restaurants]')?.addEventListener('click', () => this.render());
+        }
     }
 
     getTemplate(restaurants) {

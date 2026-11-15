@@ -87,6 +87,14 @@ export class DreamsModule {
     }
 
     getEmptyState() {
+        const hasFilter = this.currentFilter.status !== 'all' || this.currentFilter.category !== 'all';
+        if (hasFilter) return `
+            <div class="col-12"><section class="atlas-empty atlas-empty--dream" aria-label="Нет результатов по фильтрам">
+                <div class="atlas-empty-art" aria-hidden="true"><i class="bi bi-funnel"></i></div>
+                <h3>По этим фильтрам пока ничего нет</h3>
+                <p>Попробуй выбрать другой статус или категорию — твои записи никуда не исчезли.</p>
+            </section></div>
+        `;
         return `
             <div class="col-12">
                 <section class="atlas-empty atlas-empty--dream" aria-labelledby="dream-empty-title">
@@ -94,7 +102,7 @@ export class DreamsModule {
                     <span class="atlas-empty-kicker">Начало большой истории</span>
                     <h3 id="dream-empty-title">У каждой мечты есть первый шаг</h3>
                     <p>Запиши то, что вдохновляет. Маленькая идея сегодня может стать большим событием завтра.</p>
-                    <button type="button" class="btn btn-premium atlas-empty-action" onclick="document.getElementById('addDreamBtn')?.click()"><i class="bi bi-plus-lg me-2"></i>Записать мечту</button>
+                    <button type="button" class="btn btn-premium atlas-empty-action" id="emptyAddDreamBtn"><i class="bi bi-plus-lg me-2"></i>Записать мечту</button>
                 </section>
             </div>
         `;
@@ -162,6 +170,7 @@ export class DreamsModule {
 
     attachEventListeners() {
         document.getElementById('addDreamBtn')?.addEventListener('click', () => this.showModal(null));
+        document.getElementById('emptyAddDreamBtn')?.addEventListener('click', () => this.showModal(null));
 
         document.querySelectorAll('.edit-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {

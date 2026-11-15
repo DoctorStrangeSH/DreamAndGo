@@ -219,3 +219,15 @@ test('book cards and editing form safely render private library content', () => 
   assert.match(source, /data-id="\$\{escapeHTML\(String\(book\.id\)\)\}"/);
   assert.doesNotMatch(source, /<h6 class="fw-bold mb-1">\$\{book\.title/);
 });
+
+test('travel photo sources and edit dialog fields are safe', () => {
+  const source = read('js/modules/travels/travels.js');
+  assert.match(source, /safeAvatarURL\(Array\.isArray\(travel\.photos\)/);
+  assert.match(source, /escapeHTML\(photoURL\)/);
+  assert.match(source, /escapeHTML\(String\(travel\?\.title \|\| ''\)\)/);
+  assert.match(source, /escapeHTML\(String\(travel\?\.location \|\| ''\)\)/);
+  assert.match(source, /escapeHTML\(String\(travel\?\.description \|\| ''\)\)/);
+  assert.match(source, /escapeHTML\(String\(travel\?\.notes \|\| ''\)\)/);
+  assert.match(source, /safeRating = Number\.isFinite\(rawRating\)/);
+  assert.doesNotMatch(source, /<img src="\$\{escapeHTML\(travel\.photos\[0\]\)/);
+});

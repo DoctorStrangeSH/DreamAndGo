@@ -122,33 +122,33 @@ export class ProfileModule {
                             </button>
                         </li>
                         <li class="nav-item">
-                            <button type="button" class="nav-link" role="tab" id="profile-tab-travels" aria-controls="profileTabContent" aria-selected="${this.currentTab === 'travels'}" tabindex="${this.currentTab === 'travels' ? '0' : '-1'}" data-tab="travels">
+                            <button type="button" class="nav-link ${this.currentTab === 'travels' ? 'active' : ''}" role="tab" id="profile-tab-travels" aria-controls="profileTabContent" aria-selected="${this.currentTab === 'travels'}" tabindex="${this.currentTab === 'travels' ? '0' : '-1'}" data-tab="travels">
                                 <i class="bi bi-airplane me-1"></i>Путешествия
                             </button>
                         </li>
                         <li class="nav-item">
-                            <button type="button" class="nav-link" role="tab" id="profile-tab-movies" aria-controls="profileTabContent" aria-selected="${this.currentTab === 'movies'}" tabindex="${this.currentTab === 'movies' ? '0' : '-1'}" data-tab="movies">
+                            <button type="button" class="nav-link ${this.currentTab === 'movies' ? 'active' : ''}" role="tab" id="profile-tab-movies" aria-controls="profileTabContent" aria-selected="${this.currentTab === 'movies'}" tabindex="${this.currentTab === 'movies' ? '0' : '-1'}" data-tab="movies">
                                 <i class="bi bi-film me-1"></i>Кино
                             </button>
                         </li>
                         <li class="nav-item">
-                            <button type="button" class="nav-link" role="tab" id="profile-tab-books" aria-controls="profileTabContent" aria-selected="${this.currentTab === 'books'}" tabindex="${this.currentTab === 'books' ? '0' : '-1'}" data-tab="books">
+                            <button type="button" class="nav-link ${this.currentTab === 'books' ? 'active' : ''}" role="tab" id="profile-tab-books" aria-controls="profileTabContent" aria-selected="${this.currentTab === 'books'}" tabindex="${this.currentTab === 'books' ? '0' : '-1'}" data-tab="books">
                                 <i class="bi bi-book me-1"></i>Книги
                             </button>
                         </li>
                         <li class="nav-item">
-                            <button type="button" class="nav-link" role="tab" id="profile-tab-dreams" aria-controls="profileTabContent" aria-selected="${this.currentTab === 'dreams'}" tabindex="${this.currentTab === 'dreams' ? '0' : '-1'}" data-tab="dreams">
+                            <button type="button" class="nav-link ${this.currentTab === 'dreams' ? 'active' : ''}" role="tab" id="profile-tab-dreams" aria-controls="profileTabContent" aria-selected="${this.currentTab === 'dreams'}" tabindex="${this.currentTab === 'dreams' ? '0' : '-1'}" data-tab="dreams">
                                 <i class="bi bi-star me-1"></i>Мечты
                             </button>
                         </li>
                         <li class="nav-item">
-                            <button type="button" class="nav-link" role="tab" id="profile-tab-restaurants" aria-controls="profileTabContent" aria-selected="${this.currentTab === 'restaurants'}" tabindex="${this.currentTab === 'restaurants' ? '0' : '-1'}" data-tab="restaurants">
+                            <button type="button" class="nav-link ${this.currentTab === 'restaurants' ? 'active' : ''}" role="tab" id="profile-tab-restaurants" aria-controls="profileTabContent" aria-selected="${this.currentTab === 'restaurants'}" tabindex="${this.currentTab === 'restaurants' ? '0' : '-1'}" data-tab="restaurants">
                                 <i class="bi bi-shop me-1"></i>Рестораны
                             </button>
                         </li>
                         ${isOwnProfile ? `
                             <li class="nav-item ms-auto">
-                                <button type="button" class="nav-link" role="tab" id="profile-tab-achievements" aria-controls="profileTabContent" aria-selected="${this.currentTab === 'achievements'}" tabindex="${this.currentTab === 'achievements' ? '0' : '-1'}" data-tab="achievements">
+                                <button type="button" class="nav-link ${this.currentTab === 'achievements' ? 'active' : ''}" role="tab" id="profile-tab-achievements" aria-controls="profileTabContent" aria-selected="${this.currentTab === 'achievements'}" tabindex="${this.currentTab === 'achievements' ? '0' : '-1'}" data-tab="achievements">
                                     <i class="bi bi-trophy me-1"></i>Ачивки
                                 </button>
                             </li>

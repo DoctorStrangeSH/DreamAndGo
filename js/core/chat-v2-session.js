@@ -63,6 +63,11 @@ export class ChatV2Session {
         return this.delivery.refreshRead(clientMessageId);
     }
 
+    loadHistory(request) {
+        this._assertActive();
+        return this.transport.history(request);
+    }
+
     refreshUnread(chatId) {
         this._assertActive();
         return this.unread.refresh(chatId);

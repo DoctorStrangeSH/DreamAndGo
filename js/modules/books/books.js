@@ -187,7 +187,7 @@ export class BooksModule {
 
         document.querySelectorAll('#statusFilters [data-filter]').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                this.currentFilter.status = e.target.dataset.filter;
+                this.currentFilter.status = e.currentTarget.dataset.filter;
                 this.render();
             });
         });

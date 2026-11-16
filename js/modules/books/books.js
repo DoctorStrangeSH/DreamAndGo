@@ -260,13 +260,13 @@ export class BooksModule {
                             <form id="bookForm">
                                 <div class="row g-3">
                                     <div class="col-md-8">
-                                        <label class="form-label fw-semibold small">Название *</label>
-                                        <input type="text" class="form-control" name="title"
+                                        <label for="bookPrimaryField" class="form-label fw-semibold small">Название *</label>
+                                        <input type="text" class="form-control" id="bookPrimaryField" name="title"
                                                value="${escapeHTML(String(book?.title || ''))}" required>
                                     </div>
                                     <div class="col-md-4">
-                                        <label class="form-label fw-semibold small">Автор *</label>
-                                        <input type="text" class="form-control" name="author"
+                                        <label for="bookAuthorField" class="form-label fw-semibold small">Автор *</label>
+                                        <input type="text" class="form-control" id="bookAuthorField" name="author"
                                                value="${escapeHTML(String(book?.author || ''))}" required>
                                     </div>
                                     <div class="col-md-4">
@@ -338,6 +338,9 @@ export class BooksModule {
 
         const modalElement = document.getElementById('bookModal');
         const modal = new bootstrap.Modal(modalElement);
+        modalElement.addEventListener('shown.bs.modal', () => {
+            modalElement.querySelector('#bookPrimaryField')?.focus();
+        }, { once: true });
         modal.show();
 
         modalElement.addEventListener('hidden.bs.modal', () => {
@@ -358,11 +361,12 @@ export class BooksModule {
             const saveButton = event.currentTarget;
             if (saveButton.disabled) return;
             const form = document.getElementById('bookForm');
+            if (!form.reportValidity()) return;
             const formData = new FormData(form);
 
             const data = {
-                title: formData.get('title'),
-                author: formData.get('author'),
+                title: String(formData.get('title') || '').trim(),
+                author: String(formData.get('author') || '').trim(),
                 status: formData.get('status'),
                 genres: formData.getAll('genres'),
                 year: parseInt(formData.get('year')) || null,
@@ -374,6 +378,7 @@ export class BooksModule {
             };
 
             if (!data.title || !data.author) {
+                form.querySelector('#bookPrimaryField')?.focus();
                 window.app.ui.showToast('Введи название и автора', 'warning');
                 return;
             }

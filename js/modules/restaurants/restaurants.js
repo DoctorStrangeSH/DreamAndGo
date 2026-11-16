@@ -273,6 +273,9 @@ export class RestaurantsModule {
                                             </option>
                                         </select>
                                     </div>
+                                    <div class="col-12 atlas-form-extras"><details class="atlas-form-details" ${isEdit ? 'open' : ''}>
+                                        <summary>Адрес, посещение и впечатления</summary>
+                                        <div class="row g-3 mt-1">
                                     <div class="col-md-6">
                                         <label class="form-label fw-semibold small">Адрес</label>
                                         <input type="text" class="form-control" name="address"
@@ -310,6 +313,8 @@ export class RestaurantsModule {
                                         <textarea class="form-control" name="review" rows="3"
                                                   placeholder="Твои впечатления...">${escapeHTML(String(restaurant?.review || ''))}</textarea>
                                     </div>
+                                        </div>
+                                    </details></div>
                                 </div>
                             </form>
                         </div>

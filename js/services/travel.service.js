@@ -94,15 +94,22 @@ export class TravelService {
             // Обновляем статистику
             await this.updateUserStats(userId);
             
-            // Получаем созданный документ для возврата
-            const createdDoc = await getDoc(docRef);
-            
-            return { 
-                success: true, 
+            // A confirmed write stays successful even when optional read-back fails.
+            // Reporting failure after addDoc would invite a duplicate on retry.
+            let storedData = newTravel;
+            try {
+                const createdDoc = await getDoc(docRef);
+                if (createdDoc.exists()) storedData = createdDoc.data();
+            } catch (readError) {
+                console.warn('Путешествие сохранено, но повторная загрузка не удалась:', readError);
+            }
+
+            return {
+                success: true,
                 id: docRef.id,
                 travel: {
                     id: docRef.id,
-                    ...createdDoc.data(),
+                    ...storedData,
                     createdAt: new Date(),
                     updatedAt: new Date()
                 }

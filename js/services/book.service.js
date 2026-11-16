@@ -32,15 +32,17 @@ export class BookService {
                 }
             });
 
+            // Apply genre and rating together, not as mutually exclusive filters.
+            let filteredBooks = books;
             if (filters.genre && filters.genre !== 'all') {
-                return books.filter(b => b.genres?.includes(filters.genre));
+                filteredBooks = filteredBooks.filter(b => b.genres?.includes(filters.genre));
             }
 
             if (filters.rating && filters.rating > 0) {
-                return books.filter(b => b.userRating >= filters.rating);
+                filteredBooks = filteredBooks.filter(b => b.userRating >= filters.rating);
             }
 
-            return books;
+            return filteredBooks;
         } catch (error) {
             console.error('Ошибка загрузки книг:', error);
             if (throwOnError) throw error;

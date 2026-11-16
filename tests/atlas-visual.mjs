@@ -9,6 +9,8 @@ const browser = await chromium.launch({ headless: true });
 const targets = [
   { name: 'desktop', width: 1440, height: 900 },
   { name: 'mobile', width: 390, height: 844 },
+  { name: 'compact-mobile', width: 360, height: 740 },
+  { name: 'tablet', width: 768, height: 1024 },
   { name: 'small-mobile', width: 320, height: 700 }
 ];
 const errors = [];
@@ -23,18 +25,33 @@ try {
     const theme = await page.locator('html').getAttribute('data-bs-theme');
     if (theme !== 'dark') errors.push(target.name + ': theme did not switch');
     await page.screenshot({ path: path.join(root, 'atlas-screenshots', target.name + '-dark.png'), fullPage: true });
-    if (target.name === 'desktop') {
-      await page.getByRole('button', { name: 'Мой профиль' }).click();
-      await page.getByRole('tab', { name: 'Достижения' }).click();
-      await page.getByRole('heading', { name: '🏆 Первые открытия' }).waitFor();
-      await page.getByRole('tab', { name: 'Обзор' }).click();
-      await page.getByRole('textbox', { name: 'Название' }).fill('Проверка интерфейса');
-      await page.getByRole('button', { name: 'Добавить в макет' }).click();
-      await page.getByRole('heading', { name: 'Проверка интерфейса' }).waitFor();
-      await page.screenshot({ path: path.join(root, 'atlas-screenshots', 'desktop-interaction.png'), fullPage: true });
+    const touchTargets = await page.evaluate(() => {
+      const selectors = ['#themeSwitch', '[data-preview-action="new-travel"]',
+        '[data-preview-action="profile"]', '.preview-profile [role="tab"]',
+        '#previewTravelForm button[type="submit"]'];
+      return selectors.map(selector => {
+        const node = document.querySelector(selector);
+        const box = node?.getBoundingClientRect();
+        return { selector, width: box?.width ?? 0, height: box?.height ?? 0 };
+      });
+    });
+    for (const targetBox of touchTargets) {
+      if (targetBox.width < 40 || targetBox.height < 40) {
+        errors.push(target.name + ': undersized target ' + targetBox.selector);
+      }
+    }
+    await page.getByRole('button', { name: 'Мой профиль' }).click();
+    await page.getByRole('tab', { name: 'Достижения' }).click();
+    await page.getByRole('heading', { name: '🏆 Первые открытия' }).waitFor();
+    await page.getByRole('tab', { name: 'Обзор' }).click();
+    await page.getByRole('textbox', { name: 'Название' }).fill('Проверка интерфейса');
+    await page.getByRole('button', { name: 'Добавить в макет' }).click();
+    await page.getByRole('heading', { name: 'Проверка интерфейса' }).waitFor();
+    if (target.name === 'desktop' || target.name === 'small-mobile') {
+      await page.screenshot({ path: path.join(root, 'atlas-screenshots', target.name + '-interaction.png'), fullPage: true });
     }
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
-    if (overflow) errors.push(target.name + ': horizontal overflow');
+    if (overflow) errors.push(target.name + ': horizontal overflow after interaction');
     await page.close();
   }
 } finally {

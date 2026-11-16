@@ -102,3 +102,48 @@ test('owner-only read recovery: guest and other users cannot read PII or write',
         await env.cleanup();
     }
 });
+
+
+test('private collection matrix: owners can read, other accounts and guests cannot', async () => {
+    assert.ok(process.env.FIRESTORE_EMULATOR_HOST, 'Run with Firebase Firestore emulator');
+    const env = await initializeTestEnvironment({ projectId, firestore: { rules } });
+    const categories = [
+        'travels', 'restaurants', 'movies', 'books', 'dreams',
+        'dailyTasks', 'notifications', 'friends', 'friendRequests',
+        'sentRequests', 'chats', 'messages'
+    ];
+    try {
+        await env.withSecurityRulesDisabled(async ctx => {
+            const db = ctx.firestore();
+            await setDoc(doc(db, 'users', 'alice'), { email: 'alice@example.test', username: 'alice' });
+            await setDoc(doc(db, 'users', 'bob'), { email: 'bob@example.test', username: 'bob' });
+            for (const category of categories) {
+                await setDoc(doc(db, 'users', 'alice', category, 'private-1'), {
+                    title: 'Only Alice', createdAt: new Date()
+                });
+            }
+        });
+
+        const alice = env.authenticatedContext('alice').firestore();
+        const bob = env.authenticatedContext('bob').firestore();
+        const guest = env.unauthenticatedContext().firestore();
+
+        for (const category of categories) {
+            const path = ['users', 'alice', category, 'private-1'];
+            await assertSucceeds(getDoc(doc(alice, ...path)));
+            await assertSucceeds(getDocs(collection(alice, 'users', 'alice', category)));
+            await assertFails(getDoc(doc(bob, ...path)));
+            await assertFails(getDocs(collection(bob, 'users', 'alice', category)));
+            await assertFails(getDoc(doc(guest, ...path)));
+            await assertFails(getDocs(collection(guest, 'users', 'alice', category)));
+            await assertFails(updateDoc(doc(bob, ...path), { title: 'Changed by Bob' }));
+            await assertFails(deleteDoc(doc(bob, ...path)));
+        }
+
+        await assertFails(getDocs(collection(guest, 'users')));
+        await assertFails(getDocs(collection(bob, 'users')));
+        await assertFails(getDocs(collection(alice, 'users')));
+    } finally {
+        await env.cleanup();
+    }
+});

@@ -16,10 +16,23 @@ export class DreamsModule {
 
         mainContent.innerHTML = window.app.ui.createLoader();
 
-        const dreams = await this.dreamsService.getDreams(userId, this.currentFilter);
-
-        mainContent.innerHTML = this.getTemplate(dreams);
-        this.attachEventListeners();
+        try {
+            const dreams = await this.dreamsService.getDreams(userId, this.currentFilter, { throwOnError: true });
+            if (window.app.currentUser?.uid !== userId) return;
+            mainContent.innerHTML = this.getTemplate(dreams);
+            this.attachEventListeners();
+        } catch (error) {
+            console.error('Не удалось загрузить мечты:', error);
+            if (window.app.currentUser?.uid !== userId) return;
+            mainContent.innerHTML = `
+                <section class="container py-5 text-center" role="alert" aria-labelledby="dreams-load-error">
+                    <i class="bi bi-wifi-off display-5 text-warning" aria-hidden="true"></i>
+                    <h2 class="h4 mt-3" id="dreams-load-error">Не удалось загрузить мечты</h2>
+                    <p class="text-muted">Проверь подключение и попробуй снова. Твои записи не удалены.</p>
+                    <button type="button" class="btn btn-premium" id="retryDreamsLoad">Повторить</button>
+                </section>`;
+            mainContent.querySelector('#retryDreamsLoad')?.addEventListener('click', () => this.render());
+        }
     }
 
     getTemplate(dreams) {
@@ -183,7 +196,11 @@ export class DreamsModule {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 if (confirm('Удалить эту мечту?')) {
-                    await this.dreamsService.deleteDream(window.app.currentUser.uid, btn.dataset.id);
+                    const result = await this.dreamsService.deleteDream(window.app.currentUser.uid, btn.dataset.id);
+                    if (!result?.success) {
+                        window.app.ui.showToast('Не удалось удалить мечту. Попробуй ещё раз.', 'error');
+                        return;
+                    }
                     window.app.ui.showToast('Мечта удалена', 'info');
                     this.render();
                     window.app.refreshUserData();

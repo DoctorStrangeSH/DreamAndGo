@@ -366,3 +366,19 @@ test('collection forms validate required names, trim whitespace and focus the fi
   const book = read('js/modules/books/books.js');
   assert.match(book, /author: String\(formData\.get\('author'\) \|\| ''\)\.trim\(\)/);
 });
+
+test('collection modals keep essential fields visible and optional details accessible', () => {
+  for (const name of ['book', 'travel', 'restaurant']) {
+    const source = read('js/modules/' + name + 's/' + name + 's.js');
+    const form = source.slice(source.indexOf('<form id="' + name + 'Form">'), source.indexOf('</form>', source.indexOf('<form id="' + name + 'Form">')));
+    const primary = form.indexOf('id="' + name + 'PrimaryField"');
+    const disclosure = form.indexOf('<details class="atlas-form-details"');
+    assert.ok(primary >= 0 && primary < disclosure);
+    assert.match(form, /<summary>[^<]+<\/summary>/);
+    assert.match(form, /\$\{isEdit \? 'open' : ''\}/);
+    assert.match(form, /<\/details>/);
+  }
+  const css = read('css/atlas-pages.css');
+  assert.match(css, /\.atlas-form-details>summary:focus-visible/);
+  assert.match(css, /\.atlas-form-details>summary\s*\{[^}]*min-height:44px/);
+});

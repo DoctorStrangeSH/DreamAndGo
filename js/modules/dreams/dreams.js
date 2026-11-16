@@ -364,8 +364,11 @@ export class DreamsModule {
             btn.addEventListener('click', () => btn.closest('.step-row').remove());
         });
 
-        document.getElementById('saveDreamBtn').addEventListener('click', async () => {
+        document.getElementById('saveDreamBtn').addEventListener('click', async (event) => {
+            const saveButton = event.currentTarget;
+            if (saveButton.disabled) return;
             const form = document.getElementById('dreamForm');
+            if (!form) return;
             const formData = new FormData(form);
 
             const steps = [];
@@ -390,11 +393,18 @@ export class DreamsModule {
                 return;
             }
 
-            const result = isEdit
-                ? await this.dreamsService.updateDream(userId, dreamId, data)
-                : await this.dreamsService.addDream(userId, data);
+            saveButton.disabled = true;
+            saveButton.setAttribute('aria-busy', 'true');
+            try {
+                const result = isEdit
+                    ? await this.dreamsService.updateDream(userId, dreamId, data)
+                    : await this.dreamsService.addDream(userId, data);
 
-            if (result.success) {
+                if (!result?.success) {
+                    window.app.ui.showToast('Ошибка сохранения. Попробуй ещё раз.', 'error');
+                    return;
+                }
+
                 modal.hide();
                 window.app.onUserAction('add_dream');
                 window.app.ui.showToast(
@@ -404,8 +414,14 @@ export class DreamsModule {
                 setTimeout(async () => {
                     await this.render();
                 }, 300);
-            } else {
-                window.app.ui.showToast('Ошибка сохранения', 'error');
+            } catch (error) {
+                console.error('Ошибка сохранения мечты:', error);
+                window.app.ui.showToast('Не удалось сохранить мечту. Проверь подключение.', 'error');
+            } finally {
+                if (saveButton.isConnected) {
+                    saveButton.disabled = false;
+                    saveButton.removeAttribute('aria-busy');
+                }
             }
         });
     }

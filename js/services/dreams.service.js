@@ -10,7 +10,7 @@ export class DreamsService {
         this.db = db;
     }
 
-    async getDreams(userId, filters = {}) {
+    async getDreams(userId, filters = {}, { throwOnError = false } = {}) {
         try {
             const dreamsRef = collection(this.db, 'users', userId, 'dreams');
             let q = query(dreamsRef, orderBy('createdAt', 'desc'));
@@ -40,6 +40,7 @@ export class DreamsService {
             return dreams;
         } catch (error) {
             console.error('Ошибка загрузки мечт:', error);
+            if (throwOnError) throw error;
             return [];
         }
     }

@@ -45,25 +45,46 @@ export class RegistrationRecoveryModule {
                 </div>
             </section>`;
         container.querySelector('#recoverySignOut')?.addEventListener('click', async () => {
-            await this.authService.signOut();
+            const signOutButton = container.querySelector('#recoverySignOut');
+            const error = container.querySelector('#recoveryError');
+            if (!signOutButton || signOutButton.disabled) return;
+            signOutButton.disabled = true;
+            signOutButton.setAttribute('aria-busy', 'true');
+            try {
+                await this.authService.signOut();
+            } catch {
+                if (error) {
+                    error.textContent = 'Не удалось выйти из аккаунта. Проверь подключение и повтори попытку.';
+                    error.classList.remove('d-none');
+                }
+            } finally {
+                if (signOutButton.isConnected) {
+                    signOutButton.disabled = false;
+                    signOutButton.removeAttribute('aria-busy');
+                }
+            }
         });
         if (!available) return;
         container.querySelector('#recoveryForm')?.addEventListener('submit', async event => {
             event.preventDefault();
-            const username = container.querySelector('#recoveryUsername')?.value.trim();
+            const input = container.querySelector('#recoveryUsername');
             const error = container.querySelector('#recoveryError');
             const button = container.querySelector('#recoverySubmit');
+            if (!input || !error || !button || button.disabled) return;
+            const username = input.value.trim();
             if (!isValidUsername(username)) {
                 error.textContent = 'Никнейм: 3–20 латинских букв, цифр или _.';
                 error.classList.remove('d-none');
+                input.focus();
                 return;
             }
             button.disabled = true;
+            button.setAttribute('aria-busy', 'true');
             error.classList.add('d-none');
             try {
                 const result = await this.authService.recoverRegistrationV2(username);
-                if (!result.success) {
-                    error.textContent = result.error || 'Не удалось восстановить аккаунт.';
+                if (!result?.success) {
+                    error.textContent = result?.error || 'Не удалось восстановить аккаунт.';
                     error.classList.remove('d-none');
                     return;
                 }
@@ -72,7 +93,10 @@ export class RegistrationRecoveryModule {
                 error.textContent = 'Проверь подключение и попробуй ещё раз.';
                 error.classList.remove('d-none');
             } finally {
-                if (button.isConnected) button.disabled = false;
+                if (button.isConnected) {
+                    button.disabled = false;
+                    button.removeAttribute('aria-busy');
+                }
             }
         });
     }

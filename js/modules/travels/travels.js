@@ -279,6 +279,9 @@ export class TravelsModule {
                                             <option value="visited" ${travel?.status === 'visited' ? 'selected' : ''}>Посетил</option>
                                         </select>
                                     </div>
+                                    <div class="col-12 atlas-form-extras"><details class="atlas-form-details" ${isEdit ? 'open' : ''}>
+                                        <summary>Маршрут, бюджет и впечатления</summary>
+                                        <div class="row g-3 mt-1">
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Местоположение</label>
                                         <input type="text" class="form-control" name="location"
@@ -323,6 +326,8 @@ export class TravelsModule {
                                         <textarea class="form-control" name="notes" rows="2"
                                                   placeholder="Личные заметки...">${escapeHTML(String(travel?.notes || ''))}</textarea>
                                     </div>
+                                        </div>
+                                    </details></div>
                                 </div>
                             </form>
                         </div>

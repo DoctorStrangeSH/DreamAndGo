@@ -249,8 +249,8 @@ export class RestaurantsModule {
                             <form id="restaurantForm">
                                 <div class="row g-3">
                                     <div class="col-md-8">
-                                        <label class="form-label fw-semibold small">Название *</label>
-                                        <input type="text" class="form-control" name="name"
+                                        <label for="restaurantPrimaryField" class="form-label fw-semibold small">Название *</label>
+                                        <input type="text" class="form-control" id="restaurantPrimaryField" name="name"
                                                value="${escapeHTML(String(restaurant?.name || ''))}" required>
                                     </div>
                                     <div class="col-md-4">
@@ -326,6 +326,9 @@ export class RestaurantsModule {
 
         const modalElement = document.getElementById('restaurantModal');
         const modal = new bootstrap.Modal(modalElement);
+        modalElement.addEventListener('shown.bs.modal', () => {
+            modalElement.querySelector('#restaurantPrimaryField')?.focus();
+        }, { once: true });
         modal.show();
 
         modalElement.addEventListener('hidden.bs.modal', () => {
@@ -346,10 +349,11 @@ export class RestaurantsModule {
             const saveButton = event.currentTarget;
             if (saveButton.disabled) return;
             const form = document.getElementById('restaurantForm');
+            if (!form.reportValidity()) return;
             const formData = new FormData(form);
 
             const data = {
-                name: formData.get('name'),
+                name: String(formData.get('name') || '').trim(),
                 cuisine: formData.get('cuisine'),
                 status: formData.get('status'),
                 address: formData.get('address'),
@@ -365,6 +369,7 @@ export class RestaurantsModule {
             };
 
             if (!data.name) {
+                form.querySelector('#restaurantPrimaryField')?.focus();
                 window.app.ui.showToast('Введи название ресторана', 'warning');
                 return;
             }

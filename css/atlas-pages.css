@@ -269,3 +269,26 @@
   .modal-footer {gap:.55rem}
   .modal-footer .btn {min-height:44px}
 }
+
+/* Progressive collection forms: short primary step, optional details. */
+.atlas-form-extras {min-width:0}
+.atlas-form-details {
+  border:1px solid var(--border-color);border-radius:16px;
+  background:var(--bg-secondary);padding:.55rem .8rem
+}
+.atlas-form-details>summary {
+  cursor:pointer;list-style:none;display:flex;align-items:center;gap:.7rem;
+  min-height:44px;color:var(--primary);font-weight:800;line-height:1.35
+}
+.atlas-form-details>summary::-webkit-details-marker {display:none}
+.atlas-form-details>summary::before {
+  content:"+";display:grid;place-items:center;width:28px;height:28px;flex:none;
+  border-radius:9px;background:var(--bg-tertiary);border:1px solid var(--border-color)
+}
+.atlas-form-details[open]>summary::before {content:"−"}
+.atlas-form-details>summary:focus-visible {outline:3px solid var(--accent);outline-offset:3px}
+.atlas-form-details>.row {padding:.2rem .15rem .6rem}
+@media (max-width:575.98px) {
+  .atlas-form-details {padding:.5rem .65rem}
+  .atlas-form-details .form-control,.atlas-form-details .form-select {min-height:44px}
+}

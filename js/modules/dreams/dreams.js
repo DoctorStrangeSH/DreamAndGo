@@ -195,15 +195,26 @@ export class DreamsModule {
         document.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                if (confirm('Удалить эту мечту?')) {
+                if (btn.disabled || !confirm('Удалить эту мечту?')) return;
+                btn.disabled = true;
+                btn.setAttribute('aria-busy', 'true');
+                try {
                     const result = await this.dreamsService.deleteDream(window.app.currentUser.uid, btn.dataset.id);
                     if (!result?.success) {
                         window.app.ui.showToast('Не удалось удалить мечту. Попробуй ещё раз.', 'error');
                         return;
                     }
                     window.app.ui.showToast('Мечта удалена', 'info');
-                    this.render();
+                    await this.render();
                     window.app.refreshUserData();
+                } catch (error) {
+                    console.error('Ошибка удаления мечты:', error);
+                    window.app.ui.showToast('Не удалось удалить мечту. Проверь подключение.', 'error');
+                } finally {
+                    if (btn.isConnected) {
+                        btn.disabled = false;
+                        btn.removeAttribute('aria-busy');
+                    }
                 }
             });
         });

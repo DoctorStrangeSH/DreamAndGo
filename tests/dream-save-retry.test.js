@@ -7,7 +7,7 @@ const start = source.indexOf("document.getElementById('saveDreamBtn').addEventLi
 const bodyStart = source.indexOf('async (event) => {', start);
 const bodyEnd = source.indexOf('\n        });\n    }', bodyStart);
 assert.ok(start >= 0 && bodyStart >= 0 && bodyEnd > bodyStart, 'save handler must exist');
-const handlerSource = source.slice(bodyStart, bodyEnd) + '\n}';
+const handlerSource = source.slice(bodyStart, bodyEnd)\n    .replace(/^async \\(event\\) =>/, 'async function(event)') + '\n}';
 
 function makeHarness(save) {
     const state = { calls: 0, toasts: [], renders: 0 };

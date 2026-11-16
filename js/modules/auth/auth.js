@@ -173,57 +173,60 @@ export class AuthModule {
     async handleSubmit() {
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
-        
-        if (!emailInput || !passwordInput) return;
-        
+        const submitBtn = document.querySelector('#authForm button[type="submit"]');
+        if (!emailInput || !passwordInput || !submitBtn || submitBtn.disabled) return;
+
         const email = emailInput.value.trim();
         const password = passwordInput.value;
+        const mode = this.mode;
+        let username = '';
 
-        const submitBtn = document.querySelector('#authForm button[type="submit"]');
-        if (!submitBtn) return;
-        
+        if (mode !== 'login') {
+            const usernameInput = document.getElementById('username');
+            if (!usernameInput) {
+                this.showError('Поле никнейма не найдено. Открой форму регистрации заново.');
+                return;
+            }
+            username = usernameInput.value.trim();
+            if (!this.validateUsername(username)) {
+                this.showError('Никнейм должен содержать от 3 до 20 символов (буквы, цифры и _)');
+                usernameInput.focus();
+                return;
+            }
+        }
+
         const originalText = submitBtn.innerHTML;
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Загрузка...';
         submitBtn.disabled = true;
+        submitBtn.setAttribute('aria-busy', 'true');
 
-        let result;
+        try {
+            const result = mode === 'login'
+                ? await this.authService.signInWithEmail(email, password)
+                : await this.authService.signUpWithEmail(email, password, username);
 
-        if (this.mode === 'login') {
-            result = await this.authService.signInWithEmail(email, password);
-        } else {
-            const usernameInput = document.getElementById('username');
-            if (!usernameInput) return;
-            
-            const username = usernameInput.value.trim();
-
-            if (!this.validateUsername(username)) {
-                this.showError('Никнейм должен содержать от 3 до 20 символов (буквы, цифры и _)');
-                if (submitBtn) {
-                    submitBtn.innerHTML = originalText;
-                    submitBtn.disabled = false;
-                }
+            if (!result?.success) {
+                this.showError(result?.error || 'Не удалось выполнить вход. Попробуй снова.');
                 return;
             }
 
-            result = await this.authService.signUpWithEmail(email, password, username);
-        }
-
-        if (result.success) {
             this.hideError();
-            // Firebase Auth может сообщить о входе раньше, чем Firestore сохранит
-            // профиль. После регистрации повторно загружаем готовые данные.
-            if (this.mode === 'register') {
+            // Firebase Auth may signal sign-in before the Firestore profile exists.
+            if (mode === 'register') {
                 if (this.authService.signupV2Rollout?.enabled === true) {
                     await window.app?.completeSignupV2Navigation?.();
                 } else {
                     window.app?.refreshUserData?.();
                 }
             }
-        } else {
-            this.showError(result.error);
-            if (submitBtn) {
+        } catch (error) {
+            console.error('Ошибка авторизации:', error);
+            this.showError('Не удалось подключиться. Проверь интернет и попробуй ещё раз.');
+        } finally {
+            if (submitBtn.isConnected) {
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
+                submitBtn.removeAttribute('aria-busy');
             }
         }
     }

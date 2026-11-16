@@ -277,6 +277,9 @@ export class BooksModule {
                                             <option value="read" ${book?.status === 'read' ? 'selected' : ''}>Прочитана</option>
                                         </select>
                                     </div>
+                                    <div class="col-12 atlas-form-extras"><details class="atlas-form-details" ${isEdit ? 'open' : ''}>
+                                        <summary>Жанры, страницы, оценка и заметки</summary>
+                                        <div class="row g-3 mt-1">
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Жанры</label>
                                         <select class="form-select" name="genres" multiple size="3">
@@ -322,6 +325,8 @@ export class BooksModule {
                                         <textarea class="form-control" name="quotes" rows="2"
                                                   placeholder="Разделяй цитаты символом |">${escapeHTML(Array.isArray(book?.quotes) ? book.quotes.join('|') : '')}</textarea>
                                     </div>
+                                        </div>
+                                    </details></div>
                                 </div>
                             </form>
                         </div>

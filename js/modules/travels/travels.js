@@ -260,8 +260,8 @@ export class TravelsModule {
                             <form id="travelForm">
                                 <div class="row g-3">
                                     <div class="col-md-8">
-                                        <label class="form-label fw-semibold small">Название *</label>
-                                        <input type="text" class="form-control" name="title"
+                                        <label for="travelPrimaryField" class="form-label fw-semibold small">Название *</label>
+                                        <input type="text" class="form-control" id="travelPrimaryField" name="title"
                                                value="${escapeHTML(String(travel?.title || ''))}" placeholder="Например: Париж, Франция" required>
                                     </div>
                                     <div class="col-md-4">
@@ -339,6 +339,9 @@ export class TravelsModule {
 
         const modalElement = document.getElementById('travelModal');
         const modal = new bootstrap.Modal(modalElement);
+        modalElement.addEventListener('shown.bs.modal', () => {
+            modalElement.querySelector('#travelPrimaryField')?.focus();
+        }, { once: true });
         modal.show();
 
         modalElement.addEventListener('hidden.bs.modal', () => {
@@ -359,10 +362,11 @@ export class TravelsModule {
             const saveButton = event.currentTarget;
             if (saveButton.disabled) return;
             const form = document.getElementById('travelForm');
+            if (!form.reportValidity()) return;
             const formData = new FormData(form);
 
             const data = {
-                title: formData.get('title'),
+                title: String(formData.get('title') || '').trim(),
                 type: formData.get('type'),
                 status: formData.get('status'),
                 location: formData.get('location'),
@@ -378,6 +382,7 @@ export class TravelsModule {
             };
 
             if (!data.title) {
+                form.querySelector('#travelPrimaryField')?.focus();
                 window.app.ui.showToast('Введи название путешествия', 'warning');
                 return;
             }

@@ -352,3 +352,17 @@ test('Atlas mobile collection controls are visible and touch reachable', () => {
   assert.match(source, /\.profile-page \.profile-tabs\s*\{[^}]*overflow-x:auto/);
   assert.match(source, /\.filter-bar \.btn-group \.btn\s*\{min-height:44px\}/);
 });
+
+test('collection forms validate required names, trim whitespace and focus the first field', () => {
+  for (const [name, field] of [['book', 'title'], ['travel', 'title'], ['restaurant', 'name']]) {
+    const source = read('js/modules/' + name + 's/' + name + 's.js');
+    assert.match(source, new RegExp('id="' + name + 'PrimaryField" name="' + field + '"'));
+    assert.match(source, new RegExp('for="' + name + 'PrimaryField"'));
+    assert.match(source, /shown\.bs\.modal/);
+    assert.match(source, /modalElement\.querySelector\([^)]*PrimaryField[^)]*\)\?\.focus\(\)/);
+    assert.match(source, /if \(!form\.reportValidity\(\)\) return/);
+    assert.match(source, new RegExp(field + ": String\\(formData\\.get\\('" + field + "'\\) \\|\\| ''\\)\\.trim\\(\\)"));
+  }
+  const book = read('js/modules/books/books.js');
+  assert.match(book, /author: String\(formData\.get\('author'\) \|\| ''\)\.trim\(\)/);
+});

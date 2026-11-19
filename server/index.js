@@ -96,7 +96,7 @@ export const createPrivateChatV2 = onCall({ region: 'europe-west3' }, async requ
 // writes both the message and participants' previews. Not yet wired to the UI.
 export const sendPrivateMessageV2 = onCall({ region: 'europe-west3' }, async request => {
     const uid = request.auth?.uid;
-    if (!uid) throw new HttpsError('unauthenticated', 'Требуется вход в аккаунт');
+    if (!isValidUserId(uid)) throw new HttpsError('unauthenticated', 'Требуется вход в аккаунт');
 
     const chatId = request.data?.chatId;
     const text = normalizeChatMessage(request.data?.text);

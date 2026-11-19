@@ -5,6 +5,7 @@ export class DreamsModule {
     constructor() {
         this.dreamsService = new DreamsService();
         this.currentFilter = { status: 'all', category: 'all' };
+        this.searchQuery = '';
     }
 
     async render() {
@@ -87,11 +88,24 @@ export class DreamsModule {
                                 `).join('')}
                             </select>
                         </div>
+                        <div class="col-12 col-md">
+                            <label class="visually-hidden" for="dreamSearch">Найти мечту</label>
+                            <input type="search" class="form-control form-control-sm" id="dreamSearch"
+                                   placeholder="Поиск по мечтам…" autocomplete="off"
+                                   value="${escapeHTML(this.searchQuery)}">
+                        </div>
                     </div>
                 </div>
 
+                <p class="text-muted small mb-3" id="dreamSearchCount" role="status" aria-live="polite"></p>
+
                 <div id="dreamsGrid" class="row g-3">
                     ${dreams.length === 0 ? this.getEmptyState() : dreams.map((d, i) => this.createCard(d, i)).join('')}
+                </div>
+                <div id="dreamSearchEmpty" class="atlas-empty atlas-empty--dream" hidden>
+                    <div class="atlas-empty-art" aria-hidden="true"><i class="bi bi-search"></i></div>
+                    <h3>Ничего не нашлось</h3>
+                    <p>Попробуй другое слово или очисти строку поиска.</p>
                 </div>
 
                 <div id="dreamModalContainer"></div>
@@ -132,7 +146,9 @@ export class DreamsModule {
         const safeSteps = Array.isArray(dream.steps) ? dream.steps : [];
 
         return `
-            <div class="col-12 col-md-6 col-lg-4 fade-in-up" style="animation-delay: ${index * 0.06}s">
+            <div class="col-12 col-md-6 col-lg-4 fade-in-up" data-dream-card
+                 data-search="${escapeHTML([dream.title, dream.description, dream.category].filter(Boolean).join(' ').toLocaleLowerCase())}"
+                 style="animation-delay: ${index * 0.06}s">
                 <div class="card-premium h-100 dream-card p-3">
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <span class="badge bg-${status.color} bg-opacity-10 text-${status.color}">${status.badge}</span>
@@ -182,6 +198,12 @@ export class DreamsModule {
     }
 
     attachEventListeners() {
+        const searchInput = document.getElementById('dreamSearch');
+        searchInput?.addEventListener('input', () => {
+            this.searchQuery = searchInput.value;
+            this.applySearch();
+        });
+        this.applySearch();
         document.getElementById('addDreamBtn')?.addEventListener('click', () => this.showModal(null));
         document.getElementById('emptyAddDreamBtn')?.addEventListener('click', () => this.showModal(null));
 
@@ -230,6 +252,23 @@ export class DreamsModule {
             this.currentFilter.category = e.target.value;
             this.render();
         });
+    }
+
+    applySearch() {
+        const query = this.searchQuery.trim().toLocaleLowerCase();
+        const cards = [...document.querySelectorAll('#dreamsGrid [data-dream-card]')];
+        let matches = 0;
+        for (const card of cards) {
+            const visible = !query || card.dataset.search.includes(query);
+            card.hidden = !visible;
+            if (visible) matches++;
+        }
+        const empty = document.getElementById('dreamSearchEmpty');
+        if (empty) empty.hidden = !query || matches > 0 || cards.length === 0;
+        const count = document.getElementById('dreamSearchCount');
+        if (count) count.textContent = query && cards.length
+            ? `Найдено: ${matches} из ${cards.length}`
+            : '';
     }
 
     async showModal(dreamId) {

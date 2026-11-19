@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { webcrypto } from 'node:crypto';
+import { ChatPendingIntentStore } from '../js/core/chat-pending-store.js';
 import {
     createEncryptedChatPendingAdapter,
     encryptChatPendingRecords,
@@ -64,8 +65,14 @@ test('IndexedDB adapter encrypts account queues and clears data plus key', async
     });
     let inspectionDb;
     try {
-        await adapter.write('alice', records);
-        assert.deepEqual(await adapter.read('alice'), records);
+        const store = new ChatPendingIntentStore({
+            adapter, getUserId: () => 'alice', now: () => 1_800_000_000_000
+        });
+        await store.save({
+            chatId: 'chat-a', text: 'Private message',
+            clientMessageId: '550e8400-e29b-41d4-a716-446655440000'
+        });
+        assert.deepEqual(await store.load(), records);
         assert.deepEqual(await adapter.read('bob'), []);
 
         inspectionDb = await new Promise((resolve, reject) => {
@@ -85,7 +92,7 @@ test('IndexedDB adapter encrypts account queues and clears data plus key', async
             false
         );
 
-        await adapter.write('alice', []);
+        await store.clear();
         assert.deepEqual(await adapter.read('alice'), []);
         const keyRecord = await new Promise((resolve, reject) => {
             const tx = inspectionDb.transaction('pendingKeys', 'readonly');

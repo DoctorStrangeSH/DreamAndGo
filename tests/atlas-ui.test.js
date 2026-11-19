@@ -66,6 +66,21 @@ test('social Atlas cards handle narrow screens and icon-only actions accessibly'
   assert.match(css, /\.friends-tabs \+ #searchSection #searchUserBtn/);
 });
 
+test('collection dialogs keep actions visible and scroll forms within short viewports', () => {
+  const css = read('css/atlas-dialogs.css');
+  assert.match(css, /\.modal-dialog \.modal-content\s*\{[^}]*max-height:calc\(100dvh - 1rem\)/);
+  assert.match(css, /\.modal-dialog \.modal-header,\.modal-dialog \.modal-footer\s*\{flex-shrink:0\}/);
+  assert.match(css, /\.modal-dialog \.modal-body\s*\{min-height:0;overflow-y:auto;overscroll-behavior:contain\}/);
+  assert.match(css, /@media\(max-height:650px\)/);
+  assert.match(css, /safe-area-inset-bottom/);
+  for (const name of ['dreams', 'travels', 'books', 'restaurants', 'movies']) {
+    const source = read(`js/modules/${name}/${name}.js`);
+    assert.match(source, /class="modal-dialog modal-lg modal-dialog-centered"/);
+    assert.match(source, /class="modal-body"/);
+    assert.match(source, /class="modal-footer"/);
+  }
+});
+
 test('shared Atlas loader communicates progress without depending on animation', () => {
   const ui = read('js/core/ui-components.js');
   const css = read('css/atlas-theme.css');

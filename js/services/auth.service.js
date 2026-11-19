@@ -12,6 +12,7 @@ import {
     collection,
     where,
     getDocs,
+    limit,
     serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
@@ -60,6 +61,9 @@ export class AuthService {
             
             // Проверяем уникальность ника
             const isUnique = await this.checkUsernameUnique(username);
+            if (isUnique === null) {
+                return { success: false, error: 'Не удалось проверить никнейм. Проверь подключение и попробуй снова.' };
+            }
             if (!isUnique) {
                 console.warn('⚠️ Ник уже занят:', username);
                 return { success: false, error: 'Этот ник уже занят 😔 Придумай другой!' };
@@ -73,6 +77,7 @@ export class AuthService {
             await this.createUserProfile(result.user.uid, {
                 email: email,
                 username: username,
+                usernameNormalized: username.trim().toLowerCase(),
                 displayName: username,
                 createdAt: serverTimestamp(),
                 lastLogin: serverTimestamp(),
@@ -130,16 +135,19 @@ export class AuthService {
     async checkUsernameUnique(username) {
         try {
             const usersRef = collection(this.db, 'users');
-            const q = query(usersRef, where('username', '==', username.toLowerCase()));
-            const querySnapshot = await getDocs(q);
-            const isUnique = querySnapshot.empty;
-            
+            const normalized = String(username ?? '').trim().toLowerCase();
+            const [indexed, legacy] = await Promise.all([
+                getDocs(query(usersRef, where('usernameNormalized', '==', normalized), limit(1))),
+                getDocs(query(usersRef, where('username', '==', String(username ?? '').trim()), limit(1)))
+            ]);
+            const isUnique = indexed.empty && legacy.empty;
+
             console.log(`🔍 Проверка ника "${username}":`, isUnique ? 'свободен' : 'занят');
             return isUnique;
         } catch (error) {
             console.error('❌ Ошибка проверки ника:', error);
-            // В случае ошибки лучше разрешить регистрацию
-            return true;
+            // Never allow registration when uniqueness could not be checked.
+            return null;
         }
     }
 

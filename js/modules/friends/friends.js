@@ -327,88 +327,78 @@ export class FriendsModule {
 
     attachCardListeners() {
         document.querySelectorAll('.accept-btn').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const result = await this.friendsService.acceptFriendRequest(window.app.currentUser.uid, btn.dataset.uid);
-                if (!result.success) {
-                    window.app.ui.showToast('Не удалось принять заявку', 'error');
-                    return;
-                }
-                window.app.onUserAction('add_friend');
-                window.app.ui.showToast('Друг добавлен! 🤝', 'success');
-                this.subscribeToFriends();
-                this.subscribeToRequests();
-                this.subscribeToSent();
-            });
+            btn.addEventListener('click', () => this.runFriendAction(btn,
+                uid => this.friendsService.acceptFriendRequest(uid, btn.dataset.uid),
+                'Друг добавлен! 🤝', 'Не удалось принять заявку', () => {
+                    window.app.onUserAction('add_friend');
+                    this.subscribeToFriends(); this.subscribeToRequests(); this.subscribeToSent();
+                }));
         });
 
         document.querySelectorAll('.reject-btn').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const result = await this.friendsService.rejectFriendRequest(window.app.currentUser.uid, btn.dataset.uid);
-                if (!result.success) {
-                    window.app.ui.showToast('Не удалось отклонить заявку', 'error');
-                    return;
-                }
-                window.app.ui.showToast('Заявка отклонена', 'info');
-                this.subscribeToRequests();
-                this.subscribeToSent();
-            });
+            btn.addEventListener('click', () => this.runFriendAction(btn,
+                uid => this.friendsService.rejectFriendRequest(uid, btn.dataset.uid),
+                'Заявка отклонена', 'Не удалось отклонить заявку', () => {
+                    this.subscribeToRequests(); this.subscribeToSent();
+                }));
         });
 
         document.querySelectorAll('.cancel-request-btn').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const result = await this.friendsService.rejectFriendRequest(btn.dataset.uid, window.app.currentUser.uid);
-                if (!result.success) {
-                    window.app.ui.showToast('Не удалось отменить заявку', 'error');
-                    return;
-                }
-                window.app.ui.showToast('Заявка отменена', 'info');
-                this.subscribeToSent();
-            });
+            btn.addEventListener('click', () => this.runFriendAction(btn,
+                uid => this.friendsService.rejectFriendRequest(btn.dataset.uid, uid),
+                'Заявка отменена', 'Не удалось отменить заявку', () => this.subscribeToSent()));
         });
 
         document.querySelectorAll('.remove-friend-btn').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                if (confirm('Удалить из друзей?')) {
-                    const result = await this.friendsService.removeFriend(window.app.currentUser.uid, btn.dataset.uid);
-                    if (!result.success) {
-                        window.app.ui.showToast('Не удалось удалить друга', 'error');
-                        return;
-                    }
-                    window.app.ui.showToast('Друг удалён', 'info');
-                    this.subscribeToFriends();
-                }
+            btn.addEventListener('click', () => {
+                if (!btn.disabled && confirm('Удалить из друзей?')) this.runFriendAction(btn,
+                    uid => this.friendsService.removeFriend(uid, btn.dataset.uid),
+                    'Друг удалён', 'Не удалось удалить друга', () => this.subscribeToFriends());
             });
         });
 
         document.querySelectorAll('.send-request-btn').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                btn.disabled = true;
-                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Отправка...';
-
-                const result = await this.friendsService.sendFriendRequest(
-                    window.app.currentUser.uid,
-                    btn.dataset.uid
-                );
-
-                if (result.success) {
-                    window.app.ui.showToast('Заявка отправлена! 🎉', 'success');
+            btn.addEventListener('click', () => this.runFriendAction(btn,
+                uid => this.friendsService.sendFriendRequest(uid, btn.dataset.uid),
+                'Заявка отправлена! 🎉', 'Не удалось отправить заявку', () => {
                     btn.innerHTML = '<i class="bi bi-check me-1"></i>Отправлено';
                     btn.classList.remove('btn-premium');
                     btn.classList.add('btn-success');
-
-                    this.currentTab = 'sent';
+                    this.switchTab('sent');
                     document.querySelectorAll('.friends-tabs [data-tab]').forEach(t => t.classList.remove('active'));
                     document.querySelector('[data-tab="sent"]')?.classList.add('active');
-                    document.getElementById('searchSection').style.display = 'none';
-                    document.getElementById('searchResults').innerHTML = '';
-                    this.subscribeToSent();
-                } else {
-                    window.app.ui.showToast(result.error || 'Не удалось отправить заявку', 'error');
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="bi bi-person-plus me-1"></i>Добавить';
-                }
-            });
+                }, { keepDisabledOnSuccess: true }));
         });
+    }
+
+    async runFriendAction(btn, perform, successMessage, errorMessage, onSuccess, { keepDisabledOnSuccess = false } = {}) {
+        const uid = window.app.currentUser?.uid;
+        if (!uid || uid !== this.ownerUid || !btn.isConnected || btn.disabled) return;
+        const originalHTML = btn.innerHTML;
+        btn.disabled = true;
+        btn.setAttribute('aria-busy', 'true');
+        let succeeded = false;
+        const stillCurrent = () => window.app.currentUser?.uid === uid && this.ownerUid === uid && btn.isConnected;
+        try {
+            const result = await perform(uid);
+            if (!stillCurrent()) return;
+            if (!result?.success) {
+                window.app.ui.showToast(result?.error || errorMessage, 'error');
+                return;
+            }
+            succeeded = true;
+            window.app.ui.showToast(successMessage, 'success');
+            onSuccess?.();
+        } catch (error) {
+            console.error('Ошибка действия с друзьями:', error);
+            if (stillCurrent()) window.app.ui.showToast(errorMessage, 'error');
+        } finally {
+            if (btn.isConnected) {
+                btn.removeAttribute('aria-busy');
+                if (!succeeded || !keepDisabledOnSuccess) btn.disabled = false;
+                if (!succeeded && stillCurrent()) btn.innerHTML = originalHTML;
+            }
+        }
     }
 
     destroy() {

@@ -31,6 +31,11 @@
   background:var(--bg-card);color:var(--text-primary);border-color:var(--border-color)
 }
 .modal-footer .btn-outline-secondary:hover,.modal-footer .btn-secondary:hover {background:var(--bg-tertiary)}
+/* Keep the title and actions reachable while long forms scroll inside the dialog. */
+.modal-dialog .modal-content {display:flex;flex-direction:column;max-height:calc(100dvh - 1rem)}
+.modal-dialog .modal-header,.modal-dialog .modal-footer {flex-shrink:0}
+.modal-dialog .modal-body {min-height:0;overflow-y:auto;overscroll-behavior:contain}
+.modal-dialog .modal-body:focus-within {scroll-behavior:auto}
 .modal-backdrop.show {opacity:.57}
 .form-check-input {width:1.14em;height:1.14em;background-color:var(--bg-card);border-color:var(--border-color)}
 .form-check-input:checked {background-color:#187e7c;border-color:#187e7c}
@@ -39,9 +44,18 @@
 [data-bs-theme="dark"] .modal-footer {background:var(--bg-secondary)}
 @media(max-width:575.98px) {
  .modal-dialog {margin:.4rem;max-width:calc(100% - .8rem);padding:0}
+ .modal-dialog.modal-dialog-centered {min-height:0}
+ .modal-dialog .modal-content {max-height:calc(100dvh - .8rem - env(safe-area-inset-bottom,0px))}
  .modal-content {border-radius:21px!important}
  .modal-header {padding:1rem 1rem .8rem}
  .modal-body {padding:1rem}
  .modal-footer {padding:.9rem 1rem;flex-wrap:wrap}
  .modal-footer .btn {flex:1 1 auto}
+ .modal-body .form-control,.modal-body .form-select {min-height:44px}
+}
+@media(max-height:650px) {
+ .modal-dialog.modal-dialog-centered {min-height:0}
+ .modal-header {padding:.7rem 1rem}
+ .modal-footer {padding:.6rem 1rem;gap:.4rem}
+ .modal-dialog .modal-content {max-height:calc(100dvh - .8rem)}
 }

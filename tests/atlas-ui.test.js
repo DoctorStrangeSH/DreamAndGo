@@ -382,3 +382,16 @@ test('collection modals keep essential fields visible and optional details acces
   assert.match(css, /\.atlas-form-details>summary:focus-visible/);
   assert.match(css, /\.atlas-form-details>summary\s*\{[^}]*min-height:44px/);
 });
+
+
+test('pending collection actions show a visible, reduced-motion-friendly loading indicator', () => {
+  const css = read('css/atlas-theme.css');
+  assert.match(css, /\.btn\[aria-busy="true"\]::after\s*\{/);
+  assert.match(css, /@keyframes atlasBusySpin/);
+  assert.match(css, /prefers-reduced-motion:reduce/);
+  for (const name of ['dreams', 'travels', 'books', 'movies', 'restaurants']) {
+    const source = read(`js/modules/${name}/${name}.js`);
+    assert.match(source, /saveButton\.setAttribute\('aria-busy', 'true'\)/);
+    assert.match(source, /saveButton\.removeAttribute\('aria-busy'\)/);
+  }
+});

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { applyCollectionSearchAndSort } from '../js/core/collection-search.js';
 
 const source = readFileSync(new URL('../js/modules/restaurants/restaurants.js', import.meta.url), 'utf8');
 
@@ -32,7 +33,7 @@ test('restaurant search and sorting are local, reversible, and preserve empty st
     const empty = { hidden: true };
     const count = { textContent: '' };
     const document = { getElementById: id => ({ restaurantsGrid: grid, restaurantSearchEmpty: empty, restaurantSearchCount: count })[id] };
-    const Module = new Function('document', `return class Module { ${source.slice(from, to)} }`)(document);
+    const Module = new Function('document', 'applyCollectionSearchAndSort', `return class Module { ${source.slice(from, to)} }`)(document, applyCollectionSearchAndSort);
     const module = new Module();
     module.sortOrder = 'rating';
     module.searchQuery = '  ЯПОНСКАЯ ';

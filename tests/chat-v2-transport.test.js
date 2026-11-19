@@ -71,3 +71,23 @@ test('malformed or forged success envelopes never confirm delivery or read', asy
     reply = { nonsense: true };
     await assert.rejects(api.unread({ chatId: 'chat-a' }), /ответ сервера/);
 });
+
+
+test('transport rejects malformed authenticated and partner UIDs before invoking backend', async () => {
+    let calls = 0;
+    let userId = 'alice';
+    const api = new ChatV2Transport(async () => {
+        calls++;
+        return { data: { chatId: 'chat-a', version: 2 } };
+    }, () => userId);
+
+    for (const invalid of ['', ' alice', 'alice ', 'alice/other', 'x'.repeat(129)]) {
+        userId = invalid;
+        await assert.rejects(api.unread({ chatId: 'chat-a' }), /вход в аккаунт/);
+    }
+    userId = 'alice';
+    for (const invalid of ['', ' bob', 'bob ', 'bob/other', 'x'.repeat(129)]) {
+        await assert.rejects(api.createChat(invalid), TypeError);
+    }
+    assert.equal(calls, 0);
+});

@@ -96,7 +96,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible {
 .btn-light {color:#1b5e66}
 .btn-link {color:var(--primary);font-weight:750}
 .btn:disabled {opacity:.55;cursor:not-allowed;box-shadow:none}
-/* Show feedback while a save or delete is pending. */
+/* Keep the action readable while showing that a save/delete is still pending. */
 .btn[aria-busy="true"] {
   opacity:.85;cursor:progress;pointer-events:none;
   transform:none!important;box-shadow:none
@@ -260,4 +260,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible {
   .navbar-premium .navbar-collapse {overscroll-behavior:contain}
   .navbar-premium .nav-link-premium {white-space:normal;overflow-wrap:anywhere}
   .navbar-premium .dropdown-menu {max-width:100%}
+  .navbar-premium #notificationsDropdown {
+    width:min(340px,calc(100vw - 2rem))!important;max-width:calc(100vw - 2rem);
+    left:0;right:auto
+  }
 }

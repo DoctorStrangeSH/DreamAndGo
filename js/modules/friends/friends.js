@@ -10,6 +10,8 @@ export class FriendsModule {
         this.unsubscribeRequests = null;
         this.unsubscribeSent = null;
         this.searchVersion = 0;
+        this.ownerUid = null;
+        this.subscriptionVersions = { friends: 0, requests: 0, sent: 0 };
     }
 
     async render() {
@@ -18,6 +20,10 @@ export class FriendsModule {
 
         const userId = window.app.currentUser?.uid;
         if (!userId) return;
+        this.stopSubscriptions();
+        this.searchVersion++;
+        this.ownerUid = userId;
+        this.currentTab = 'friends';
 
         mainContent.innerHTML = this.getTemplate();
         this.attachEventListeners();
@@ -80,14 +86,18 @@ export class FriendsModule {
 
     subscribeToFriends() {
         const list = document.getElementById('friendsList');
-        if (!list) return;
+        const uid = this.ownerUid;
+        if (!list || !uid || window.app.currentUser?.uid !== uid) return;
+        this.unsubscribeFriends?.();
+        const version = ++this.subscriptionVersions.friends;
 
         list.innerHTML = window.app.ui.createLoader();
 
         this.unsubscribeFriends = window.app.realtimeService.subscribeToFriends(
-            window.app.currentUser.uid,
+            uid,
             (friends) => {
-                if (this.currentTab !== 'friends') return;
+                if (version !== this.subscriptionVersions.friends || this.currentTab !== 'friends' ||
+                    window.app.currentUser?.uid !== uid || !list.isConnected) return;
 
                 if (friends.length === 0) {
                     list.innerHTML = `
@@ -106,13 +116,18 @@ export class FriendsModule {
     }
 
     subscribeToRequests() {
+        const uid = this.ownerUid;
+        if (!uid || window.app.currentUser?.uid !== uid) return;
+        this.unsubscribeRequests?.();
+        const version = ++this.subscriptionVersions.requests;
         this.unsubscribeRequests = window.app.realtimeService.subscribeToFriendRequests(
-            window.app.currentUser.uid,
+            uid,
             (requests) => {
-                if (this.currentTab !== 'requests') return;
+                if (version !== this.subscriptionVersions.requests || this.currentTab !== 'requests' ||
+                    window.app.currentUser?.uid !== uid) return;
 
                 const list = document.getElementById('friendsList');
-                if (!list) return;
+                if (!list?.isConnected) return;
 
                 if (requests.length === 0) {
                     list.innerHTML = `
@@ -131,13 +146,18 @@ export class FriendsModule {
     }
 
     subscribeToSent() {
+        const uid = this.ownerUid;
+        if (!uid || window.app.currentUser?.uid !== uid) return;
+        this.unsubscribeSent?.();
+        const version = ++this.subscriptionVersions.sent;
         this.unsubscribeSent = window.app.realtimeService.subscribeToSentRequests(
-            window.app.currentUser.uid,
+            uid,
             (sent) => {
-                if (this.currentTab !== 'sent') return;
+                if (version !== this.subscriptionVersions.sent || this.currentTab !== 'sent' ||
+                    window.app.currentUser?.uid !== uid) return;
 
                 const list = document.getElementById('friendsList');
-                if (!list) return;
+                if (!list?.isConnected) return;
 
                 if (sent.length === 0) {
                     list.innerHTML = `
@@ -236,6 +256,8 @@ export class FriendsModule {
     }
 
     switchTab(tab) {
+        if (window.app.currentUser?.uid !== this.ownerUid) return;
+        this.stopSubscriptions();
         this.searchVersion++;
         this.currentTab = tab;
 
@@ -277,11 +299,11 @@ export class FriendsModule {
         try {
             user = await this.friendsService.getUserByUsername(username);
         } catch (error) {
-            if (searchVersion !== this.searchVersion || this.currentTab !== 'search' || window.app.currentUser?.uid !== userId || !results.isConnected) return;
+            if (searchVersion !== this.searchVersion || this.currentTab !== 'search' || window.app.currentUser?.uid !== userId || userId !== this.ownerUid || !results.isConnected) return;
             results.innerHTML = `<div class="alert alert-warning" role="alert">${escapeHTML(error.message || 'Поиск временно недоступен. Попробуй ещё раз.')}</div>`;
             return;
         }
-        if (searchVersion !== this.searchVersion || this.currentTab !== 'search' || window.app.currentUser?.uid !== userId || !results.isConnected) return;
+        if (searchVersion !== this.searchVersion || this.currentTab !== 'search' || window.app.currentUser?.uid !== userId || userId !== this.ownerUid || !results.isConnected) return;
 
         if (!user) {
             results.innerHTML = `
@@ -391,8 +413,17 @@ export class FriendsModule {
 
     destroy() {
         this.searchVersion++;
-        if (this.unsubscribeFriends) this.unsubscribeFriends();
-        if (this.unsubscribeRequests) this.unsubscribeRequests();
-        if (this.unsubscribeSent) this.unsubscribeSent();
+        this.stopSubscriptions();
+        this.ownerUid = null;
+    }
+
+    stopSubscriptions() {
+        for (const tab of Object.keys(this.subscriptionVersions)) this.subscriptionVersions[tab]++;
+        this.unsubscribeFriends?.();
+        this.unsubscribeRequests?.();
+        this.unsubscribeSent?.();
+        this.unsubscribeFriends = null;
+        this.unsubscribeRequests = null;
+        this.unsubscribeSent = null;
     }
 }

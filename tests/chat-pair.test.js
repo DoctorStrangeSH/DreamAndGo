@@ -13,7 +13,10 @@ test('length-prefix encoding avoids collisions in the legacy underscore format',
 });
 
 test('pair keys reject invalid and self-conversations', () => {
-    for (const [a, b] of [['alice', 'alice'], ['', 'bob'], [null, 'bob'], ['alice', undefined]]) {
+    for (const [a, b] of [
+        ['alice', 'alice'], ['', 'bob'], [null, 'bob'], ['alice', undefined],
+        [' alice', 'bob'], ['alice ', 'bob'], ['a/b', 'bob'], ['u'.repeat(129), 'bob']
+    ]) {
         assert.throws(() => conversationPairKey(a, b), TypeError);
     }
 });

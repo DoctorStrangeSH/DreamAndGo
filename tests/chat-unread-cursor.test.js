@@ -31,3 +31,15 @@ test('rejects malformed cursors and messages without server sequence', () => {
     assert.throws(() => advanceReadCursor(1, 1.5), /cursor/i);
     assert.throws(() => countUnreadIncoming([{ senderId: 'alice' }], 'bob', 0), /sequence/i);
 });
+
+
+test('unread counting rejects malformed current-user and message sender IDs', () => {
+    for (const uid of ['', ' alice', 'alice ', 'alice/other', 'u'.repeat(129)]) {
+        assert.throws(() => countUnreadIncoming(messages, uid, 0), /current user/i);
+    }
+    for (const senderId of ['', ' bob', 'bob ', 'bob/other', 'u'.repeat(129), undefined]) {
+        assert.throws(() => countUnreadIncoming([
+            { sequence: 1, senderId }
+        ], 'alice', 0), /sequence/i);
+    }
+});

@@ -298,6 +298,21 @@
   .modal-footer .btn {min-height:44px}
 }
 
+/* On narrow phones the collection title and primary action need separate rows. */
+@media (max-width:420px) {
+  .page-header .row {row-gap:.75rem}
+  .page-header .row>.col {flex:1 1 100%;min-width:0}
+  .page-header .row>.col-auto {flex:0 0 100%;width:100%;max-width:100%}
+  .page-header .row>.col-auto>.btn {display:flex;align-items:center;justify-content:center;width:100%;min-height:44px;white-space:normal}
+  .filter-bar .btn-group .btn {overflow-wrap:anywhere}
+}
+
+/* Reachable edit/delete controls on touch devices, even with long card titles. */
+@media (hover:none), (pointer:coarse) {
+  .travel-card-actions .btn,.restaurant-card-actions .btn,
+  .book-card-actions .btn,.dream-card-actions .btn {min-width:44px;min-height:44px}
+}
+
 /* Progressive collection forms: short primary step, optional details. */
 .atlas-form-extras {min-width:0}
 .atlas-form-details {

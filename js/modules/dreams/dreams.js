@@ -1,11 +1,13 @@
 import { DreamsService } from '../../services/dreams.service.js';
 import { escapeHTML } from '../../core/escape-html.js';
+import { applyCollectionSearchAndSort } from '../../core/collection-search.js';
 
 export class DreamsModule {
     constructor() {
         this.dreamsService = new DreamsService();
         this.currentFilter = { status: 'all', category: 'all' };
         this.searchQuery = '';
+        this.sortOrder = 'recent';
         this.requestId = 0;
     }
 
@@ -100,6 +102,14 @@ export class DreamsModule {
                                    placeholder="Поиск по мечтам…" autocomplete="off"
                                    value="${escapeHTML(this.searchQuery)}">
                         </div>
+                        <div class="col-12 col-md-auto">
+                            <label class="visually-hidden" for="dreamSort">Сортировка мечт</label>
+                            <select class="form-select form-select-sm" id="dreamSort">
+                                <option value="recent" ${this.sortOrder === 'recent' ? 'selected' : ''}>Сначала новые</option>
+                                <option value="name" ${this.sortOrder === 'name' ? 'selected' : ''}>По названию</option>
+                                <option value="rating" ${this.sortOrder === 'rating' ? 'selected' : ''}>По прогрессу</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -154,6 +164,8 @@ export class DreamsModule {
         return `
             <div class="col-12 col-md-6 col-lg-4 fade-in-up" data-dream-card
                  data-search="${escapeHTML([dream.title, dream.description, dream.category].filter(Boolean).join(' ').toLocaleLowerCase())}"
+                 data-name="${escapeHTML(String(dream.title || '').toLocaleLowerCase())}"
+                 data-rating="${progress}" data-original-index="${index}"
                  style="animation-delay: ${index * 0.06}s">
                 <div class="card-premium h-100 dream-card p-3">
                     <div class="d-flex justify-content-between align-items-start mb-2">
@@ -207,9 +219,13 @@ export class DreamsModule {
         const searchInput = document.getElementById('dreamSearch');
         searchInput?.addEventListener('input', () => {
             this.searchQuery = searchInput.value;
-            this.applySearch();
+            this.applySearchAndSort();
         });
-        this.applySearch();
+        document.getElementById('dreamSort')?.addEventListener('change', (event) => {
+            this.sortOrder = event.target.value;
+            this.applySearchAndSort();
+        });
+        this.applySearchAndSort();
         document.getElementById('addDreamBtn')?.addEventListener('click', () => this.showModal(null));
         document.getElementById('emptyAddDreamBtn')?.addEventListener('click', () => this.showModal(null));
 
@@ -260,21 +276,9 @@ export class DreamsModule {
         });
     }
 
-    applySearch() {
-        const query = this.searchQuery.trim().toLocaleLowerCase();
-        const cards = [...document.querySelectorAll('#dreamsGrid [data-dream-card]')];
-        let matches = 0;
-        for (const card of cards) {
-            const visible = !query || card.dataset.search.includes(query);
-            card.hidden = !visible;
-            if (visible) matches++;
-        }
-        const empty = document.getElementById('dreamSearchEmpty');
-        if (empty) empty.hidden = !query || matches > 0 || cards.length === 0;
-        const count = document.getElementById('dreamSearchCount');
-        if (count) count.textContent = query && cards.length
-            ? `Найдено: ${matches} из ${cards.length}`
-            : '';
+    applySearchAndSort() {
+        return applyCollectionSearchAndSort({ document, gridId: 'dreamsGrid', cardSelector: '[data-dream-card]',
+            emptyId: 'dreamSearchEmpty', countId: 'dreamSearchCount', query: this.searchQuery, order: this.sortOrder });
     }
 
     async showModal(dreamId) {

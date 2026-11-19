@@ -1,6 +1,32 @@
 import { db } from '../../config/firebase.js';
 import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
+function escapeHTML(value) {
+    return String(value ?? '').replace(/[&<>"']/g, character => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    })[character]);
+}
+
+function safeAvatarURL(value) {
+    if (typeof value !== 'string' || !value.trim()) return '';
+    try {
+        const url = new URL(value);
+        if (url.protocol !== 'https:' || url.username || url.password) return '';
+        return url.href;
+    } catch {
+        return '';
+    }
+}
+
+function safeCount(value) {
+    const count = Number(value);
+    return Number.isFinite(count) && count > 0 ? Math.floor(count) : 0;
+}
+
 export class ProfileModule {
     constructor() {
         this.currentTab = 'overview';
@@ -13,6 +39,8 @@ export class ProfileModule {
         const currentUserId = window.app.currentUser?.uid;
         const userId = (params.id && params.id.length > 20) ? params.id : currentUserId;
         const isOwnProfile = userId === currentUserId;
+        this.profileIsOwn = isOwnProfile;
+        this.profileUserId = userId;
 
         mainContent.innerHTML = window.app.ui.createLoader();
 
@@ -41,7 +69,8 @@ export class ProfileModule {
     getProfileTemplate(userData, isOwnProfile) {
         const coverGradient = this.getRandomGradient();
         const stats = userData.stats || {};
-        const initials = (userData.username || 'U')[0].toUpperCase();
+        const initials = String(userData.username || 'U').charAt(0).toUpperCase();
+        const avatarURL = safeAvatarURL(userData.avatar);
 
         return `
             <div class="profile-page fade-in-up">
@@ -53,8 +82,8 @@ export class ProfileModule {
                     <div class="profile-header">
                         <div class="profile-avatar-wrapper">
                             <div class="profile-avatar">
-                                ${userData.avatar 
-                                    ? `<img src="${userData.avatar}" alt="${userData.username}">`
+                                ${avatarURL 
+                                    ? `<img src="${escapeHTML(avatarURL)}" alt="Аватар ${escapeHTML(userData.username || 'пользователя')}">`
                                     : `<span class="profile-avatar-text">${initials}</span>`
                                 }
                             </div>
@@ -62,40 +91,40 @@ export class ProfileModule {
 
                         <div class="profile-info">
                             <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
-                                <h2 class="profile-username">@${userData.username || 'user'}</h2>
+                                <h2 class="profile-username">@${escapeHTML(userData.username || 'user')}</h2>
                                 ${userData.displayName ? 
-                                    `<span class="profile-display-name">${userData.displayName}</span>` : ''}
+                                    `<span class="profile-display-name">${escapeHTML(userData.displayName)}</span>` : ''}
                             </div>
                             
                             ${userData.bio ? 
-                                `<p class="profile-bio text-secondary mb-2">${userData.bio}</p>` : ''}
+                                `<p class="profile-bio text-secondary mb-2">${escapeHTML(userData.bio)}</p>` : ''}
                             
                             ${userData.location ? 
-                                `<p class="text-muted small mb-2"><i class="bi bi-geo-alt me-1"></i>${userData.location}</p>` : ''}
+                                `<p class="text-muted small mb-2"><i class="bi bi-geo-alt me-1"></i>${escapeHTML(userData.location)}</p>` : ''}
 
                             <div class="profile-stats mt-2">
                                 <div class="profile-stat">
-                                    <strong>${stats.travels || 0}</strong>
+                                    <strong>${safeCount(stats.travels)}</strong>
                                     <span>путешествий</span>
                                 </div>
                                 <div class="profile-stat">
-                                    <strong>${stats.restaurants || 0}</strong>
+                                    <strong>${safeCount(stats.restaurants)}</strong>
                                     <span>ресторанов</span>
                                 </div>
                                 <div class="profile-stat">
-                                    <strong>${stats.movies || 0}</strong>
+                                    <strong>${safeCount(stats.movies)}</strong>
                                     <span>фильмов</span>
                                 </div>
                                 <div class="profile-stat">
-                                    <strong>${stats.books || 0}</strong>
+                                    <strong>${safeCount(stats.books)}</strong>
                                     <span>книг</span>
                                 </div>
                                 <div class="profile-stat">
-                                    <strong>${stats.dreams || 0}</strong>
+                                    <strong>${safeCount(stats.dreams)}</strong>
                                     <span>мечт</span>
                                 </div>
                                 <div class="profile-stat">
-                                    <strong>${stats.friends || 0}</strong>
+                                    <strong>${safeCount(stats.friends)}</strong>
                                     <span>друзей</span>
                                 </div>
                             </div>
@@ -221,25 +250,25 @@ export class ProfileModule {
                         <div class="d-flex flex-column gap-3">
                             <div>
                                 <div class="d-flex justify-content-between small mb-1">
-                                    <span>Путешествия</span><span class="fw-semibold">${stats.travels || 0}</span>
+                                    <span>Путешествия</span><span class="fw-semibold">${safeCount(stats.travels)}</span>
                                 </div>
                                 <div class="progress" style="height: 6px;"><div class="progress-bar bg-primary" style="width: ${Math.min((stats.travels || 0) * 10, 100)}%"></div></div>
                             </div>
                             <div>
                                 <div class="d-flex justify-content-between small mb-1">
-                                    <span>Фильмы</span><span class="fw-semibold">${stats.movies || 0}</span>
+                                    <span>Фильмы</span><span class="fw-semibold">${safeCount(stats.movies)}</span>
                                 </div>
                                 <div class="progress" style="height: 6px;"><div class="progress-bar bg-warning" style="width: ${Math.min((stats.movies || 0) * 5, 100)}%"></div></div>
                             </div>
                             <div>
                                 <div class="d-flex justify-content-between small mb-1">
-                                    <span>Книги</span><span class="fw-semibold">${stats.books || 0}</span>
+                                    <span>Книги</span><span class="fw-semibold">${safeCount(stats.books)}</span>
                                 </div>
                                 <div class="progress" style="height: 6px;"><div class="progress-bar bg-danger" style="width: ${Math.min((stats.books || 0) * 10, 100)}%"></div></div>
                             </div>
                             <div>
                                 <div class="d-flex justify-content-between small mb-1">
-                                    <span>Мечты</span><span class="fw-semibold">${stats.dreams || 0}</span>
+                                    <span>Мечты</span><span class="fw-semibold">${safeCount(stats.dreams)}</span>
                                 </div>
                                 <div class="progress" style="height: 6px;"><div class="progress-bar bg-info" style="width: ${Math.min((stats.dreams || 0) * 20, 100)}%"></div></div>
                             </div>
@@ -249,8 +278,8 @@ export class ProfileModule {
                 <div class="col-md-6">
                     <div class="card-premium p-4 h-100">
                         <h6 class="fw-bold mb-3"><i class="bi bi-info-circle text-info me-2"></i>Информация</h6>
-                        <p class="text-muted small mb-2"><i class="bi bi-envelope me-2"></i>${window.app.currentUser?.email || '—'}</p>
-                        <p class="text-muted small mb-2"><i class="bi bi-geo-alt me-2"></i>${userData.location || 'Не указан'}</p>
+                        ${this.profileIsOwn ? `<p class="text-muted small mb-2"><i class="bi bi-envelope me-2"></i>${escapeHTML(window.app.currentUser?.email || '—')}</p>` : ''}
+                        <p class="text-muted small mb-2"><i class="bi bi-geo-alt me-2"></i>${escapeHTML(userData.location || 'Не указан')}</p>
                         <p class="text-muted small mb-2"><i class="bi bi-calendar me-2"></i>На сайте с ${this.formatDate(userData.createdAt)}</p>
                         <p class="text-muted small mb-0"><i class="bi bi-clock me-2"></i>Был ${this.formatDate(userData.lastLogin)}</p>
                     </div>
@@ -277,11 +306,11 @@ export class ProfileModule {
                         <div class="card-premium p-3 achievement-earned">
                             <div class="d-flex align-items-center gap-3">
                                 <div class="achievement-icon earned">
-                                    <span>${a.emoji}</span>
+                                    <span>${escapeHTML(a.emoji)}</span>
                                 </div>
                                 <div>
-                                    <h6 class="fw-bold mb-0">${a.title}</h6>
-                                    <p class="text-muted small mb-0">${a.description}</p>
+                                    <h6 class="fw-bold mb-0">${escapeHTML(a.title)}</h6>
+                                    <p class="text-muted small mb-0">${escapeHTML(a.description)}</p>
                                     <small class="text-muted">${this.formatDate(a.awardedAt)}</small>
                                 </div>
                                 <span class="badge bg-warning ms-auto">Ур. ${a.level || 1}</span>

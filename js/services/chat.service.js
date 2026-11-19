@@ -224,6 +224,7 @@ export class ChatService {
     }
 
     async getUserProfile(uid) {
+        if (!isValidChatUid(uid)) return null;
         try {
             const userDoc = await getDoc(doc(this.db, 'users', uid));
             if (userDoc.exists()) {

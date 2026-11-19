@@ -1,5 +1,5 @@
 import { auth, db } from '../config/firebase.js';
-import { validateChatMessage, validChatParticipants, isValidChatUid } from '../core/chat-message-policy.js';
+import { validateChatMessage, validChatParticipants, isValidChatUid, isValidChatPathSegment } from '../core/chat-message-policy.js';
 import {
     collection, doc, getDocs, getDoc, updateDoc, deleteDoc,
     query, orderBy, limit, serverTimestamp, writeBatch, setDoc, increment, runTransaction
@@ -130,8 +130,8 @@ export class ChatService {
     async deleteMessage(chatId, messageId) {
         try {
             const actorId = auth?.currentUser?.uid;
-            if (!actorId || !isValidChatUid(actorId) || !isValidChatUid(chatId) ||
-                !isValidChatUid(messageId)) return { success: false };
+            if (!actorId || !isValidChatUid(actorId) || !isValidChatPathSegment(chatId, 257) ||
+                !isValidChatPathSegment(messageId, 128)) return { success: false };
             const messageRef = doc(this.db, 'chats', chatId, 'messages', messageId);
             const existing = await getDoc(messageRef);
             if (!existing.exists() || existing.data().senderId !== actorId || auth?.currentUser?.uid !== actorId) return { success: false };
@@ -148,8 +148,8 @@ export class ChatService {
         if (!validation.valid) return { success: false, error: validation.error };
         try {
             const actorId = auth?.currentUser?.uid;
-            if (!actorId || !isValidChatUid(actorId) || !isValidChatUid(chatId) ||
-                !isValidChatUid(messageId)) return { success: false };
+            if (!actorId || !isValidChatUid(actorId) || !isValidChatPathSegment(chatId, 257) ||
+                !isValidChatPathSegment(messageId, 128)) return { success: false };
             const messageRef = doc(this.db, 'chats', chatId, 'messages', messageId);
             const existing = await getDoc(messageRef);
             if (!existing.exists() || existing.data().senderId !== actorId || auth?.currentUser?.uid !== actorId) return { success: false };

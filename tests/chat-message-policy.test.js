@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { MAX_CHAT_MESSAGE_LENGTH, validateChatMessage, validChatParticipants } from '../js/core/chat-message-policy.js';
+import { MAX_CHAT_MESSAGE_LENGTH, validateChatMessage, validChatParticipants, isValidChatUid } from '../js/core/chat-message-policy.js';
 
 const getChatId = (a, b) => [a, b].sort().join('_');
 
@@ -26,4 +26,21 @@ test('sender must be the logged-in user and chat must match the participants', (
 
 test('legacy underscore chat IDs are ambiguous and need a server-side migration', () => {
     assert.equal(getChatId('a_b', 'c'), getChatId('a', 'b_c'));
+});
+
+
+test('chat UIDs are safe Firestore path segments', () => {
+    for (const uid of ['alice', 'firebase-user-123', 'a'.repeat(128)]) {
+        assert.equal(isValidChatUid(uid), true);
+    }
+    for (const uid of ['', ' ', ' alice', 'alice ', 'a/b', 'a'.repeat(129), null, undefined, 42]) {
+        assert.equal(isValidChatUid(uid), false);
+    }
+});
+
+test('chat participant validation rejects unsafe IDs before deriving a chat path', () => {
+    assert.equal(validChatParticipants('alice', 'alice', 'bob', 'alice_bob', getChatId), true);
+    assert.equal(validChatParticipants('alice', 'alice', 'bad/uid', 'alice_bad/uid', getChatId), false);
+    assert.equal(validChatParticipants('alice', 'alice', 'b'.repeat(129), 'alice_' + 'b'.repeat(129), getChatId), false);
+    assert.equal(validChatParticipants('alice ', 'alice ', 'bob', 'alice _bob', getChatId), false);
 });

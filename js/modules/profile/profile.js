@@ -252,25 +252,25 @@ export class ProfileModule {
                                 <div class="d-flex justify-content-between small mb-1">
                                     <span>Путешествия</span><span class="fw-semibold">${safeCount(stats.travels)}</span>
                                 </div>
-                                <div class="progress" style="height: 6px;"><div class="progress-bar bg-primary" style="width: ${Math.min((stats.travels || 0) * 10, 100)}%"></div></div>
+                                <div class="progress" style="height: 6px;"><div class="progress-bar bg-primary" style="width: ${Math.min(safeCount(stats.travels) * 10, 100)}%"></div></div>
                             </div>
                             <div>
                                 <div class="d-flex justify-content-between small mb-1">
                                     <span>Фильмы</span><span class="fw-semibold">${safeCount(stats.movies)}</span>
                                 </div>
-                                <div class="progress" style="height: 6px;"><div class="progress-bar bg-warning" style="width: ${Math.min((stats.movies || 0) * 5, 100)}%"></div></div>
+                                <div class="progress" style="height: 6px;"><div class="progress-bar bg-warning" style="width: ${Math.min(safeCount(stats.movies) * 5, 100)}%"></div></div>
                             </div>
                             <div>
                                 <div class="d-flex justify-content-between small mb-1">
                                     <span>Книги</span><span class="fw-semibold">${safeCount(stats.books)}</span>
                                 </div>
-                                <div class="progress" style="height: 6px;"><div class="progress-bar bg-danger" style="width: ${Math.min((stats.books || 0) * 10, 100)}%"></div></div>
+                                <div class="progress" style="height: 6px;"><div class="progress-bar bg-danger" style="width: ${Math.min(safeCount(stats.books) * 10, 100)}%"></div></div>
                             </div>
                             <div>
                                 <div class="d-flex justify-content-between small mb-1">
                                     <span>Мечты</span><span class="fw-semibold">${safeCount(stats.dreams)}</span>
                                 </div>
-                                <div class="progress" style="height: 6px;"><div class="progress-bar bg-info" style="width: ${Math.min((stats.dreams || 0) * 20, 100)}%"></div></div>
+                                <div class="progress" style="height: 6px;"><div class="progress-bar bg-info" style="width: ${Math.min(safeCount(stats.dreams) * 20, 100)}%"></div></div>
                             </div>
                         </div>
                     </div>

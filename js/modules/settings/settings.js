@@ -1,5 +1,5 @@
 import { db } from '../../config/firebase.js';
-import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { doc, getDoc, updateDoc, collection, query, where, getDocs, limit } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 function escapeHTML(value) {
     return String(value ?? '').replace(/[&<>"']/g, character => ({
@@ -166,10 +166,15 @@ export class SettingsModule {
 
             if (username !== currentUser?.username) {
                 const usersRef = collection(db, 'users');
-                const q = query(usersRef, where('username', '==', username.toLowerCase()));
-                const snapshot = await getDocs(q);
+                const normalized = username.trim().toLowerCase();
+                const [indexed, legacy] = await Promise.all([
+                    getDocs(query(usersRef, where('usernameNormalized', '==', normalized), limit(2))),
+                    getDocs(query(usersRef, where('username', '==', username.trim()), limit(2)))
+                ]);
+                const isTakenByAnotherUser = [...indexed.docs, ...legacy.docs]
+                    .some(userDoc => userDoc.id !== uid);
 
-                if (!snapshot.empty) {
+                if (isTakenByAnotherUser) {
                     window.app.ui.showToast('Этот ник уже занят 😔', 'warning');
                     submitBtn.innerHTML = originalText;
                     submitBtn.disabled = false;
@@ -180,6 +185,7 @@ export class SettingsModule {
             const userRef = doc(db, 'users', uid);
             await updateDoc(userRef, {
                 username: username,
+                usernameNormalized: username.trim().toLowerCase(),
                 displayName: displayName,
                 bio: bio,
                 location: location

@@ -113,7 +113,10 @@ export function createEncryptedChatPendingAdapter({
         const readDone = transactionFinished(read);
         const existing = await requestValue(read.objectStore(KEYS_STORE).get(userId));
         await readDone;
-        if (existing?.key) return existing.key;
+        if (existing?.key) {
+            if (!isExpectedKey(existing.key)) throw new Error('Некорректный ключ очереди');
+            return existing.key;
+        }
 
         const generated = await cryptoImpl.subtle.generateKey(
             { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
@@ -126,6 +129,10 @@ export function createEncryptedChatPendingAdapter({
             lookup.onsuccess = () => {
                 const current = lookup.result;
                 if (current?.key) {
+                    if (!isExpectedKey(current.key)) {
+                        reject(new Error('Некорректный ключ очереди'));
+                        return;
+                    }
                     resolve(current.key);
                     return;
                 }
@@ -137,6 +144,17 @@ export function createEncryptedChatPendingAdapter({
         });
         await writeDone;
         return chosen;
+    }
+
+    async function getStoredKey(db, userId) {
+        const tx = db.transaction(KEYS_STORE, 'readonly');
+        const done = transactionFinished(tx);
+        const record = await requestValue(tx.objectStore(KEYS_STORE).get(userId));
+        await done;
+        if (record?.userId !== userId || !isExpectedKey(record.key)) {
+            throw new Error('Не удалось проверить ключ зашифрованной очереди');
+        }
+        return record.key;
     }
 
     return Object.freeze({
@@ -154,7 +172,7 @@ export function createEncryptedChatPendingAdapter({
             const record = await requestValue(tx.objectStore(RECORDS_STORE).get(userId));
             await done;
             if (!record) return [];
-            const key = await getOrCreateKey(db, userId);
+            const key = await getStoredKey(db, userId);
             return decryptChatPendingRecords(record.envelope, userId, key, cryptoImpl);
         },
 

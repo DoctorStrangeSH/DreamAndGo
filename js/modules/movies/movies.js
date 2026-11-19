@@ -12,6 +12,9 @@ export class MoviesModule {
         this.searchPage = 1;
         this.popularPage = 1;
         this.myMoviesPage = 1;
+        this.mySearchQuery = '';
+        this.mySortOrder = 'recent';
+        this.myMovies = [];
         this.requestId = 0;
         this.ITEMS_PER_PAGE = 12;
     }
@@ -89,8 +92,24 @@ export class MoviesModule {
                                 `).join('')}
                             </select>
                         </div>
+                        <div class="col-12 col-md">
+                            <label for="myMovieSearch" class="visually-hidden">Поиск в моей коллекции</label>
+                            <input id="myMovieSearch" type="search" class="form-control form-control-sm"
+                                   placeholder="Найти фильм в коллекции…" autocomplete="off"
+                                   value="${escapeHTML(this.mySearchQuery)}">
+                        </div>
+                        <div class="col-12 col-sm-auto">
+                            <label for="myMovieSort" class="visually-hidden">Сортировка моей коллекции</label>
+                            <select id="myMovieSort" class="form-select form-select-sm">
+                                <option value="recent" ${this.mySortOrder === 'recent' ? 'selected' : ''}>Сначала новые</option>
+                                <option value="name" ${this.mySortOrder === 'name' ? 'selected' : ''}>По названию</option>
+                                <option value="rating" ${this.mySortOrder === 'rating' ? 'selected' : ''}>По оценке</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
+
+                <p id="myMovieCount" class="text-muted small" role="status" aria-live="polite"></p>
 
                 <div id="moviesGrid" class="row g-3"></div>
                 <div id="movieModalContainer"></div>
@@ -114,36 +133,8 @@ export class MoviesModule {
             if (requestId !== this.requestId || this.currentTab !== 'my' ||
                 !grid.isConnected || window.app.currentUser?.uid !== userId) return;
     
-            if (allMovies.length === 0) {
-                grid.innerHTML = `
-                    <div class="col-12">
-                        <section class="atlas-empty atlas-empty--movie">
-                            <div class="atlas-empty-art" aria-hidden="true"><i class="bi bi-film"></i></div>
-                            <h3>Твоя киноколлекция ждёт первой истории</h3>
-                            <p>Найди любимый фильм или добавь то, что давно хочется посмотреть.</p>
-                        </section>
-                        <button class="btn btn-premium btn-sm" id="goToSearch">
-                            <i class="bi bi-search me-1"></i>Найти фильмы
-                        </button>
-                    </div>
-                `;
-                document.getElementById('goToSearch')?.addEventListener('click', () => this.switchTab('search'));
-                return;
-            }
-    
-            const totalPages = Math.ceil(allMovies.length / this.ITEMS_PER_PAGE);
-    
-            if (totalPages > 1) {
-                this.createPaginationElement();
-                const start = (this.myMoviesPage - 1) * this.ITEMS_PER_PAGE;
-                const pageMovies = allMovies.slice(start, start + this.ITEMS_PER_PAGE);
-                grid.innerHTML = pageMovies.map((m, i) => this.createCard(m, i)).join('');
-                this.renderPagination(totalPages, 'my');
-            } else {
-                grid.innerHTML = allMovies.map((m, i) => this.createCard(m, i)).join('');
-            }
-    
-            this.attachCardListeners();
+            this.myMovies = allMovies;
+            this.renderMyMovieCollection();
         } catch (error) {
             console.error('Не удалось загрузить киноколлекцию:', error);
             if (requestId !== this.requestId || this.currentTab !== 'my' ||
@@ -153,6 +144,54 @@ export class MoviesModule {
                 <button type="button" class="btn btn-premium" data-retry-movies>Повторить</button>
             </section></div>`;
             grid.querySelector('[data-retry-movies]')?.addEventListener('click', () => this.loadMyMovies());
+        }
+    }
+
+    renderMyMovieCollection() {
+        if (this.currentTab !== 'my') return;
+        const grid = document.getElementById('moviesGrid');
+        if (!grid) return;
+        const pagination = document.getElementById('pagination');
+        if (pagination) pagination.remove();
+        const allMovies = this.myMovies;
+        const query = this.mySearchQuery.trim().toLocaleLowerCase();
+        const visible = allMovies.filter(movie => [movie.title, movie.originalTitle, movie.releaseDate]
+            .filter(Boolean).join(' ').toLocaleLowerCase().includes(query));
+        if (this.mySortOrder === 'name') visible.sort((a, b) => String(a.title || '').localeCompare(String(b.title || ''), 'ru'));
+        if (this.mySortOrder === 'rating') visible.sort((a, b) => Number(b.userRating || 0) - Number(a.userRating || 0));
+        const count = document.getElementById('myMovieCount');
+        if (count) count.textContent = query ? `Найдено: ${visible.length} из ${allMovies.length}` : '';
+        if (allMovies.length === 0) {
+            grid.innerHTML = `
+                <div class="col-12">
+                    <section class="atlas-empty atlas-empty--movie">
+                        <div class="atlas-empty-art" aria-hidden="true"><i class="bi bi-film"></i></div>
+                        <h3>Твоя киноколлекция ждёт первой истории</h3>
+                        <p>Найди любимый фильм или добавь то, что давно хочется посмотреть.</p>
+                    </section>
+                    <button class="btn btn-premium btn-sm" id="goToSearch">
+                        <i class="bi bi-search me-1"></i>Найти фильмы
+                    </button>
+                </div>
+            `;
+            document.getElementById('goToSearch')?.addEventListener('click', () => this.switchTab('search'));
+            return;
+        }
+        if (visible.length === 0) {
+            grid.innerHTML = `<div class="col-12"><section class="atlas-empty atlas-empty--movie">
+                <div class="atlas-empty-art" aria-hidden="true"><i class="bi bi-search"></i></div>
+                <h3>Ничего не нашлось</h3><p>Попробуй другое название или очисти строку поиска.</p>
+            </section></div>`;
+            return;
+        }
+        const totalPages = Math.ceil(visible.length / this.ITEMS_PER_PAGE);
+        this.myMoviesPage = Math.min(Math.max(1, this.myMoviesPage), totalPages);
+        const start = (this.myMoviesPage - 1) * this.ITEMS_PER_PAGE;
+        grid.innerHTML = visible.slice(start, start + this.ITEMS_PER_PAGE).map((m, i) => this.createCard(m, i)).join('');
+        this.attachCardListeners();
+        if (totalPages > 1) {
+            this.createPaginationElement();
+            this.renderPagination(totalPages, 'my');
         }
     }
 
@@ -323,7 +362,7 @@ export class MoviesModule {
     }
 
     renderPagination(totalPages, type) {
-        if (this.currentTab === 'my' || totalPages <= 1) {
+        if (totalPages <= 1) {
             const pagination = document.getElementById('pagination');
             if (pagination) { pagination.style.display = 'none'; pagination.innerHTML = ''; }
             return;
@@ -332,7 +371,7 @@ export class MoviesModule {
         const pagination = document.getElementById('pagination');
         if (!pagination) return;
 
-        const currentPage = type === 'search' ? this.searchPage : this.popularPage;
+        const currentPage = type === 'search' ? this.searchPage : type === 'my' ? this.myMoviesPage : this.popularPage;
 
         pagination.style.display = 'flex';
         pagination.innerHTML = `
@@ -363,7 +402,9 @@ export class MoviesModule {
                 const page = parseInt(e.target.closest('.page-link').dataset.page);
                 const btnType = e.target.closest('.page-link').dataset.type;
 
+                if (page < 1 || page > totalPages) return;
                 if (btnType === 'search') { this.searchPage = page; await this.searchMovies(); }
+                else if (btnType === 'my') { this.myMoviesPage = page; this.renderMyMovieCollection(); }
                 else { this.popularPage = page; await this.loadPopularMovies(); }
             });
         });
@@ -380,6 +421,16 @@ export class MoviesModule {
     }
 
     attachEventListeners() {
+        document.getElementById('myMovieSearch')?.addEventListener('input', (event) => {
+            this.mySearchQuery = event.target.value;
+            this.myMoviesPage = 1;
+            this.renderMyMovieCollection();
+        });
+        document.getElementById('myMovieSort')?.addEventListener('change', (event) => {
+            this.mySortOrder = event.target.value;
+            this.myMoviesPage = 1;
+            this.renderMyMovieCollection();
+        });
         document.querySelectorAll('.movies-tabs [data-tab]').forEach(tab => {
             tab.addEventListener('click', (e) => {
                 document.querySelectorAll('.movies-tabs [data-tab]').forEach(t => t.classList.remove('active'));

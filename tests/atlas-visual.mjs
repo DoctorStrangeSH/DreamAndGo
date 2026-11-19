@@ -11,7 +11,9 @@ const targets = [
   { name: 'mobile', width: 390, height: 844 },
   { name: 'compact-mobile', width: 360, height: 740 },
   { name: 'tablet', width: 768, height: 1024 },
-  { name: 'small-mobile', width: 320, height: 700 }
+  { name: 'small-mobile', width: 320, height: 700 },
+  { name: 'short-mobile', width: 320, height: 568 },
+  { name: 'landscape-mobile', width: 667, height: 375 }
 ];
 const errors = [];
 await mkdir(path.join(root, 'atlas-screenshots'), { recursive: true });
@@ -29,6 +31,43 @@ try {
     const darkOverflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
     if (darkOverflow) errors.push(target.name + ': horizontal overflow in dark theme');
     await page.screenshot({ path: path.join(root, 'atlas-screenshots', target.name + '-dark.png'), fullPage: true });
+    // Offline, deterministic long-form fixture exercises the production Atlas dialog CSS.
+    const dialog = await page.evaluate(() => {
+      const fixture = document.createElement('div');
+      fixture.id = 'atlas-dialog-fixture';
+      fixture.style.cssText = 'position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:rgba(0,0,0,.4)';
+      const fields = Array.from({ length: 18 }, (_, i) => `<label class="preview-field">Поле ${i + 1}<input class="form-control" value="Длинное значение для проверки формы"></label>`).join('');
+      fixture.innerHTML = `<div class="modal-dialog modal-dialog-centered" style="width:min(700px,100%)">
+        <div class="modal-content"><div class="modal-header"><h3 class="modal-title">Длинная форма</h3></div>
+        <div class="modal-body">${fields}</div>
+        <div class="modal-footer"><button class="btn btn-secondary">Отменить</button><button class="btn btn-premium">Сохранить</button></div>
+        </div></div>`;
+      document.body.append(fixture);
+      const content = fixture.querySelector('.modal-content');
+      const body = fixture.querySelector('.modal-body');
+      const footer = fixture.querySelector('.modal-footer');
+      body.scrollTop = body.scrollHeight;
+      const bounds = content.getBoundingClientRect();
+      const footerBounds = footer.getBoundingClientRect();
+      const result = {
+        top: bounds.top, bottom: bounds.bottom, left: bounds.left, right: bounds.right,
+        footerTop: footerBounds.top, footerBottom: footerBounds.bottom,
+        bodyScrolled: body.scrollTop > 0,
+        bodyScrollable: body.scrollHeight > body.clientHeight,
+        footerVisible: getComputedStyle(footer).display !== 'none'
+      };
+      return result;
+    });
+    if (dialog.left < -1 || dialog.right > target.width + 1 || dialog.top < -1 || dialog.bottom > target.height + 1) {
+      errors.push(target.name + ': long dialog extends beyond viewport');
+    }
+    if (!dialog.bodyScrollable || !dialog.bodyScrolled || !dialog.footerVisible || dialog.footerBottom > target.height + 1) {
+      errors.push(target.name + ': long dialog body or actions inaccessible');
+    }
+    if (target.name === 'short-mobile' || target.name === 'landscape-mobile') {
+      await page.screenshot({ path: path.join(root, 'atlas-screenshots', target.name + '-dialog.png') });
+    }
+    await page.locator('#atlas-dialog-fixture').evaluate(node => node.remove());
     const touchTargets = await page.evaluate(() => {
       const selectors = ['#themeSwitch', '[data-preview-action="new-travel"]',
         '[data-preview-action="profile"]', '.preview-profile [role="tab"]',

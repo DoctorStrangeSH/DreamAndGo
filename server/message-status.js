@@ -1,14 +1,14 @@
 import { HttpsError } from 'firebase-functions/v2/https';
 import { isConversationBlocked } from './block-policy.js';
-import { normalizeClientMessageId, otherChatParticipant, serverMessageDocumentId } from './message-policy.js';
+import { isValidUserId, isValidDocumentId, normalizeClientMessageId, otherChatParticipant, serverMessageDocumentId } from './message-policy.js';
 
 // Read-only candidate v2 reconciliation. Never returns message text or recipient data.
 export async function getPrivateMessageStatus(db, uid, chatId, clientMessageId) {
     const normalizedId = normalizeClientMessageId(clientMessageId);
-    if (typeof uid !== 'string' || !uid) {
+    if (!isValidUserId(uid)) {
         throw new HttpsError('unauthenticated', 'Требуется вход в аккаунт');
     }
-    if (typeof chatId !== 'string' || !chatId || chatId.length > 128 || chatId.includes('/') || !normalizedId) {
+    if (!isValidDocumentId(chatId) || !normalizedId) {
         throw new HttpsError('invalid-argument', 'Некорректный идентификатор сообщения');
     }
     const chatRef = db.collection('chats').doc(chatId);

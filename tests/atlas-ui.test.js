@@ -344,7 +344,9 @@ test('travel photo sources and edit dialog fields are safe', () => {
 test('collection deletion prevents repeated clicks and reports failed requests', () => {
   for (const name of ['books', 'travels', 'restaurants']) {
     const source = read('js/modules/' + name + '/' + name + '.js');
-    assert.match(source, /if \(btn\.disabled \|\| !confirm\(/);
+    assert.match(source, /const userId = window\.app\.currentUser\?\.uid/);
+    assert.match(source, /if \(!userId \|\| btn\.disabled \|\| !confirm\(/);
+    assert.match(source, /window\.app\.currentUser\?\.uid !== userId/);
     assert.match(source, /btn\.disabled = true/);
     assert.match(source, /if \(!result\?\.success\) throw new Error/);
     assert.match(source, /Не удалось удалить запись\. Попробуй снова\./);

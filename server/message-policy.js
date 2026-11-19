@@ -1,5 +1,15 @@
 import { createHash } from 'node:crypto';
 
+export function isValidUserId(value) {
+    return typeof value === 'string' && value.length > 0 &&
+        value.length <= 128 && value.trim() === value && !value.includes('/');
+}
+
+export function isValidDocumentId(value, maxLength = 128) {
+    return typeof value === 'string' && value.length > 0 &&
+        value.length <= maxLength && value.trim() === value && !value.includes('/');
+}
+
 export function normalizeChatMessage(value) {
     if (typeof value !== 'string') return null;
     const text = value.trim();
@@ -8,8 +18,8 @@ export function normalizeChatMessage(value) {
 
 export function otherChatParticipant(participants, uid) {
     if (!Array.isArray(participants) || participants.length !== 2 ||
-        typeof uid !== 'string' || !uid ||
-        !participants.every(x => typeof x === 'string' && Boolean(x)) ||
+        !isValidUserId(uid) ||
+        !participants.every(isValidUserId) ||
         participants[0] === participants[1] ||
         !participants.includes(uid)) return null;
     return participants.find(x => x !== uid);
@@ -23,8 +33,8 @@ export function normalizeClientMessageId(value) {
 }
 
 export function serverMessageDocumentId(chatId, senderId, clientMessageId) {
-    if (typeof chatId !== 'string' || !chatId ||
-        typeof senderId !== 'string' || !senderId ||
+    if (!isValidDocumentId(chatId) ||
+        !isValidUserId(senderId) ||
         !normalizeClientMessageId(clientMessageId)) return null;
     const fields = [chatId, senderId, clientMessageId.toLowerCase()];
     const framed = fields.map(value => `${Buffer.byteLength(value, 'utf8')}:${value}`).join('');

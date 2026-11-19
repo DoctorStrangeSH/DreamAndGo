@@ -85,3 +85,30 @@ test('nonparticipants, both blocks and frozen chats prevent history reads', asyn
     });
 });
 test.after(async () => { await deleteApp(app); });
+
+
+test('cursor pagination remains gap-free when a new message arrives between page requests', async () => {
+    const x = await setup();
+    const first = await send(x, x.alice, 701, 10_000);
+    const second = await send(x, x.bob, 702, 10_000);
+    const third = await send(x, x.alice, 703, 12_000);
+
+    const initialPage = await history(x, x.bob, null, 2);
+    assert.deepEqual(initialPage.messages.map(row => row.sequence), [3, 2]);
+    assert.equal(initialPage.nextBeforeSequence, 2);
+
+    const fourth = await send(x, x.bob, 704, 12_000);
+    const olderPage = await history(x, x.alice, initialPage.nextBeforeSequence, 2);
+    assert.deepEqual(olderPage.messages.map(row => row.sequence), [1]);
+    assert.equal(olderPage.hasMore, false);
+
+    const ids = [
+        ...initialPage.messages.map(row => row.id),
+        ...olderPage.messages.map(row => row.id)
+    ];
+    assert.equal(new Set(ids).size, 3);
+    assert.deepEqual(new Set(ids), new Set([first.messageId, second.messageId, third.messageId]));
+    const refreshedHead = await history(x, x.alice, null, 2);
+    assert.deepEqual(refreshedHead.messages.map(row => row.sequence), [4, 3]);
+    assert.equal(refreshedHead.messages[0].id, fourth.messageId);
+});

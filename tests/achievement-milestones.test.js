@@ -6,7 +6,9 @@ const source = readFileSync(new URL('../js/modules/achievements/achievements.js'
 const from = source.indexOf('const MILESTONES =');
 const to = source.indexOf('export class AchievementsModule', from);
 assert.ok(from >= 0 && to > from);
-const getProgress = new Function(`${source.slice(from, to).replace('export function getAchievementMilestone', 'function getAchievementMilestone')} return getAchievementMilestone;`)();
+const getProgress = new Function(`${source.slice(from, to).replaceAll('export function ', 'function ')} return getAchievementMilestone;`)();
+const getTier = new Function(`${source.slice(from, to).replaceAll('export function ', 'function ')} return getAchievementTier;`)();
+const css = readFileSync(new URL('../css/atlas-pages.css', import.meta.url), 'utf8');
 
 test('achievement progress follows the next level and clamps malformed stats', () => {
     assert.deepEqual(getProgress({ id: 'first_travel' }, 1, { travels: 3 }), { current: 3, target: 5, percentage: 60 });
@@ -26,4 +28,16 @@ test('achievement overview counts earned levels, not only achievement records', 
     assert.match(source, /Math\.min\(achievement\.levels\.length, Math\.max\(0, level\)\)/);
     assert.match(source, /role="progressbar" aria-label="Прогресс достижения/);
     assert.match(source, /escapeHTML\(e\?\.title \|\| a\.title\)/);
+});
+
+test('achievement tiers have distinct states and reduced-motion styling', () => {
+    assert.deepEqual([0, 1, 2, 3, 4, 99, -2, NaN].map(level => getTier(level).id),
+        ['locked', 'bronze', 'silver', 'gold', 'legendary', 'legendary', 'locked', 'locked']);
+    assert.match(source, /achievement-tier--\$\{tier\.id\}/);
+    assert.match(source, /achievement-tier-badge--\$\{tier\.id\}/);
+    for (const tier of ['bronze', 'silver', 'gold', 'legendary']) {
+        assert.ok(css.includes('.achievement-tier--' + tier));
+        assert.ok(css.includes('.achievement-tier-badge--' + tier));
+    }
+    assert.match(css, /prefers-reduced-motion:reduce\)\s*\{\.achievement-item/);
 });

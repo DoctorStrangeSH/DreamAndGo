@@ -1,5 +1,7 @@
 import { MovieService } from '../../services/movie.service.js';
 import { APP_CONFIG } from '../../config/constants.js';
+import { escapeHTML } from '../../core/escape-html.js';
+import { safeAvatarURL } from '../../core/safe-avatar-url.js';
 
 export class MoviesModule {
     constructor() {
@@ -10,6 +12,9 @@ export class MoviesModule {
         this.searchPage = 1;
         this.popularPage = 1;
         this.myMoviesPage = 1;
+        this.mySearchQuery = '';
+        this.mySortOrder = 'recent';
+        this.myMovies = [];
         this.requestId = 0;
         this.ITEMS_PER_PAGE = 12;
     }
@@ -83,12 +88,28 @@ export class MoviesModule {
                             <select class="form-select form-select-sm" id="genreFilter">
                                 <option value="all">Все жанры</option>
                                 ${Object.entries(APP_CONFIG.MOVIE_GENRES).map(([id, name]) => `
-                                    <option value="${id}">${name}</option>
+                                    <option value="${escapeHTML(String(id))}">${escapeHTML(String(name))}</option>
                                 `).join('')}
+                            </select>
+                        </div>
+                        <div class="col-12 col-md">
+                            <label for="myMovieSearch" class="visually-hidden">Поиск в моей коллекции</label>
+                            <input id="myMovieSearch" type="search" class="form-control form-control-sm"
+                                   placeholder="Найти фильм в коллекции…" autocomplete="off"
+                                   value="${escapeHTML(this.mySearchQuery)}">
+                        </div>
+                        <div class="col-12 col-sm-auto">
+                            <label for="myMovieSort" class="visually-hidden">Сортировка моей коллекции</label>
+                            <select id="myMovieSort" class="form-select form-select-sm">
+                                <option value="recent" ${this.mySortOrder === 'recent' ? 'selected' : ''}>Сначала новые</option>
+                                <option value="name" ${this.mySortOrder === 'name' ? 'selected' : ''}>По названию</option>
+                                <option value="rating" ${this.mySortOrder === 'rating' ? 'selected' : ''}>По оценке</option>
                             </select>
                         </div>
                     </div>
                 </div>
+
+                <p id="myMovieCount" class="text-muted small" role="status" aria-live="polite"></p>
 
                 <div id="moviesGrid" class="row g-3"></div>
                 <div id="movieModalContainer"></div>
@@ -97,6 +118,7 @@ export class MoviesModule {
     }
 
     async loadMyMovies() {
+        const requestId = ++this.requestId;
         const grid = document.getElementById('moviesGrid');
         if (!grid) return;
 
@@ -106,14 +128,47 @@ export class MoviesModule {
         grid.innerHTML = window.app.ui.createLoader();
 
         const userId = window.app.currentUser.uid;
-        const allMovies = await this.movieService.getUserMovies(userId, this.currentFilter);
+        try {
+            const allMovies = await this.movieService.getUserMovies(userId, this.currentFilter, { throwOnError: true });
+            if (requestId !== this.requestId || this.currentTab !== 'my' ||
+                !grid.isConnected || window.app.currentUser?.uid !== userId) return;
+    
+            this.myMovies = allMovies;
+            this.renderMyMovieCollection();
+        } catch (error) {
+            console.error('Не удалось загрузить киноколлекцию:', error);
+            if (requestId !== this.requestId || this.currentTab !== 'my' ||
+                !grid.isConnected || window.app.currentUser?.uid !== userId) return;
+            grid.innerHTML = `<div class="col-12"><section class="atlas-empty atlas-empty--movie" role="alert">
+                <h3>Не удалось загрузить фильмы</h3><p>Проверь подключение к интернету и попробуй ещё раз.</p>
+                <button type="button" class="btn btn-premium" data-retry-movies>Повторить</button>
+            </section></div>`;
+            grid.querySelector('[data-retry-movies]')?.addEventListener('click', () => this.loadMyMovies());
+        }
+    }
 
+    renderMyMovieCollection() {
+        if (this.currentTab !== 'my') return;
+        const grid = document.getElementById('moviesGrid');
+        if (!grid) return;
+        const pagination = document.getElementById('pagination');
+        if (pagination) pagination.remove();
+        const allMovies = this.myMovies;
+        const query = this.mySearchQuery.trim().toLocaleLowerCase();
+        const visible = allMovies.filter(movie => [movie.title, movie.originalTitle, movie.releaseDate]
+            .filter(Boolean).join(' ').toLocaleLowerCase().includes(query));
+        if (this.mySortOrder === 'name') visible.sort((a, b) => String(a.title || '').localeCompare(String(b.title || ''), 'ru'));
+        if (this.mySortOrder === 'rating') visible.sort((a, b) => Number(b.userRating || 0) - Number(a.userRating || 0));
+        const count = document.getElementById('myMovieCount');
+        if (count) count.textContent = query ? `Найдено: ${visible.length} из ${allMovies.length}` : '';
         if (allMovies.length === 0) {
             grid.innerHTML = `
-                <div class="col-12 text-center py-5">
-                    <i class="bi bi-film display-1 text-muted opacity-25"></i>
-                    <h5 class="mt-3 text-muted">Нет фильмов</h5>
-                    <p class="text-muted small">Добавь фильмы в коллекцию</p>
+                <div class="col-12">
+                    <section class="atlas-empty atlas-empty--movie">
+                        <div class="atlas-empty-art" aria-hidden="true"><i class="bi bi-film"></i></div>
+                        <h3>Твоя киноколлекция ждёт первой истории</h3>
+                        <p>Найди любимый фильм или добавь то, что давно хочется посмотреть.</p>
+                    </section>
                     <button class="btn btn-premium btn-sm" id="goToSearch">
                         <i class="bi bi-search me-1"></i>Найти фильмы
                     </button>
@@ -122,24 +177,28 @@ export class MoviesModule {
             document.getElementById('goToSearch')?.addEventListener('click', () => this.switchTab('search'));
             return;
         }
-
-        const totalPages = Math.ceil(allMovies.length / this.ITEMS_PER_PAGE);
-
+        if (visible.length === 0) {
+            grid.innerHTML = `<div class="col-12"><section class="atlas-empty atlas-empty--movie">
+                <div class="atlas-empty-art" aria-hidden="true"><i class="bi bi-search"></i></div>
+                <h3>Ничего не нашлось</h3><p>Попробуй другое название или очисти строку поиска.</p>
+            </section></div>`;
+            return;
+        }
+        const totalPages = Math.ceil(visible.length / this.ITEMS_PER_PAGE);
+        this.myMoviesPage = Math.min(Math.max(1, this.myMoviesPage), totalPages);
+        const start = (this.myMoviesPage - 1) * this.ITEMS_PER_PAGE;
+        grid.innerHTML = visible.slice(start, start + this.ITEMS_PER_PAGE).map((m, i) => this.createCard(m, i)).join('');
+        this.attachCardListeners();
         if (totalPages > 1) {
             this.createPaginationElement();
-            const start = (this.myMoviesPage - 1) * this.ITEMS_PER_PAGE;
-            const pageMovies = allMovies.slice(start, start + this.ITEMS_PER_PAGE);
-            grid.innerHTML = pageMovies.map((m, i) => this.createCard(m, i)).join('');
             this.renderPagination(totalPages, 'my');
-        } else {
-            grid.innerHTML = allMovies.map((m, i) => this.createCard(m, i)).join('');
         }
-
-        this.attachCardListeners();
     }
 
     async loadPopularMovies() {
         const requestId = ++this.requestId;
+        const userId = window.app.currentUser?.uid;
+        if (!userId) return;
         const grid = document.getElementById('moviesGrid');
         if (!grid) return;
 
@@ -148,17 +207,23 @@ export class MoviesModule {
         grid.innerHTML = window.app.ui.createLoader();
 
         try {
-            const result = await this.movieService.getPopularMovies(this.popularPage);
+            const result = await this.movieService.getPopularMovies(this.popularPage, { throwOnError: true });
 
-            if (requestId !== this.requestId || this.currentTab !== 'popular') return;
+            if (requestId !== this.requestId || this.currentTab !== 'popular' || !grid.isConnected ||
+                window.app.currentUser?.uid !== userId) return;
 
             if (result.movies.length === 0) {
+                const pagination = document.getElementById('pagination');
+                if (pagination) { pagination.style.display = 'none'; pagination.innerHTML = ''; }
                 grid.innerHTML = `
-                    <div class="col-12 text-center py-5">
-                        <i class="bi bi-cloud-slash display-1 text-muted opacity-25"></i>
-                        <h5 class="mt-3">Не удалось загрузить</h5>
-                    </div>
+                    <div class="col-12"><section class="atlas-empty atlas-empty--movie">
+                        <div class="atlas-empty-art" aria-hidden="true"><i class="bi bi-film"></i></div>
+                        <h3>Популярных фильмов пока нет</h3>
+                        <p>Загляни сюда чуть позже или найди фильм через поиск.</p>
+                        <button type="button" class="btn btn-premium" data-open-movie-search>Перейти к поиску</button>
+                    </section></div>
                 `;
+                grid.querySelector('[data-open-movie-search]')?.addEventListener('click', () => this.switchTab('search'));
             } else {
                 grid.innerHTML = result.movies.map((m, i) => this.createCard(m, i, true)).join('');
                 this.attachCardListeners();
@@ -167,18 +232,22 @@ export class MoviesModule {
                 }
             }
         } catch (error) {
-            if (requestId === this.requestId && this.currentTab === 'popular') {
-                grid.innerHTML = `
-                    <div class="col-12 text-center py-5">
-                        <i class="bi bi-cloud-slash display-1 text-muted opacity-25"></i>
-                        <h5 class="mt-3">Не удалось загрузить</h5>
-                    </div>
-                `;
-            }
+            console.error('Не удалось загрузить популярные фильмы:', error);
+            if (requestId !== this.requestId || this.currentTab !== 'popular' || !grid.isConnected ||
+                window.app.currentUser?.uid !== userId) return;
+            grid.innerHTML = `<div class="col-12"><section class="atlas-empty atlas-empty--movie" role="alert">
+                <h3>Не удалось загрузить популярные фильмы</h3>
+                <p>Проверь подключение к интернету и попробуй ещё раз.</p>
+                <button type="button" class="btn btn-premium" data-retry-popular>Повторить</button>
+            </section></div>`;
+            grid.querySelector('[data-retry-popular]')?.addEventListener('click', () => this.loadPopularMovies());
         }
     }
 
     async searchMovies() {
+        const requestId = ++this.requestId;
+        const userId = window.app.currentUser?.uid;
+        if (!userId) return;
         const grid = document.getElementById('moviesGrid');
         if (!grid || !this.searchQuery.trim()) return;
 
@@ -186,23 +255,37 @@ export class MoviesModule {
 
         grid.innerHTML = window.app.ui.createLoader();
 
-        const result = await this.movieService.searchMovies(this.searchQuery, this.searchPage);
-
-        if (this.currentTab !== 'search') return;
-
-        if (result.movies.length === 0) {
+        try {
+            const result = await this.movieService.searchMovies(this.searchQuery, this.searchPage, { throwOnError: true });
+    
+            if (requestId !== this.requestId || this.currentTab !== 'search' || !grid.isConnected ||
+                window.app.currentUser?.uid !== userId) return;
+    
+            if (result.movies.length === 0) {
+                const pagination = document.getElementById('pagination');
+                if (pagination) { pagination.style.display = 'none'; pagination.innerHTML = ''; }
+                grid.innerHTML = `
+                    <div class="col-12 text-center py-5">
+                        <i class="bi bi-emoji-frown display-1 text-muted opacity-25"></i>
+                        <h5 class="mt-3">Ничего не найдено</h5>
+                    </div>
+                `;
+            } else {
+                grid.innerHTML = result.movies.map((m, i) => this.createCard(m, i, true)).join('');
+                this.attachCardListeners();
+                if (this.currentTab === 'search') this.renderPagination(result.totalPages, 'search');
+            }
+        } catch (error) {
+            console.error('Не удалось выполнить поиск фильмов:', error);
+            if (requestId !== this.requestId || this.currentTab !== 'search' || !grid.isConnected ||
+                window.app.currentUser?.uid !== userId) return;
             const pagination = document.getElementById('pagination');
             if (pagination) { pagination.style.display = 'none'; pagination.innerHTML = ''; }
-            grid.innerHTML = `
-                <div class="col-12 text-center py-5">
-                    <i class="bi bi-emoji-frown display-1 text-muted opacity-25"></i>
-                    <h5 class="mt-3">Ничего не найдено</h5>
-                </div>
-            `;
-        } else {
-            grid.innerHTML = result.movies.map((m, i) => this.createCard(m, i, true)).join('');
-            this.attachCardListeners();
-            if (this.currentTab === 'search') this.renderPagination(result.totalPages, 'search');
+            grid.innerHTML = `<div class="col-12"><section class="atlas-empty atlas-empty--movie" role="alert">
+                <h3>Поиск сейчас недоступен</h3><p>Проверь подключение к интернету и попробуй ещё раз.</p>
+                <button type="button" class="btn btn-premium" data-retry-search>Повторить</button>
+            </section></div>`;
+            grid.querySelector('[data-retry-search]')?.addEventListener('click', () => this.searchMovies());
         }
     }
 
@@ -217,14 +300,20 @@ export class MoviesModule {
                 ? '<span class="badge bg-info bg-opacity-10 text-info">☆ Буду смотреть</span>'
                 : '';
 
-        const year = movie.releaseDate ? new Date(movie.releaseDate).getFullYear() : '';
+        const posterURL = safeAvatarURL(movie.poster);
+        const yearMatch = String(movie.releaseDate || '').match(/^(\d{4})/);
+        const year = yearMatch ? yearMatch[1] : '';
+        const displayRating = Number(movie.voteAverage || movie.rating);
+        const safeRating = Number.isFinite(displayRating) && displayRating >= 0 ? Math.min(10, displayRating) : '?';
+        const ownRating = Number(movie.userRating);
+        const safeOwnRating = Number.isFinite(ownRating) && ownRating > 0 ? Math.min(10, Math.max(0, ownRating * 2)) : 0;
 
         return `
             <div class="col-6 col-md-4 col-lg-3 fade-in-up" style="animation-delay: ${index * 0.04}s">
                 <div class="card-premium h-100 movie-card">
                     <div class="movie-poster">
-                        ${movie.poster
-                ? `<img src="${movie.poster}" alt="${movie.title}" class="w-100 h-100" style="object-fit: cover;">`
+                        ${posterURL
+                ? `<img src="${escapeHTML(posterURL)}" alt="${escapeHTML(String(movie.title || 'Фильм'))}" class="w-100 h-100" style="object-fit: cover;" loading="lazy">`
                 : `<div class="movie-poster-placeholder">
                                 <i class="bi bi-film display-4 text-white opacity-25"></i>
                             </div>`
@@ -232,17 +321,17 @@ export class MoviesModule {
                         <div class="movie-poster-overlay">
                             <div class="d-flex flex-column gap-1">
                                 ${showAddButton
-                ? `<button class="btn btn-success btn-sm add-movie-btn" data-movie-id="${movie.id}">
+                ? `<button class="btn btn-success btn-sm add-movie-btn" data-movie-id="${escapeHTML(String(movie.id))}">
                                         <i class="bi bi-plus-lg"></i> Добавить
                                     </button>`
-                : `<button class="btn btn-light btn-sm edit-movie-btn" data-movie-id="${movie.id}">
+                : `<button type="button" aria-label="Редактировать фильм" class="btn btn-light btn-sm edit-movie-btn" data-movie-id="${escapeHTML(String(movie.id))}">
                                         <i class="bi bi-pencil"></i>
                                     </button>
-                                    <button class="btn btn-danger btn-sm delete-movie-btn" data-movie-id="${movie.id}">
+                                    <button type="button" aria-label="Удалить фильм" class="btn btn-danger btn-sm delete-movie-btn" data-movie-id="${escapeHTML(String(movie.id))}">
                                         <i class="bi bi-trash"></i>
                                     </button>`
             }
-                                <button class="btn btn-info btn-sm details-movie-btn" data-movie-id="${movie.id}">
+                                <button class="btn btn-info btn-sm details-movie-btn" data-movie-id="${escapeHTML(String(movie.id))}">
                                     <i class="bi bi-info-circle"></i> Детали
                                 </button>
                             </div>
@@ -250,19 +339,19 @@ export class MoviesModule {
                         ${statusBadge ? `<div class="movie-badge">${statusBadge}</div>` : ''}
                         <div class="movie-rating">
                             <i class="bi bi-star-fill text-warning"></i>
-                            <span>${movie.voteAverage || movie.rating || '?'}</span>
+                            <span>${safeRating}</span>
                         </div>
                     </div>
                     <div class="p-2">
-                        <h6 class="fw-bold mb-0 movie-title">${movie.title}</h6>
+                        <h6 class="fw-bold mb-0 movie-title">${escapeHTML(String(movie.title || 'Без названия'))}</h6>
                         <div class="d-flex justify-content-between align-items-center">
                             <small class="text-muted">${year}</small>
-                            <small class="text-muted">${genres.join(', ')}</small>
+                            <small class="text-muted">${escapeHTML(genres.join(', '))}</small>
                         </div>
-                        ${movie.userRating
+                        ${safeOwnRating
                 ? `<div class="mt-1">
                                 <span class="badge" style="background: var(--primary);">
-                                    <i class="bi bi-heart-fill me-1" style="font-size: 0.6rem;"></i>${movie.userRating * 2}/10
+                                    <i class="bi bi-heart-fill me-1" style="font-size: 0.6rem;"></i>${safeOwnRating}/10
                                 </span>
                             </div>`
                 : ''
@@ -286,7 +375,7 @@ export class MoviesModule {
     }
 
     renderPagination(totalPages, type) {
-        if (this.currentTab === 'my' || totalPages <= 1) {
+        if (totalPages <= 1) {
             const pagination = document.getElementById('pagination');
             if (pagination) { pagination.style.display = 'none'; pagination.innerHTML = ''; }
             return;
@@ -295,7 +384,7 @@ export class MoviesModule {
         const pagination = document.getElementById('pagination');
         if (!pagination) return;
 
-        const currentPage = type === 'search' ? this.searchPage : this.popularPage;
+        const currentPage = type === 'search' ? this.searchPage : type === 'my' ? this.myMoviesPage : this.popularPage;
 
         pagination.style.display = 'flex';
         pagination.innerHTML = `
@@ -326,7 +415,9 @@ export class MoviesModule {
                 const page = parseInt(e.target.closest('.page-link').dataset.page);
                 const btnType = e.target.closest('.page-link').dataset.type;
 
+                if (page < 1 || page > totalPages) return;
                 if (btnType === 'search') { this.searchPage = page; await this.searchMovies(); }
+                else if (btnType === 'my') { this.myMoviesPage = page; this.renderMyMovieCollection(); }
                 else { this.popularPage = page; await this.loadPopularMovies(); }
             });
         });
@@ -343,19 +434,29 @@ export class MoviesModule {
     }
 
     attachEventListeners() {
+        document.getElementById('myMovieSearch')?.addEventListener('input', (event) => {
+            this.mySearchQuery = event.target.value;
+            this.myMoviesPage = 1;
+            this.renderMyMovieCollection();
+        });
+        document.getElementById('myMovieSort')?.addEventListener('change', (event) => {
+            this.mySortOrder = event.target.value;
+            this.myMoviesPage = 1;
+            this.renderMyMovieCollection();
+        });
         document.querySelectorAll('.movies-tabs [data-tab]').forEach(tab => {
             tab.addEventListener('click', (e) => {
                 document.querySelectorAll('.movies-tabs [data-tab]').forEach(t => t.classList.remove('active'));
-                e.target.classList.add('active');
-                this.switchTab(e.target.dataset.tab);
+                e.currentTarget.classList.add('active');
+                this.switchTab(e.currentTarget.dataset.tab);
             });
         });
 
         document.querySelectorAll('#statusFilters [data-filter]').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('#statusFilters [data-filter]').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-                this.currentFilter.status = e.target.dataset.filter;
+                e.currentTarget.classList.add('active');
+                this.currentFilter.status = e.currentTarget.dataset.filter;
                 this.myMoviesPage = 1;
                 this.loadMyMovies();
             });
@@ -426,11 +527,23 @@ export class MoviesModule {
         document.querySelectorAll('.delete-movie-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                if (confirm('Удалить фильм?')) {
-                    await this.movieService.deleteMovie(window.app.currentUser.uid, btn.dataset.movieId);
+                const userId = window.app.currentUser?.uid;
+                if (!userId || btn.disabled || !confirm('Удалить фильм?')) return;
+                btn.disabled = true;
+                try {
+                    const result = await this.movieService.deleteMovie(userId, btn.dataset.movieId);
+                    if (!result?.success) throw new Error('Удаление не выполнено');
+                    if (window.app.currentUser?.uid !== userId || this.currentTab !== 'my') return;
                     window.app.ui.showToast('Фильм удалён', 'info');
                     await this.loadMyMovies();
-                    window.app.refreshUserData();
+                    if (window.app.currentUser?.uid === userId) window.app.refreshUserData();
+                } catch (error) {
+                    console.error('Не удалось удалить фильм:', error);
+                    if (window.app.currentUser?.uid === userId && this.currentTab === 'my') {
+                        window.app.ui.showToast('Не удалось удалить фильм. Попробуй снова.', 'error');
+                    }
+                } finally {
+                    btn.disabled = false;
                 }
             });
         });
@@ -456,7 +569,9 @@ export class MoviesModule {
         document.body.style.overflow = '';
 
         const isEdit = !!existingId;
-        const userRating10 = (movieData.userRating || 0) * 2;
+        const rawOwnRating = Number(movieData.userRating);
+        const userRating10 = Number.isFinite(rawOwnRating) ? Math.min(10, Math.max(0, rawOwnRating * 2)) : 0;
+        const posterURL = safeAvatarURL(movieData.poster);
 
         const container = document.createElement('div');
         container.id = 'movieModalContainer';
@@ -476,25 +591,25 @@ export class MoviesModule {
                         <div class="modal-body">
                             <div class="row">
                                 <div class="col-md-4 mb-3">
-                                    ${movieData.poster
-                ? `<img src="${movieData.poster}" alt="${movieData.title}" class="w-100 rounded">`
+                                    ${posterURL
+                ? `<img src="${escapeHTML(posterURL)}" alt="${escapeHTML(String(movieData.title || 'Фильм'))}" class="w-100 rounded">`
                 : `<div class="bg-secondary rounded w-100 d-flex align-items-center justify-content-center" style="height: 300px;">
                                             <i class="bi bi-film display-1 text-white opacity-25"></i>
                                         </div>`
             }
                                 </div>
                                 <div class="col-md-8">
-                                    <h4 class="fw-bold">${movieData.title}</h4>
-                                    ${movieData.originalTitle ? `<p class="text-muted">${movieData.originalTitle}</p>` : ''}
-                                    ${movieData.tagline ? `<p class="fst-italic text-muted">"${movieData.tagline}"</p>` : ''}
+                                    <h4 class="fw-bold">${escapeHTML(String(movieData.title || 'Без названия'))}</h4>
+                                    ${movieData.originalTitle ? `<p class="text-muted">${escapeHTML(String(movieData.originalTitle))}</p>` : ''}
+                                    ${movieData.tagline ? `<p class="fst-italic text-muted">"${escapeHTML(String(movieData.tagline))}"</p>` : ''}
 
                                     <div class="mb-2">
                                         ${movieData.genres ? movieData.genres.map(g =>
-                `<span class="badge bg-primary me-1">${g.name || g}</span>`
+                `<span class="badge bg-primary me-1">${escapeHTML(String(g.name || g))}</span>`
             ).join('') : ''}
                                     </div>
 
-                                    ${movieData.overview ? `<p class="small text-muted">${movieData.overview.substring(0, 300)}...</p>` : ''}
+                                    ${movieData.overview ? `<p class="small text-muted">${escapeHTML(String(movieData.overview).substring(0, 300))}...</p>` : ''}
 
                                     <form id="movieForm" class="mt-3">
                                         <div class="mb-2">
@@ -516,7 +631,7 @@ export class MoviesModule {
                                         <div class="mb-2">
                                             <label class="form-label fw-semibold small">Рецензия</label>
                                             <textarea class="form-control form-control-sm" name="review" rows="3"
-                                                      placeholder="Твои мысли о фильме...">${movieData.review || ''}</textarea>
+                                                      placeholder="Твои мысли о фильме...">${escapeHTML(String(movieData.review || ''))}</textarea>
                                         </div>
                                     </form>
                                 </div>
@@ -551,7 +666,9 @@ export class MoviesModule {
             });
         }
 
-        document.getElementById('saveMovieBtn').addEventListener('click', async () => {
+        document.getElementById('saveMovieBtn').addEventListener('click', async (event) => {
+            const saveButton = event.currentTarget;
+            if (saveButton.disabled) return;
             const form = document.getElementById('movieForm');
             const formData = new FormData(form);
 
@@ -579,7 +696,10 @@ export class MoviesModule {
                 review: formData.get('review')
             };
 
+            saveButton.disabled = true;
+            saveButton.setAttribute('aria-busy', 'true');
             const userId = window.app.currentUser.uid;
+            try {
             const result = isEdit
                 ? await this.movieService.updateMovie(userId, existingId, moviePayload)
                 : await this.movieService.addMovie(userId, moviePayload);
@@ -595,7 +715,14 @@ export class MoviesModule {
                     await this.render();
                 }, 300);
             } else {
-                window.app.ui.showToast('Ошибка сохранения', 'error');
+                window.app.ui.showToast('Не удалось сохранить фильм. Попробуй снова.', 'error');
+            }
+            } catch (error) {
+                console.error('Ошибка сохранения фильма:', error);
+                window.app.ui.showToast('Не удалось сохранить фильм. Попробуй снова.', 'error');
+            } finally {
+                saveButton.disabled = false;
+                saveButton.removeAttribute('aria-busy');
             }
         });
     }
@@ -621,29 +748,29 @@ export class MoviesModule {
                 <div class="modal-dialog modal-lg modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title fw-bold">${details.title || 'Без названия'}</h5>
+                            <h5 class="modal-title fw-bold">${escapeHTML(String(details.title || 'Без названия'))}</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
                             <div class="row">
                                 <div class="col-md-4 mb-3">
-                                    ${details.poster
-                ? `<img src="${details.poster}" class="w-100 rounded">`
+                                    ${safeAvatarURL(details.poster)
+                ? `<img src="${escapeHTML(safeAvatarURL(details.poster))}" alt="Постер фильма" class="w-100 rounded">`
                 : '<div class="bg-secondary rounded w-100" style="height: 300px;"></div>'
             }
                                 </div>
                                 <div class="col-md-8">
-                                    <p><strong>Оригинальное название:</strong> ${details.originalTitle || details.title || '—'}</p>
-                                    <p><strong>Год:</strong> ${details.releaseDate ? details.releaseDate.split('-')[0] : '—'}</p>
-                                    <p><strong>Рейтинг TMDB:</strong> ⭐ ${details.voteAverage || details.rating || '—'} / 10 (${details.voteCount || '0'} голосов)</p>
-                                    <p><strong>Длительность:</strong> ${details.runtime || '—'} мин.</p>
-                                    <p><strong>Жанры:</strong> ${details.genres?.map(g => g.name).join(', ') || '—'}</p>
-                                    <p><strong>Слоган:</strong> ${details.tagline || '—'}</p>
-                                    <p><strong>Страны:</strong> ${details.productionCountries?.map(c => c.name).join(', ') || '—'}</p>
-                                    ${details.userRating ? `<p><strong>Моя оценка:</strong> ❤️ ${details.userRating * 2} / 10</p>` : ''}
-                                    ${details.review ? `<p><strong>Рецензия:</strong></p><p class="fst-italic">"${details.review}"</p>` : ''}
+                                    <p><strong>Оригинальное название:</strong> ${escapeHTML(String(details.originalTitle || details.title || '—'))}</p>
+                                    <p><strong>Год:</strong> ${escapeHTML(String(details.releaseDate || '—').split('-')[0])}</p>
+                                    <p><strong>Рейтинг TMDB:</strong> ⭐ ${Number.isFinite(Number(details.voteAverage || details.rating)) ? Math.min(10, Math.max(0, Number(details.voteAverage || details.rating))) : '—'} / 10 (${Number.isFinite(Number(details.voteCount)) ? Math.max(0, Math.floor(Number(details.voteCount))) : '0'} голосов)</p>
+                                    <p><strong>Длительность:</strong> ${Number.isFinite(Number(details.runtime)) && Number(details.runtime) > 0 ? Math.floor(Number(details.runtime)) : '—'} мин.</p>
+                                    <p><strong>Жанры:</strong> ${escapeHTML(Array.isArray(details.genres) ? details.genres.map(g => String(g.name || g)).join(', ') || '—' : '—')}</p>
+                                    <p><strong>Слоган:</strong> ${escapeHTML(String(details.tagline || '—'))}</p>
+                                    <p><strong>Страны:</strong> ${escapeHTML(Array.isArray(details.productionCountries) ? details.productionCountries.map(c => String(c.name || c)).join(', ') || '—' : '—')}</p>
+                                    ${details.userRating ? `<p><strong>Моя оценка:</strong> ❤️ ${Math.min(10, Math.max(0, Number(details.userRating) * 2))} / 10</p>` : ''}
+                                    ${details.review ? `<p><strong>Рецензия:</strong></p><p class="fst-italic">"${escapeHTML(String(details.review))}"</p>` : ''}
                                     <hr>
-                                    <p>${details.overview || ''}</p>
+                                    <p>${escapeHTML(String(details.overview || ''))}</p>
                                 </div>
                             </div>
                         </div>

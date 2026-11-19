@@ -1,9 +1,14 @@
 import { BookService } from '../../services/book.service.js';
+import { escapeHTML } from '../../core/escape-html.js';
+import { applyCollectionSearchAndSort } from '../../core/collection-search.js';
 
 export class BooksModule {
     constructor() {
         this.bookService = new BookService();
         this.currentFilter = { status: 'all', genre: 'all', rating: 0 };
+        this.requestId = 0;
+        this.searchQuery = '';
+        this.sortOrder = 'recent';
     }
 
     async render() {
@@ -13,12 +18,29 @@ export class BooksModule {
         const userId = window.app.currentUser?.uid;
         if (!userId) return;
 
-        mainContent.innerHTML = window.app.ui.createLoader();
+        const requestId = ++this.requestId;
+        mainContent.innerHTML = `<div data-collection-request="books-${requestId}">${window.app.ui.createLoader()}</div>`;
 
-        const books = await this.bookService.getBooks(userId, this.currentFilter);
+        try {
+            const books = await this.bookService.getBooks(userId, this.currentFilter, { throwOnError: true });
 
-        mainContent.innerHTML = this.getTemplate(books);
-        this.attachEventListeners();
+            if (requestId !== this.requestId || window.app.currentUser?.uid !== userId ||
+                !mainContent.isConnected || !mainContent.querySelector('[data-collection-request="books-' + requestId + '"]')) return;
+
+            mainContent.innerHTML = this.getTemplate(books);
+            this.attachEventListeners();
+        } catch (error) {
+            console.error('Не удалось загрузить коллекцию книг:', error);
+            if (requestId !== this.requestId || window.app.currentUser?.uid !== userId ||
+                !mainContent.isConnected || !mainContent.querySelector('[data-collection-request="books-' + requestId + '"]')) return;
+
+            mainContent.innerHTML = `<section class="atlas-empty" role="alert">
+                <h2>Не удалось загрузить книги</h2>
+                <p>Проверь подключение к интернету и попробуй ещё раз.</p>
+                <button class="btn btn-premium" type="button" data-retry-books>Повторить</button>
+            </section>`;
+            mainContent.querySelector('[data-retry-books]')?.addEventListener('click', () => this.render());
+        }
     }
 
     getTemplate(books) {
@@ -51,8 +73,8 @@ export class BooksModule {
                         <div class="col-auto">
                             <select class="form-select form-select-sm" id="genreFilter" style="min-width: 130px;">
                                 ${genres.map(g => `
-                                    <option value="${g}" ${activeGenre === g ? 'selected' : ''}>
-                                        ${g === 'all' ? 'Все жанры' : g}
+                                    <option value="${escapeHTML(g)}" ${activeGenre === g ? 'selected' : ''}>
+                                        ${escapeHTML(g === 'all' ? 'Все жанры' : g)}
                                     </option>
                                 `).join('')}
                             </select>
@@ -73,11 +95,32 @@ export class BooksModule {
                                 </button>
                             </div>
                         </div>
+                        <div class="col-12 col-md">
+                            <label class="visually-hidden" for="bookSearch">Поиск книги</label>
+                            <input type="search" class="form-control form-control-sm" id="bookSearch"
+                                   placeholder="Название, автор или жанр…" autocomplete="off"
+                                   value="${escapeHTML(this.searchQuery)}">
+                        </div>
+                        <div class="col-12 col-sm-auto">
+                            <label class="visually-hidden" for="bookSort">Сортировка книг</label>
+                            <select class="form-select form-select-sm" id="bookSort">
+                                <option value="recent" ${this.sortOrder === 'recent' ? 'selected' : ''}>Сначала новые</option>
+                                <option value="name" ${this.sortOrder === 'name' ? 'selected' : ''}>По названию</option>
+                                <option value="rating" ${this.sortOrder === 'rating' ? 'selected' : ''}>По оценке</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
+                <p class="text-muted small mb-3" id="bookSearchCount" role="status" aria-live="polite"></p>
+
                 <div id="booksGrid" class="row g-3">
                     ${books.length === 0 ? this.getEmptyState() : books.map((b, i) => this.createCard(b, i)).join('')}
+                </div>
+                <div id="bookSearchEmpty" class="atlas-empty atlas-empty--book" hidden>
+                    <div class="atlas-empty-art" aria-hidden="true"><i class="bi bi-search"></i></div>
+                    <h3>Книга не найдена</h3>
+                    <p>Проверь название, автора или очисти строку поиска.</p>
                 </div>
 
                 <div id="bookModalContainer"></div>
@@ -86,11 +129,23 @@ export class BooksModule {
     }
 
     getEmptyState() {
+        const hasFilter = this.currentFilter.status !== 'all' || this.currentFilter.genre !== 'all';
+        if (hasFilter) return `
+            <div class="col-12"><section class="atlas-empty atlas-empty--book" aria-label="Нет результатов по фильтрам">
+                <div class="atlas-empty-art" aria-hidden="true"><i class="bi bi-funnel"></i></div>
+                <h3>По этим фильтрам пока ничего нет</h3>
+                <p>Попробуй выбрать другой статус или категорию — твои записи никуда не исчезли.</p>
+            </section></div>
+        `;
         return `
-            <div class="col-12 text-center py-5">
-                <i class="bi bi-book display-1 text-muted opacity-25"></i>
-                <h5 class="mt-3 text-muted">Нет книг</h5>
-                <p class="text-muted small">Добавь свою первую книгу</p>
+            <div class="col-12">
+                <section class="atlas-empty atlas-empty--book" aria-labelledby="book-empty-title">
+                    <div class="atlas-empty-art" aria-hidden="true"><span class="atlas-empty-orbit"></span><i class="bi bi-book-half"></i><span class="atlas-empty-spark atlas-empty-spark--one">✦</span><span class="atlas-empty-spark atlas-empty-spark--two">✧</span></div>
+                    <span class="atlas-empty-kicker">Твоя библиотека</span>
+                    <h3 id="book-empty-title">Время открыть новую страницу</h3>
+                    <p>Собери любимые истории и книги, которые хочется прочитать однажды.</p>
+                    <button type="button" class="btn btn-premium atlas-empty-action" id="emptyAddBookBtn"><i class="bi bi-plus-lg me-2"></i>Добавить книгу</button>
+                </section>
             </div>
         `;
     }
@@ -101,35 +156,44 @@ export class BooksModule {
             reading: { badge: 'Читаю', color: 'primary' },
             want_to_read: { badge: 'Хочу прочитать', color: 'warning' }
         };
-        const status = statuses[book.status] || statuses.want_to_read;
-        const progress = book.totalPages && book.currentPage
-            ? Math.round((book.currentPage / book.totalPages) * 100)
-            : 0;
+        const status = Object.hasOwn(statuses, book.status) ? statuses[book.status] : statuses.want_to_read;
+        const totalPages = Number(book.totalPages);
+        const currentPage = Number(book.currentPage);
+        const safeTotalPages = Number.isFinite(totalPages) && totalPages > 0 ? Math.floor(totalPages) : 0;
+        const safeCurrentPage = Number.isFinite(currentPage) && currentPage > 0
+            ? Math.min(safeTotalPages, Math.floor(currentPage)) : 0;
+        const progress = safeTotalPages ? Math.round((safeCurrentPage / safeTotalPages) * 100) : 0;
+        const rating = Number(book.userRating);
+        const safeRating = Number.isFinite(rating) && rating > 0 ? Math.min(10, Math.max(0, rating)) : 0;
 
         return `
-            <div class="col-12 col-md-6 col-lg-4 fade-in-up" style="animation-delay: ${index * 0.06}s">
+            <div class="col-12 col-md-6 col-lg-4 fade-in-up" data-book-card
+                 data-search="${escapeHTML([book.title, book.author, ...(Array.isArray(book.genres) ? book.genres : [])].filter(Boolean).join(' ').toLocaleLowerCase())}"
+                 data-name="${escapeHTML(String(book.title || '').toLocaleLowerCase())}"
+                 data-rating="${safeRating}" data-original-index="${index}"
+                 style="animation-delay: ${Math.min(index, 12) * 0.06}s">
                 <div class="card-premium h-100 book-card p-3">
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <span class="badge bg-${status.color} bg-opacity-10 text-${status.color}">${status.badge}</span>
                         <div class="book-card-actions">
-                            <button class="btn btn-sm btn-outline-secondary rounded-circle me-1 edit-btn" data-id="${book.id}">
+                            <button class="btn btn-sm btn-outline-secondary rounded-circle me-1 edit-btn" aria-label="Редактировать запись" title="Редактировать" data-id="${escapeHTML(String(book.id))}">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="${book.id}">
+                            <button class="btn btn-sm btn-outline-danger rounded-circle delete-btn" aria-label="Удалить запись" title="Удалить" data-id="${escapeHTML(String(book.id))}">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </div>
                     </div>
-                    <h6 class="fw-bold mb-1">${book.title || 'Без названия'}</h6>
-                    <p class="text-muted small mb-2">${book.author || 'Автор не указан'}</p>
-                    ${book.genres && book.genres.length
-                ? `<div class="mb-2">${book.genres.map(g => `<span class="badge bg-light text-dark me-1">${g}</span>`).join('')}</div>`
+                    <h6 class="fw-bold mb-1">${escapeHTML(String(book.title || 'Без названия'))}</h6>
+                    <p class="text-muted small mb-2">${escapeHTML(String(book.author || 'Автор не указан'))}</p>
+                    ${Array.isArray(book.genres) && book.genres.length
+                ? `<div class="mb-2">${book.genres.map(g => `<span class="badge bg-light text-dark me-1">${escapeHTML(String(g))}</span>`).join('')}</div>`
                 : ''
             }
                     ${book.status === 'reading' && progress > 0
                 ? `<div class="mb-2">
                             <div class="d-flex justify-content-between small">
-                                <span>${book.currentPage}/${book.totalPages} стр.</span>
+                                <span>${safeCurrentPage}/${safeTotalPages} стр.</span>
                                 <span>${progress}%</span>
                             </div>
                             <div class="progress" style="height: 4px;">
@@ -139,8 +203,8 @@ export class BooksModule {
                 : ''
             }
                     <div class="d-flex justify-content-between align-items-center">
-                        ${book.userRating
-                ? `<span class="badge bg-primary">${book.userRating}/10</span>`
+                        ${safeRating
+                ? `<span class="badge bg-primary">${safeRating}/10</span>`
                 : '<span></span>'
             }
                         <small class="text-muted">${this.formatDate(book.createdAt)}</small>
@@ -151,7 +215,18 @@ export class BooksModule {
     }
 
     attachEventListeners() {
+        const searchInput = document.getElementById('bookSearch');
+        searchInput?.addEventListener('input', () => {
+            this.searchQuery = searchInput.value;
+            this.applySearchAndSort();
+        });
+        document.getElementById('bookSort')?.addEventListener('change', (event) => {
+            this.sortOrder = event.target.value;
+            this.applySearchAndSort();
+        });
+        this.applySearchAndSort();
         document.getElementById('addBookBtn')?.addEventListener('click', () => this.showModal(null));
+        document.getElementById('emptyAddBookBtn')?.addEventListener('click', () => this.showModal(null));
 
         document.querySelectorAll('.edit-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -163,18 +238,30 @@ export class BooksModule {
         document.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                if (confirm('Удалить эту книгу?')) {
-                    await this.bookService.deleteBook(window.app.currentUser.uid, btn.dataset.id);
+                const userId = window.app.currentUser?.uid;
+                if (!userId || btn.disabled || !confirm('Удалить эту книгу?')) return;
+                btn.disabled = true;
+                try {
+                    const result = await this.bookService.deleteBook(userId, btn.dataset.id);
+                    if (!result?.success) throw new Error('Удаление не выполнено');
+                    if (window.app.currentUser?.uid !== userId) return;
                     window.app.ui.showToast('Книга удалена', 'info');
-                    this.render();
-                    window.app.refreshUserData();
+                    await this.render();
+                    if (window.app.currentUser?.uid === userId) window.app.refreshUserData();
+                } catch (error) {
+                    console.error('Не удалось удалить книгу:', error);
+                    if (window.app.currentUser?.uid === userId) {
+                        window.app.ui.showToast('Не удалось удалить запись. Попробуй снова.', 'error');
+                    }
+                } finally {
+                    btn.disabled = false;
                 }
             });
         });
 
         document.querySelectorAll('#statusFilters [data-filter]').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                this.currentFilter.status = e.target.dataset.filter;
+                this.currentFilter.status = e.currentTarget.dataset.filter;
                 this.render();
             });
         });
@@ -183,6 +270,11 @@ export class BooksModule {
             this.currentFilter.genre = e.target.value;
             this.render();
         });
+    }
+
+    applySearchAndSort() {
+        return applyCollectionSearchAndSort({ document, gridId: 'booksGrid', cardSelector: '[data-book-card]',
+            emptyId: 'bookSearchEmpty', countId: 'bookSearchCount', query: this.searchQuery, order: this.sortOrder });
     }
 
     async showModal(bookId) {
@@ -215,14 +307,14 @@ export class BooksModule {
                             <form id="bookForm">
                                 <div class="row g-3">
                                     <div class="col-md-8">
-                                        <label class="form-label fw-semibold small">Название *</label>
-                                        <input type="text" class="form-control" name="title"
-                                               value="${book?.title || ''}" required>
+                                        <label for="bookPrimaryField" class="form-label fw-semibold small">Название *</label>
+                                        <input type="text" class="form-control" id="bookPrimaryField" name="title"
+                                               value="${escapeHTML(String(book?.title || ''))}" required>
                                     </div>
                                     <div class="col-md-4">
-                                        <label class="form-label fw-semibold small">Автор *</label>
-                                        <input type="text" class="form-control" name="author"
-                                               value="${book?.author || ''}" required>
+                                        <label for="bookAuthorField" class="form-label fw-semibold small">Автор *</label>
+                                        <input type="text" class="form-control" id="bookAuthorField" name="author"
+                                               value="${escapeHTML(String(book?.author || ''))}" required>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Статус</label>
@@ -232,11 +324,14 @@ export class BooksModule {
                                             <option value="read" ${book?.status === 'read' ? 'selected' : ''}>Прочитана</option>
                                         </select>
                                     </div>
+                                    <div class="col-12 atlas-form-extras"><details class="atlas-form-details" ${isEdit ? 'open' : ''}>
+                                        <summary>Жанры, страницы, оценка и заметки</summary>
+                                        <div class="row g-3 mt-1">
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Жанры</label>
                                         <select class="form-select" name="genres" multiple size="3">
                                             ${genres.map(g => `
-                                                <option value="${g}" ${book?.genres?.includes(g) ? 'selected' : ''}>${g}</option>
+                                                <option value="${escapeHTML(g)}" ${book?.genres?.includes(g) ? 'selected' : ''}>${escapeHTML(g)}</option>
                                             `).join('')}
                                         </select>
                                         <small class="text-muted">Ctrl+клик для нескольких</small>
@@ -244,39 +339,41 @@ export class BooksModule {
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Год издания</label>
                                         <input type="number" class="form-control" name="year"
-                                               value="${book?.year || ''}" min="1000" max="2099">
+                                               value="${escapeHTML(String(book?.year || ''))}" min="1000" max="2099">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Всего страниц</label>
                                         <input type="number" class="form-control" name="totalPages"
-                                               value="${book?.totalPages || ''}">
+                                               value="${escapeHTML(String(book?.totalPages || ''))}">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Прочитано</label>
                                         <input type="number" class="form-control" name="currentPage"
-                                               value="${book?.currentPage || ''}">
+                                               value="${escapeHTML(String(book?.currentPage || ''))}">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Моя оценка</label>
                                         <div class="d-flex align-items-center gap-2 pt-2">
                                             <input type="range" class="form-range" name="userRating"
-                                                   min="0" max="10" value="${book?.userRating || 0}"
+                                                   min="0" max="10" value="${Number.isFinite(Number(book?.userRating)) ? Math.min(10, Math.max(0, Number(book.userRating))) : 0}"
                                                    id="ratingSlider" style="flex: 1;">
-                                            <span class="badge bg-primary" id="ratingValue">${book?.userRating || 0}/10</span>
+                                            <span class="badge bg-primary" id="ratingValue">${Number.isFinite(Number(book?.userRating)) ? Math.min(10, Math.max(0, Number(book.userRating))) : 0}/10</span>
                                         </div>
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label fw-semibold small">Рецензия</label>
                                         <textarea class="form-control" name="review" rows="3"
-                                                  placeholder="Твои мысли о книге...">${book?.review || ''}</textarea>
+                                                  placeholder="Твои мысли о книге...">${escapeHTML(String(book?.review || ''))}</textarea>
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label fw-semibold small">
                                             <i class="bi bi-chat-quote me-1"></i>Любимые цитаты
                                         </label>
                                         <textarea class="form-control" name="quotes" rows="2"
-                                                  placeholder="Разделяй цитаты символом |">${book?.quotes?.join('|') || ''}</textarea>
+                                                  placeholder="Разделяй цитаты символом |">${escapeHTML(Array.isArray(book?.quotes) ? book.quotes.join('|') : '')}</textarea>
                                     </div>
+                                        </div>
+                                    </details></div>
                                 </div>
                             </form>
                         </div>
@@ -293,6 +390,9 @@ export class BooksModule {
 
         const modalElement = document.getElementById('bookModal');
         const modal = new bootstrap.Modal(modalElement);
+        modalElement.addEventListener('shown.bs.modal', () => {
+            modalElement.querySelector('#bookPrimaryField')?.focus();
+        }, { once: true });
         modal.show();
 
         modalElement.addEventListener('hidden.bs.modal', () => {
@@ -309,13 +409,16 @@ export class BooksModule {
             });
         }
 
-        document.getElementById('saveBookBtn').addEventListener('click', async () => {
+        document.getElementById('saveBookBtn').addEventListener('click', async (event) => {
+            const saveButton = event.currentTarget;
+            if (saveButton.disabled) return;
             const form = document.getElementById('bookForm');
+            if (!form.reportValidity()) return;
             const formData = new FormData(form);
 
             const data = {
-                title: formData.get('title'),
-                author: formData.get('author'),
+                title: String(formData.get('title') || '').trim(),
+                author: String(formData.get('author') || '').trim(),
                 status: formData.get('status'),
                 genres: formData.getAll('genres'),
                 year: parseInt(formData.get('year')) || null,
@@ -327,13 +430,21 @@ export class BooksModule {
             };
 
             if (!data.title || !data.author) {
+                form.querySelector('#bookPrimaryField')?.focus();
                 window.app.ui.showToast('Введи название и автора', 'warning');
                 return;
             }
 
+            saveButton.disabled = true;
+            saveButton.setAttribute('aria-busy', 'true');
+            try {
             const result = isEdit
                 ? await this.bookService.updateBook(userId, bookId, data)
                 : await this.bookService.addBook(userId, data);
+
+            // A completed write belongs to the account that started it.
+            // Never update another account's UI after an auth switch.
+            if (window.app.currentUser?.uid !== userId) return;
 
             if (result.success) {
                 modal.hide();
@@ -343,10 +454,19 @@ export class BooksModule {
                     'success'
                 );
                 setTimeout(async () => {
-                    await this.render();
+                    if (window.app.currentUser?.uid === userId) await this.render();
                 }, 300);
             } else {
-                window.app.ui.showToast('Ошибка сохранения', 'error');
+                window.app.ui.showToast('Не удалось сохранить книгу. Попробуй снова.', 'error');
+            }
+            } catch (error) {
+                console.error('Ошибка сохранения книги:', error);
+                if (window.app.currentUser?.uid === userId) {
+                    window.app.ui.showToast('Не удалось сохранить книгу. Попробуй снова.', 'error');
+                }
+            } finally {
+                saveButton.disabled = false;
+                saveButton.removeAttribute('aria-busy');
             }
         });
     }

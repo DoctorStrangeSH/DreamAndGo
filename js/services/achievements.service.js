@@ -134,7 +134,7 @@ export class AchievementsService {
     }
 
     // Получить все достижения пользователя
-    async getUserAchievements(userId) {
+    async getUserAchievements(userId, { throwOnError = false } = {}) {
         try {
             const userDoc = await getDoc(doc(this.db, 'users', userId));
             if (!userDoc.exists()) return [];
@@ -142,6 +142,7 @@ export class AchievementsService {
             return userDoc.data().achievements || [];
         } catch (error) {
             console.error('Ошибка загрузки достижений:', error);
+            if (throwOnError) throw error;
             return [];
         }
     }

@@ -9,7 +9,7 @@ export class BookService {
         this.db = db;
     }
 
-    async getBooks(userId, filters = {}) {
+    async getBooks(userId, filters = {}, { throwOnError = false } = {}) {
         try {
             const booksRef = collection(this.db, 'users', userId, 'books');
             let q = query(booksRef, orderBy('createdAt', 'desc'));
@@ -32,17 +32,20 @@ export class BookService {
                 }
             });
 
+            // Apply genre and rating together, not as mutually exclusive filters.
+            let filteredBooks = books;
             if (filters.genre && filters.genre !== 'all') {
-                return books.filter(b => b.genres?.includes(filters.genre));
+                filteredBooks = filteredBooks.filter(b => b.genres?.includes(filters.genre));
             }
 
             if (filters.rating && filters.rating > 0) {
-                return books.filter(b => b.userRating >= filters.rating);
+                filteredBooks = filteredBooks.filter(b => b.userRating >= filters.rating);
             }
 
-            return books;
+            return filteredBooks;
         } catch (error) {
             console.error('Ошибка загрузки книг:', error);
+            if (throwOnError) throw error;
             return [];
         }
     }
@@ -114,7 +117,8 @@ export class BookService {
 
     async updateUserStats(userId) {
         try {
-            const books = await this.getBooks(userId);
+            // Never overwrite valid counters with zeros when the collection read failed.
+            const books = await this.getBooks(userId, {}, { throwOnError: true });
             const reading = books.filter(b => b.status === 'reading').length;
             const read = books.filter(b => b.status === 'read').length;
             const wantToRead = books.filter(b => b.status === 'want_to_read').length;

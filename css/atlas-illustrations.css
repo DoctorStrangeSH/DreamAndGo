@@ -1,0 +1,42 @@
+/* Atlas illustrated empty states · CSS-only ornamental geometry */
+.atlas-empty {
+  --empty-accent:#168b8d;
+  position:relative;isolation:isolate;overflow:hidden;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:390px;padding:3.1rem 1.4rem;text-align:center;
+  background:radial-gradient(circle at 49% 14%,rgba(94,201,180,.15),transparent 35%),
+             linear-gradient(125deg,var(--bg-card),var(--bg-secondary));
+  border:1px solid var(--border-color);border-radius:30px;box-shadow:var(--shadow-sm)
+}
+.atlas-empty[hidden] {display:none}
+.atlas-empty::before,.atlas-empty::after {
+  content:"";position:absolute;z-index:-1;width:290px;height:290px;border:1px solid var(--border-color);
+  border-radius:50%;opacity:.6;pointer-events:none
+}
+.atlas-empty::before {left:-165px;top:-155px}
+.atlas-empty::after {right:-180px;bottom:-185px}
+.atlas-empty--dream {--empty-accent:#d98771;background:radial-gradient(circle at 51% 14%,rgba(240,161,119,.2),transparent 35%),linear-gradient(125deg,var(--bg-card),var(--bg-secondary))}
+.atlas-empty--book {--empty-accent:#607eaf;background:radial-gradient(circle at 51% 14%,rgba(124,153,202,.17),transparent 35%),linear-gradient(125deg,var(--bg-card),var(--bg-secondary))}
+.atlas-empty-art {
+  width:116px;height:116px;position:relative;display:grid;place-items:center;
+  border-radius:37px;margin-bottom:1.45rem;
+  background:linear-gradient(135deg,var(--bg-card),var(--bg-tertiary));
+  border:1px solid var(--border-color);box-shadow:var(--shadow-md);transform:rotate(-6deg)
+}
+.atlas-empty-art>.bi {font-size:3.5rem;color:var(--empty-accent);transform:rotate(6deg)}
+.atlas-empty-orbit {position:absolute;inset:-15px;border:1px dashed var(--empty-accent);opacity:.35;border-radius:43px}
+.atlas-empty-spark {position:absolute;font-size:1.7rem;color:var(--accent)}
+.atlas-empty-spark--one {right:-26px;top:-20px}
+.atlas-empty-spark--two {left:-20px;bottom:-10px;font-size:1.25rem}
+.atlas-empty-kicker {font-size:.75rem;font-weight:850;text-transform:uppercase;letter-spacing:.14em;color:var(--empty-accent);margin-bottom:.6rem}
+.atlas-empty h3 {font-size:clamp(1.45rem,2.6vw,2.1rem);letter-spacing:-.05em;margin:0 0 .7rem;font-weight:850;color:var(--text-primary)}
+.atlas-empty p {max-width:43ch;font-size:.95rem;line-height:1.7;color:var(--text-secondary);margin-bottom:1.5rem}
+.atlas-empty-action {min-height:46px}
+@media(max-width:575.98px) {.atlas-empty {min-height:355px;padding:2rem 1rem;border-radius:20px}.atlas-empty-art {width:92px;height:92px;border-radius:29px}.atlas-empty-art>.bi {font-size:2.8rem}}
+
+.atlas-empty--achievement {
+  --empty-accent:#aa8152;
+  background:radial-gradient(circle at 50% 10%,rgba(237,188,110,.2),transparent 34%),
+             linear-gradient(125deg,var(--bg-card),var(--bg-secondary))
+}
+[data-bs-theme="dark"] .atlas-empty--achievement {--empty-accent:#edc18a}

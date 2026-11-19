@@ -1,7 +1,8 @@
-import { db } from '../config/firebase.js';
+import { auth, db } from '../config/firebase.js';
+import { validateChatMessage, validChatParticipants, isValidChatUid, isValidChatPathSegment } from '../core/chat-message-policy.js';
 import {
-    collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc,
-    query, orderBy, serverTimestamp, writeBatch, setDoc
+    collection, doc, getDocs, getDoc, updateDoc, deleteDoc,
+    query, orderBy, limit, serverTimestamp, writeBatch, setDoc, increment, runTransaction
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 export class ChatService {
@@ -10,10 +11,14 @@ export class ChatService {
     }
 
     getChatId(userId1, userId2) {
+        if (!isValidChatUid(userId1) || !isValidChatUid(userId2) || userId1 === userId2) {
+            throw new TypeError('Некорректные участники диалога');
+        }
         return [userId1, userId2].sort().join('_');
     }
 
     async getChats(userId) {
+        if (!isValidChatUid(userId) || auth?.currentUser?.uid !== userId) return [];
         try {
             const chatsRef = collection(this.db, 'users', userId, 'chats');
             const q = query(chatsRef, orderBy('lastMessageTime', 'desc'));
@@ -46,31 +51,27 @@ export class ChatService {
     }
 
     async getOrCreateChat(userId, partnerId) {
+        if (!isValidChatUid(userId) || !isValidChatUid(partnerId) ||
+            userId === partnerId || auth?.currentUser?.uid !== userId) return null;
         try {
-            const userChatRef = doc(this.db, 'users', userId, 'chats', partnerId);
-            const userChatDoc = await getDoc(userChatRef);
-
-            if (userChatDoc.exists()) {
-                return partnerId;
-            }
-
-            const batch = writeBatch(this.db);
-
-            const chatData = {
-                partnerId: partnerId,
-                lastMessage: '',
-                lastMessageTime: serverTimestamp(),
-                unread: 0,
-                createdAt: serverTimestamp()
-            };
-
-            batch.set(doc(this.db, 'users', userId, 'chats', partnerId), chatData);
-            batch.set(doc(this.db, 'users', partnerId, 'chats', userId), {
-                ...chatData,
-                partnerId: userId
+            const ownRef = doc(this.db, 'users', userId, 'chats', partnerId);
+            const peerRef = doc(this.db, 'users', partnerId, 'chats', userId);
+            await runTransaction(this.db, async transaction => {
+                // Read only our own document. Concurrent attempts retry safely.
+                const own = await transaction.get(ownRef);
+                if (own.exists()) return;
+                transaction.set(ownRef, {
+                    partnerId,
+                    lastMessage: '',
+                    lastMessageTime: serverTimestamp(),
+                    unread: 0,
+                    createdAt: serverTimestamp()
+                });
+                // Preserve the recipient's existing preview, timestamp and unread count.
+                // The first actual message populates them if the record was absent.
+                transaction.set(peerRef, { partnerId: userId }, { merge: true });
             });
-
-            await batch.commit();
+            if (auth?.currentUser?.uid !== userId) return null;
             return partnerId;
         } catch (error) {
             console.error('Ошибка создания чата:', error);
@@ -79,6 +80,12 @@ export class ChatService {
     }
 
     async sendMessage(chatId, senderId, receiverId, text) {
+        const validation = validateChatMessage(text);
+        if (!validation.valid) return { success: false, error: validation.error };
+        if (!validChatParticipants(auth?.currentUser?.uid, senderId, receiverId, chatId, this.getChatId.bind(this))) {
+            return { success: false, error: 'Некорректные участники диалога' };
+        }
+        text = validation.text;
         try {
             const messagesRef = collection(this.db, 'chats', chatId, 'messages');
 
@@ -90,9 +97,9 @@ export class ChatService {
                 edited: false
             };
 
-            await addDoc(messagesRef, message);
-
+            // All three documents succeed or fail together.
             const batch = writeBatch(this.db);
+            batch.set(doc(messagesRef), message);
 
             const updateData = {
                 lastMessage: text.substring(0, 100),
@@ -102,17 +109,16 @@ export class ChatService {
             batch.set(doc(this.db, 'users', senderId, 'chats', receiverId), {
                 partnerId: receiverId,
                 ...updateData,
-                unread: 0,
-                createdAt: serverTimestamp()
+                unread: 0
             }, { merge: true });
 
             batch.set(doc(this.db, 'users', receiverId, 'chats', senderId), {
                 partnerId: senderId,
                 ...updateData,
-                unread: 1,
-                createdAt: serverTimestamp()
+                unread: increment(1)
             }, { merge: true });
 
+            if (auth?.currentUser?.uid !== senderId) return { success: false, error: 'Сессия изменилась' };
             await batch.commit();
             return { success: true };
         } catch (error) {
@@ -123,7 +129,13 @@ export class ChatService {
 
     async deleteMessage(chatId, messageId) {
         try {
-            await deleteDoc(doc(this.db, 'chats', chatId, 'messages', messageId));
+            const actorId = auth?.currentUser?.uid;
+            if (!actorId || !isValidChatUid(actorId) || !isValidChatPathSegment(chatId, 257) ||
+                !isValidChatPathSegment(messageId, 128)) return { success: false };
+            const messageRef = doc(this.db, 'chats', chatId, 'messages', messageId);
+            const existing = await getDoc(messageRef);
+            if (!existing.exists() || existing.data().senderId !== actorId || auth?.currentUser?.uid !== actorId) return { success: false };
+            await deleteDoc(messageRef);
             return { success: true };
         } catch (error) {
             console.error('Ошибка удаления сообщения:', error);
@@ -132,9 +144,17 @@ export class ChatService {
     }
 
     async editMessage(chatId, messageId, newText) {
+        const validation = validateChatMessage(newText);
+        if (!validation.valid) return { success: false, error: validation.error };
         try {
-            await updateDoc(doc(this.db, 'chats', chatId, 'messages', messageId), {
-                text: newText,
+            const actorId = auth?.currentUser?.uid;
+            if (!actorId || !isValidChatUid(actorId) || !isValidChatPathSegment(chatId, 257) ||
+                !isValidChatPathSegment(messageId, 128)) return { success: false };
+            const messageRef = doc(this.db, 'chats', chatId, 'messages', messageId);
+            const existing = await getDoc(messageRef);
+            if (!existing.exists() || existing.data().senderId !== actorId || auth?.currentUser?.uid !== actorId) return { success: false };
+            await updateDoc(messageRef, {
+                text: validation.text,
                 edited: true,
                 editedAt: serverTimestamp()
             });
@@ -146,6 +166,8 @@ export class ChatService {
     }
 
     async markAsRead(userId, partnerId) {
+        if (!isValidChatUid(userId) || !isValidChatUid(partnerId) ||
+            userId === partnerId || auth?.currentUser?.uid !== userId) return;
         try {
             const chatRef = doc(this.db, 'users', userId, 'chats', partnerId);
             await updateDoc(chatRef, { unread: 0 });
@@ -155,30 +177,43 @@ export class ChatService {
     }
 
     async deleteChat(userId, partnerId) {
+        if (!isValidChatUid(userId) || !isValidChatUid(partnerId) ||
+            userId === partnerId || auth?.currentUser?.uid !== userId) {
+            return { success: false, error: 'Некорректный диалог' };
+        }
         try {
             const chatId = this.getChatId(userId, partnerId);
-            const batch = writeBatch(this.db);
+            const messagesRef = collection(this.db, 'chats', chatId, 'messages');
 
-            // Удаляем диалог у обоих
+            // Firestore batches allow at most 500 writes. Reserve two writes
+            // for conversation metadata; fail without deleting anything if
+            // the full history will not fit into the atomic batch.
+            const snapshot = await getDocs(query(messagesRef, limit(499)));
+            if (snapshot.size > 498) {
+                return {
+                    success: false,
+                    error: 'История слишком длинная для безопасного удаления. Обратись к администратору.'
+                };
+            }
+
+            if (auth?.currentUser?.uid !== userId) return { success: false, error: 'Сессия изменилась' };
+            const batch = writeBatch(this.db);
+            snapshot.forEach(item => batch.delete(item.ref));
             batch.delete(doc(this.db, 'users', userId, 'chats', partnerId));
             batch.delete(doc(this.db, 'users', partnerId, 'chats', userId));
-
-            // Удаляем все сообщения
-            const messagesRef = collection(this.db, 'chats', chatId, 'messages');
-            const snapshot = await getDocs(messagesRef);
-            snapshot.forEach(msgDoc => {
-                batch.delete(msgDoc.ref);
-            });
-
             await batch.commit();
             return { success: true };
         } catch (error) {
             console.error('Ошибка удаления диалога:', error);
-            return { success: false };
+            return { success: false, error: 'Не удалось удалить диалог' };
         }
     }
 
     async deleteChatLocal(userId, partnerId) {
+        if (!isValidChatUid(userId) || !isValidChatUid(partnerId) ||
+            userId === partnerId || auth?.currentUser?.uid !== userId) {
+            return { success: false };
+        }
         try {
             await deleteDoc(doc(this.db, 'users', userId, 'chats', partnerId));
             return { success: true };
@@ -189,6 +224,7 @@ export class ChatService {
     }
 
     async getUserProfile(uid) {
+        if (!isValidChatUid(uid)) return null;
         try {
             const userDoc = await getDoc(doc(this.db, 'users', uid));
             if (userDoc.exists()) {

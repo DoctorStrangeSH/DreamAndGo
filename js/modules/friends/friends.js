@@ -1,4 +1,6 @@
 import { FriendsService } from '../../services/friends.service.js';
+import { escapeHTML } from '../../core/escape-html.js';
+import { getHomeSnapshot } from '../../core/home-snapshot.js';
 
 export class FriendsModule {
     constructor() {
@@ -7,6 +9,9 @@ export class FriendsModule {
         this.unsubscribeFriends = null;
         this.unsubscribeRequests = null;
         this.unsubscribeSent = null;
+        this.searchVersion = 0;
+        this.ownerUid = null;
+        this.subscriptionVersions = { friends: 0, requests: 0, sent: 0 };
     }
 
     async render() {
@@ -15,13 +20,15 @@ export class FriendsModule {
 
         const userId = window.app.currentUser?.uid;
         if (!userId) return;
+        this.stopSubscriptions();
+        this.searchVersion++;
+        this.ownerUid = userId;
+        this.currentTab = 'friends';
 
         mainContent.innerHTML = this.getTemplate();
         this.attachEventListeners();
 
         this.subscribeToFriends();
-        this.subscribeToRequests();
-        this.subscribeToSent();
     }
 
     getTemplate() {
@@ -79,14 +86,18 @@ export class FriendsModule {
 
     subscribeToFriends() {
         const list = document.getElementById('friendsList');
-        if (!list) return;
+        const uid = this.ownerUid;
+        if (!list || !uid || window.app.currentUser?.uid !== uid) return;
+        this.unsubscribeFriends?.();
+        const version = ++this.subscriptionVersions.friends;
 
         list.innerHTML = window.app.ui.createLoader();
 
         this.unsubscribeFriends = window.app.realtimeService.subscribeToFriends(
-            window.app.currentUser.uid,
+            uid,
             (friends) => {
-                if (this.currentTab !== 'friends') return;
+                if (version !== this.subscriptionVersions.friends || this.currentTab !== 'friends' ||
+                    window.app.currentUser?.uid !== uid || !list.isConnected) return;
 
                 if (friends.length === 0) {
                     list.innerHTML = `
@@ -105,13 +116,18 @@ export class FriendsModule {
     }
 
     subscribeToRequests() {
+        const uid = this.ownerUid;
+        if (!uid || window.app.currentUser?.uid !== uid) return;
+        this.unsubscribeRequests?.();
+        const version = ++this.subscriptionVersions.requests;
         this.unsubscribeRequests = window.app.realtimeService.subscribeToFriendRequests(
-            window.app.currentUser.uid,
+            uid,
             (requests) => {
-                if (this.currentTab !== 'requests') return;
+                if (version !== this.subscriptionVersions.requests || this.currentTab !== 'requests' ||
+                    window.app.currentUser?.uid !== uid) return;
 
                 const list = document.getElementById('friendsList');
-                if (!list) return;
+                if (!list?.isConnected) return;
 
                 if (requests.length === 0) {
                     list.innerHTML = `
@@ -130,13 +146,18 @@ export class FriendsModule {
     }
 
     subscribeToSent() {
+        const uid = this.ownerUid;
+        if (!uid || window.app.currentUser?.uid !== uid) return;
+        this.unsubscribeSent?.();
+        const version = ++this.subscriptionVersions.sent;
         this.unsubscribeSent = window.app.realtimeService.subscribeToSentRequests(
-            window.app.currentUser.uid,
+            uid,
             (sent) => {
-                if (this.currentTab !== 'sent') return;
+                if (version !== this.subscriptionVersions.sent || this.currentTab !== 'sent' ||
+                    window.app.currentUser?.uid !== uid) return;
 
                 const list = document.getElementById('friendsList');
-                if (!list) return;
+                if (!list?.isConnected) return;
 
                 if (sent.length === 0) {
                     list.innerHTML = `
@@ -155,38 +176,38 @@ export class FriendsModule {
     }
 
     createCard(user, type) {
-        const initials = (user.username || 'U')[0].toUpperCase();
-        const stats = user.stats || {};
+        const initials = String(user.username || 'U').charAt(0).toUpperCase();
+        const stats = getHomeSnapshot(user);
 
         let actions = '';
 
         if (type === 'friend') {
             actions = `
-                <a href="#profile/${user.uid}" class="btn btn-outline-primary btn-sm" title="Профиль">
+                <a href="#profile/${escapeHTML(user.uid)}" class="btn btn-outline-primary btn-sm" title="Профиль" aria-label="Открыть профиль друга">
                     <i class="bi bi-person"></i>
                 </a>
-                <button class="btn btn-outline-danger btn-sm remove-friend-btn" data-uid="${user.uid}" title="Удалить">
+                <button class="btn btn-outline-danger btn-sm remove-friend-btn" data-uid="${escapeHTML(user.uid)}" title="Удалить" aria-label="Удалить из друзей">
                     <i class="bi bi-person-x"></i>
                 </button>
             `;
         } else if (type === 'request') {
             actions = `
-                <button class="btn btn-success btn-sm accept-btn" data-uid="${user.uid}" title="Принять">
+                <button class="btn btn-success btn-sm accept-btn" data-uid="${escapeHTML(user.uid)}" title="Принять" aria-label="Принять заявку в друзья">
                     <i class="bi bi-check"></i>
                 </button>
-                <button class="btn btn-outline-danger btn-sm reject-btn" data-uid="${user.uid}" title="Отклонить">
+                <button class="btn btn-outline-danger btn-sm reject-btn" data-uid="${escapeHTML(user.uid)}" title="Отклонить" aria-label="Отклонить заявку в друзья">
                     <i class="bi bi-x"></i>
                 </button>
             `;
         } else if (type === 'sent') {
             actions = `
-                <button class="btn btn-outline-danger btn-sm cancel-request-btn" data-uid="${user.uid}">
+                <button class="btn btn-outline-danger btn-sm cancel-request-btn" data-uid="${escapeHTML(user.uid)}">
                     <i class="bi bi-x me-1"></i>Отменить
                 </button>
             `;
         } else if (type === 'search') {
             actions = `
-                <button class="btn btn-premium btn-sm send-request-btn" data-uid="${user.uid}">
+                <button class="btn btn-premium btn-sm send-request-btn" data-uid="${escapeHTML(user.uid)}">
                     <i class="bi bi-person-plus me-1"></i>Добавить
                 </button>
             `;
@@ -194,11 +215,11 @@ export class FriendsModule {
 
         return `
             <div class="col-12 col-md-6">
-                <div class="card-premium p-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="friend-avatar-placeholder">${initials}</div>
-                        <div class="flex-grow-1 min-width-0">
-                            <h6 class="fw-bold mb-0">@${user.username}</h6>
+                <div class="card-premium p-3 atlas-friend-card">
+                    <div class="d-flex align-items-center gap-3 atlas-friend-content">
+                        <div class="friend-avatar-placeholder">${escapeHTML(initials)}</div>
+                        <div class="flex-grow-1 atlas-friend-details">
+                            <h6 class="fw-bold mb-0">@${escapeHTML(user.username || 'user')}</h6>
                             <div class="d-flex gap-2 mt-1">
                                 <small class="text-muted">
                                     <i class="bi bi-airplane me-1"></i>${stats.travels || 0}
@@ -211,7 +232,7 @@ export class FriendsModule {
                                 </small>
                             </div>
                         </div>
-                        <div class="d-flex gap-1">${actions}</div>
+                        <div class="d-flex gap-1 atlas-friend-actions">${actions}</div>
                     </div>
                 </div>
             </div>
@@ -222,8 +243,8 @@ export class FriendsModule {
         document.querySelectorAll('.friends-tabs [data-tab]').forEach(tab => {
             tab.addEventListener('click', (e) => {
                 document.querySelectorAll('.friends-tabs [data-tab]').forEach(t => t.classList.remove('active'));
-                e.target.classList.add('active');
-                this.switchTab(e.target.dataset.tab);
+                tab.classList.add('active');
+                this.switchTab(tab.dataset.tab);
             });
         });
 
@@ -235,6 +256,9 @@ export class FriendsModule {
     }
 
     switchTab(tab) {
+        if (window.app.currentUser?.uid !== this.ownerUid) return;
+        this.stopSubscriptions();
+        this.searchVersion++;
         this.currentTab = tab;
 
         const searchSection = document.getElementById('searchSection');
@@ -269,13 +293,24 @@ export class FriendsModule {
         if (friendsList) friendsList.innerHTML = '';
         results.innerHTML = window.app.ui.createLoader();
 
-        const user = await this.friendsService.getUserByUsername(username);
+        const searchVersion = ++this.searchVersion;
+        const userId = window.app.currentUser?.uid;
+        let user;
+        try {
+            user = await this.friendsService.getUserByUsername(username);
+        } catch (error) {
+            if (searchVersion !== this.searchVersion || this.currentTab !== 'search' || window.app.currentUser?.uid !== userId || userId !== this.ownerUid || !results.isConnected) return;
+            results.innerHTML = `<div class="alert alert-warning" role="alert">${escapeHTML(error.message || 'Поиск временно недоступен. Попробуй ещё раз.')}</div>`;
+            return;
+        }
+        if (searchVersion !== this.searchVersion || this.currentTab !== 'search' || window.app.currentUser?.uid !== userId || userId !== this.ownerUid || !results.isConnected) return;
 
         if (!user) {
             results.innerHTML = `
                 <div class="text-center py-3">
                     <i class="bi bi-emoji-frown fs-3 text-muted"></i>
-                    <p class="text-muted mt-2">Пользователь @${username} не найден</p>
+                    <p class="text-muted mt-2">Пользователь @${escapeHTML(username)} не найден</p>
+                    <p class="text-muted small">Для старых профилей попробуй точное написание никнейма, включая заглавные буквы.</p>
                 </div>
             `;
             return;
@@ -292,77 +327,93 @@ export class FriendsModule {
 
     attachCardListeners() {
         document.querySelectorAll('.accept-btn').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                await this.friendsService.acceptFriendRequest(window.app.currentUser.uid, btn.dataset.uid);
-                window.app.onUserAction('add_friend');
-                window.app.ui.showToast('Друг добавлен! 🤝', 'success');
-                this.subscribeToFriends();
-                this.subscribeToRequests();
-                this.subscribeToSent();
-            });
+            btn.addEventListener('click', () => this.runFriendAction(btn,
+                uid => this.friendsService.acceptFriendRequest(uid, btn.dataset.uid),
+                'Друг добавлен! 🤝', 'Не удалось принять заявку', () => {
+                    window.app.onUserAction('add_friend');
+                    this.subscribeToFriends(); this.subscribeToRequests(); this.subscribeToSent();
+                }));
         });
 
         document.querySelectorAll('.reject-btn').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                await this.friendsService.rejectFriendRequest(window.app.currentUser.uid, btn.dataset.uid);
-                window.app.ui.showToast('Заявка отклонена', 'info');
-                this.subscribeToRequests();
-                this.subscribeToSent();
-            });
+            btn.addEventListener('click', () => this.runFriendAction(btn,
+                uid => this.friendsService.rejectFriendRequest(uid, btn.dataset.uid),
+                'Заявка отклонена', 'Не удалось отклонить заявку', () => {
+                    this.subscribeToRequests(); this.subscribeToSent();
+                }));
         });
 
         document.querySelectorAll('.cancel-request-btn').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                await this.friendsService.rejectFriendRequest(btn.dataset.uid, window.app.currentUser.uid);
-                window.app.ui.showToast('Заявка отменена', 'info');
-                this.subscribeToSent();
-            });
+            btn.addEventListener('click', () => this.runFriendAction(btn,
+                uid => this.friendsService.rejectFriendRequest(btn.dataset.uid, uid),
+                'Заявка отменена', 'Не удалось отменить заявку', () => this.subscribeToSent()));
         });
 
         document.querySelectorAll('.remove-friend-btn').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                if (confirm('Удалить из друзей?')) {
-                    await this.friendsService.removeFriend(window.app.currentUser.uid, btn.dataset.uid);
-                    window.app.ui.showToast('Друг удалён', 'info');
-                    this.subscribeToFriends();
-                }
+            btn.addEventListener('click', () => {
+                if (!btn.disabled && confirm('Удалить из друзей?')) this.runFriendAction(btn,
+                    uid => this.friendsService.removeFriend(uid, btn.dataset.uid),
+                    'Друг удалён', 'Не удалось удалить друга', () => this.subscribeToFriends());
             });
         });
 
         document.querySelectorAll('.send-request-btn').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                btn.disabled = true;
-                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Отправка...';
-
-                const result = await this.friendsService.sendFriendRequest(
-                    window.app.currentUser.uid,
-                    btn.dataset.uid
-                );
-
-                if (result.success) {
-                    window.app.ui.showToast('Заявка отправлена! 🎉', 'success');
+            btn.addEventListener('click', () => this.runFriendAction(btn,
+                uid => this.friendsService.sendFriendRequest(uid, btn.dataset.uid),
+                'Заявка отправлена! 🎉', 'Не удалось отправить заявку', () => {
                     btn.innerHTML = '<i class="bi bi-check me-1"></i>Отправлено';
                     btn.classList.remove('btn-premium');
                     btn.classList.add('btn-success');
-
-                    this.currentTab = 'sent';
+                    this.switchTab('sent');
                     document.querySelectorAll('.friends-tabs [data-tab]').forEach(t => t.classList.remove('active'));
                     document.querySelector('[data-tab="sent"]')?.classList.add('active');
-                    document.getElementById('searchSection').style.display = 'none';
-                    document.getElementById('searchResults').innerHTML = '';
-                    this.subscribeToSent();
-                } else {
-                    window.app.ui.showToast('Ошибка', 'error');
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="bi bi-person-plus me-1"></i>Добавить';
-                }
-            });
+                }, { keepDisabledOnSuccess: true }));
         });
     }
 
+    async runFriendAction(btn, perform, successMessage, errorMessage, onSuccess, { keepDisabledOnSuccess = false } = {}) {
+        const uid = window.app.currentUser?.uid;
+        if (!uid || uid !== this.ownerUid || !btn.isConnected || btn.disabled) return;
+        const originalHTML = btn.innerHTML;
+        btn.disabled = true;
+        btn.setAttribute('aria-busy', 'true');
+        let succeeded = false;
+        const stillCurrent = () => window.app.currentUser?.uid === uid && this.ownerUid === uid && btn.isConnected;
+        try {
+            const result = await perform(uid);
+            if (!stillCurrent()) return;
+            if (!result?.success) {
+                window.app.ui.showToast(result?.error || errorMessage, 'error');
+                return;
+            }
+            succeeded = true;
+            window.app.ui.showToast(successMessage, 'success');
+            onSuccess?.();
+        } catch (error) {
+            console.error('Ошибка действия с друзьями:', error);
+            if (stillCurrent()) window.app.ui.showToast(errorMessage, 'error');
+        } finally {
+            if (btn.isConnected) {
+                btn.removeAttribute('aria-busy');
+                if (!succeeded || !keepDisabledOnSuccess) btn.disabled = false;
+                if (!succeeded && stillCurrent()) btn.innerHTML = originalHTML;
+            }
+        }
+    }
+
     destroy() {
-        if (this.unsubscribeFriends) this.unsubscribeFriends();
-        if (this.unsubscribeRequests) this.unsubscribeRequests();
-        if (this.unsubscribeSent) this.unsubscribeSent();
+        this.searchVersion++;
+        this.stopSubscriptions();
+        this.ownerUid = null;
+    }
+
+    stopSubscriptions() {
+        for (const tab of Object.keys(this.subscriptionVersions)) this.subscriptionVersions[tab]++;
+        this.unsubscribeFriends?.();
+        this.unsubscribeRequests?.();
+        this.unsubscribeSent?.();
+        this.unsubscribeFriends = null;
+        this.unsubscribeRequests = null;
+        this.unsubscribeSent = null;
     }
 }

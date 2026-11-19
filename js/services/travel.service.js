@@ -20,7 +20,7 @@ export class TravelService {
         this.cache = new Map();
     }
 
-    async getTravels(userId, filters = {}) {
+    async getTravels(userId, filters = {}, { throwOnError = false } = {}) {
         try {
             const cacheKey = `travels_${userId}_${JSON.stringify(filters)}`;
             
@@ -66,6 +66,7 @@ export class TravelService {
             return travels;
         } catch (error) {
             console.error('Ошибка загрузки путешествий:', error);
+            if (throwOnError) throw error;
             return [];
         }
     }
@@ -93,15 +94,22 @@ export class TravelService {
             // Обновляем статистику
             await this.updateUserStats(userId);
             
-            // Получаем созданный документ для возврата
-            const createdDoc = await getDoc(docRef);
-            
-            return { 
-                success: true, 
+            // A confirmed write stays successful even when optional read-back fails.
+            // Reporting failure after addDoc would invite a duplicate on retry.
+            let storedData = newTravel;
+            try {
+                const createdDoc = await getDoc(docRef);
+                if (createdDoc.exists()) storedData = createdDoc.data();
+            } catch (readError) {
+                console.warn('Путешествие сохранено, но повторная загрузка не удалась:', readError);
+            }
+
+            return {
+                success: true,
                 id: docRef.id,
                 travel: {
                     id: docRef.id,
-                    ...createdDoc.data(),
+                    ...storedData,
                     createdAt: new Date(),
                     updatedAt: new Date()
                 }
@@ -122,7 +130,8 @@ export class TravelService {
             });
             
             this.clearCache(userId);
-            
+            await this.updateUserStats(userId);
+
             return { success: true };
         } catch (error) {
             console.error('Ошибка обновления путешествия:', error);
@@ -168,7 +177,7 @@ export class TravelService {
 
     async updateUserStats(userId) {
         try {
-            const allTravels = await this.getTravels(userId);
+            const allTravels = await this.getTravels(userId, {}, { throwOnError: true });
             const planned = allTravels.filter(t => t.status === 'planned').length;
             const visited = allTravels.filter(t => t.status === 'visited').length;
             

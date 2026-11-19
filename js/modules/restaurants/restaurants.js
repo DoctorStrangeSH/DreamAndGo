@@ -1,10 +1,16 @@
 import { RestaurantService } from '../../services/restaurant.service.js';
 import { APP_CONFIG } from '../../config/constants.js';
+import { escapeHTML } from '../../core/escape-html.js';
+import { safeAvatarURL } from '../../core/safe-avatar-url.js';
+import { applyCollectionSearchAndSort } from '../../core/collection-search.js';
 
 export class RestaurantsModule {
     constructor() {
         this.restaurantService = new RestaurantService();
         this.currentFilter = { cuisine: 'all', status: 'all', rating: 0 };
+        this.requestId = 0;
+        this.searchQuery = '';
+        this.sortOrder = 'recent';
     }
 
     async render() {
@@ -14,12 +20,29 @@ export class RestaurantsModule {
         const userId = window.app.currentUser?.uid;
         if (!userId) return;
 
-        mainContent.innerHTML = window.app.ui.createLoader();
+        const requestId = ++this.requestId;
+        mainContent.innerHTML = `<div data-collection-request="restaurants-${requestId}">${window.app.ui.createLoader()}</div>`;
 
-        const restaurants = await this.restaurantService.getRestaurants(userId, this.currentFilter);
+        try {
+            const restaurants = await this.restaurantService.getRestaurants(userId, this.currentFilter, { throwOnError: true });
 
-        mainContent.innerHTML = this.getTemplate(restaurants);
-        this.attachEventListeners();
+            if (requestId !== this.requestId || window.app.currentUser?.uid !== userId ||
+                !mainContent.isConnected || !mainContent.querySelector('[data-collection-request="restaurants-' + requestId + '"]')) return;
+
+            mainContent.innerHTML = this.getTemplate(restaurants);
+            this.attachEventListeners();
+        } catch (error) {
+            console.error('Не удалось загрузить коллекцию ресторанов:', error);
+            if (requestId !== this.requestId || window.app.currentUser?.uid !== userId ||
+                !mainContent.isConnected || !mainContent.querySelector('[data-collection-request="restaurants-' + requestId + '"]')) return;
+
+            mainContent.innerHTML = `<section class="atlas-empty" role="alert">
+                <h2>Не удалось загрузить рестораны</h2>
+                <p>Проверь подключение к интернету и попробуй ещё раз.</p>
+                <button class="btn btn-premium" type="button" data-retry-restaurants>Повторить</button>
+            </section>`;
+            mainContent.querySelector('[data-retry-restaurants]')?.addEventListener('click', () => this.render());
+        }
     }
 
     getTemplate(restaurants) {
@@ -52,8 +75,8 @@ export class RestaurantsModule {
                         <div class="col-auto">
                             <select class="form-select form-select-sm" id="cuisineFilter" style="min-width: 140px;">
                                 ${cuisines.map(c => `
-                                    <option value="${c}" ${activeCuisine === c ? 'selected' : ''}>
-                                        ${c === 'all' ? 'Все кухни' : c}
+                                    <option value="${escapeHTML(c)}" ${activeCuisine === c ? 'selected' : ''}>
+                                        ${escapeHTML(c === 'all' ? 'Все кухни' : c)}
                                     </option>
                                 `).join('')}
                             </select>
@@ -71,11 +94,32 @@ export class RestaurantsModule {
                                 </button>
                             </div>
                         </div>
+                        <div class="col-12 col-md">
+                            <label class="visually-hidden" for="restaurantSearch">Найти ресторан</label>
+                            <input type="search" class="form-control form-control-sm" id="restaurantSearch"
+                                   placeholder="Название, кухня или адрес…" autocomplete="off"
+                                   value="${escapeHTML(this.searchQuery)}">
+                        </div>
+                        <div class="col-12 col-sm-auto">
+                            <label class="visually-hidden" for="restaurantSort">Сортировка ресторанов</label>
+                            <select class="form-select form-select-sm" id="restaurantSort">
+                                <option value="recent" ${this.sortOrder === 'recent' ? 'selected' : ''}>Сначала новые</option>
+                                <option value="name" ${this.sortOrder === 'name' ? 'selected' : ''}>По названию</option>
+                                <option value="rating" ${this.sortOrder === 'rating' ? 'selected' : ''}>По оценке</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
+                <p class="text-muted small mb-3" id="restaurantSearchCount" role="status" aria-live="polite"></p>
+
                 <div id="restaurantsGrid" class="row g-3">
                     ${restaurants.length === 0 ? this.getEmptyState() : restaurants.map((r, i) => this.createCard(r, i)).join('')}
+                </div>
+                <div id="restaurantSearchEmpty" class="atlas-empty atlas-empty--restaurant" hidden>
+                    <div class="atlas-empty-art" aria-hidden="true"><i class="bi bi-search"></i></div>
+                    <h3>Заведение не найдено</h3>
+                    <p>Попробуй другое название, кухню или очисти поиск.</p>
                 </div>
 
                 <div id="restaurantModalContainer"></div>
@@ -85,10 +129,12 @@ export class RestaurantsModule {
 
     getEmptyState() {
         return `
-            <div class="col-12 text-center py-5">
-                <i class="bi bi-shop display-1 text-muted opacity-25"></i>
-                <h5 class="mt-3 text-muted">Нет ресторанов</h5>
-                <p class="text-muted small">Добавь свой первый ресторан</p>
+            <div class="col-12">
+                <section class="atlas-empty atlas-empty--restaurant">
+                    <div class="atlas-empty-art" aria-hidden="true"><i class="bi bi-cup-hot"></i></div>
+                    <h3>Впереди много вкусных открытий</h3>
+                    <p>Добавь любимое заведение или место, куда давно хочется заглянуть.</p>
+                </section>
             </div>
         `;
     }
@@ -98,48 +144,56 @@ export class RestaurantsModule {
             ? '<span class="badge bg-success bg-opacity-10 text-success">✓ Посетил</span>'
             : '<span class="badge bg-warning bg-opacity-10 text-warning">☆ Хочу</span>';
 
+        const imageURL = safeAvatarURL(restaurant.photos?.[0]);
+        const rating = Number(restaurant.userRating);
+        const safeRating = Number.isFinite(rating) && rating > 0 ? Math.min(10, Math.max(0, rating)) : 0;
+
         return `
-            <div class="col-12 col-md-6 col-lg-4 fade-in-up" style="animation-delay: ${index * 0.06}s">
+            <div class="col-12 col-md-6 col-lg-4 fade-in-up" data-restaurant-card
+                 data-search="${escapeHTML([restaurant.name, restaurant.cuisine, restaurant.address, restaurant.review].filter(Boolean).join(' ').toLocaleLowerCase())}"
+                 data-name="${escapeHTML(String(restaurant.name || '').toLocaleLowerCase())}"
+                 data-rating="${safeRating}" data-original-index="${index}"
+                 style="animation-delay: ${Math.min(index, 12) * 0.06}s">
                 <div class="card-premium h-100 restaurant-card">
                     <div class="restaurant-card-header">
-                        ${restaurant.photos && restaurant.photos[0]
-                ? `<img src="${restaurant.photos[0]}" class="restaurant-photo" alt="${restaurant.name}">`
+                        ${imageURL
+                ? `<img src="${escapeHTML(imageURL)}" class="restaurant-photo" alt="${escapeHTML(String(restaurant.name || 'Ресторан'))}" loading="lazy">`
                 : `<div class="restaurant-placeholder">
                                 <i class="bi bi-shop display-4 text-white opacity-25"></i>
                             </div>`
             }
                         <div class="position-absolute top-0 start-0 p-2">${statusBadge}</div>
                         <div class="restaurant-card-actions">
-                            <button class="btn btn-light btn-sm rounded-circle me-1 edit-btn" data-id="${restaurant.id}">
+                            <button type="button" class="btn btn-light btn-sm rounded-circle me-1 edit-btn" aria-label="Редактировать ресторан" data-id="${escapeHTML(String(restaurant.id))}">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <button class="btn btn-light btn-sm rounded-circle delete-btn" data-id="${restaurant.id}">
+                            <button type="button" class="btn btn-light btn-sm rounded-circle delete-btn" aria-label="Удалить ресторан" data-id="${escapeHTML(String(restaurant.id))}">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </div>
                     </div>
                     <div class="p-3">
                         <div class="d-flex justify-content-between align-items-start mb-1">
-                            <h6 class="fw-bold mb-0">${restaurant.name || 'Без названия'}</h6>
-                            ${restaurant.userRating
-                ? `<span class="badge" style="background: var(--primary);">${restaurant.userRating}/10</span>`
+                            <h6 class="fw-bold mb-0">${escapeHTML(String(restaurant.name || 'Без названия'))}</h6>
+                            ${safeRating
+                ? `<span class="badge" style="background: var(--primary);">${safeRating}/10</span>`
                 : ''
             }
                         </div>
                         <p class="text-muted small mb-2">
-                            <i class="bi bi-egg-fried me-1"></i>${restaurant.cuisine || 'Кухня не указана'}
+                            <i class="bi bi-egg-fried me-1"></i>${escapeHTML(String(restaurant.cuisine || 'Кухня не указана'))}
                             ${restaurant.address
-                ? `<span class="mx-1">·</span><i class="bi bi-geo-alt me-1"></i>${restaurant.address}`
+                ? `<span class="mx-1">·</span><i class="bi bi-geo-alt me-1"></i>${escapeHTML(String(restaurant.address))}`
                 : ''
             }
                         </p>
                         ${restaurant.review
-                ? `<p class="text-muted small mb-2">${restaurant.review.substring(0, 100)}...</p>`
+                ? `<p class="text-muted small mb-2">${escapeHTML(String(restaurant.review).substring(0, 100))}...</p>`
                 : ''
             }
                         ${restaurant.favoriteDishes && restaurant.favoriteDishes.length
                 ? `<p class="small mb-0">
-                                <i class="bi bi-heart me-1 text-danger"></i>${restaurant.favoriteDishes.slice(0, 2).join(', ')}
+                                <i class="bi bi-heart me-1 text-danger"></i>${escapeHTML(restaurant.favoriteDishes.slice(0, 2).join(', '))}
                             </p>`
                 : ''
             }
@@ -150,6 +204,16 @@ export class RestaurantsModule {
     }
 
     attachEventListeners() {
+        const searchInput = document.getElementById('restaurantSearch');
+        searchInput?.addEventListener('input', () => {
+            this.searchQuery = searchInput.value;
+            this.applySearchAndSort();
+        });
+        document.getElementById('restaurantSort')?.addEventListener('change', (event) => {
+            this.sortOrder = event.target.value;
+            this.applySearchAndSort();
+        });
+        this.applySearchAndSort();
         document.getElementById('addRestaurantBtn')?.addEventListener('click', () => this.showModal(null));
 
         document.querySelectorAll('.edit-btn').forEach(btn => {
@@ -162,18 +226,30 @@ export class RestaurantsModule {
         document.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                if (confirm('Удалить ресторан?')) {
-                    await this.restaurantService.deleteRestaurant(window.app.currentUser.uid, btn.dataset.id);
+                const userId = window.app.currentUser?.uid;
+                if (!userId || btn.disabled || !confirm('Удалить ресторан?')) return;
+                btn.disabled = true;
+                try {
+                    const result = await this.restaurantService.deleteRestaurant(userId, btn.dataset.id);
+                    if (!result?.success) throw new Error('Удаление не выполнено');
+                    if (window.app.currentUser?.uid !== userId) return;
                     window.app.ui.showToast('Ресторан удалён', 'info');
-                    this.render();
-                    window.app.refreshUserData();
+                    await this.render();
+                    if (window.app.currentUser?.uid === userId) window.app.refreshUserData();
+                } catch (error) {
+                    console.error('Не удалось удалить ресторан:', error);
+                    if (window.app.currentUser?.uid === userId) {
+                        window.app.ui.showToast('Не удалось удалить запись. Попробуй снова.', 'error');
+                    }
+                } finally {
+                    btn.disabled = false;
                 }
             });
         });
 
         document.querySelectorAll('#statusFilters [data-filter]').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                this.currentFilter.status = e.target.dataset.filter;
+                this.currentFilter.status = e.currentTarget.dataset.filter;
                 this.render();
             });
         });
@@ -182,6 +258,11 @@ export class RestaurantsModule {
             this.currentFilter.cuisine = e.target.value;
             this.render();
         });
+    }
+
+    applySearchAndSort() {
+        return applyCollectionSearchAndSort({ document, gridId: 'restaurantsGrid', cardSelector: '[data-restaurant-card]',
+            emptyId: 'restaurantSearchEmpty', countId: 'restaurantSearchCount', query: this.searchQuery, order: this.sortOrder });
     }
 
     async showModal(restaurantId) {
@@ -215,16 +296,16 @@ export class RestaurantsModule {
                             <form id="restaurantForm">
                                 <div class="row g-3">
                                     <div class="col-md-8">
-                                        <label class="form-label fw-semibold small">Название *</label>
-                                        <input type="text" class="form-control" name="name"
-                                               value="${restaurant?.name || ''}" required>
+                                        <label for="restaurantPrimaryField" class="form-label fw-semibold small">Название *</label>
+                                        <input type="text" class="form-control" id="restaurantPrimaryField" name="name"
+                                               value="${escapeHTML(String(restaurant?.name || ''))}" required>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Кухня</label>
                                         <select class="form-select" name="cuisine">
                                             <option value="">Выбери кухню</option>
                                             ${APP_CONFIG.CUISINE_TYPES.map(c => `
-                                                <option value="${c}" ${restaurant?.cuisine === c ? 'selected' : ''}>${c}</option>
+                                                <option value="${escapeHTML(c)}" ${restaurant?.cuisine === c ? 'selected' : ''}>${escapeHTML(c)}</option>
                                             `).join('')}
                                         </select>
                                     </div>
@@ -239,43 +320,48 @@ export class RestaurantsModule {
                                             </option>
                                         </select>
                                     </div>
+                                    <div class="col-12 atlas-form-extras"><details class="atlas-form-details" ${isEdit ? 'open' : ''}>
+                                        <summary>Адрес, посещение и впечатления</summary>
+                                        <div class="row g-3 mt-1">
                                     <div class="col-md-6">
                                         <label class="form-label fw-semibold small">Адрес</label>
                                         <input type="text" class="form-control" name="address"
-                                               value="${restaurant?.address || ''}">
+                                               value="${escapeHTML(String(restaurant?.address || ''))}">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Дата посещения</label>
                                         <input type="date" class="form-control" name="visitDate"
-                                               value="${restaurant?.visitDate || ''}">
+                                               value="${escapeHTML(String(restaurant?.visitDate || ''))}">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Средний чек</label>
                                         <input type="number" class="form-control" name="avgBill"
-                                               value="${restaurant?.avgBill || ''}" placeholder="₽">
+                                               value="${escapeHTML(String(restaurant?.avgBill || ''))}" placeholder="₽">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Моя оценка</label>
                                         <div class="d-flex align-items-center gap-2 pt-2">
                                             <input type="range" class="form-range" name="userRating"
-                                                   min="0" max="10" value="${restaurant?.userRating || 0}"
+                                                   min="0" max="10" value="${Number.isFinite(Number(restaurant?.userRating)) ? Math.min(10, Math.max(0, Number(restaurant.userRating))) : 0}"
                                                    id="ratingSlider" style="flex: 1;">
                                             <span class="badge bg-primary" id="ratingValue">
-                                                ${restaurant?.userRating || 0}/10
+                                                ${Number.isFinite(Number(restaurant?.userRating)) ? Math.min(10, Math.max(0, Number(restaurant.userRating))) : 0}/10
                                             </span>
                                         </div>
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label fw-semibold small">Любимые блюда</label>
                                         <input type="text" class="form-control" name="favoriteDishes"
-                                               value="${restaurant?.favoriteDishes?.join(', ') || ''}"
+                                               value="${escapeHTML(Array.isArray(restaurant?.favoriteDishes) ? restaurant.favoriteDishes.join(', ') : '')}"
                                                placeholder="Через запятую: паста, пицца, тирамису">
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label fw-semibold small">Рецензия</label>
                                         <textarea class="form-control" name="review" rows="3"
-                                                  placeholder="Твои впечатления...">${restaurant?.review || ''}</textarea>
+                                                  placeholder="Твои впечатления...">${escapeHTML(String(restaurant?.review || ''))}</textarea>
                                     </div>
+                                        </div>
+                                    </details></div>
                                 </div>
                             </form>
                         </div>
@@ -292,6 +378,9 @@ export class RestaurantsModule {
 
         const modalElement = document.getElementById('restaurantModal');
         const modal = new bootstrap.Modal(modalElement);
+        modalElement.addEventListener('shown.bs.modal', () => {
+            modalElement.querySelector('#restaurantPrimaryField')?.focus();
+        }, { once: true });
         modal.show();
 
         modalElement.addEventListener('hidden.bs.modal', () => {
@@ -308,12 +397,15 @@ export class RestaurantsModule {
             });
         }
 
-        document.getElementById('saveRestaurantBtn').addEventListener('click', async () => {
+        document.getElementById('saveRestaurantBtn').addEventListener('click', async (event) => {
+            const saveButton = event.currentTarget;
+            if (saveButton.disabled) return;
             const form = document.getElementById('restaurantForm');
+            if (!form.reportValidity()) return;
             const formData = new FormData(form);
 
             const data = {
-                name: formData.get('name'),
+                name: String(formData.get('name') || '').trim(),
                 cuisine: formData.get('cuisine'),
                 status: formData.get('status'),
                 address: formData.get('address'),
@@ -329,10 +421,14 @@ export class RestaurantsModule {
             };
 
             if (!data.name) {
+                form.querySelector('#restaurantPrimaryField')?.focus();
                 window.app.ui.showToast('Введи название ресторана', 'warning');
                 return;
             }
 
+            saveButton.disabled = true;
+            saveButton.setAttribute('aria-busy', 'true');
+            try {
             const result = isEdit
                 ? await this.restaurantService.updateRestaurant(userId, restaurantId, data)
                 : await this.restaurantService.addRestaurant(userId, data);
@@ -348,7 +444,14 @@ export class RestaurantsModule {
                     await this.render();
                 }, 300);
             } else {
-                window.app.ui.showToast('Ошибка сохранения', 'error');
+                window.app.ui.showToast('Не удалось сохранить ресторан. Попробуй снова.', 'error');
+            }
+            } catch (error) {
+                console.error('Ошибка сохранения ресторан:', error);
+                window.app.ui.showToast('Не удалось сохранить ресторан. Попробуй снова.', 'error');
+            } finally {
+                saveButton.disabled = false;
+                saveButton.removeAttribute('aria-busy');
             }
         });
     }

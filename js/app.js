@@ -1,3 +1,5 @@
+import { escapeHTML } from './core/escape-html.js';
+import { getHomeSnapshot, getNextHomeAchievement } from './core/home-snapshot.js';
 import { auth, db, checkFirebaseConnection } from './config/firebase.js';
 import { AuthService } from './services/auth.service.js';
 import { ThemeService } from './services/theme.service.js';
@@ -7,6 +9,9 @@ import { EventBus } from './core/event-bus.js';
 import { RealtimeService } from './services/realtime.service.js';
 import { Navigation } from './modules/navigation/navigation.js';
 import { AuthModule } from './modules/auth/auth.js';
+import { RegistrationRecoveryModule } from './modules/auth/registration-recovery.js';
+import { canUseSignupV2 } from './core/signup-v2-policy.js';
+import { recoveryRouteRedirect } from './core/registration-recovery-route.js';
 import { ProfileModule } from './modules/profile/profile.js';
 import { TravelsModule } from './modules/travels/travels.js';
 import { RestaurantsModule } from './modules/restaurants/restaurants.js';
@@ -30,7 +35,11 @@ import { DailyTasksWidget } from './modules/daily-tasks/daily-tasks.js';
 
 class DreamAndGo {
     constructor() {
-        this.authService = new AuthService(auth, db);
+        // Candidate registration v2 requires verified legacy migration and backend rollout.
+        // Keep disabled until staging tests and production rules have been reviewed.
+        this.authService = new AuthService(auth, db, Object.freeze({
+            enabled: false, backendReady: false, legacyMigrationVerified: false
+        }));
         this.db = db;
         this.themeService = new ThemeService();
         this.router = new Router();
@@ -53,6 +62,9 @@ class DreamAndGo {
         this.isOnline = navigator.onLine;
         this.authResolved = false;
         this.dataLoaded = false;
+        this.authVersion = 0;
+        this.registrationRecoveryPending = false;
+        this.registrationRecoveryStatus = 'complete';
 
         window.app = this;
         this.init();
@@ -68,17 +80,48 @@ class DreamAndGo {
         this.initEventListeners();
 
         this.authService.onAuthChange(async (user) => {
+            const version = ++this.authVersion;
+            const previousUid = this.currentUser?.uid;
+            if (previousUid && previousUid !== user?.uid) {
+                this.realtimeService.unsubscribeAll();
+                this.userData = null;
+                this.dataLoaded = false;
+                const oldContent = document.getElementById('main-content');
+                if (oldContent) oldContent.innerHTML = this.ui.createLoader();
+            }
             this.currentUser = user;
             this.authResolved = true;
 
             if (user) {
+                if (canUseSignupV2(this.authService.signupV2Rollout)) {
+                    const recovery = await this.authService.getRegistrationStateV2();
+                    if (version !== this.authVersion) return;
+                    this.registrationRecoveryStatus = recovery.success
+                        ? recovery.status : 'temporarily-unavailable';
+                    this.registrationRecoveryPending = this.registrationRecoveryStatus !== 'complete';
+                } else {
+                    this.registrationRecoveryStatus = 'complete';
+                    this.registrationRecoveryPending = false;
+                }
                 this.showApp();
-                this.notificationsWidget.init();
-                await this.loadUserData();
-                setTimeout(() => this.renderNavWidgets(), 500);
+                if (this.registrationRecoveryPending) {
+                    this.router.navigate('recovery');
+                } else {
+                    if (window.location.hash === '#recovery') this.router.navigate('home');
+                    this.notificationsWidget.init();
+                    await this.loadUserData();
+                    if (version !== this.authVersion) return;
+                    setTimeout(() => {
+                        if (version === this.authVersion && this.currentUser) this.renderNavWidgets();
+                    }, 500);
+                }
             } else {
+                // Снимаем слушатели предыдущего аккаунта до показа формы входа.
+                this.realtimeService.unsubscribeAll();
                 this.userData = null;
                 this.dataLoaded = false;
+                this.registrationRecoveryPending = false;
+                this.registrationRecoveryStatus = 'complete';
                 this.showAuth();
             }
 
@@ -107,6 +150,9 @@ class DreamAndGo {
 
     registerRoutes() {
         this.router.register('auth', new AuthModule(this.authService), { title: 'Вход', requiresAuth: false, showInNav: false });
+        this.router.register('recovery', new RegistrationRecoveryModule(
+            this.authService, async () => this.completeSignupV2Navigation()
+        ), { title: 'Восстановление аккаунта', requiresAuth: true, showInNav: false });
         this.router.register('home', { render: () => this.renderHomePage() }, { title: 'Главная', icon: 'bi-house-heart', showInNav: true });
         this.router.register('travels', new TravelsModule(), { title: 'Путешествия', icon: 'bi-airplane', showInNav: true });
         this.router.register('food', new RestaurantsModule(), { title: 'Рестораны', icon: 'bi-shop', showInNav: true });
@@ -120,6 +166,15 @@ class DreamAndGo {
         this.router.register('achievements', new AchievementsModule(), { title: 'Достижения', icon: 'bi-trophy', showInNav: true });
 
         this.router.beforeEach((path) => {
+            const recoveryTarget = recoveryRouteRedirect({
+                pending: this.registrationRecoveryPending,
+                signedIn: Boolean(this.currentUser),
+                path
+            });
+            if (recoveryTarget) {
+                this.router.navigate(recoveryTarget);
+                return false;
+            }
             if (path === 'auth') {
                 if (this.currentUser && this.authResolved) { this.router.navigate('home'); return false; }
                 return true;
@@ -133,7 +188,13 @@ class DreamAndGo {
 
     initEventListeners() {
         this.eventBus.on('userDataUpdated', (data) => { this.userData = { ...this.userData, ...data }; this.updateHomeStats(); });
-        this.eventBus.on('userLoggedOut', () => { this.currentUser = null; this.userData = null; this.dataLoaded = false; });
+        this.eventBus.on('userLoggedOut', () => {
+            ++this.authVersion;
+            this.realtimeService.unsubscribeAll();
+            this.currentUser = null;
+            this.userData = null;
+            this.dataLoaded = false;
+        });
     }
 
     initConnectionListeners() {
@@ -167,10 +228,22 @@ class DreamAndGo {
         new AuthModule(this.authService).render();
     }
 
+    async completeSignupV2Navigation() {
+        if (!canUseSignupV2(this.authService.signupV2Rollout) || !this.currentUser) return;
+        // Only invoked after the authenticated server callable confirms success.
+        this.registrationRecoveryPending = false;
+        this.registrationRecoveryStatus = 'complete';
+        await this.loadUserData();
+        this.router.navigate('home');
+    }
+
     async loadUserData() {
         if (!this.currentUser) return;
+        const requestedUid = this.currentUser.uid;
+        const version = this.authVersion;
         try {
-            const result = await this.authService.getUserData(this.currentUser.uid);
+            const result = await this.authService.getUserData(requestedUid);
+            if (version !== this.authVersion || this.currentUser?.uid !== requestedUid) return;
             if (result.success) {
                 this.userData = result.data;
                 this.dataLoaded = true;
@@ -188,9 +261,12 @@ class DreamAndGo {
     async checkAchievements() {
         if (!this.currentUser) return;
         try {
-            const newAchievements = await this.achievementsService.checkAndAwardAchievements(this.currentUser.uid);
+            const requestedUid = this.currentUser.uid;
+            const version = this.authVersion;
+            const newAchievements = await this.achievementsService.checkAndAwardAchievements(requestedUid);
+            if (version !== this.authVersion || this.currentUser?.uid !== requestedUid) return;
             if (newAchievements.length > 0) {
-                newAchievements.forEach(a => this.ui.showToast(`${a.emoji} ${a.title} — ${a.description}`, 'success'));
+                newAchievements.forEach(a => this.ui.showAchievementToast(a));
             }
         } catch (error) { console.error('Ошибка проверки достижений:', error); }
     }
@@ -211,8 +287,8 @@ class DreamAndGo {
 
     updateHomeStats() {
         if (!this.userData?.stats) return;
-        const stats = this.userData.stats;
-        ['travels', 'restaurants', 'movies', 'books'].forEach(key => {
+        const stats = getHomeSnapshot(this.userData);
+        ['travels', 'restaurants', 'movies', 'books', 'dreams'].forEach(key => {
             const el = document.querySelector(`[data-stat="${key}"]`);
             if (el) el.textContent = stats[key] || 0;
         });
@@ -248,31 +324,38 @@ class DreamAndGo {
         if (!mainContent) return;
 
         const userName = this.userData?.username || this.currentUser?.email?.split('@')[0] || 'Мечтатель';
-        const stats = this.userData?.stats || {};
+        const stats = getHomeSnapshot(this.userData);
+        const nextAchievement = getNextHomeAchievement(this.userData);
 
         mainContent.innerHTML = `
             <div class="container py-3 py-md-4">
-                <div class="welcome-section mb-4 fade-in-up">
-                    <div class="card-premium p-4 p-md-5" style="background: linear-gradient(135deg, rgba(108,92,231,0.05) 0%, rgba(168,85,247,0.05) 100%);">
-                        <div class="row align-items-center">
-                            <div class="col-12 col-lg-7">
-                                <h1 class="display-4 fw-bold mb-2">Привет, <span class="text-gradient">@${userName}</span>! ✨</h1>
-                                <p class="lead text-secondary mb-3">${this.getRandomGreeting()}</p>
-                                <div class="d-flex gap-2 flex-wrap">
-                                    <a href="#travels" class="btn btn-premium btn-sm"><i class="bi bi-plus-lg me-1"></i>Добавить путешествие</a>
-                                    <a href="#movies" class="btn btn-outline-primary btn-sm"><i class="bi bi-search me-1"></i>Найти фильм</a>
-                                    <a href="#dreams" class="btn btn-outline-primary btn-sm"><i class="bi bi-star me-1"></i>Записать мечту</a>
-                                </div>
-                            </div>
-                            <div class="col-12 col-lg-5 text-center mt-3 mt-lg-0">
-                                <div class="position-relative d-inline-block">
-                                    <div class="avatar-circle" style="width: 100px; height: 100px; font-size: 2.5rem;">${userName[0].toUpperCase()}</div>
-                                    <span class="position-absolute bottom-0 end-0 bg-success rounded-circle p-1" style="width: 20px; height: 20px;"></span>
-                                </div>
-                            </div>
+                <section class="home-dashboard-hero mb-4 fade-in-up" aria-labelledby="home-welcome-heading">
+                    <div class="home-dashboard-copy">
+                        <span class="home-dashboard-eyebrow"><i class="bi bi-stars" aria-hidden="true"></i> Твоя личная вселенная</span>
+                        <h1 id="home-welcome-heading">Привет, <span>@${escapeHTML(userName)}</span>! ✨</h1>
+                        <p>${this.getRandomGreeting()}</p>
+                        <div class="home-dashboard-actions">
+                            <a href="${stats.nextAction.href}" class="btn btn-light fw-bold"><i class="bi ${stats.nextAction.icon} me-2" aria-hidden="true"></i>${stats.nextAction.label}</a>
+                            <a href="#profile" class="btn btn-outline-light"><i class="bi bi-person me-2" aria-hidden="true"></i>Мой профиль</a>
                         </div>
                     </div>
-                </div>
+                    <div class="home-dashboard-progress">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="home-dashboard-progress-label"><i class="bi bi-compass me-2" aria-hidden="true"></i>Первые открытия</span>
+                            <strong>${stats.onboardingPercent}%</strong>
+                        </div>
+                        <div class="progress home-dashboard-progress-track" role="progressbar" aria-label="Прогресс первых шагов" aria-valuenow="${stats.onboardingPercent}" aria-valuemin="0" aria-valuemax="100">
+                            <div class="progress-bar" style="width: ${stats.onboardingPercent}%"></div>
+                        </div>
+                        <p class="small mb-3">${stats.startedTasks} из ${stats.totalTasks} первых шагов выполнено</p>
+                        <div class="home-dashboard-dreams">
+                            <div><strong data-stat="dreams">${stats.dreams}</strong><span>Мечтаний</span></div>
+                            <div><strong>${stats.dreamsInProgress}</strong><span>В процессе</span></div>
+                            <div><strong>${stats.dreamsCompleted}</strong><span>Сбылось</span></div>
+                        </div>
+                        <a href="#dreams" class="home-dashboard-progress-link">Перейти к мечтам <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+                    </div>
+                </section>
 
                 <div class="row g-3 mb-4 fade-in-up" style="animation-delay: 0.1s;">
                     <div class="col-6 col-md-3"><div class="card-premium stat-card p-3 text-center h-100"><div class="stat-icon mb-2 mx-auto" style="background: rgba(108,92,231,0.1); color: #6C5CE7;"><i class="bi bi-airplane fs-3"></i></div><h4 class="fw-bold mb-0" data-stat="travels">${stats.travels || 0}</h4><small class="text-muted">Путешествий</small></div></div>
@@ -280,6 +363,22 @@ class DreamAndGo {
                     <div class="col-6 col-md-3"><div class="card-premium stat-card p-3 text-center h-100"><div class="stat-icon mb-2 mx-auto" style="background: rgba(253,203,110,0.1); color: #FDCB6E;"><i class="bi bi-film fs-3"></i></div><h4 class="fw-bold mb-0" data-stat="movies">${stats.movies || 0}</h4><small class="text-muted">Фильмов</small></div></div>
                     <div class="col-6 col-md-3"><div class="card-premium stat-card p-3 text-center h-100"><div class="stat-icon mb-2 mx-auto" style="background: rgba(225,112,85,0.1); color: #E17055;"><i class="bi bi-book fs-3"></i></div><h4 class="fw-bold mb-0" data-stat="books">${stats.books || 0}</h4><small class="text-muted">Книг</small></div></div>
                 </div>
+
+                ${nextAchievement ? `<section class="card-premium p-3 p-md-4 mb-4 fade-in-up" aria-labelledby="home-next-achievement">
+                    <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-3">
+                        <div class="stat-icon flex-shrink-0" aria-hidden="true"><i class="bi ${nextAchievement.icon} fs-3 text-warning"></i></div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                                <div><small class="text-muted">Следующее достижение</small><h2 class="h5 fw-bold mb-0" id="home-next-achievement">${nextAchievement.title}</h2></div>
+                                <strong class="text-nowrap">${nextAchievement.current}/${nextAchievement.target}</strong>
+                            </div>
+                            <div class="progress" role="progressbar" aria-label="Прогресс до достижения ${nextAchievement.title}" aria-valuenow="${nextAchievement.current}" aria-valuemin="0" aria-valuemax="${nextAchievement.target}">
+                                <div class="progress-bar bg-warning" style="width:${nextAchievement.percentage}%"></div>
+                            </div>
+                        </div>
+                        <a href="${nextAchievement.href}" class="btn btn-outline-primary flex-shrink-0">Продолжить <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></a>
+                    </div>
+                </section>` : ''}
 
                 <div class="row g-4 fade-in-up" style="animation-delay: 0.2s;">
                     <div class="col-12 col-md-5">
@@ -307,7 +406,7 @@ class DreamAndGo {
     }
 
     getOnboardingSteps() {
-        const stats = this.userData?.stats || {};
+        const stats = getHomeSnapshot(this.userData);
         const steps = [
             { done: stats.travels > 0, icon: 'bi-airplane', text: 'Добавь своё первое путешествие', link: '#travels', color: 'primary' },
             { done: stats.movies > 0, icon: 'bi-film', text: 'Найди и оцени первый фильм', link: '#movies', color: 'warning' },
@@ -328,13 +427,13 @@ class DreamAndGo {
     }
 
     getRecentAchievements() {
-        const achievements = this.userData?.achievements || [];
+        const achievements = Array.isArray(this.userData?.achievements) ? this.userData.achievements : [];
         const recent = achievements.slice(-3).reverse();
         if (recent.length === 0) return '<p class="text-muted small mb-0">Пока нет достижений. Начни пользоваться сайтом!</p>';
         return recent.map(a => `
             <div class="d-flex align-items-center gap-2 mb-2">
-                <span style="font-size:1.2rem">${a.emoji}</span>
-                <div><small class="fw-semibold">${a.title}</small><small class="text-muted d-block" style="font-size:0.7rem">${a.description}</small></div>
+                <span style="font-size:1.2rem">${escapeHTML(a.emoji)}</span>
+                <div><small class="fw-semibold">${escapeHTML(a.title)}</small><small class="text-muted d-block" style="font-size:0.7rem">${escapeHTML(a.description)}</small></div>
             </div>`).join('');
     }
 

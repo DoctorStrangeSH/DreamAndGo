@@ -1,9 +1,14 @@
 import { DreamsService } from '../../services/dreams.service.js';
+import { escapeHTML } from '../../core/escape-html.js';
+import { applyCollectionSearchAndSort } from '../../core/collection-search.js';
 
 export class DreamsModule {
     constructor() {
         this.dreamsService = new DreamsService();
         this.currentFilter = { status: 'all', category: 'all' };
+        this.searchQuery = '';
+        this.sortOrder = 'recent';
+        this.requestId = 0;
     }
 
     async render() {
@@ -13,12 +18,30 @@ export class DreamsModule {
         const userId = window.app.currentUser?.uid;
         if (!userId) return;
 
-        mainContent.innerHTML = window.app.ui.createLoader();
+        const requestId = ++this.requestId;
+        mainContent.innerHTML = `<div data-collection-request="dreams-${requestId}">${window.app.ui.createLoader()}</div>`;
+        const isCurrentRequest = () => requestId === this.requestId &&
+            window.app.currentUser?.uid === userId && mainContent.isConnected !== false &&
+            !!mainContent.querySelector(`[data-collection-request="dreams-${requestId}"]`);
 
-        const dreams = await this.dreamsService.getDreams(userId, this.currentFilter);
-
-        mainContent.innerHTML = this.getTemplate(dreams);
-        this.attachEventListeners();
+        try {
+            const filters = { ...this.currentFilter };
+            const dreams = await this.dreamsService.getDreams(userId, filters, { throwOnError: true });
+            if (!isCurrentRequest()) return;
+            mainContent.innerHTML = this.getTemplate(dreams);
+            this.attachEventListeners();
+        } catch (error) {
+            console.error('Не удалось загрузить мечты:', error);
+            if (!isCurrentRequest()) return;
+            mainContent.innerHTML = `
+                <section class="container py-5 text-center" role="alert" aria-labelledby="dreams-load-error">
+                    <i class="bi bi-wifi-off display-5 text-warning" aria-hidden="true"></i>
+                    <h2 class="h4 mt-3" id="dreams-load-error">Не удалось загрузить мечты</h2>
+                    <p class="text-muted">Проверь подключение и попробуй снова. Твои записи не удалены.</p>
+                    <button type="button" class="btn btn-premium" id="retryDreamsLoad">Повторить</button>
+                </section>`;
+            mainContent.querySelector('#retryDreamsLoad')?.addEventListener('click', () => this.render());
+        }
     }
 
     getTemplate(dreams) {
@@ -73,11 +96,32 @@ export class DreamsModule {
                                 `).join('')}
                             </select>
                         </div>
+                        <div class="col-12 col-md">
+                            <label class="visually-hidden" for="dreamSearch">Найти мечту</label>
+                            <input type="search" class="form-control form-control-sm" id="dreamSearch"
+                                   placeholder="Поиск по мечтам…" autocomplete="off"
+                                   value="${escapeHTML(this.searchQuery)}">
+                        </div>
+                        <div class="col-12 col-md-auto">
+                            <label class="visually-hidden" for="dreamSort">Сортировка мечт</label>
+                            <select class="form-select form-select-sm" id="dreamSort">
+                                <option value="recent" ${this.sortOrder === 'recent' ? 'selected' : ''}>Сначала новые</option>
+                                <option value="name" ${this.sortOrder === 'name' ? 'selected' : ''}>По названию</option>
+                                <option value="rating" ${this.sortOrder === 'rating' ? 'selected' : ''}>По прогрессу</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
+                <p class="text-muted small mb-3" id="dreamSearchCount" role="status" aria-live="polite"></p>
+
                 <div id="dreamsGrid" class="row g-3">
                     ${dreams.length === 0 ? this.getEmptyState() : dreams.map((d, i) => this.createCard(d, i)).join('')}
+                </div>
+                <div id="dreamSearchEmpty" class="atlas-empty atlas-empty--dream" hidden>
+                    <div class="atlas-empty-art" aria-hidden="true"><i class="bi bi-search"></i></div>
+                    <h3>Ничего не нашлось</h3>
+                    <p>Попробуй другое слово или очисти строку поиска.</p>
                 </div>
 
                 <div id="dreamModalContainer"></div>
@@ -86,11 +130,23 @@ export class DreamsModule {
     }
 
     getEmptyState() {
+        const hasFilter = this.currentFilter.status !== 'all' || this.currentFilter.category !== 'all';
+        if (hasFilter) return `
+            <div class="col-12"><section class="atlas-empty atlas-empty--dream" aria-label="Нет результатов по фильтрам">
+                <div class="atlas-empty-art" aria-hidden="true"><i class="bi bi-funnel"></i></div>
+                <h3>По этим фильтрам пока ничего нет</h3>
+                <p>Попробуй выбрать другой статус или категорию — твои записи никуда не исчезли.</p>
+            </section></div>
+        `;
         return `
-            <div class="col-12 text-center py-5">
-                <i class="bi bi-star display-1 text-muted opacity-25"></i>
-                <h5 class="mt-3 text-muted">Нет мечт</h5>
-                <p class="text-muted small">Запиши свою первую мечту</p>
+            <div class="col-12">
+                <section class="atlas-empty atlas-empty--dream" aria-labelledby="dream-empty-title">
+                    <div class="atlas-empty-art" aria-hidden="true"><span class="atlas-empty-orbit"></span><i class="bi bi-stars"></i><span class="atlas-empty-spark atlas-empty-spark--one">✦</span><span class="atlas-empty-spark atlas-empty-spark--two">✧</span></div>
+                    <span class="atlas-empty-kicker">Начало большой истории</span>
+                    <h3 id="dream-empty-title">У каждой мечты есть первый шаг</h3>
+                    <p>Запиши то, что вдохновляет. Маленькая идея сегодня может стать большим событием завтра.</p>
+                    <button type="button" class="btn btn-premium atlas-empty-action" id="emptyAddDreamBtn"><i class="bi bi-plus-lg me-2"></i>Записать мечту</button>
+                </section>
             </div>
         `;
     }
@@ -102,49 +158,55 @@ export class DreamsModule {
             completed: { badge: 'Сбылось!', color: 'success' }
         };
         const status = statuses[dream.status] || statuses.dreaming;
+        const progress = Math.max(0, Math.min(100, Number(dream.progress) || 0));
+        const safeSteps = Array.isArray(dream.steps) ? dream.steps : [];
 
         return `
-            <div class="col-12 col-md-6 col-lg-4 fade-in-up" style="animation-delay: ${index * 0.06}s">
+            <div class="col-12 col-md-6 col-lg-4 fade-in-up" data-dream-card
+                 data-search="${escapeHTML([dream.title, dream.description, dream.category].filter(Boolean).join(' ').toLocaleLowerCase())}"
+                 data-name="${escapeHTML(String(dream.title || '').toLocaleLowerCase())}"
+                 data-rating="${progress}" data-original-index="${index}"
+                 style="animation-delay: ${index * 0.06}s">
                 <div class="card-premium h-100 dream-card p-3">
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <span class="badge bg-${status.color} bg-opacity-10 text-${status.color}">${status.badge}</span>
                         <div class="dream-card-actions">
-                            <button class="btn btn-sm btn-outline-secondary rounded-circle me-1 edit-btn" data-id="${dream.id}">
+                            <button class="btn btn-sm btn-outline-secondary rounded-circle me-1 edit-btn" aria-label="Редактировать запись" title="Редактировать" data-id="${escapeHTML(dream.id)}">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="${dream.id}">
+                            <button class="btn btn-sm btn-outline-danger rounded-circle delete-btn" aria-label="Удалить запись" title="Удалить" data-id="${escapeHTML(dream.id)}">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </div>
                     </div>
-                    <h6 class="fw-bold mb-1">${dream.title || 'Без названия'}</h6>
+                    <h6 class="fw-bold mb-1">${escapeHTML(dream.title || 'Без названия')}</h6>
                     ${dream.category
-                ? `<span class="badge bg-light text-dark me-1"><i class="bi bi-tag me-1"></i>${dream.category}</span>`
+                ? `<span class="badge bg-light text-dark me-1"><i class="bi bi-tag me-1"></i>${escapeHTML(dream.category)}</span>`
                 : ''
             }
                     ${dream.description
-                ? `<p class="text-muted small mt-2 mb-2">${dream.description.substring(0, 100)}...</p>`
+                ? `<p class="text-muted small mt-2 mb-2">${escapeHTML(String(dream.description).substring(0, 100))}...</p>`
                 : ''
             }
                     ${dream.status !== 'completed'
                 ? `<div class="mb-2">
                             <div class="d-flex justify-content-between small">
                                 <span>Прогресс</span>
-                                <span>${dream.progress || 0}%</span>
+                                <span>${progress}%</span>
                             </div>
                             <div class="progress" style="height: 5px;">
-                                <div class="progress-bar bg-${status.color}" style="width: ${dream.progress || 0}%"></div>
+                                <div class="progress-bar bg-${status.color}" style="width: ${progress}%"></div>
                             </div>
                         </div>`
                 : ''
             }
                     ${dream.deadline
-                ? `<small class="text-muted d-block"><i class="bi bi-calendar me-1"></i>${this.formatDate(dream.deadline)}</small>`
+                ? `<small class="text-muted d-block"><i class="bi bi-calendar me-1"></i>${escapeHTML(this.formatDate(dream.deadline))}</small>`
                 : ''
             }
-                    ${dream.steps && dream.steps.length
+                    ${safeSteps.length
                 ? `<small class="text-muted d-block mt-1">
-                            <i class="bi bi-list-check me-1"></i>${dream.steps.filter(s => s.done).length}/${dream.steps.length} шагов
+                            <i class="bi bi-list-check me-1"></i>${safeSteps.filter(s => s.done).length}/${safeSteps.length} шагов
                         </small>`
                 : ''
             }
@@ -154,7 +216,18 @@ export class DreamsModule {
     }
 
     attachEventListeners() {
+        const searchInput = document.getElementById('dreamSearch');
+        searchInput?.addEventListener('input', () => {
+            this.searchQuery = searchInput.value;
+            this.applySearchAndSort();
+        });
+        document.getElementById('dreamSort')?.addEventListener('change', (event) => {
+            this.sortOrder = event.target.value;
+            this.applySearchAndSort();
+        });
+        this.applySearchAndSort();
         document.getElementById('addDreamBtn')?.addEventListener('click', () => this.showModal(null));
+        document.getElementById('emptyAddDreamBtn')?.addEventListener('click', () => this.showModal(null));
 
         document.querySelectorAll('.edit-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -166,18 +239,33 @@ export class DreamsModule {
         document.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                if (confirm('Удалить эту мечту?')) {
-                    await this.dreamsService.deleteDream(window.app.currentUser.uid, btn.dataset.id);
+                if (btn.disabled || !confirm('Удалить эту мечту?')) return;
+                btn.disabled = true;
+                btn.setAttribute('aria-busy', 'true');
+                try {
+                    const result = await this.dreamsService.deleteDream(window.app.currentUser.uid, btn.dataset.id);
+                    if (!result?.success) {
+                        window.app.ui.showToast('Не удалось удалить мечту. Попробуй ещё раз.', 'error');
+                        return;
+                    }
                     window.app.ui.showToast('Мечта удалена', 'info');
-                    this.render();
+                    await this.render();
                     window.app.refreshUserData();
+                } catch (error) {
+                    console.error('Ошибка удаления мечты:', error);
+                    window.app.ui.showToast('Не удалось удалить мечту. Проверь подключение.', 'error');
+                } finally {
+                    if (btn.isConnected) {
+                        btn.disabled = false;
+                        btn.removeAttribute('aria-busy');
+                    }
                 }
             });
         });
 
         document.querySelectorAll('#statusFilters [data-filter]').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                this.currentFilter.status = e.target.dataset.filter;
+                this.currentFilter.status = e.currentTarget.dataset.filter;
                 this.render();
             });
         });
@@ -186,6 +274,11 @@ export class DreamsModule {
             this.currentFilter.category = e.target.value;
             this.render();
         });
+    }
+
+    applySearchAndSort() {
+        return applyCollectionSearchAndSort({ document, gridId: 'dreamsGrid', cardSelector: '[data-dream-card]',
+            emptyId: 'dreamSearchEmpty', countId: 'dreamSearchCount', query: this.searchQuery, order: this.sortOrder });
     }
 
     async showModal(dreamId) {
@@ -198,7 +291,8 @@ export class DreamsModule {
         const dream = dreamId ? await this.dreamsService.getDream(userId, dreamId) : null;
         const isEdit = !!dream;
         const categories = ['Путешествия', 'Карьера', 'Творчество', 'Спорт', 'Отношения', 'Знания', 'Материальное', 'Другое'];
-        const steps = dream?.steps || [{ text: '', done: false }, { text: '', done: false }];
+        const steps = Array.isArray(dream?.steps) ? dream.steps : [{ text: '', done: false }, { text: '', done: false }];
+        const progress = Math.max(0, Math.min(100, Number(dream?.progress) || 0));
 
         const container = document.createElement('div');
         container.id = 'dreamModalContainer';
@@ -221,7 +315,7 @@ export class DreamsModule {
                                     <div class="col-md-8">
                                         <label class="form-label fw-semibold small">Название мечты *</label>
                                         <input type="text" class="form-control" name="title"
-                                               value="${dream?.title || ''}" placeholder="О чём ты мечтаешь?" required>
+                                               value="${escapeHTML(dream?.title || '')}" placeholder="О чём ты мечтаешь?" required>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Категория</label>
@@ -244,42 +338,49 @@ export class DreamsModule {
                                         <label class="form-label fw-semibold small">Прогресс</label>
                                         <div class="d-flex align-items-center gap-2 pt-2">
                                             <input type="range" class="form-range" name="progress"
-                                                   min="0" max="100" value="${dream?.progress || 0}"
+                                                   min="0" max="100" value="${progress}"
                                                    id="progressSlider" style="flex: 1;">
-                                            <span class="badge bg-primary" id="progressValue">${dream?.progress || 0}%</span>
+                                            <span class="badge bg-primary" id="progressValue">${progress}%</span>
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Срок</label>
                                         <input type="date" class="form-control" name="deadline"
-                                               value="${dream?.deadline || ''}">
+                                               value="${escapeHTML(dream?.deadline || '')}">
                                     </div>
-                                    <div class="col-12">
-                                        <label class="form-label fw-semibold small">Описание</label>
-                                        <textarea class="form-control" name="description" rows="3"
-                                                  placeholder="Опиши свою мечту...">${dream?.description || ''}</textarea>
-                                    </div>
-                                    <div class="col-12">
-                                        <label class="form-label fw-semibold small">
-                                            <i class="bi bi-list-check me-1"></i>Шаги к мечте
-                                        </label>
-                                        <div id="stepsContainer">
-                                            ${steps.map((step, i) => `
-                                                <div class="input-group mb-2 step-row">
-                                                    <span class="input-group-text">
-                                                        <input type="checkbox" ${step.done ? 'checked' : ''} class="step-done">
-                                                    </span>
-                                                    <input type="text" class="form-control step-text"
-                                                           value="${step.text || ''}" placeholder="Шаг ${i + 1}">
-                                                    <button type="button" class="btn btn-outline-danger btn-sm remove-step">
-                                                        <i class="bi bi-x"></i>
+                                    <div class="col-12 atlas-form-extras">
+                                        <details class="atlas-form-details" ${isEdit ? 'open' : ''}>
+                                            <summary>Описание и шаги к мечте</summary>
+                                            <div class="row g-3">
+                                                <div class="col-12">
+                                                    <label class="form-label fw-semibold small" for="dreamDescription">Описание</label>
+                                                    <textarea class="form-control" id="dreamDescription" name="description" rows="3"
+                                                              placeholder="Опиши свою мечту...">${escapeHTML(dream?.description || '')}</textarea>
+                                                </div>
+                                                <div class="col-12">
+                                                    <label class="form-label fw-semibold small" for="dreamStep0">
+                                                        <i class="bi bi-list-check me-1"></i>Шаги к мечте
+                                                    </label>
+                                                    <div id="stepsContainer">
+                                                        ${steps.map((step, i) => `
+                                                            <div class="input-group mb-2 step-row">
+                                                                <span class="input-group-text">
+                                                                    <input type="checkbox" ${step.done ? 'checked' : ''} class="step-done" aria-label="Шаг ${i + 1} выполнен">
+                                                                </span>
+                                                                <input type="text" class="form-control step-text" id="dreamStep${i}"
+                                                                       value="${escapeHTML(step.text || '')}" placeholder="Шаг ${i + 1}" aria-label="Шаг ${i + 1}">
+                                                                <button type="button" class="btn btn-outline-danger btn-sm remove-step" aria-label="Удалить шаг ${i + 1}">
+                                                                    <i class="bi bi-x" aria-hidden="true"></i>
+                                                                </button>
+                                                            </div>
+                                                        `).join('')}
+                                                    </div>
+                                                    <button type="button" class="btn btn-outline-primary btn-sm" id="addStepBtn">
+                                                        <i class="bi bi-plus me-1"></i>Добавить шаг
                                                     </button>
                                                 </div>
-                                            `).join('')}
-                                        </div>
-                                        <button type="button" class="btn btn-outline-primary btn-sm" id="addStepBtn">
-                                            <i class="bi bi-plus me-1"></i>Добавить шаг
-                                        </button>
+                                            </div>
+                                        </details>
                                     </div>
                                 </div>
                             </form>
@@ -318,9 +419,9 @@ export class DreamsModule {
             const row = document.createElement('div');
             row.className = 'input-group mb-2 step-row';
             row.innerHTML = `
-                <span class="input-group-text"><input type="checkbox" class="step-done"></span>
-                <input type="text" class="form-control step-text" placeholder="Новый шаг">
-                <button type="button" class="btn btn-outline-danger btn-sm remove-step"><i class="bi bi-x"></i></button>
+                <span class="input-group-text"><input type="checkbox" class="step-done" aria-label="Новый шаг выполнен"></span>
+                <input type="text" class="form-control step-text" placeholder="Новый шаг" aria-label="Новый шаг">
+                <button type="button" class="btn btn-outline-danger btn-sm remove-step" aria-label="Удалить шаг"><i class="bi bi-x" aria-hidden="true"></i></button>
             `;
             stepsContainer.appendChild(row);
             row.querySelector('.remove-step').addEventListener('click', () => row.remove());
@@ -330,8 +431,11 @@ export class DreamsModule {
             btn.addEventListener('click', () => btn.closest('.step-row').remove());
         });
 
-        document.getElementById('saveDreamBtn').addEventListener('click', async () => {
+        document.getElementById('saveDreamBtn').addEventListener('click', async (event) => {
+            const saveButton = event.currentTarget;
+            if (saveButton.disabled) return;
             const form = document.getElementById('dreamForm');
+            if (!form) return;
             const formData = new FormData(form);
 
             const steps = [];
@@ -356,11 +460,18 @@ export class DreamsModule {
                 return;
             }
 
-            const result = isEdit
-                ? await this.dreamsService.updateDream(userId, dreamId, data)
-                : await this.dreamsService.addDream(userId, data);
+            saveButton.disabled = true;
+            saveButton.setAttribute('aria-busy', 'true');
+            try {
+                const result = isEdit
+                    ? await this.dreamsService.updateDream(userId, dreamId, data)
+                    : await this.dreamsService.addDream(userId, data);
 
-            if (result.success) {
+                if (!result?.success) {
+                    window.app.ui.showToast('Ошибка сохранения. Попробуй ещё раз.', 'error');
+                    return;
+                }
+
                 modal.hide();
                 window.app.onUserAction('add_dream');
                 window.app.ui.showToast(
@@ -370,8 +481,14 @@ export class DreamsModule {
                 setTimeout(async () => {
                     await this.render();
                 }, 300);
-            } else {
-                window.app.ui.showToast('Ошибка сохранения', 'error');
+            } catch (error) {
+                console.error('Ошибка сохранения мечты:', error);
+                window.app.ui.showToast('Не удалось сохранить мечту. Проверь подключение.', 'error');
+            } finally {
+                if (saveButton.isConnected) {
+                    saveButton.disabled = false;
+                    saveButton.removeAttribute('aria-busy');
+                }
             }
         });
     }

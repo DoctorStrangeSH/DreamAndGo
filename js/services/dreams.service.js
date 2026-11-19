@@ -1,4 +1,5 @@
 import { db } from '../config/firebase.js';
+import { validateDreamInput } from '../core/dream-input-policy.js';
 import { 
     collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc,
     query, orderBy, serverTimestamp, where
@@ -9,7 +10,7 @@ export class DreamsService {
         this.db = db;
     }
 
-    async getDreams(userId, filters = {}) {
+    async getDreams(userId, filters = {}, { throwOnError = false } = {}) {
         try {
             const dreamsRef = collection(this.db, 'users', userId, 'dreams');
             let q = query(dreamsRef, orderBy('createdAt', 'desc'));
@@ -39,6 +40,7 @@ export class DreamsService {
             return dreams;
         } catch (error) {
             console.error('Ошибка загрузки мечт:', error);
+            if (throwOnError) throw error;
             return [];
         }
     }
@@ -53,7 +55,7 @@ export class DreamsService {
                 status: data.status || 'dreaming',
                 progress: data.progress || 0,
                 steps: data.steps || [],
-                isPublic: data.isPublic !== false
+                isPublic: false
             };
 
             const docRef = await addDoc(dreamsRef, newDream);
@@ -109,7 +111,7 @@ export class DreamsService {
 
     async updateUserStats(userId) {
         try {
-            const dreams = await this.getDreams(userId);
+            const dreams = await this.getDreams(userId, {}, { throwOnError: true });
             const dreaming = dreams.filter(d => d.status === 'dreaming').length;
             const inProgress = dreams.filter(d => d.status === 'in_progress').length;
             const completed = dreams.filter(d => d.status === 'completed').length;

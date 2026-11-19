@@ -1,0 +1,31 @@
+/* Candidate v2. Load only with the v2 chat rollout. */
+.chat-unread-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    min-width: 1.55rem;
+    height: 1.55rem;
+    padding: 0 .45rem;
+    border-radius: 999px;
+    font-size: .7rem;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+.chat-unread-badge--count {
+    color: #fff;
+    background: var(--bs-primary, #6f5be8);
+}
+.chat-unread-badge--checking,
+.chat-unread-badge--unknown {
+    min-width: 1.4rem;
+    height: 1.4rem;
+    background: var(--bs-secondary-bg, #363640);
+    color: var(--bs-secondary-color, #c3c3cf);
+}
+@media (prefers-reduced-motion: no-preference) {
+    .chat-unread-badge--checking .bi { animation: chat-unread-spin 1s linear infinite; }
+}
+@keyframes chat-unread-spin { to { transform: rotate(360deg); } }

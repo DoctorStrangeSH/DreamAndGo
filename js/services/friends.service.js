@@ -1,8 +1,17 @@
 import { db } from '../config/firebase.js';
+import { normalizeUsername, isValidUsername } from '../core/username.js';
+import { toPublicProfile } from '../core/public-profile.js';
+import { countFriendRecords } from '../core/friend-count.js';
 import { 
     collection, doc, getDocs, getDoc, updateDoc,
-    query, where, serverTimestamp, writeBatch, setDoc
+    query, where, limit, serverTimestamp, writeBatch, setDoc
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+function isValidFriendPair(userId, friendId) {
+    const isValidUid = value => typeof value === 'string' && value.length > 0 &&
+        value.length <= 128 && value.trim() === value && !value.includes('/');
+    return isValidUid(userId) && isValidUid(friendId) && userId !== friendId;
+}
 
 export class FriendsService {
     constructor() {
@@ -10,53 +19,56 @@ export class FriendsService {
     }
 
     async getUserByUsername(username) {
+        const normalized = normalizeUsername(username);
+        if (!isValidUsername(normalized)) return null;
+
         try {
             const usersRef = collection(this.db, 'users');
-            const searchName = username.toLowerCase();
-            const snapshot = await getDocs(usersRef);
-            
-            let foundUser = null;
-            
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                if (data.username && data.username.toLowerCase() === searchName) {
-                    foundUser = { uid: doc.id, ...data };
-                }
-            });
-            
-            return foundUser;
+            // New profiles use the canonical key. Legacy profiles are still
+            // available via exact-case username until a safe backfill exists.
+            const indexed = await getDocs(query(usersRef, where('usernameNormalized', '==', normalized), limit(1)));
+            let match = indexed.docs[0];
+            if (!match) {
+                const legacy = await getDocs(query(usersRef, where('username', '==', String(username).trim()), limit(1)));
+                match = legacy.docs[0];
+            }
+            if (!match) return null;
+            return toPublicProfile(match.id, match.data());
         } catch (error) {
             console.error('Ошибка поиска пользователя:', error);
-            return null;
+            throw new Error('Не удалось выполнить поиск. Проверь подключение к интернету и повтори попытку.');
         }
     }
 
     async sendFriendRequest(fromUserId, toUserId) {
+        if (!isValidFriendPair(fromUserId, toUserId)) {
+            return { success: false, error: fromUserId === toUserId
+                ? 'Нельзя отправить заявку самому себе.'
+                : 'Некорректные данные для отправки заявки.' };
+        }
         try {
-            const requestRef = doc(this.db, 'users', toUserId, 'friendRequests', fromUserId);
-            await setDoc(requestRef, {
+            // Both user-facing views must change atomically, or neither changes.
+            const batch = writeBatch(this.db);
+            const request = {
                 from: fromUserId,
                 to: toUserId,
                 status: 'pending',
                 createdAt: serverTimestamp()
-            });
-
-            const sentRef = doc(this.db, 'users', fromUserId, 'sentRequests', toUserId);
-            await setDoc(sentRef, {
-                from: fromUserId,
-                to: toUserId,
-                status: 'pending',
-                createdAt: serverTimestamp()
-            });
-
+            };
+            batch.set(doc(this.db, 'users', toUserId, 'friendRequests', fromUserId), request);
+            batch.set(doc(this.db, 'users', fromUserId, 'sentRequests', toUserId), request);
+            await batch.commit();
             return { success: true };
         } catch (error) {
             console.error('Ошибка отправки заявки:', error);
-            return { success: false, error: error.message };
+            return { success: false, error: 'Не удалось отправить заявку. Попробуй ещё раз.' };
         }
     }
 
     async acceptFriendRequest(userId, friendId) {
+        if (!isValidFriendPair(userId, friendId)) {
+            return { success: false, error: 'Некорректные данные для принятия заявки.' };
+        }
         try {
             const batch = writeBatch(this.db);
 
@@ -86,6 +98,9 @@ export class FriendsService {
     }
 
     async rejectFriendRequest(userId, friendId) {
+        if (!isValidFriendPair(userId, friendId)) {
+            return { success: false, error: 'Некорректные данные для отклонения заявки.' };
+        }
         try {
             const batch = writeBatch(this.db);
 
@@ -102,6 +117,9 @@ export class FriendsService {
     }
 
     async removeFriend(userId, friendId) {
+        if (!isValidFriendPair(userId, friendId)) {
+            return { success: false, error: 'Некорректные данные для удаления друга.' };
+        }
         try {
             const batch = writeBatch(this.db);
 
@@ -202,14 +220,7 @@ export class FriendsService {
         try {
             const userDoc = await getDoc(doc(this.db, 'users', uid));
             if (userDoc.exists()) {
-                const data = userDoc.data();
-                return {
-                    username: data.username,
-                    displayName: data.displayName || data.username,
-                    avatar: data.avatar,
-                    bio: data.bio || '',
-                    stats: data.stats || {}
-                };
+                return toPublicProfile(uid, userDoc.data());
             }
             return null;
         } catch (error) {
@@ -219,9 +230,11 @@ export class FriendsService {
 
     async updateFriendsCount(userId) {
         try {
-            const friends = await this.getFriends(userId);
+            const friendsRef = collection(this.db, 'users', userId, 'friends');
+            const snapshot = await getDocs(friendsRef);
+            const count = countFriendRecords(snapshot.docs);
             const userRef = doc(this.db, 'users', userId);
-            await updateDoc(userRef, { 'stats.friends': friends.length });
+            await updateDoc(userRef, { 'stats.friends': count });
         } catch (error) {
             console.error('Ошибка обновления счётчика друзей:', error);
         }

@@ -1,0 +1,36 @@
+name: Firebase Emulator (candidate chat rules)
+on:
+  push:
+    paths:
+      - 'tests/firebase-emulator/**'
+      - 'server/**'
+      - '.github/workflows/firebase-emulator.yml'
+  pull_request:
+    paths:
+      - 'tests/firebase-emulator/**'
+      - 'server/**'
+      - '.github/workflows/firebase-emulator.yml'
+jobs:
+  chat-rules:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tests/firebase-emulator
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install emulator test dependencies
+        run: npm install --no-audit --no-fund
+      - name: Install candidate server dependencies
+        run: npm install --prefix ../../server --no-audit --no-fund
+      - name: Run all isolated rule and transaction tests in one emulator session
+        run: >-
+          npx -y firebase-tools@latest emulators:exec
+          --project demo-dreamandgo-chat-rules --only auth,firestore --config firebase.json
+          "npm test && node --test ../../server/*.emulator.test.mjs"

@@ -1,4 +1,6 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app-check.js';
+import { initializeWebAppCheck } from '../core/app-check-bootstrap.js';
 import { 
     getAuth,
     signInWithEmailAndPassword,
@@ -29,8 +31,12 @@ const firebaseConfig = {
     measurementId: "G-FR9HRFS4S7"
 };
 
+// Public reCAPTCHA Enterprise site key registered for the DreamAndGo web app.
+// Never place a reCAPTCHA secret or an App Check debug token here.
+const appCheckSiteKey = '6LdTWiEuAAAAAGp17v14_t0ZlE67ha6sbDGM4KbS';
+
 // Инициализация Firebase с проверкой ошибок
-let app, auth, db;
+let app, auth, db, appCheck;
 
 try {
     app = initializeApp(firebaseConfig);
@@ -48,7 +54,7 @@ try {
 }
 
 // Экспортируем для использования в других модулях
-export { app, auth, db };
+export { app, auth, db, appCheck };
 
 // Дополнительно: проверка подключения
 export async function checkFirebaseConnection() {

@@ -1,0 +1,360 @@
+/* Dream&Go · Atlas internal pages. Purely presentational. */
+.page-header {margin-bottom:1.6rem}
+.page-header h1,.page-header h2 {font-size:clamp(1.65rem,2.7vw,2.5rem);letter-spacing:-.05em}
+.page-header p {color:var(--text-secondary);line-height:1.7}
+.page-header .btn {min-height:43px}
+.travel-card,.restaurant-card,.movie-card,.book-card,.dream-card {transition:transform .25s ease}
+.travel-card:hover,.restaurant-card:hover,.movie-card:hover,.book-card:hover {transform:translateY(-3px)}
+.travel-card .card-premium,.restaurant-card .card-premium,.movie-card .card-premium,.book-card .card-premium {height:100%}
+.travel-card-image,.restaurant-photo,.movie-poster {position:relative;isolation:isolate}
+.travel-card-image::after,.restaurant-photo::after,.movie-poster::after {
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,transparent 47%,rgba(20,50,60,.3))
+}
+.travel-card-placeholder,.restaurant-placeholder,.movie-poster-placeholder {
+  background:radial-gradient(circle at 72% 25%,rgba(251,203,151,.65),transparent 43%),linear-gradient(125deg,#1a6370,#209889)!important
+}
+.travel-card-badges .badge,.restaurant-card-badges .badge,.movie-badge {
+  border:1px solid rgba(255,255,255,.5);box-shadow:0 5px 14px rgba(15,49,58,.12);backdrop-filter:blur(8px)
+}
+/* Action buttons stay discoverable on touch and keyboard, not just hover. */
+.travel-card-actions,.restaurant-card-actions,.book-card-actions,.dream-card-actions {
+  opacity:1!important
+}
+.travel-card-actions .btn,.restaurant-card-actions .btn,.book-card-actions .btn,.dream-card-actions .btn {
+  box-shadow:0 5px 14px rgba(20,49,56,.16)
+}
+.dream-card {
+  background:var(--bg-card);border:1px solid var(--border-color);border-radius:24px;
+  box-shadow:var(--shadow-sm);overflow:hidden
+}
+.dream-card:hover {border-color:rgba(22,127,128,.42);box-shadow:var(--shadow-md)}
+.dream-card .progress {height:9px}
+/* Profile identity: recognisable atlas cover even when no image is available. */
+.profile-page {max-width:1320px;margin-inline:auto}
+.profile-cover {
+  min-height:210px;
+  background:radial-gradient(circle at 75% 15%,rgba(249,186,125,.65),transparent 32%),
+             linear-gradient(120deg,#153e58,#187a7b 58%,#75c4a8);
+  border:1px solid var(--border-color);box-shadow:var(--shadow-md)!important
+}
+.profile-cover-overlay {background:linear-gradient(0deg,rgba(13,44,56,.2),transparent 55%)}
+.profile-avatar {border:5px solid var(--bg-card);box-shadow:var(--shadow-lg)}
+.profile-username {color:var(--text-secondary)}
+.profile-display-name {font-weight:850;letter-spacing:-.045em}
+.profile-bio {color:var(--text-secondary);line-height:1.7}
+.profile-stats {background:var(--bg-card);border:1px solid var(--border-color);border-radius:22px;box-shadow:var(--shadow-sm)}
+.profile-stat strong {color:var(--primary)}
+.profile-tabs {border-bottom:1px solid var(--border-color)}
+.profile-tabs .nav-link {
+  color:var(--text-secondary);font-weight:800;border-radius:12px 12px 0 0;
+  transition:color .2s ease,background .2s ease
+}
+.profile-tabs .nav-link:hover {color:var(--primary);background:var(--bg-hover)}
+.profile-tabs .nav-link.active {color:var(--primary)}
+.profile-tabs .nav-link.active::after {background:var(--primary)}
+/* Legacy chat remains functional; only its presentation changes. */
+.chat-page {color:var(--text-primary)}
+.chat-list,.chat-header,.chat-messages,.chat-input {border-color:var(--border-color)}
+.chat-list-item {border-bottom:1px solid var(--border-light);transition:background .2s ease}
+.chat-list-item:hover {background:var(--bg-hover)}
+.chat-list-item.active {background:var(--bg-tertiary);border-left:3px solid var(--primary)}
+.chat-avatar-placeholder {background:var(--gradient-primary);color:white}
+.chat-messages {
+  background:radial-gradient(circle at 18% 18%,rgba(45,155,146,.055),transparent 28%),
+             radial-gradient(circle at 88% 72%,rgba(239,143,100,.065),transparent 24%),var(--bg-secondary)
+}
+.chat-input {background:var(--bg-card)}
+.chat-input .form-control {border-radius:15px}
+.chat-page .card-premium {overflow:hidden}
+/* Content tabs and gamification */
+.movies-tabs .nav-link {color:var(--text-secondary);font-weight:750;border-radius:12px}
+.movies-tabs .nav-link.active {color:var(--primary);background:var(--bg-tertiary)}
+.achievement-icon {border-radius:18px;background:var(--bg-tertiary)}
+.achievement-icon.earned {background:linear-gradient(135deg,#f9d68c,#f2ad6f)}
+.achievement-earned {border-color:rgba(28,153,132,.35)}
+.achievement-locked {opacity:.7}
+.achievement-level-dot.earned {background:var(--success)}
+.achievement-level-dot.current {box-shadow:0 0 0 4px rgba(29,156,146,.18)}
+.achievement-item .card-premium {position:relative;overflow:hidden;transition:border-color .22s ease,box-shadow .22s ease,transform .22s ease}
+.achievement-item .card-premium::before {content:"";position:absolute;inset:0 0 auto;height:4px;background:var(--border-color)}
+.achievement-tier--bronze {border-color:rgba(185,113,67,.35)!important}
+.achievement-tier--bronze::before {background:linear-gradient(90deg,#965e40,#d89b6c)!important}
+.achievement-tier--silver {border-color:rgba(120,150,174,.46)!important}
+.achievement-tier--silver::before {background:linear-gradient(90deg,#69859b,#d3e1ec)!important}
+.achievement-tier--gold {border-color:rgba(220,167,62,.5)!important;background:radial-gradient(circle at 90% 12%,rgba(247,191,76,.09),transparent 45%),var(--bg-card)}
+.achievement-tier--gold::before {background:linear-gradient(90deg,#c08a2d,#ffda79)!important}
+.achievement-tier--legendary {border-color:rgba(154,112,220,.62)!important;background:radial-gradient(circle at 88% 8%,rgba(167,117,232,.17),transparent 55%),var(--bg-card);box-shadow:0 12px 28px rgba(113,67,156,.12)}
+.achievement-tier--legendary::before {background:linear-gradient(90deg,#7554af,#dfb0fb,#efc779)!important}
+.achievement-tier-badge {display:inline-flex;align-items:center;justify-content:center;align-self:flex-start;flex-shrink:0;white-space:nowrap;border-radius:999px;padding:.24rem .55rem;font-size:.68rem;font-weight:800;letter-spacing:.02em;background:var(--bg-tertiary);color:var(--text-secondary)}
+.achievement-tier-badge--bronze {background:rgba(185,113,67,.14);color:#ac754f}
+.achievement-tier-badge--silver {background:rgba(120,150,174,.16);color:var(--text-primary)}
+.achievement-tier-badge--gold {background:rgba(220,167,62,.16);color:#ac781e}
+.achievement-tier-badge--legendary {background:rgba(154,112,220,.17);color:#ae7bde}
+.atlas-achievement-toast {position:relative;overflow:hidden;min-width:min(350px,calc(100vw - 2rem));max-width:min(420px,calc(100vw - 2rem));border-radius:20px!important;border:1px solid rgba(222,171,75,.48)!important;background:var(--bg-card)!important;color:var(--text-primary)!important;box-shadow:0 18px 42px rgba(21,30,50,.22)!important}
+.atlas-achievement-toast::before {content:"";position:absolute;inset:0 0 auto;height:4px;background:linear-gradient(90deg,#a67342,#f2d58b)}
+.atlas-achievement-toast--silver::before {background:linear-gradient(90deg,#68849e,#d7e1ec)}
+.atlas-achievement-toast--gold::before {background:linear-gradient(90deg,#b87f26,#ffe19b)}
+.atlas-achievement-toast--legendary::before {background:linear-gradient(90deg,#7955bb,#dfb0fb,#edc36e)}
+.atlas-achievement-toast-icon {display:grid;place-items:center;flex-shrink:0;width:52px;height:52px;border-radius:15px;background:var(--bg-tertiary);font-size:1.65rem}
+.atlas-achievement-toast-kicker {display:block;margin-bottom:.2rem;color:var(--primary);font-weight:800;letter-spacing:.02em}
+.atlas-achievement-toast-link {display:inline-flex;gap:.3rem;align-items:center;margin-top:.5rem;font-size:.8rem;font-weight:750;color:var(--primary);text-decoration:none}
+.atlas-achievement-toast-link:hover {text-decoration:underline}
+.atlas-achievement-toast .btn-close {flex-shrink:0}
+@media(hover:hover) and (pointer:fine) {.achievement-item .achievement-earned:hover {transform:translateY(-3px);box-shadow:var(--shadow-md)}}
+@media(max-width:575.98px) {.achievement-tier-badge {font-size:.62rem;padding:.2rem .4rem}.achievement-item .card-premium .d-flex.gap-3 {gap:.7rem!important}}
+@media(prefers-reduced-motion:reduce) {.achievement-item .card-premium {transition:none!important}.achievement-item .achievement-earned:hover {transform:none!important}.achievement-item .achievement-level-dot.current {animation:none!important}}
+/* Tables, list groups, tabs, menus share the palette. */
+.list-group-item,.table,.table>:not(caption)>*>*,.accordion-item {
+  background-color:var(--bg-card);color:var(--text-primary);border-color:var(--border-color)
+}
+.list-group-item-action:hover {background:var(--bg-hover)}
+.nav-tabs {border-color:var(--border-color)}
+.nav-tabs .nav-link {color:var(--text-secondary);font-weight:700}
+.nav-tabs .nav-link.active {background:var(--bg-card);color:var(--primary);border-color:var(--border-color)}
+.pagination .page-link {background:var(--bg-card);border-color:var(--border-color);color:var(--primary)}
+.pagination .active .page-link {background:var(--gradient-primary);color:white;border-color:transparent}
+[data-bs-theme="dark"] .text-dark {color:var(--text-primary)!important}
+[data-bs-theme="dark"] .bg-white {background:var(--bg-card)!important}
+[data-bs-theme="dark"] .bg-light {background:var(--bg-secondary)!important}
+[data-bs-theme="dark"] .btn-close {filter:invert(1) grayscale(1)}
+@media(hover:hover) and (pointer:fine) {
+  .travel-card-actions,.restaurant-card-actions,.book-card-actions,.dream-card-actions {opacity:.35!important;transition:opacity .2s ease}
+  .travel-card:hover .travel-card-actions,.restaurant-card:hover .restaurant-card-actions,
+  .book-card:hover .book-card-actions,.dream-card:hover .dream-card-actions,
+  .travel-card:focus-within .travel-card-actions,.restaurant-card:focus-within .restaurant-card-actions,
+  .book-card:focus-within .book-card-actions,.dream-card:focus-within .dream-card-actions {opacity:1!important}
+}
+@media(max-width:767.98px) {
+  .profile-cover {min-height:145px}
+  .profile-stats {border-radius:16px}
+  .page-header .d-flex {flex-wrap:wrap}
+  .chat-page .card-premium {border-radius:18px}
+  .travel-card-image {height:175px}
+}
+@media(prefers-reduced-motion:reduce) {
+  .travel-card,.restaurant-card,.movie-card,.book-card,.dream-card {transition:none!important}
+}
+
+
+/* Editorial collection cards */
+.travel-card,.dream-card {
+  position:relative;display:flex;flex-direction:column;
+  border-radius:25px!important;box-shadow:var(--shadow-sm);
+}
+.travel-card .restaurant-card-header {position:relative;min-height:190px;overflow:hidden;background:var(--bg-tertiary)}
+.travel-card .restaurant-photo,.travel-card .restaurant-placeholder {width:100%;height:205px;object-fit:cover}
+.travel-card .restaurant-photo {transition:transform .4s ease}
+.travel-card:hover .restaurant-photo {transform:scale(1.045)}
+.travel-card .restaurant-card-header>.position-absolute {z-index:2}
+.travel-card .restaurant-card-actions {z-index:3}
+.travel-card>.p-3 {display:flex;flex:1;flex-direction:column;gap:.45rem;padding:1.2rem!important}
+.travel-card h6 {font-size:1.08rem;line-height:1.3;letter-spacing:-.025em;overflow-wrap:anywhere}
+.travel-card>.p-3>div:last-child {margin-top:auto;padding-top:.7rem;border-top:1px solid var(--border-light)}
+.travel-card .badge,.dream-card .badge {border-radius:9px;padding:.43rem .62rem;font-size:.72rem}
+.travel-card .restaurant-card-header .badge {background:rgba(255,254,250,.92)!important;color:#205b61!important}
+.travel-card .restaurant-card-actions .btn {display:inline-grid;place-items:center;width:35px;height:35px;border:1px solid rgba(255,255,255,.5);padding:0}
+.dream-card {padding:1.3rem!important;gap:.2rem}
+.dream-card::before {
+  content:"";height:4px;position:absolute;inset:0 20px auto;
+  border-radius:0 0 999px 999px;background:linear-gradient(90deg,#4caf9c,#f1bd86)
+}
+.dream-card>h6 {font-size:1.18rem;line-height:1.35;letter-spacing:-.032em;margin:.35rem 0!important}
+.dream-card>.text-muted {line-height:1.65}
+.dream-card .progress {height:9px!important;background:var(--bg-tertiary);margin-top:.3rem}
+.dream-card .progress-bar {background:linear-gradient(90deg,#15938b,#7acdb4)!important}
+.dream-card-actions .btn {display:inline-grid;place-items:center;width:34px;height:34px;padding:0;border-radius:11px!important}
+.dream-card .badge.bg-light {background:var(--bg-tertiary)!important;color:var(--text-primary)!important}
+.filter-bar {padding:1rem;border-radius:18px;background:var(--bg-card);border:1px solid var(--border-color);box-shadow:var(--shadow-xs)}
+.filter-bar .btn-group {flex-wrap:wrap;gap:.2rem}
+.filter-bar .btn-group .btn {border-radius:11px!important;margin:0;padding:.42rem .72rem}
+.filter-bar .btn-group .btn.active {background:var(--gradient-primary);color:#fff;border-color:transparent}
+.filter-bar .form-select {min-height:39px}
+@media(max-width:575.98px) {
+ .filter-bar {padding:.65rem}.filter-bar .btn-group {display:flex}
+ .filter-bar .btn-group .btn {font-size:.77rem}
+ .travel-card .restaurant-photo,.travel-card .restaurant-placeholder {height:180px}
+}
+
+
+/* Resilience under real user content, zoom and keyboard navigation */
+.travel-card,.dream-card,.book-card,.restaurant-card,.movie-card {min-width:0}
+.travel-card h6,.dream-card h6,.book-card h6,.restaurant-card h6,.movie-card h6 {
+  overflow-wrap:anywhere;word-break:normal
+}
+.travel-card p,.dream-card p,.book-card p {overflow-wrap:anywhere}
+.travel-card .restaurant-photo,.restaurant-card .restaurant-photo {aspect-ratio:16/10;object-fit:cover}
+.card-premium:focus-within {box-shadow:0 0 0 3px rgba(38,170,161,.16),var(--shadow-md)}
+.travel-card-actions .btn:focus-visible,.dream-card-actions .btn:focus-visible {
+  outline:3px solid var(--accent)!important;outline-offset:2px;opacity:1
+}
+.filter-bar .btn-group .btn {white-space:normal;line-height:1.3}
+.filter-bar .btn-group .btn:focus-visible {position:relative;z-index:2}
+@media(max-width:575.98px) {
+  .filter-bar .row {display:flex;gap:.65rem}
+  .filter-bar .row>[class*="col-"] {width:100%;max-width:100%}
+  .filter-bar .btn-group {width:100%;flex-wrap:wrap}
+  .filter-bar .btn-group .btn {flex:1 1 auto;min-height:42px}
+  .filter-bar .form-select {width:100%!important;min-width:0!important}
+  .travel-card>.p-3,.dream-card {padding:1.1rem!important}
+  .travel-card>.p-3>div:last-child {gap:.6rem;flex-wrap:wrap}
+}
+@media(prefers-contrast:more) {
+ .card-premium,.atlas-empty,.filter-bar {border-width:2px}
+ .btn-outline-secondary,.btn-outline-primary {border-width:2px}
+}
+
+/* Profile identity and activity — the same Atlas language as the design preview. */
+.profile-page .profile-header {gap:1.35rem;align-items:flex-end;min-width:0}
+.profile-page .profile-info {min-width:0}
+.profile-page .profile-avatar {
+  width:108px;height:108px;border-radius:29px;
+  border:5px solid var(--bg-card);box-shadow:var(--shadow-lg)
+}
+.profile-page .profile-avatar-text {font-weight:850}
+.profile-page .profile-username {overflow-wrap:anywhere;line-height:1.25}
+.profile-page .profile-display-name {
+  border:1px solid var(--border-color);background:var(--bg-tertiary);
+  color:var(--primary);font-weight:800
+}
+.profile-page .profile-stats {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.65rem;padding:1rem}
+.profile-page .profile-stat {
+  min-width:0;padding:.9rem .55rem;background:var(--bg-secondary);
+  border:1px solid var(--border-light);border-radius:15px
+}
+.profile-page .profile-stat strong {font-size:1.4rem;line-height:1.25;font-weight:850}
+.profile-page .profile-stat span {display:block;font-size:.76rem;overflow-wrap:anywhere}
+.profile-page .profile-tabs {scrollbar-width:thin;scrollbar-color:var(--border-color) transparent;gap:.35rem}
+.profile-page .profile-tabs .nav-link {min-height:44px;padding:.72rem 1rem}
+.profile-page .profile-tabs .nav-link[aria-selected="true"] {
+  background:var(--bg-tertiary);color:var(--primary);border-radius:12px 12px 0 0
+}
+.profile-page .profile-tab-content .card-premium {border-radius:21px}
+.profile-page .achievement-earned .badge {background:var(--bg-tertiary)!important;color:var(--primary)!important}
+@media(min-width:1200px) {
+  .profile-page .profile-stats {grid-template-columns:repeat(6,minmax(0,1fr))}
+}
+@media(max-width:767.98px) {
+  .profile-page .profile-header {align-items:flex-start;flex-wrap:wrap;margin-top:-38px}
+  .profile-page .profile-avatar {width:88px;height:88px;border-radius:23px}
+  .profile-page .profile-info {flex:1 1 100%;padding-inline:.25rem}
+  .profile-page .profile-stats {grid-template-columns:repeat(3,minmax(0,1fr));padding:.65rem}
+}
+@media(max-width:380px) {
+  .profile-page .profile-stats {grid-template-columns:repeat(2,minmax(0,1fr))}
+  .profile-page .profile-stat {padding:.7rem .4rem}
+}
+
+/* Read-only owner collection inside profile; never exposes edit actions. */
+.profile-collection-card {min-width:0;overflow:hidden}
+.profile-collection-card h3,.profile-collection-card p {overflow-wrap:anywhere}
+.profile-collection-kicker {
+  display:inline-flex;align-self:flex-start;padding:.33rem .65rem;
+  background:var(--bg-tertiary);border:1px solid var(--border-color);
+  border-radius:10px;color:var(--primary);font-size:.73rem;font-weight:800
+}
+
+/* Social cards: long handles, compact screens and touch-first actions. */
+.atlas-friend-card {height:100%;border-radius:21px;min-width:0}
+.atlas-friend-content {min-width:0}
+.atlas-friend-details {min-width:0}
+.atlas-friend-details h6 {overflow-wrap:anywhere;line-height:1.4}
+.atlas-friend-details small {white-space:nowrap}
+.atlas-friend-card .friend-avatar-placeholder {flex-shrink:0}
+.atlas-friend-actions {flex-shrink:0;align-items:center}
+.atlas-friend-actions .btn {display:inline-flex;align-items:center;justify-content:center;min-width:40px;min-height:40px}
+.atlas-friend-actions .btn:focus-visible {outline:3px solid var(--accent);outline-offset:2px}
+@media (max-width:575.98px) {
+  .friends-tabs {flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-inline:contain;scrollbar-width:thin;padding-bottom:.35rem}
+  .friends-tabs .nav-item {flex:0 0 auto}
+  .friends-tabs .nav-link {white-space:nowrap;min-height:44px}
+  .atlas-friend-content {flex-wrap:wrap;gap:.75rem!important}
+  .atlas-friend-details {flex:1 1 calc(100% - 75px);min-width:0}
+  .atlas-friend-actions {width:100%;justify-content:flex-end;border-top:1px solid var(--border-light);padding-top:.65rem}
+  .atlas-friend-actions .btn {min-height:44px;min-width:44px}
+  .friends-tabs + #searchSection .input-group {flex-wrap:wrap;gap:.5rem}
+  .friends-tabs + #searchSection .input-group .form-control {flex:1 1 calc(100% - 54px);min-width:0}
+  .friends-tabs + #searchSection #searchUserBtn {flex:1 1 100%;min-height:44px;border-radius:12px}
+}
+
+
+/* Atlas mobile usability: reachable actions, readable cards and compact controls. */
+.movie-card:focus-within .movie-poster-overlay {opacity:1}
+.movie-card .movie-poster-overlay .btn:focus-visible {outline:3px solid #ffcf9a;outline-offset:2px}
+@media (hover:none), (pointer:coarse) {
+  .travel-card:hover,.restaurant-card:hover,.movie-card:hover,.book-card:hover {transform:none}
+  .movie-card .movie-poster-overlay {
+    opacity:1;top:auto;bottom:0;min-height:52px;padding:.65rem;
+    align-items:flex-end;justify-content:center;
+    background:linear-gradient(0deg,rgba(8,26,32,.92),rgba(8,26,32,.48) 75%,transparent)
+  }
+  .movie-card .movie-poster-overlay>div {width:100%}
+  .movie-card .movie-poster-overlay .btn {
+    min-height:40px;max-width:100%;width:100%;
+    display:flex;align-items:center;justify-content:center;gap:.35rem;
+    white-space:normal;line-height:1.2
+  }
+  .travel-card-actions .btn,.restaurant-card-actions .btn,
+  .book-card-actions .btn,.dream-card-actions .btn {
+    min-width:40px;min-height:40px
+  }
+}
+@media (max-width:575.98px) {
+  .page-header {margin-bottom:1rem}
+  .page-header>.d-flex {align-items:flex-start!important;gap:.75rem}
+  .page-header>.d-flex>.btn,.page-header>.d-flex>button {
+    max-width:100%;min-height:44px;white-space:normal
+  }
+  .movies-tabs {display:flex;flex-wrap:nowrap;gap:.35rem;overflow-x:auto;
+    overscroll-behavior-inline:contain;scrollbar-width:thin;padding-bottom:.35rem}
+  .movies-tabs .nav-item {flex:0 0 auto}
+  .movies-tabs .nav-link {min-height:44px;white-space:nowrap}
+  .movie-poster {height:clamp(185px,58vw,250px)}
+  .movie-card .movie-title {-webkit-line-clamp:2;line-height:1.4;min-height:2.8em}
+  .movie-card .card-body {padding:.75rem}
+  .filter-bar .btn-group .btn {min-height:44px}
+  .filter-bar .form-control,.filter-bar .form-select {min-height:44px}
+  .profile-page .profile-tabs {overflow-x:auto;flex-wrap:nowrap;overscroll-behavior-inline:contain}
+  .profile-page .profile-tabs .nav-item {flex:0 0 auto}
+  .profile-page .profile-tabs .nav-link {white-space:nowrap}
+  .modal-footer {gap:.55rem}
+  .modal-footer .btn {min-height:44px}
+}
+
+/* On narrow phones the collection title and primary action need separate rows. */
+@media (max-width:420px) {
+  .page-header .row {row-gap:.75rem}
+  .page-header .row>.col {flex:1 1 100%;min-width:0}
+  .page-header .row>.col-auto {flex:0 0 100%;width:100%;max-width:100%}
+  .page-header .row>.col-auto>.btn {display:flex;align-items:center;justify-content:center;width:100%;min-height:44px;white-space:normal}
+  .filter-bar .btn-group .btn {overflow-wrap:anywhere}
+}
+
+/* Reachable edit/delete controls on touch devices, even with long card titles. */
+@media (hover:none), (pointer:coarse) {
+  .travel-card-actions .btn,.restaurant-card-actions .btn,
+  .book-card-actions .btn,.dream-card-actions .btn {min-width:44px;min-height:44px}
+}
+
+/* Progressive collection forms: short primary step, optional details. */
+.atlas-form-extras {min-width:0}
+.atlas-form-details {
+  border:1px solid var(--border-color);border-radius:16px;
+  background:var(--bg-secondary);padding:.55rem .8rem
+}
+.atlas-form-details>summary {
+  cursor:pointer;list-style:none;display:flex;align-items:center;gap:.7rem;
+  min-height:44px;color:var(--primary);font-weight:800;line-height:1.35
+}
+.atlas-form-details>summary::-webkit-details-marker {display:none}
+.atlas-form-details>summary::before {
+  content:"+";display:grid;place-items:center;width:28px;height:28px;flex:none;
+  border-radius:9px;background:var(--bg-tertiary);border:1px solid var(--border-color)
+}
+.atlas-form-details[open]>summary::before {content:"−"}
+.atlas-form-details>summary:focus-visible {outline:3px solid var(--accent);outline-offset:3px}
+.atlas-form-details>.row {padding:.2rem .15rem .6rem}
+@media (max-width:575.98px) {
+  .atlas-form-details {padding:.5rem .65rem}
+  .atlas-form-details .form-control,.atlas-form-details .form-select {min-height:44px}
+}

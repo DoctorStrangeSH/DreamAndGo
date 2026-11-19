@@ -1,6 +1,12 @@
+import { app } from '../config/firebase.js';
+import { completeSignupV2 } from '../core/signup-v2-flow.js';
+import { canUseSignupV2 } from '../core/signup-v2-policy.js';
+import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
+import { normalizeUsername } from '../core/username.js';
 import { 
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
+    deleteUser,
     signOut,
     onAuthStateChanged
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
@@ -16,9 +22,10 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 export class AuthService {
-    constructor(auth, db) {
+    constructor(auth, db, signupV2Rollout = { enabled: false }) {
         this.auth = auth;
         this.db = db;
+        this.signupV2Rollout = signupV2Rollout;
     }
 
     // Отслеживание состояния авторизации
@@ -40,7 +47,11 @@ export class AuthService {
             console.log('✅ Успешный вход');
             
             // Обновляем время последнего входа
-            await this.updateLastLogin(result.user.uid);
+            // Legacy merge writes would create an empty users/{uid} for an
+            // Auth-only account and permanently block signup recovery.
+            if (this.signupV2Rollout?.enabled !== true) {
+                await this.updateLastLogin(result.user.uid);
+            }
             
             return { success: true, user: result.user };
         } catch (error) {
@@ -53,13 +64,70 @@ export class AuthService {
         }
     }
 
+    // Candidate server-backed signup, unreachable unless explicitly opted in.
+    async signUpWithEmailV2(email, password, username) {
+        if (!canUseSignupV2(this.signupV2Rollout)) {
+            return { success: false, error: 'Регистрация временно недоступна до проверки безопасности.' };
+        }
+        const register = httpsCallable(getFunctions(app, 'europe-west3'), 'registerProfileV2');
+        return completeSignupV2({
+            email, password, username,
+            createAuthUser: async (newEmail, newPassword) =>
+                (await createUserWithEmailAndPassword(this.auth, newEmail, newPassword)).user,
+            registerProfile: async newUsername => register({ username: newUsername }),
+            deleteAuthUser: async user => deleteUser(user),
+            signOutAuth: async () => signOut(this.auth)
+        });
+    }
+
+    // Candidate-only recovery after logging in to an Auth-only account.
+    // The backend reveals only own-account status, never private fields.
+    async getRegistrationStateV2() {
+        if (!canUseSignupV2(this.signupV2Rollout) || !this.auth.currentUser) {
+            return { success: false, status: 'temporarily-unavailable' };
+        }
+        try {
+            const call = httpsCallable(getFunctions(app, 'europe-west3'), 'getRegistrationStateV2');
+            const result = await call({});
+            const status = result.data?.status;
+            if (!['complete', 'needs-profile', 'temporarily-unavailable'].includes(status)) {
+                return { success: false, status: 'temporarily-unavailable' };
+            }
+            return { success: true, status };
+        } catch {
+            return { success: false, status: 'temporarily-unavailable' };
+        }
+    }
+
+    async recoverRegistrationV2(username) {
+        if (!canUseSignupV2(this.signupV2Rollout) || !this.auth.currentUser) {
+            return { success: false, error: 'Восстановление временно недоступно.' };
+        }
+        try {
+            const call = httpsCallable(getFunctions(app, 'europe-west3'), 'registerProfileV2');
+            const response = await call({ username });
+            return { success: true, recovered: response.data?.recovered === true };
+        } catch (error) {
+            return {
+                success: false, code: error?.code,
+                error: 'Не удалось завершить профиль. Проверь никнейм или попробуй позднее.'
+            };
+        }
+    }
+
     // Регистрация
     async signUpWithEmail(email, password, username) {
+        if (this.signupV2Rollout?.enabled === true) {
+            return this.signUpWithEmailV2(email, password, username);
+        }
         try {
             console.log('📝 Попытка регистрации:', email, username);
             
             // Проверяем уникальность ника
             const isUnique = await this.checkUsernameUnique(username);
+            if (isUnique === null) {
+                return { success: false, error: 'Не удалось проверить никнейм. Проверь подключение и попробуй ещё раз.' };
+            }
             if (!isUnique) {
                 console.warn('⚠️ Ник уже занят:', username);
                 return { success: false, error: 'Этот ник уже занят 😔 Придумай другой!' };
@@ -70,9 +138,11 @@ export class AuthService {
             console.log('✅ Аккаунт создан');
             
             // Создаём профиль пользователя в Firestore
-            await this.createUserProfile(result.user.uid, {
+            try {
+                await this.createUserProfile(result.user.uid, {
                 email: email,
                 username: username,
+                usernameNormalized: normalizeUsername(username),
                 displayName: username,
                 createdAt: serverTimestamp(),
                 lastLogin: serverTimestamp(),
@@ -101,7 +171,25 @@ export class AuthService {
                     theme: 'light',
                     language: 'ru'
                 }
-            });
+                });
+            } catch (profileError) {
+                console.error("Не удалось создать профиль после регистрации:", profileError);
+                let rollbackFailed = false;
+                try {
+                    // Откатываем только что созданный пустой аккаунт.
+                    await deleteUser(result.user);
+                } catch (cleanupError) {
+                    rollbackFailed = true;
+                    console.error("Не удалось откатить незавершённую регистрацию:", cleanupError);
+                    try { await signOut(this.auth); } catch (signOutError) { console.error(signOutError); }
+                }
+                return {
+                    success: false,
+                    error: rollbackFailed
+                        ? "Аккаунт создан, но профиль не сохранился. Не регистрируйся повторно с этим email: требуется восстановление профиля."
+                        : "Не удалось сохранить профиль. Попробуй зарегистрироваться ещё раз."
+                };
+            }
 
             return { success: true, user: result.user };
         } catch (error) {
@@ -130,16 +218,19 @@ export class AuthService {
     async checkUsernameUnique(username) {
         try {
             const usersRef = collection(this.db, 'users');
-            const q = query(usersRef, where('username', '==', username.toLowerCase()));
-            const querySnapshot = await getDocs(q);
-            const isUnique = querySnapshot.empty;
+            const normalized = normalizeUsername(username);
+            const [indexed, legacy] = await Promise.all([
+                getDocs(query(usersRef, where('usernameNormalized', '==', normalized))),
+                getDocs(query(usersRef, where('username', '==', username.trim())))
+            ]);
+            const isUnique = indexed.empty && legacy.empty;
             
             console.log(`🔍 Проверка ника "${username}":`, isUnique ? 'свободен' : 'занят');
             return isUnique;
         } catch (error) {
             console.error('❌ Ошибка проверки ника:', error);
-            // В случае ошибки лучше разрешить регистрацию
-            return true;
+            // Не путаем сбой Firestore с действительно занятым ником.
+            return null;
         }
     }
 

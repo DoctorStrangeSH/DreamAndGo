@@ -149,8 +149,15 @@ test('controller consistently normalizes restored UUIDs across status, retry, re
     assert.equal(controller.get(upper).deliveryStatus, 'read');
     assert.equal(controller.acknowledgeRead(upper, 'wrong'), false);
 
+    const retryController = new ChatDeliveryController(
+        async payload => ({ messageId: payload.clientMessageId }),
+        async () => ({ status: 'missing' }), 'alice', () => id
+    );
+    retryController.restore('chat-1', 'Retry me', upper);
+    assert.deepEqual(await retryController.send(upper), { success: true, messageId: id });
+    assert.equal(retryController.get(upper).deliveryStatus, 'sent');
+
     const pendingId = '650e8400-e29b-41d4-a716-446655440000';
-    // Use a distinct controller UUID factory for the second intent.
     const second = new ChatDeliveryController(async () => ({ messageId: 'unused' }),
         async () => ({ status: 'missing' }), 'alice', () => pendingId);
     second.prepare('chat-1', 'Discard me');

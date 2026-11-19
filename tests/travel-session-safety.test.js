@@ -22,7 +22,7 @@ test('travel save stays scoped to the starting account and does not refresh a ne
     assert.match(modal, /\/\/ The write remains scoped to the original UID; never update a new session's UI\./);
     assert.match(modal, /if \(window\.app\.currentUser\?\.uid === userId\) await this\.render\(\)/);
     assert.match(modal, /if \(window\.app\.currentUser\?\.uid === userId\) \{\s*window\.app\.ui\.showToast/);
-    assert.match(modal, /if \(saveButton\.isConnected\) \{\s*saveButton\.disabled = false/);
+    assert.match(modal, /finally \{\s*saveButton\.disabled = false/);
 });
 
 test('travel deletion uses the initiating account and suppresses stale-session UI updates', () => {

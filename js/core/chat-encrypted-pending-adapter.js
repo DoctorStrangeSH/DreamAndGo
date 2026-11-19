@@ -27,6 +27,12 @@ function transactionFinished(transaction) {
     });
 }
 
+function isExpectedKey(key) {
+    return key && key.type === 'secret' && key.extractable === false &&
+        key.algorithm?.name === 'AES-GCM' && key.algorithm?.length === 256 &&
+        key.usages?.includes('encrypt') && key.usages?.includes('decrypt');
+}
+
 function openDatabase(indexedDB, name) {
     return new Promise((resolve, reject) => {
         const request = indexedDB.open(name, DATABASE_VERSION);

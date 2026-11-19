@@ -56,7 +56,7 @@ test('message ID validation rejects arbitrary, malformed or non-v4 request keys'
 
 
 test('server participant and Firestore path identifiers reject malformed values', () => {
-    for (const uid of ['alice', 'u'.repeat(128)]) assert.equal(isValidUserId(uid), true);
+    for (const uid of ['alice', 'u'.repeat(128), 'пользователь']) assert.equal(isValidUserId(uid), true);
     for (const uid of ['', ' ', ' alice', 'alice ', 'a/b', 'u'.repeat(129), null, 42]) {
         assert.equal(isValidUserId(uid), false);
         assert.equal(otherChatParticipant([uid, 'bob'], uid), null);

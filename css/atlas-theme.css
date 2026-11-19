@@ -96,6 +96,21 @@ input:focus-visible,select:focus-visible,textarea:focus-visible {
 .btn-light {color:#1b5e66}
 .btn-link {color:var(--primary);font-weight:750}
 .btn:disabled {opacity:.55;cursor:not-allowed;box-shadow:none}
+/* Show feedback while a save or delete is pending. */
+.btn[aria-busy="true"] {
+  opacity:.85;cursor:progress;pointer-events:none;
+  transform:none!important;box-shadow:none
+}
+.btn[aria-busy="true"]::after {
+  content:"";display:inline-block!important;vertical-align:-.15em;
+  width:1em;height:1em;margin-inline-start:.55em;border-radius:50%;
+  border:2px solid currentColor;border-right-color:transparent;
+  animation:atlasBusySpin .8s linear infinite
+}
+@keyframes atlasBusySpin {to {transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce) {
+  .btn[aria-busy="true"]::after {animation:none;border-style:dotted}
+}
 .form-control,.form-select {
   min-height:46px;border-radius:13px;background:var(--bg-card);
   border:1px solid var(--border-color);color:var(--text-primary);

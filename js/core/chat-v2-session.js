@@ -24,6 +24,7 @@ export class ChatV2Session {
             typeof pendingStore.clear !== 'function'
         )) throw new TypeError('Некорректное защищённое хранилище очереди');
         this.pendingStore = pendingStore;
+        this.sendTasks = new Map();
         this.disposed = false;
         this.trackers = new Set();
         this.transport = new ChatV2Transport(invoke, getUserId);
@@ -63,10 +64,22 @@ export class ChatV2Session {
         return this.delivery.restore(chatId, text, clientMessageId);
     }
 
-    async send(clientMessageId) {
+    send(clientMessageId) {
         this._assertActive();
         const intent = this.delivery.outbox.get(clientMessageId);
         if (!intent) return this.delivery.send(clientMessageId);
+        const key = intent.clientMessageId;
+        const existing = this.sendTasks.get(key);
+        if (existing) return existing;
+        const task = this._sendPersisted(intent).finally(() => {
+            if (this.sendTasks.get(key) === task) this.sendTasks.delete(key);
+        });
+        this.sendTasks.set(key, task);
+        return task;
+    }
+
+    async _sendPersisted(intent) {
+        const clientMessageId = intent.clientMessageId;
         if (this.pendingStore) {
             await this.pendingStore.save(intent);
             this._assertActive();
@@ -77,7 +90,9 @@ export class ChatV2Session {
             this._assertActive();
             if (reconciliation.status === 'sent') {
                 if (this.pendingStore) await this.pendingStore.remove(clientMessageId);
-                this._assertActive();
+                if (this.disposed || this.getUserId() !== this.userId) {
+                    return { success: false, error: 'Сессия изменилась' };
+                }
                 return { success: true, messageId: reconciliation.messageId, reconciled: true };
             }
             if (reconciliation.status !== 'missing') {
@@ -85,10 +100,14 @@ export class ChatV2Session {
             }
         }
         const result = await this.delivery.send(clientMessageId);
-        this._assertActive();
+        if (this.disposed || this.getUserId() !== this.userId) {
+            return { success: false, error: 'Сессия изменилась' };
+        }
         if (result.success && this.pendingStore) {
             await this.pendingStore.remove(clientMessageId);
-            this._assertActive();
+            if (this.disposed || this.getUserId() !== this.userId) {
+                return { success: false, error: 'Сессия изменилась' };
+            }
         }
         return result;
     }
@@ -193,5 +212,6 @@ export class ChatV2Session {
         this.trackers.clear();
         this.delivery.clear();
         this.unread.clear();
+        this.sendTasks.clear();
     }
 }

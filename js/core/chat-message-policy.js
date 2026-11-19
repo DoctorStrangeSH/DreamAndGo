@@ -1,5 +1,10 @@
 export const MAX_CHAT_MESSAGE_LENGTH = 2000;
 
+export function isValidChatUid(value) {
+    return typeof value === 'string' && value.length > 0 &&
+        value.length <= 128 && value.trim() === value && !value.includes('/');
+}
+
 export function validateChatMessage(text) {
     if (typeof text !== 'string') return { valid: false, error: 'Некорректный текст сообщения' };
     const normalized = text.trim();
@@ -11,9 +16,11 @@ export function validateChatMessage(text) {
 }
 
 export function validChatParticipants(currentUserId, senderId, receiverId, chatId, getChatId) {
-    return typeof currentUserId === 'string' && currentUserId.length > 0 &&
+    return isValidChatUid(currentUserId) &&
         currentUserId === senderId &&
-        typeof receiverId === 'string' && receiverId.length > 0 &&
+        isValidChatUid(senderId) &&
+        isValidChatUid(receiverId) &&
         receiverId !== senderId &&
-        typeof chatId === 'string' && chatId === getChatId(senderId, receiverId);
+        typeof chatId === 'string' && chatId.length <= 257 &&
+        chatId === getChatId(senderId, receiverId);
 }

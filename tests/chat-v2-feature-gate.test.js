@@ -15,6 +15,12 @@ test('v2 rollout is disabled without explicit backend readiness and user allowli
     assert.equal(canStartChatV2({ ...allowed, allowedUserIds: '*' }, 'alice'), false);
     assert.equal(canStartChatV2(allowed, 'bob'), false);
     assert.equal(canStartChatV2(allowed, ''), false);
+    assert.equal(canStartChatV2(allowed, 'alice/attacker'), false);
+    assert.equal(canStartChatV2(allowed, ' alice'), false);
+    assert.equal(canStartChatV2(allowed, 'a'.repeat(129)), false);
+    assert.equal(canStartChatV2({ ...allowed, allowedUserIds: ['alice/attacker'] }, 'alice/attacker'), false);
+    assert.equal(canStartChatV2({ ...allowed, allowedUserIds: [' alice'] }, ' alice'), false);
+    assert.equal(canStartChatV2({ ...allowed, allowedUserIds: ['a'.repeat(129)] }, 'a'.repeat(129)), false);
     assert.equal(canStartChatV2(allowed, 'alice'), true);
 });
 

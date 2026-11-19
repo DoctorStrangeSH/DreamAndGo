@@ -153,7 +153,7 @@ test('stale authenticated identity cannot create trackers or send pending intent
     });
     session.prepare('chat-a', 'Текст');
     userId = 'bob';
-    assert.throws(() => session.send(uuid), /Сессия изменилась/);
+    await assert.rejects(session.send(uuid), /Сессия изменилась/);
     assert.throws(() => session.watchIncoming({
         chatId: 'chat-a', root: { contains: () => true }, isActive: () => true
     }), /Сессия изменилась/);

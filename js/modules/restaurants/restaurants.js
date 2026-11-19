@@ -8,6 +8,8 @@ export class RestaurantsModule {
         this.restaurantService = new RestaurantService();
         this.currentFilter = { cuisine: 'all', status: 'all', rating: 0 };
         this.requestId = 0;
+        this.searchQuery = '';
+        this.sortOrder = 'recent';
     }
 
     async render() {
@@ -91,11 +93,32 @@ export class RestaurantsModule {
                                 </button>
                             </div>
                         </div>
+                        <div class="col-12 col-md">
+                            <label class="visually-hidden" for="restaurantSearch">Найти ресторан</label>
+                            <input type="search" class="form-control form-control-sm" id="restaurantSearch"
+                                   placeholder="Название, кухня или адрес…" autocomplete="off"
+                                   value="${escapeHTML(this.searchQuery)}">
+                        </div>
+                        <div class="col-12 col-sm-auto">
+                            <label class="visually-hidden" for="restaurantSort">Сортировка ресторанов</label>
+                            <select class="form-select form-select-sm" id="restaurantSort">
+                                <option value="recent" ${this.sortOrder === 'recent' ? 'selected' : ''}>Сначала новые</option>
+                                <option value="name" ${this.sortOrder === 'name' ? 'selected' : ''}>По названию</option>
+                                <option value="rating" ${this.sortOrder === 'rating' ? 'selected' : ''}>По оценке</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
+                <p class="text-muted small mb-3" id="restaurantSearchCount" role="status" aria-live="polite"></p>
+
                 <div id="restaurantsGrid" class="row g-3">
                     ${restaurants.length === 0 ? this.getEmptyState() : restaurants.map((r, i) => this.createCard(r, i)).join('')}
+                </div>
+                <div id="restaurantSearchEmpty" class="atlas-empty atlas-empty--restaurant" hidden>
+                    <div class="atlas-empty-art" aria-hidden="true"><i class="bi bi-search"></i></div>
+                    <h3>Заведение не найдено</h3>
+                    <p>Попробуй другое название, кухню или очисти поиск.</p>
                 </div>
 
                 <div id="restaurantModalContainer"></div>
@@ -125,7 +148,11 @@ export class RestaurantsModule {
         const safeRating = Number.isFinite(rating) && rating > 0 ? Math.min(10, Math.max(0, rating)) : 0;
 
         return `
-            <div class="col-12 col-md-6 col-lg-4 fade-in-up" style="animation-delay: ${Math.min(index, 12) * 0.06}s">
+            <div class="col-12 col-md-6 col-lg-4 fade-in-up" data-restaurant-card
+                 data-search="${escapeHTML([restaurant.name, restaurant.cuisine, restaurant.address, restaurant.review].filter(Boolean).join(' ').toLocaleLowerCase())}"
+                 data-name="${escapeHTML(String(restaurant.name || '').toLocaleLowerCase())}"
+                 data-rating="${safeRating}" data-original-index="${index}"
+                 style="animation-delay: ${Math.min(index, 12) * 0.06}s">
                 <div class="card-premium h-100 restaurant-card">
                     <div class="restaurant-card-header">
                         ${imageURL
@@ -176,6 +203,16 @@ export class RestaurantsModule {
     }
 
     attachEventListeners() {
+        const searchInput = document.getElementById('restaurantSearch');
+        searchInput?.addEventListener('input', () => {
+            this.searchQuery = searchInput.value;
+            this.applySearchAndSort();
+        });
+        document.getElementById('restaurantSort')?.addEventListener('change', (event) => {
+            this.sortOrder = event.target.value;
+            this.applySearchAndSort();
+        });
+        this.applySearchAndSort();
         document.getElementById('addRestaurantBtn')?.addEventListener('click', () => this.showModal(null));
 
         document.querySelectorAll('.edit-btn').forEach(btn => {
@@ -216,6 +253,29 @@ export class RestaurantsModule {
             this.currentFilter.cuisine = e.target.value;
             this.render();
         });
+    }
+
+    applySearchAndSort() {
+        const query = this.searchQuery.trim().toLocaleLowerCase();
+        const grid = document.getElementById('restaurantsGrid');
+        if (!grid) return;
+        const cards = [...grid.querySelectorAll('[data-restaurant-card]')];
+        const sorted = [...cards].sort((a, b) => {
+            if (this.sortOrder === 'name') return a.dataset.name.localeCompare(b.dataset.name, 'ru') || Number(a.dataset.originalIndex) - Number(b.dataset.originalIndex);
+            if (this.sortOrder === 'rating') return Number(b.dataset.rating) - Number(a.dataset.rating) || Number(a.dataset.originalIndex) - Number(b.dataset.originalIndex);
+            return Number(a.dataset.originalIndex) - Number(b.dataset.originalIndex);
+        });
+        for (const card of sorted) grid.appendChild(card);
+        let matches = 0;
+        for (const card of cards) {
+            const visible = !query || card.dataset.search.includes(query);
+            card.hidden = !visible;
+            if (visible) matches++;
+        }
+        const empty = document.getElementById('restaurantSearchEmpty');
+        if (empty) empty.hidden = !query || matches > 0 || cards.length === 0;
+        const count = document.getElementById('restaurantSearchCount');
+        if (count) count.textContent = query && cards.length ? `Найдено: ${matches} из ${cards.length}` : '';
     }
 
     async showModal(restaurantId) {

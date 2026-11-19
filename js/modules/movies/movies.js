@@ -210,12 +210,17 @@ export class MoviesModule {
             if (requestId !== this.requestId || this.currentTab !== 'popular' || !grid.isConnected) return;
 
             if (result.movies.length === 0) {
+                const pagination = document.getElementById('pagination');
+                if (pagination) { pagination.style.display = 'none'; pagination.innerHTML = ''; }
                 grid.innerHTML = `
-                    <div class="col-12 text-center py-5">
-                        <i class="bi bi-cloud-slash display-1 text-muted opacity-25"></i>
-                        <h5 class="mt-3">Не удалось загрузить</h5>
-                    </div>
+                    <div class="col-12"><section class="atlas-empty atlas-empty--movie">
+                        <div class="atlas-empty-art" aria-hidden="true"><i class="bi bi-film"></i></div>
+                        <h3>Популярных фильмов пока нет</h3>
+                        <p>Загляни сюда чуть позже или найди фильм через поиск.</p>
+                        <button type="button" class="btn btn-premium" data-open-movie-search>Перейти к поиску</button>
+                    </section></div>
                 `;
+                grid.querySelector('[data-open-movie-search]')?.addEventListener('click', () => this.switchTab('search'));
             } else {
                 grid.innerHTML = result.movies.map((m, i) => this.createCard(m, i, true)).join('');
                 this.attachCardListeners();

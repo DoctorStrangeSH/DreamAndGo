@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { ChatV2Session } from '../js/core/chat-v2-session.js';
+import { ChatPendingIntentStore } from '../js/core/chat-pending-store.js';
 
 const uuid = '550e8400-e29b-41d4-a716-446655440000';
 const messageId = 'a'.repeat(64);
@@ -209,4 +210,133 @@ test('restore and discard are blocked after account change or disposal', () => {
     assert.throws(() => session.restore('chat-a', 'Private pending text', uuid),
         /Сессия изменилась/);
     assert.throws(() => session.discard(uuid), /Сессия изменилась/);
+});
+
+
+function securePendingStoreHarness(getUserId, overrides = {}) {
+    const records = new Map();
+    const adapter = {
+        security: { encryptionAtRest: true, integrityProtection: true, accountIsolation: true },
+        async read(uid) { return records.get(uid) ?? []; },
+        async write(uid, value) {
+            if (overrides.write) return overrides.write(uid, value, records);
+            records.set(uid, structuredClone(value));
+        }
+    };
+    return {
+        store: new ChatPendingIntentStore({ adapter, getUserId, now: () => 1_800_000_000_000 }),
+        records,
+        adapter
+    };
+}
+
+test('session persists intent before send and removes it only after confirmed delivery', async () => {
+    const server = fakeServer();
+    const { store, records } = securePendingStoreHarness(() => 'alice');
+    const session = new ChatV2Session({
+        invoke: server.invokeFor('alice'), getUserId: () => 'alice',
+        createId: () => uuid, pendingStore: store
+    });
+    session.prepare('chat-a', 'Persist me');
+    const result = await session.send(uuid);
+    assert.equal(result.success, true);
+    assert.deepEqual(records.get('alice'), []);
+    assert.equal(server.calls.filter(call => call.name === 'sendPrivateMessageV2').length, 1);
+    session.dispose();
+});
+
+test('session does not send when secure persistence fails', async () => {
+    let sends = 0;
+    const store = new ChatPendingIntentStore({
+        adapter: {
+            security: { encryptionAtRest: true, integrityProtection: true, accountIsolation: true },
+            async read() { return []; },
+            async write() { throw new Error('disk unavailable'); }
+        },
+        getUserId: () => 'alice'
+    });
+    const session = new ChatV2Session({
+        invoke: async name => { if (name === 'sendPrivateMessageV2') sends++; return { data: {} }; },
+        getUserId: () => 'alice', createId: () => uuid, pendingStore: store
+    });
+    session.prepare('chat-a', 'Do not send');
+    await assert.rejects(session.send(uuid), /disk unavailable/);
+    assert.equal(sends, 0);
+    session.dispose();
+});
+
+test('restorePending reconciles server state before allowing an explicit retry', async () => {
+    const server = fakeServer();
+    const { store, records } = securePendingStoreHarness(() => 'alice');
+    await store.save({ chatId: 'chat-a', text: 'Already delivered', clientMessageId: uuid });
+    const session = new ChatV2Session({
+        invoke: server.invokeFor('alice'), getUserId: () => 'alice',
+        createId: () => uuid, pendingStore: store
+    });
+    server.messages.set(uuid, { id: messageId, sender: 'alice', read: false });
+    const recovered = await session.restorePending();
+    assert.deepEqual(recovered, [{ clientMessageId: uuid, status: { status: 'sent', messageId } }]);
+    assert.deepEqual(records.get('alice'), []);
+    assert.equal(server.calls.filter(call => call.name === 'sendPrivateMessageV2').length, 0);
+    session.dispose();
+});
+
+test('restorePending keeps missing and unknown records without automatic send', async () => {
+    let status = 'missing', sends = 0;
+    const { store, records } = securePendingStoreHarness(() => 'alice');
+    await store.save({ chatId: 'chat-a', text: 'Retry later', clientMessageId: uuid });
+    const session = new ChatV2Session({
+        invoke: async name => {
+            if (name === 'getPrivateMessageStatusV2') return { data: { status } };
+            if (name === 'sendPrivateMessageV2') sends++;
+            return { data: {} };
+        },
+        getUserId: () => 'alice', createId: () => uuid, pendingStore: store
+    });
+    await session.restorePending();
+    assert.equal(sends, 0);
+    assert.equal(records.get('alice').length, 1);
+    assert.equal(session.delivery.get(uuid).deliveryStatus, 'failed');
+    session.dispose();
+});
+
+test('account change during pending store read blocks stale restoration', async () => {
+    let userId = 'alice', finishRead;
+    const store = new ChatPendingIntentStore({
+        adapter: {
+            security: { encryptionAtRest: true, integrityProtection: true, accountIsolation: true },
+            read: () => new Promise(resolve => { finishRead = resolve; }),
+            async write() {}
+        },
+        getUserId: () => userId
+    });
+    const session = new ChatV2Session({
+        invoke: async () => ({ data: { status: 'missing' } }),
+        getUserId: () => userId, createId: () => uuid, pendingStore: store
+    });
+    const restore = session.restorePending();
+    await tick();
+    userId = 'bob';
+    finishRead([{ schemaVersion: 1, userId: 'alice', chatId: 'chat-a', text: 'Private', clientMessageId: uuid, createdAt: Date.now() }]);
+    await assert.rejects(restore, /Сессия изменилась/);
+    assert.equal(session.delivery.get(uuid), null);
+    session.dispose();
+});
+
+test('concurrent session sends share one in-flight send and logout clears only its account queue', async () => {
+    const server = fakeServer();
+    const { store, records } = securePendingStoreHarness(() => 'alice');
+    const session = new ChatV2Session({
+        invoke: server.invokeFor('alice'), getUserId: () => 'alice',
+        createId: () => uuid, pendingStore: store
+    });
+    session.prepare('chat-a', 'One send');
+    const [a, b] = await Promise.all([session.send(uuid), session.send(uuid)]);
+    assert.equal(a.success, true);
+    assert.equal(b.success, true);
+    assert.equal(server.calls.filter(call => call.name === 'sendPrivateMessageV2').length, 1);
+    await store.save({ chatId: 'chat-a', text: 'Logout cleanup', clientMessageId: '650e8400-e29b-41d4-a716-446655440000' });
+    await session.logout();
+    assert.deepEqual(records.get('alice'), []);
+    assert.equal(session.disposed, true);
 });

@@ -1,16 +1,15 @@
-import { otherChatParticipant } from './message-policy.js';
+import { isValidUserId, isValidDocumentId, otherChatParticipant } from './message-policy.js';
 import { isConversationBlocked } from './block-policy.js';
 
 // Pure policy for a future authenticated v2 history callable. No database IO.
 // The Firestore adapter must read the chat and both block records before querying
 // any message documents, and must never trust a client-supplied sender ID.
 export function normalizeHistoryRequest(uid, data) {
-    if (typeof uid !== 'string' || !uid) {
+    if (!isValidUserId(uid)) {
         return { ok: false, code: 'unauthenticated' };
     }
     if (!data || typeof data !== 'object' || Array.isArray(data) ||
-        typeof data.chatId !== 'string' || !data.chatId ||
-        data.chatId.length > 128 || data.chatId.includes('/') ||
+        !isValidDocumentId(data.chatId) ||
         (data.beforeSequence != null &&
             (!Number.isSafeInteger(data.beforeSequence) || data.beforeSequence <= 0)) ||
         !Number.isSafeInteger(data.limit) || data.limit < 1 || data.limit > 50) {

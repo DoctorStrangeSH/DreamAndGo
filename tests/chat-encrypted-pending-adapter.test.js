@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { webcrypto } from 'node:crypto';
+import { FakeIndexedDB } from './helpers/fake-indexeddb.js';
 import { ChatPendingIntentStore } from '../js/core/chat-pending-store.js';
 import {
     createEncryptedChatPendingAdapter,
@@ -55,13 +56,10 @@ test('AES-GCM additional authenticated data prevents cross-account replay', asyn
 });
 
 test('IndexedDB adapter encrypts account queues and clears data plus key', async t => {
-    if (!globalThis.indexedDB) {
-        t.skip('В этой версии Node.js нет IndexedDB');
-        return;
-    }
+    const indexedDB = new FakeIndexedDB();
     const databaseName = 'dream-and-go-test-' + webcrypto.randomUUID();
     const adapter = createEncryptedChatPendingAdapter({
-        indexedDB: globalThis.indexedDB, crypto: webcrypto, databaseName
+        indexedDB, crypto: webcrypto, databaseName
     });
     let inspectionDb;
     try {

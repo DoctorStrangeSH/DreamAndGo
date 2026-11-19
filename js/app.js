@@ -1,5 +1,5 @@
 import { escapeHTML } from './core/escape-html.js';
-import { getHomeSnapshot } from './core/home-snapshot.js';
+import { getHomeSnapshot, getNextHomeAchievement } from './core/home-snapshot.js';
 import { auth, db, checkFirebaseConnection } from './config/firebase.js';
 import { AuthService } from './services/auth.service.js';
 import { ThemeService } from './services/theme.service.js';
@@ -325,6 +325,7 @@ class DreamAndGo {
 
         const userName = this.userData?.username || this.currentUser?.email?.split('@')[0] || 'Мечтатель';
         const stats = getHomeSnapshot(this.userData);
+        const nextAchievement = getNextHomeAchievement(this.userData);
 
         mainContent.innerHTML = `
             <div class="container py-3 py-md-4">
@@ -362,6 +363,22 @@ class DreamAndGo {
                     <div class="col-6 col-md-3"><div class="card-premium stat-card p-3 text-center h-100"><div class="stat-icon mb-2 mx-auto" style="background: rgba(253,203,110,0.1); color: #FDCB6E;"><i class="bi bi-film fs-3"></i></div><h4 class="fw-bold mb-0" data-stat="movies">${stats.movies || 0}</h4><small class="text-muted">Фильмов</small></div></div>
                     <div class="col-6 col-md-3"><div class="card-premium stat-card p-3 text-center h-100"><div class="stat-icon mb-2 mx-auto" style="background: rgba(225,112,85,0.1); color: #E17055;"><i class="bi bi-book fs-3"></i></div><h4 class="fw-bold mb-0" data-stat="books">${stats.books || 0}</h4><small class="text-muted">Книг</small></div></div>
                 </div>
+
+                ${nextAchievement ? `<section class="card-premium p-3 p-md-4 mb-4 fade-in-up" aria-labelledby="home-next-achievement">
+                    <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-3">
+                        <div class="stat-icon flex-shrink-0" aria-hidden="true"><i class="bi ${nextAchievement.icon} fs-3 text-warning"></i></div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                                <div><small class="text-muted">Следующее достижение</small><h2 class="h5 fw-bold mb-0" id="home-next-achievement">${nextAchievement.title}</h2></div>
+                                <strong class="text-nowrap">${nextAchievement.current}/${nextAchievement.target}</strong>
+                            </div>
+                            <div class="progress" role="progressbar" aria-label="Прогресс до достижения ${nextAchievement.title}" aria-valuenow="${nextAchievement.current}" aria-valuemin="0" aria-valuemax="${nextAchievement.target}">
+                                <div class="progress-bar bg-warning" style="width:${nextAchievement.percentage}%"></div>
+                            </div>
+                        </div>
+                        <a href="${nextAchievement.href}" class="btn btn-outline-primary flex-shrink-0">Продолжить <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></a>
+                    </div>
+                </section>` : ''}
 
                 <div class="row g-4 fade-in-up" style="animation-delay: 0.2s;">
                     <div class="col-12 col-md-5">

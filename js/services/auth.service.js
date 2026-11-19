@@ -2,6 +2,7 @@ import {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
     signOut,
+    deleteUser,
     onAuthStateChanged
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { 
@@ -73,8 +74,10 @@ export class AuthService {
             const result = await createUserWithEmailAndPassword(this.auth, email, password);
             console.log('✅ Аккаунт создан');
             
-            // Создаём профиль пользователя в Firestore
-            await this.createUserProfile(result.user.uid, {
+            // Создаём профиль пользователя в Firestore.
+            // If profile creation fails, roll back the just-created Auth account.
+            try {
+                await this.createUserProfile(result.user.uid, {
                 email: email,
                 username: username,
                 usernameNormalized: username.trim().toLowerCase(),
@@ -106,7 +109,28 @@ export class AuthService {
                     theme: 'light',
                     language: 'ru'
                 }
-            });
+                });
+            } catch (profileError) {
+                console.error('Не удалось создать профиль после регистрации:', profileError);
+                let rollbackFailed = false;
+                try {
+                    await deleteUser(result.user);
+                } catch (cleanupError) {
+                    rollbackFailed = true;
+                    console.error('Не удалось откатить незавершённую регистрацию:', cleanupError);
+                    try {
+                        await signOut(this.auth);
+                    } catch (signOutError) {
+                        console.error('Не удалось завершить сессию после ошибки регистрации:', signOutError);
+                    }
+                }
+                return {
+                    success: false,
+                    error: rollbackFailed
+                        ? 'Аккаунт создан, но профиль не сохранился. Не регистрируйся повторно с этим email: требуется восстановление профиля.'
+                        : 'Не удалось сохранить профиль. Попробуй зарегистрироваться ещё раз.'
+                };
+            }
 
             return { success: true, user: result.user };
         } catch (error) {

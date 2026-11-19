@@ -53,6 +53,59 @@ test('AES-GCM additional authenticated data prevents cross-account replay', asyn
     );
 });
 
+test('IndexedDB adapter encrypts account queues and clears data plus key', async t => {
+    if (!globalThis.indexedDB) {
+        t.skip('В этой версии Node.js нет IndexedDB');
+        return;
+    }
+    const databaseName = 'dream-and-go-test-' + webcrypto.randomUUID();
+    const adapter = createEncryptedChatPendingAdapter({
+        indexedDB: globalThis.indexedDB, crypto: webcrypto, databaseName
+    });
+    let inspectionDb;
+    try {
+        await adapter.write('alice', records);
+        assert.deepEqual(await adapter.read('alice'), records);
+        assert.deepEqual(await adapter.read('bob'), []);
+
+        inspectionDb = await new Promise((resolve, reject) => {
+            const request = indexedDB.open(databaseName, 1);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+        const persisted = await new Promise((resolve, reject) => {
+            const tx = inspectionDb.transaction('encryptedPending', 'readonly');
+            const request = tx.objectStore('encryptedPending').get('alice');
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+        assert.ok(persisted?.envelope?.ciphertext instanceof Uint8Array);
+        assert.equal(
+            Buffer.from(persisted.envelope.ciphertext).includes(Buffer.from('Private message')),
+            false
+        );
+
+        await adapter.write('alice', []);
+        assert.deepEqual(await adapter.read('alice'), []);
+        const keyRecord = await new Promise((resolve, reject) => {
+            const tx = inspectionDb.transaction('pendingKeys', 'readonly');
+            const request = tx.objectStore('pendingKeys').get('alice');
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+        assert.equal(keyRecord, undefined);
+    } finally {
+        inspectionDb?.close();
+        await adapter.close();
+        await new Promise((resolve, reject) => {
+            const request = indexedDB.deleteDatabase(databaseName);
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+            request.onblocked = () => reject(new Error('Тестовая база занята'));
+        });
+    }
+});
+
 test('encrypted adapter refuses environments without IndexedDB or Web Crypto', () => {
     assert.throws(() => createEncryptedChatPendingAdapter({
         indexedDB: null, crypto: webcrypto

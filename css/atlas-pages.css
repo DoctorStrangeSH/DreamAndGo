@@ -76,6 +76,24 @@
 .achievement-locked {opacity:.7}
 .achievement-level-dot.earned {background:var(--success)}
 .achievement-level-dot.current {box-shadow:0 0 0 4px rgba(29,156,146,.18)}
+.achievement-item .card-premium {position:relative;overflow:hidden;transition:border-color .22s ease,box-shadow .22s ease,transform .22s ease}
+.achievement-item .card-premium::before {content:"";position:absolute;inset:0 0 auto;height:4px;background:var(--border-color)}
+.achievement-tier--bronze {border-color:rgba(185,113,67,.35)!important}
+.achievement-tier--bronze::before {background:linear-gradient(90deg,#965e40,#d89b6c)!important}
+.achievement-tier--silver {border-color:rgba(120,150,174,.46)!important}
+.achievement-tier--silver::before {background:linear-gradient(90deg,#69859b,#d3e1ec)!important}
+.achievement-tier--gold {border-color:rgba(220,167,62,.5)!important;background:radial-gradient(circle at 90% 12%,rgba(247,191,76,.09),transparent 45%),var(--bg-card)}
+.achievement-tier--gold::before {background:linear-gradient(90deg,#c08a2d,#ffda79)!important}
+.achievement-tier--legendary {border-color:rgba(154,112,220,.62)!important;background:radial-gradient(circle at 88% 8%,rgba(167,117,232,.17),transparent 55%),var(--bg-card);box-shadow:0 12px 28px rgba(113,67,156,.12)}
+.achievement-tier--legendary::before {background:linear-gradient(90deg,#7554af,#dfb0fb,#efc779)!important}
+.achievement-tier-badge {display:inline-flex;align-items:center;justify-content:center;align-self:flex-start;flex-shrink:0;white-space:nowrap;border-radius:999px;padding:.24rem .55rem;font-size:.68rem;font-weight:800;letter-spacing:.02em;background:var(--bg-tertiary);color:var(--text-secondary)}
+.achievement-tier-badge--bronze {background:rgba(185,113,67,.14);color:#ac754f}
+.achievement-tier-badge--silver {background:rgba(120,150,174,.16);color:var(--text-primary)}
+.achievement-tier-badge--gold {background:rgba(220,167,62,.16);color:#ac781e}
+.achievement-tier-badge--legendary {background:rgba(154,112,220,.17);color:#ae7bde}
+@media(hover:hover) and (pointer:fine) {.achievement-item .achievement-earned:hover {transform:translateY(-3px);box-shadow:var(--shadow-md)}}
+@media(max-width:575.98px) {.achievement-tier-badge {font-size:.62rem;padding:.2rem .4rem}.achievement-item .card-premium .d-flex.gap-3 {gap:.7rem!important}}
+@media(prefers-reduced-motion:reduce) {.achievement-item .card-premium {transition:none!important}.achievement-item .achievement-earned:hover {transform:none!important}.achievement-item .achievement-level-dot.current {animation:none!important}}
 /* Tables, list groups, tabs, menus share the palette. */
 .list-group-item,.table,.table>:not(caption)>*>*,.accordion-item {
   background-color:var(--bg-card);color:var(--text-primary);border-color:var(--border-color)

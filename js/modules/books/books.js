@@ -6,6 +6,8 @@ export class BooksModule {
         this.bookService = new BookService();
         this.currentFilter = { status: 'all', genre: 'all', rating: 0 };
         this.requestId = 0;
+        this.searchQuery = '';
+        this.sortOrder = 'recent';
     }
 
     async render() {
@@ -92,11 +94,32 @@ export class BooksModule {
                                 </button>
                             </div>
                         </div>
+                        <div class="col-12 col-md">
+                            <label class="visually-hidden" for="bookSearch">Поиск книги</label>
+                            <input type="search" class="form-control form-control-sm" id="bookSearch"
+                                   placeholder="Название, автор или жанр…" autocomplete="off"
+                                   value="${escapeHTML(this.searchQuery)}">
+                        </div>
+                        <div class="col-12 col-sm-auto">
+                            <label class="visually-hidden" for="bookSort">Сортировка книг</label>
+                            <select class="form-select form-select-sm" id="bookSort">
+                                <option value="recent" ${this.sortOrder === 'recent' ? 'selected' : ''}>Сначала новые</option>
+                                <option value="name" ${this.sortOrder === 'name' ? 'selected' : ''}>По названию</option>
+                                <option value="rating" ${this.sortOrder === 'rating' ? 'selected' : ''}>По оценке</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
+                <p class="text-muted small mb-3" id="bookSearchCount" role="status" aria-live="polite"></p>
+
                 <div id="booksGrid" class="row g-3">
                     ${books.length === 0 ? this.getEmptyState() : books.map((b, i) => this.createCard(b, i)).join('')}
+                </div>
+                <div id="bookSearchEmpty" class="atlas-empty atlas-empty--book" hidden>
+                    <div class="atlas-empty-art" aria-hidden="true"><i class="bi bi-search"></i></div>
+                    <h3>Книга не найдена</h3>
+                    <p>Проверь название, автора или очисти строку поиска.</p>
                 </div>
 
                 <div id="bookModalContainer"></div>
@@ -143,7 +166,11 @@ export class BooksModule {
         const safeRating = Number.isFinite(rating) && rating > 0 ? Math.min(10, Math.max(0, rating)) : 0;
 
         return `
-            <div class="col-12 col-md-6 col-lg-4 fade-in-up" style="animation-delay: ${Math.min(index, 12) * 0.06}s">
+            <div class="col-12 col-md-6 col-lg-4 fade-in-up" data-book-card
+                 data-search="${escapeHTML([book.title, book.author, ...(Array.isArray(book.genres) ? book.genres : [])].filter(Boolean).join(' ').toLocaleLowerCase())}"
+                 data-name="${escapeHTML(String(book.title || '').toLocaleLowerCase())}"
+                 data-rating="${safeRating}" data-original-index="${index}"
+                 style="animation-delay: ${Math.min(index, 12) * 0.06}s">
                 <div class="card-premium h-100 book-card p-3">
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <span class="badge bg-${status.color} bg-opacity-10 text-${status.color}">${status.badge}</span>
@@ -187,6 +214,16 @@ export class BooksModule {
     }
 
     attachEventListeners() {
+        const searchInput = document.getElementById('bookSearch');
+        searchInput?.addEventListener('input', () => {
+            this.searchQuery = searchInput.value;
+            this.applySearchAndSort();
+        });
+        document.getElementById('bookSort')?.addEventListener('change', (event) => {
+            this.sortOrder = event.target.value;
+            this.applySearchAndSort();
+        });
+        this.applySearchAndSort();
         document.getElementById('addBookBtn')?.addEventListener('click', () => this.showModal(null));
         document.getElementById('emptyAddBookBtn')?.addEventListener('click', () => this.showModal(null));
 
@@ -228,6 +265,29 @@ export class BooksModule {
             this.currentFilter.genre = e.target.value;
             this.render();
         });
+    }
+
+    applySearchAndSort() {
+        const query = this.searchQuery.trim().toLocaleLowerCase();
+        const grid = document.getElementById('booksGrid');
+        if (!grid) return;
+        const cards = [...grid.querySelectorAll('[data-book-card]')];
+        const sorted = [...cards].sort((a, b) => {
+            if (this.sortOrder === 'name') return a.dataset.name.localeCompare(b.dataset.name, 'ru') || Number(a.dataset.originalIndex) - Number(b.dataset.originalIndex);
+            if (this.sortOrder === 'rating') return Number(b.dataset.rating) - Number(a.dataset.rating) || Number(a.dataset.originalIndex) - Number(b.dataset.originalIndex);
+            return Number(a.dataset.originalIndex) - Number(b.dataset.originalIndex);
+        });
+        for (const card of sorted) grid.appendChild(card);
+        let matches = 0;
+        for (const card of cards) {
+            const visible = !query || card.dataset.search.includes(query);
+            card.hidden = !visible;
+            if (visible) matches++;
+        }
+        const empty = document.getElementById('bookSearchEmpty');
+        if (empty) empty.hidden = !query || matches > 0 || cards.length === 0;
+        const count = document.getElementById('bookSearchCount');
+        if (count) count.textContent = query && cards.length ? `Найдено: ${matches} из ${cards.length}` : '';
     }
 
     async showModal(bookId) {

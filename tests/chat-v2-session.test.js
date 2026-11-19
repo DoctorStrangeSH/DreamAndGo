@@ -43,7 +43,7 @@ function fakeServer() {
                 throw new Error('Unexpected endpoint: ' + name);
         }
     };
-    return { calls, invokeFor };
+    return { calls, invokeFor, messages };
 }
 
 function visibilityHarness() {

@@ -6,9 +6,10 @@ const MAX_PENDING_INTENTS = 100;
 const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 // Persistence boundary only. The injected adapter MUST provide authenticated
-// encryption at rest, integrity protection, and per-user isolation. This module
-// deliberately ships no localStorage/IndexedDB adapter and does not claim to
-// encrypt data itself.
+// encryption at rest, integrity protection, and per-user isolation. The
+// capability descriptor is an adapter-owner assertion, not cryptographic
+// verification by this boundary. This module deliberately ships no browser
+// storage adapter and does not claim to encrypt data itself.
 export class ChatPendingIntentStore {
     constructor({ adapter, getUserId, now = () => Date.now(), ttlMs = CHAT_PENDING_INTENT_TTL_MS }) {
         const security = adapter?.security;

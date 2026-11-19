@@ -46,6 +46,14 @@ try {
       const content = fixture.querySelector('.modal-content');
       const body = fixture.querySelector('.modal-body');
       const footer = fixture.querySelector('.modal-footer');
+      const firstInput = body.querySelector('input');
+      const lastInput = body.querySelector('label:last-child input');
+      firstInput.focus();
+      body.scrollTop = 0;
+      lastInput.focus();
+      const inputBounds = lastInput.getBoundingClientRect();
+      const bodyBounds = body.getBoundingClientRect();
+      const lastInputReachable = inputBounds.top >= bodyBounds.top - 1 && inputBounds.bottom <= bodyBounds.bottom + 1;
       body.scrollTop = body.scrollHeight;
       const bounds = content.getBoundingClientRect();
       const footerBounds = footer.getBoundingClientRect();
@@ -54,6 +62,7 @@ try {
         footerTop: footerBounds.top, footerBottom: footerBounds.bottom,
         bodyScrolled: body.scrollTop > 0,
         bodyScrollable: body.scrollHeight > body.clientHeight,
+        lastInputReachable,
         footerVisible: getComputedStyle(footer).display !== 'none'
       };
       return result;
@@ -61,7 +70,7 @@ try {
     if (dialog.left < -1 || dialog.right > target.width + 1 || dialog.top < -1 || dialog.bottom > target.height + 1) {
       errors.push(target.name + ': long dialog extends beyond viewport');
     }
-    if (!dialog.bodyScrollable || !dialog.bodyScrolled || !dialog.footerVisible || dialog.footerBottom > target.height + 1) {
+    if (!dialog.bodyScrollable || !dialog.bodyScrolled || !dialog.lastInputReachable || !dialog.footerVisible || dialog.footerBottom > target.height + 1) {
       errors.push(target.name + ': long dialog body or actions inaccessible');
     }
     if (target.name === 'short-mobile' || target.name === 'landscape-mobile') {

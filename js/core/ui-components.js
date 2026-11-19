@@ -75,6 +75,39 @@ export class UIComponents {
         toastElement.addEventListener('hidden.bs.toast', () => toastElement.remove());
     }
 
+    // Праздничное уведомление о награде — текст из профиля всегда экранируется.
+    showAchievementToast(achievement) {
+        if (!this.toastContainer?.isConnected) {
+            this.toastContainer = document.createElement('div');
+            this.toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+            document.body.appendChild(this.toastContainer);
+        }
+        const level = Math.max(1, Math.min(4, Math.floor(Number(achievement?.level) || 1)));
+        const tier = ['bronze', 'bronze', 'silver', 'gold', 'legendary'][level];
+        const title = escapeHTML(String(achievement?.title || 'Новое достижение'));
+        const description = escapeHTML(String(achievement?.description || ''));
+        const emoji = escapeHTML(String(achievement?.emoji || '🏆'));
+        const toastId = `achievement-toast-${Date.now()}-${++this.toastSequence}`;
+        this.toastContainer.insertAdjacentHTML('beforeend', `
+            <div id="${toastId}" class="toast atlas-achievement-toast atlas-achievement-toast--${tier}" role="status" aria-live="polite" aria-atomic="true">
+                <div class="d-flex align-items-start gap-3 p-3">
+                    <span class="atlas-achievement-toast-icon" aria-hidden="true">${emoji}</span>
+                    <div class="flex-grow-1 min-width-0">
+                        <small class="atlas-achievement-toast-kicker">Достижение открыто · Уровень ${level}</small>
+                        <div class="fw-bold">${title}</div>
+                        <div class="small text-muted">${description}</div>
+                        <a href="#achievements" class="atlas-achievement-toast-link">Мои награды <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Закрыть уведомление"></button>
+                </div>
+            </div>`);
+        const element = this.toastContainer.querySelector(`#${toastId}`);
+        const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true;
+        const toast = new bootstrap.Toast(element, { delay: 6000, animation: !reducedMotion });
+        element.addEventListener('hidden.bs.toast', () => element.remove());
+        toast.show();
+    }
+
     // Спиннер загрузки
     createLoader(size = 'md') {
         const sizes = {

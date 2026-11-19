@@ -1,7 +1,7 @@
 import { db } from '../config/firebase.js';
 import { 
     collection, doc, getDocs, getDoc, updateDoc,
-    query, where, serverTimestamp, writeBatch, setDoc
+    query, where, limit, serverTimestamp, writeBatch, setDoc
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 export class FriendsService {
@@ -10,24 +10,44 @@ export class FriendsService {
     }
 
     async getUserByUsername(username) {
+        const searchName = String(username ?? '').trim();
+        const normalizedName = searchName.toLowerCase();
+        if (!/^[a-z0-9_]{3,20}$/.test(normalizedName)) return null;
+
         try {
             const usersRef = collection(this.db, 'users');
-            const searchName = username.toLowerCase();
-            const snapshot = await getDocs(usersRef);
-            
-            let foundUser = null;
-            
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                if (data.username && data.username.toLowerCase() === searchName) {
-                    foundUser = { uid: doc.id, ...data };
-                }
-            });
-            
-            return foundUser;
+            const indexed = await getDocs(query(
+                usersRef,
+                where('usernameNormalized', '==', normalizedName),
+                limit(1)
+            ));
+            let match = indexed.docs[0];
+
+            // Compatibility path for accounts created before usernameNormalized existed.
+            if (!match) {
+                const legacy = await getDocs(query(
+                    usersRef,
+                    where('username', '==', searchName),
+                    limit(1)
+                ));
+                match = legacy.docs[0];
+            }
+
+            if (!match) return null;
+            const data = match.data();
+            // Return only fields intended for the friend-search card.
+            return {
+                uid: match.id,
+                username: data.username || '',
+                displayName: data.displayName || data.username || '',
+                avatar: data.avatar || null,
+                bio: data.bio || '',
+                location: data.location || '',
+                stats: data.stats || {}
+            };
         } catch (error) {
             console.error('Ошибка поиска пользователя:', error);
-            return null;
+            throw new Error('Не удалось выполнить поиск. Проверь подключение к интернету и повтори попытку.');
         }
     }
 

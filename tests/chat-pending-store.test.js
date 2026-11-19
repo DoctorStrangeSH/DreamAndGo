@@ -9,6 +9,7 @@ function harness() {
     const data = new Map();
     const writes = [];
     const adapter = {
+        security: { encryptionAtRest: true, integrityProtection: true, accountIsolation: true },
         async read(uid) { return data.get(uid) ?? []; },
         async write(uid, records) {
             writes.push(uid);
@@ -83,6 +84,10 @@ test('remove and clear affect only the active account namespace', async () => {
 test('pending store requires an explicit adapter and authenticated UID', () => {
     assert.throws(() => new ChatPendingIntentStore({ adapter: {}, getUserId: () => 'alice' }), TypeError);
     assert.throws(() => new ChatPendingIntentStore({
-        adapter: { read() {}, write() {} }, getUserId: () => 'bad/user'
+        adapter: { read() {}, write() {}, security: { encryptionAtRest: true } },
+        getUserId: () => 'alice'
+    }), TypeError);
+    assert.throws(() => new ChatPendingIntentStore({
+        adapter: { security: { encryptionAtRest: true, integrityProtection: true, accountIsolation: true }, read() {}, write() {} }, getUserId: () => 'bad/user'
     }), /вход в аккаунт/);
 });

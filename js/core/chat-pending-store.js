@@ -128,7 +128,7 @@ export class ChatPendingIntentStore {
         return this._enqueueMutation(async () => {
         this._assertOwner();
         if (typeof clientMessageId !== 'string' || !UUID_V4.test(clientMessageId)) return false;
-        const current = await this.load();
+        const current = await this._loadInternal();
         this._assertOwner();
         const key = clientMessageId.toLowerCase();
         const next = current.filter(item => item.clientMessageId !== key);

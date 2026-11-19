@@ -1,8 +1,12 @@
 export const MAX_CHAT_MESSAGE_LENGTH = 2000;
 
-export function isValidChatUid(value) {
+export function isValidChatPathSegment(value, maxLength = 512) {
     return typeof value === 'string' && value.length > 0 &&
-        value.length <= 128 && value.trim() === value && !value.includes('/');
+        value.length <= maxLength && value.trim() === value && !value.includes('/');
+}
+
+export function isValidChatUid(value) {
+    return isValidChatPathSegment(value, 128);
 }
 
 export function validateChatMessage(text) {

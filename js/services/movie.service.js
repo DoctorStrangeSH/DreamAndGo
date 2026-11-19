@@ -280,7 +280,7 @@ export class MovieService {
 
     async updateUserStats(userId) {
         try {
-            const movies = await this.getUserMovies(userId);
+            const movies = await this.getUserMovies(userId, {}, { throwOnError: true });
             const watched = movies.filter(m => m.status === 'watched').length;
             const toWatch = movies.filter(m => m.status === 'to_watch').length;
             

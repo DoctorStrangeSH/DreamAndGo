@@ -183,19 +183,19 @@ export class FriendsModule {
 
         if (type === 'friend') {
             actions = `
-                <a href="#profile/${escapeHTML(user.uid)}" class="btn btn-outline-primary btn-sm" title="Профиль">
+                <a href="#profile/${escapeHTML(user.uid)}" class="btn btn-outline-primary btn-sm" title="Профиль" aria-label="Открыть профиль друга">
                     <i class="bi bi-person"></i>
                 </a>
-                <button class="btn btn-outline-danger btn-sm remove-friend-btn" data-uid="${escapeHTML(user.uid)}" title="Удалить">
+                <button class="btn btn-outline-danger btn-sm remove-friend-btn" data-uid="${escapeHTML(user.uid)}" title="Удалить" aria-label="Удалить из друзей">
                     <i class="bi bi-person-x"></i>
                 </button>
             `;
         } else if (type === 'request') {
             actions = `
-                <button class="btn btn-success btn-sm accept-btn" data-uid="${escapeHTML(user.uid)}" title="Принять">
+                <button class="btn btn-success btn-sm accept-btn" data-uid="${escapeHTML(user.uid)}" title="Принять" aria-label="Принять заявку в друзья">
                     <i class="bi bi-check"></i>
                 </button>
-                <button class="btn btn-outline-danger btn-sm reject-btn" data-uid="${escapeHTML(user.uid)}" title="Отклонить">
+                <button class="btn btn-outline-danger btn-sm reject-btn" data-uid="${escapeHTML(user.uid)}" title="Отклонить" aria-label="Отклонить заявку в друзья">
                     <i class="bi bi-x"></i>
                 </button>
             `;
@@ -215,10 +215,10 @@ export class FriendsModule {
 
         return `
             <div class="col-12 col-md-6">
-                <div class="card-premium p-3">
-                    <div class="d-flex align-items-center gap-3">
+                <div class="card-premium p-3 atlas-friend-card">
+                    <div class="d-flex align-items-center gap-3 atlas-friend-content">
                         <div class="friend-avatar-placeholder">${escapeHTML(initials)}</div>
-                        <div class="flex-grow-1 min-width-0">
+                        <div class="flex-grow-1 atlas-friend-details">
                             <h6 class="fw-bold mb-0">@${escapeHTML(user.username || 'user')}</h6>
                             <div class="d-flex gap-2 mt-1">
                                 <small class="text-muted">
@@ -232,7 +232,7 @@ export class FriendsModule {
                                 </small>
                             </div>
                         </div>
-                        <div class="d-flex gap-1">${actions}</div>
+                        <div class="d-flex gap-1 atlas-friend-actions">${actions}</div>
                     </div>
                 </div>
             </div>

@@ -4,6 +4,7 @@ import { escapeHTML } from './escape-html.js';
 export class UIComponents {
     constructor() {
         this.toastContainer = null;
+        this.toastSequence = 0;
     }
 
     // Модальное окно
@@ -28,7 +29,7 @@ export class UIComponents {
 
     // Toast уведомления
     showToast(message, type = 'success') {
-        if (!this.toastContainer) {
+        if (!this.toastContainer?.isConnected) {
             this.toastContainer = document.createElement('div');
             this.toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
             document.body.appendChild(this.toastContainer);
@@ -48,22 +49,24 @@ export class UIComponents {
             info: 'primary'
         };
 
-        const toastId = `toast-${Date.now()}`;
+        const variant = Object.hasOwn(colors, type) ? type : 'info';
+        const isImportant = variant === 'error' || variant === 'warning';
+        const toastId = `toast-${Date.now()}-${++this.toastSequence}`;
         const toastHTML = `
-            <div id="${toastId}" class="toast align-items-center text-bg-${colors[type]} border-0" role="alert">
+            <div id="${toastId}" class="toast align-items-center text-bg-${colors[variant]} border-0" role="${isImportant ? 'alert' : 'status'}" aria-live="${isImportant ? 'assertive' : 'polite'}" aria-atomic="true">
                 <div class="d-flex">
                     <div class="toast-body">
-                        <i class="bi ${icons[type]} me-2"></i>
+                        <i class="bi ${icons[variant]} me-2" aria-hidden="true"></i>
                         ${escapeHTML(message)}
                     </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Закрыть уведомление"></button>
                 </div>
             </div>
         `;
 
         this.toastContainer.insertAdjacentHTML('beforeend', toastHTML);
-        const toastElement = document.getElementById(toastId);
-        const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+        const toastElement = this.toastContainer.querySelector(`#${toastId}`);
+        const toast = new bootstrap.Toast(toastElement, { delay: isImportant ? 6000 : 3500 });
         toast.show();
 
         toastElement.addEventListener('hidden.bs.toast', () => toastElement.remove());

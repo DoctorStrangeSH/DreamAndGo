@@ -118,15 +118,19 @@ export class ChatV2Session {
         if (!this.pendingStore) return this.delivery.discard(clientMessageId);
         const removed = await this.pendingStore.remove(clientMessageId);
         this._assertActive();
-        if (removed) this.delivery.discard(clientMessageId);
-        return removed;
+        const discarded = this.delivery.discard(clientMessageId);
+        return removed || discarded;
     }
 
     async logout() {
         this._assertActive();
-        if (this.pendingStore) await this.pendingStore.clear();
-        this._assertActive();
-        this.dispose();
+        try {
+            if (this.pendingStore) await this.pendingStore.clear();
+            this._assertActive();
+        } finally {
+            // Even a storage failure must not leave an authenticated view model alive.
+            this.dispose();
+        }
     }
 
     discard(clientMessageId) {

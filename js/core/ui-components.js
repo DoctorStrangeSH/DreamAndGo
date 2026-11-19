@@ -9,13 +9,16 @@ export class UIComponents {
 
     // Модальное окно
     createModal({ id, title, content, size = 'md', onClose = null }) {
+        const safeId = escapeHTML(id);
+        const safeSize = ['sm', 'md', 'lg', 'xl'].includes(size) ? size : 'md';
+        // `content` is trusted markup assembled by the caller; the title is plain text.
         const modalHTML = `
-            <div class="modal fade" id="${id}" tabindex="-1">
-                <div class="modal-dialog modal-${size} modal-dialog-centered">
+            <div class="modal fade" id="${safeId}" tabindex="-1">
+                <div class="modal-dialog modal-${safeSize} modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header border-0">
-                            <h5 class="modal-title fw-bold">${title}</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            <h5 class="modal-title fw-bold">${escapeHTML(title)}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть окно"></button>
                         </div>
                         <div class="modal-body">
                             ${content}
@@ -90,13 +93,15 @@ export class UIComponents {
 
     // Пустое состояние
     createEmptyState({ icon, title, description, action = null }) {
+        const safeIcon = /^bi-[a-z0-9-]+$/.test(String(icon)) ? icon : 'bi-info-circle';
+        // `action` is trusted button markup; title and description are plain text.
         return `
             <div class="text-center py-5 fade-in-up">
                 <div class="empty-state-icon mb-4">
-                    <i class="bi ${icon} display-1 text-muted opacity-50"></i>
+                    <i class="bi ${safeIcon} display-1 text-muted opacity-50" aria-hidden="true"></i>
                 </div>
-                <h4 class="fw-bold mb-2">${title}</h4>
-                <p class="text-muted mb-4">${description}</p>
+                <h4 class="fw-bold mb-2">${escapeHTML(title)}</h4>
+                <p class="text-muted mb-4">${escapeHTML(description)}</p>
                 ${action ? action : ''}
             </div>
         `;

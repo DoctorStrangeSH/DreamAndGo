@@ -4,6 +4,8 @@ import { validateProfileSettings } from '../../core/profile-settings-policy.js';
 import { doc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 export class SettingsModule {
+    constructor() { this.requestId = 0; }
+
     async render() {
         const mainContent = document.getElementById('main-content');
         if (!mainContent) return;
@@ -11,10 +13,27 @@ export class SettingsModule {
         const userId = window.app.currentUser?.uid;
         if (!userId) return;
 
-        mainContent.innerHTML = window.app.ui.createLoader();
+        const requestId = ++this.requestId;
+        mainContent.innerHTML = `<div data-settings-request="${requestId}">${window.app.ui.createLoader()}</div>`;
+        const isCurrent = () => requestId === this.requestId && window.app.currentUser?.uid === userId &&
+            mainContent.isConnected !== false && !!mainContent.querySelector(`[data-settings-request="${requestId}"]`);
 
-        const userRef = doc(db, 'users', userId);
-        const userDoc = await getDoc(userRef);
+        let userDoc;
+        try {
+            const userRef = doc(db, 'users', userId);
+            userDoc = await getDoc(userRef);
+        } catch (error) {
+            console.error('Не удалось загрузить настройки:', error);
+            if (!isCurrent()) return;
+            mainContent.innerHTML = `<section class="atlas-empty" role="alert">
+                <h2>Не удалось загрузить настройки</h2>
+                <p>Проверь подключение и попробуй снова. Изменения не вносились.</p>
+                <button type="button" class="btn btn-premium" data-retry-settings>Повторить</button>
+            </section>`;
+            mainContent.querySelector('[data-retry-settings]')?.addEventListener('click', () => this.render());
+            return;
+        }
+        if (!isCurrent()) return;
         const userData = userDoc.exists() ? userDoc.data() : {};
 
         mainContent.innerHTML = `
@@ -29,7 +48,7 @@ export class SettingsModule {
                             <h5 class="fw-bold mb-4">
                                 <i class="bi bi-person me-2"></i>Профиль
                             </h5>
-                            <form id="profileSettingsForm">
+                            <form id="profileSettingsForm" data-settings-owner="${escapeHTML(userId)}">
                                 <div class="mb-3">
                                     <label class="form-label fw-semibold">Никнейм</label>
                                     <div class="input-group">
@@ -115,23 +134,29 @@ export class SettingsModule {
 
         document.getElementById('exportDataBtn')?.addEventListener('click', async () => {
             const btn = document.getElementById('exportDataBtn');
+            const uid = window.app.currentUser?.uid;
+            if (!uid || uid !== userId || !btn || btn.disabled) return;
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Экспорт...';
-
-            const success = await window.app.exportService.exportAndDownload(window.app.currentUser.uid);
-
-            if (success) {
-                window.app.ui.showToast('Данные скачаны! 📦', 'success');
-            } else {
-                window.app.ui.showToast('Ошибка экспорта', 'error');
+            try {
+                const success = await window.app.exportService.exportAndDownload(uid);
+                if (window.app.currentUser?.uid !== uid || !btn.isConnected) return;
+                window.app.ui.showToast(success ? 'Данные скачаны! 📦' : 'Ошибка экспорта', success ? 'success' : 'error');
+            } catch (error) {
+                console.error('Ошибка экспорта:', error);
+                if (window.app.currentUser?.uid === uid && btn.isConnected) window.app.ui.showToast('Ошибка экспорта', 'error');
+            } finally {
+                if (btn.isConnected) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-download me-2"></i>Скачать данные';
+                }
             }
-
-            btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-download me-2"></i>Скачать данные';
         });
     }
 
     async saveSettings(form) {
+        const uid = window.app.currentUser?.uid;
+        if (!uid || !form.isConnected || form.dataset.settingsOwner !== uid) return;
         const formData = new FormData(form);
         const username = formData.get('username').trim();
         const displayName = formData.get('displayName').trim();
@@ -155,17 +180,19 @@ export class SettingsModule {
         submitBtn.disabled = true;
 
         try {
-            const userRef = doc(db, 'users', window.app.currentUser.uid);
+            const userRef = doc(db, 'users', uid);
             await updateDoc(userRef, settings);
-
+            if (window.app.currentUser?.uid !== uid || !form.isConnected) return;
             window.app.userData = { ...window.app.userData, ...settings };
             window.app.ui.showToast('Настройки сохранены! ✨', 'success');
         } catch (error) {
             console.error('Ошибка сохранения:', error);
-            window.app.ui.showToast('Ошибка сохранения', 'error');
+            if (window.app.currentUser?.uid === uid && form.isConnected) window.app.ui.showToast('Ошибка сохранения', 'error');
+        } finally {
+            if (form.isConnected) {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
         }
-
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
     }
 }

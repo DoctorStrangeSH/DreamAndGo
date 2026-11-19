@@ -1,5 +1,10 @@
 import { validateChatMessage } from './chat-message-policy.js';
 
+const normalizeClientMessageId = value => typeof value === 'string' &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+    ? value.toLowerCase()
+    : null;
+
 // Prepared for the v2 callable API; intentionally not wired to the legacy chat.
 // Pending messages remain in memory only and are never persisted as plaintext.
 export class ChatOutbox {
@@ -60,11 +65,15 @@ export class ChatOutbox {
     }
 
     get(clientMessageId) {
-        return this.pending.get(clientMessageId) || null;
+        const key = normalizeClientMessageId(clientMessageId);
+        return key ? this.pending.get(key) || null : null;
     }
 
     // Retrying deliberately reuses the immutable intent, including the UUID.
     deliver(clientMessageId) {
+        const key = normalizeClientMessageId(clientMessageId);
+        if (!key) return Promise.resolve({ success: false, error: 'Некорректный идентификатор отправки' });
+        clientMessageId = key;
         const pending = this.pending.get(clientMessageId);
         if (!pending) return Promise.resolve({ success: false, error: 'Сообщение отсутствует в очереди' });
         if (this.checking.has(clientMessageId)) return Promise.resolve({ success: false, error: 'Проверяется статус сообщения' });
@@ -90,6 +99,9 @@ export class ChatOutbox {
     // A lookup confirms whether an earlier send committed before its ack was lost.
     // 'missing' is NOT permission to auto-send: the caller decides when to retry.
     reconcile(clientMessageId, lookup) {
+        const key = normalizeClientMessageId(clientMessageId);
+        if (!key) return Promise.resolve({ status: 'absent' });
+        clientMessageId = key;
         const pending = this.pending.get(clientMessageId);
         if (!pending) return Promise.resolve({ status: 'absent' });
         if (typeof lookup !== 'function') throw new TypeError('Status lookup required');
@@ -115,8 +127,9 @@ export class ChatOutbox {
     }
 
     discard(clientMessageId) {
-        if (this.inFlight.has(clientMessageId) || this.checking.has(clientMessageId)) return false;
-        return this.pending.delete(clientMessageId);
+        const key = normalizeClientMessageId(clientMessageId);
+        if (!key || this.inFlight.has(key) || this.checking.has(key)) return false;
+        return this.pending.delete(key);
     }
 
     clear() {

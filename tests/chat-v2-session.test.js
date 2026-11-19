@@ -169,3 +169,44 @@ test('v2 session refuses malformed authenticated UID before creating transport',
         }), /вход в аккаунт/);
     }
 });
+
+
+test('session exposes explicit pending-intent recovery and deliberate discard', async () => {
+    const server = fakeServer();
+    const session = new ChatV2Session({
+        invoke: server.invokeFor('alice'),
+        getUserId: () => 'alice',
+        createId: () => uuid
+    });
+
+    const restored = session.restore('chat-a', 'Recovered after restart', uuid);
+    assert.equal(restored.clientMessageId, uuid);
+    assert.equal(session.delivery.get(uuid).deliveryStatus, 'checking');
+    assert.deepEqual(await session.reconcile(uuid), { status: 'missing' });
+    assert.equal(session.delivery.get(uuid).deliveryStatus, 'failed');
+    assert.equal(server.calls.filter(item => item.name === 'sendPrivateMessageV2').length, 0);
+
+    assert.equal(session.discard(uuid), true);
+    assert.equal(session.delivery.get(uuid), null);
+    assert.equal(session.discard(uuid), false);
+    session.dispose();
+});
+
+test('restore and discard are blocked after account change or disposal', () => {
+    let userId = 'alice';
+    const session = new ChatV2Session({
+        invoke: async () => ({ data: {} }),
+        getUserId: () => userId,
+        createId: () => uuid
+    });
+    session.restore('chat-a', 'Private pending text', uuid);
+    userId = 'bob';
+    assert.throws(() => session.restore('chat-a', 'Other', '650e8400-e29b-41d4-a716-446655440000'),
+        /Сессия изменилась/);
+    assert.throws(() => session.discard(uuid), /Сессия изменилась/);
+    userId = 'alice';
+    session.dispose();
+    assert.throws(() => session.restore('chat-a', 'Private pending text', uuid),
+        /Сессия изменилась/);
+    assert.throws(() => session.discard(uuid), /Сессия изменилась/);
+});

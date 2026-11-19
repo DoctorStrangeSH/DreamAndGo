@@ -8,6 +8,8 @@ export class TravelsModule {
         this.travelService = new TravelService();
         this.currentFilter = { type: 'all', status: 'all' };
         this.requestId = 0;
+        this.searchQuery = '';
+        this.sortOrder = 'recent';
     }
 
     async render() {
@@ -89,11 +91,32 @@ export class TravelsModule {
                                 `).join('')}
                             </select>
                         </div>
+                        <div class="col-12 col-md">
+                            <label class="visually-hidden" for="travelSearch">Найти место</label>
+                            <input type="search" class="form-control form-control-sm" id="travelSearch"
+                                   placeholder="Страна, город или место…" autocomplete="off"
+                                   value="${escapeHTML(this.searchQuery)}">
+                        </div>
+                        <div class="col-12 col-sm-auto">
+                            <label class="visually-hidden" for="travelSort">Сортировка путешествий</label>
+                            <select class="form-select form-select-sm" id="travelSort">
+                                <option value="recent" ${this.sortOrder === 'recent' ? 'selected' : ''}>Сначала новые</option>
+                                <option value="name" ${this.sortOrder === 'name' ? 'selected' : ''}>По названию</option>
+                                <option value="rating" ${this.sortOrder === 'rating' ? 'selected' : ''}>По оценке</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
+                <p class="text-muted small mb-3" id="travelSearchCount" role="status" aria-live="polite"></p>
+
                 <div id="travelsGrid" class="row g-3">
                     ${travels.length === 0 ? this.getEmptyState() : travels.map((t, i) => this.createCard(t, i)).join('')}
+                </div>
+                <div id="travelSearchEmpty" class="atlas-empty atlas-empty--travel" hidden>
+                    <div class="atlas-empty-art" aria-hidden="true"><i class="bi bi-search"></i></div>
+                    <h3>Такого места пока нет</h3>
+                    <p>Попробуй другое название или очисти поиск.</p>
                 </div>
 
                 <div id="travelModalContainer"></div>
@@ -136,7 +159,11 @@ export class TravelsModule {
             : '<span class="badge bg-warning bg-opacity-10 text-warning">☆ Планирую</span>';
 
         return `
-            <div class="col-12 col-md-6 col-lg-4 fade-in-up" style="animation-delay: ${Math.min(index, 12) * 0.06}s">
+            <div class="col-12 col-md-6 col-lg-4 fade-in-up" data-travel-card
+                 data-search="${escapeHTML([travel.title, travel.location, travel.description, typeInfo.label].filter(Boolean).join(' ').toLocaleLowerCase())}"
+                 data-name="${escapeHTML(String(travel.title || '').toLocaleLowerCase())}"
+                 data-rating="${safeRating}" data-original-index="${index}"
+                 style="animation-delay: ${Math.min(index, 12) * 0.06}s">
                 <div class="card-premium h-100 travel-card">
                     <div class="restaurant-card-header">
                         ${photoURL
@@ -188,6 +215,16 @@ export class TravelsModule {
     }
 
     attachEventListeners() {
+        const searchInput = document.getElementById('travelSearch');
+        searchInput?.addEventListener('input', () => {
+            this.searchQuery = searchInput.value;
+            this.applySearchAndSort();
+        });
+        document.getElementById('travelSort')?.addEventListener('change', (event) => {
+            this.sortOrder = event.target.value;
+            this.applySearchAndSort();
+        });
+        this.applySearchAndSort();
         document.getElementById('addTravelBtn')?.addEventListener('click', () => this.showModal(null));
         document.getElementById('emptyAddTravelBtn')?.addEventListener('click', () => this.showModal(null));
 
@@ -229,6 +266,29 @@ export class TravelsModule {
             this.currentFilter.type = e.target.value;
             this.render();
         });
+    }
+
+    applySearchAndSort() {
+        const query = this.searchQuery.trim().toLocaleLowerCase();
+        const grid = document.getElementById('travelsGrid');
+        if (!grid) return;
+        const cards = [...grid.querySelectorAll('[data-travel-card]')];
+        const sorted = [...cards].sort((a, b) => {
+            if (this.sortOrder === 'name') return a.dataset.name.localeCompare(b.dataset.name, 'ru') || Number(a.dataset.originalIndex) - Number(b.dataset.originalIndex);
+            if (this.sortOrder === 'rating') return Number(b.dataset.rating) - Number(a.dataset.rating) || Number(a.dataset.originalIndex) - Number(b.dataset.originalIndex);
+            return Number(a.dataset.originalIndex) - Number(b.dataset.originalIndex);
+        });
+        for (const card of sorted) grid.appendChild(card);
+        let matches = 0;
+        for (const card of cards) {
+            const visible = !query || card.dataset.search.includes(query);
+            card.hidden = !visible;
+            if (visible) matches++;
+        }
+        const empty = document.getElementById('travelSearchEmpty');
+        if (empty) empty.hidden = !query || matches > 0 || cards.length === 0;
+        const count = document.getElementById('travelSearchCount');
+        if (count) count.textContent = query && cards.length ? `Найдено: ${matches} из ${cards.length}` : '';
     }
 
     async showModal(travelId) {

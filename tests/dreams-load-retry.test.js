@@ -32,6 +32,9 @@ test('dreams render offers retry rather than displaying an empty library on fail
     const mainContent = {
         innerHTML: '',
         querySelector(selector) {
+            if (selector.startsWith('[data-collection-request=')) {
+                return this.innerHTML.includes(selector.slice(1, -1)) ? {} : null;
+            }
             assert.equal(selector, '#retryDreamsLoad');
             return { addEventListener(_event, callback) { retryCallback = callback; } };
         }
@@ -48,6 +51,7 @@ test('dreams render offers retry rather than displaying an empty library on fail
         `return class Module {
             constructor() {
                 this.currentFilter = {};
+                this.requestId = 0;
                 this.dreamsService = { async getDreams() {
                     state.calls++;
                     if (state.calls === 1) throw new Error('offline');

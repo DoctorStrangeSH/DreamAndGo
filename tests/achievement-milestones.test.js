@@ -1,0 +1,29 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+
+const source = readFileSync(new URL('../js/modules/achievements/achievements.js', import.meta.url), 'utf8');
+const from = source.indexOf('const MILESTONES =');
+const to = source.indexOf('export class AchievementsModule', from);
+assert.ok(from >= 0 && to > from);
+const getProgress = new Function(`${source.slice(from, to).replace('export function getAchievementMilestone', 'function getAchievementMilestone')} return getAchievementMilestone;`)();
+
+test('achievement progress follows the next level and clamps malformed stats', () => {
+    assert.deepEqual(getProgress({ id: 'first_travel' }, 1, { travels: 3 }), { current: 3, target: 5, percentage: 60 });
+    assert.deepEqual(getProgress({ id: 'first_travel' }, 1, { travels: 100 }), { current: 5, target: 5, percentage: 100 });
+    assert.deepEqual(getProgress({ id: 'first_travel' }, 1, { travels: -99 }), { current: 0, target: 5, percentage: 0 });
+    assert.equal(getProgress({ id: 'first_travel' }, 4, { travels: 100 }), null);
+});
+
+test('completed dreams and all collection categories use their actual milestones', () => {
+    assert.deepEqual(getProgress({ id: 'first_dream' }, 2, { dreams: 99, dreamsCompleted: 2 }), { current: 2, target: 3, percentage: 67 });
+    assert.deepEqual(getProgress({ id: 'collector' }, 0, { travels: 2, restaurants: 1, movies: 3, books: 0, dreams: 1 }), { current: 4, target: 5, percentage: 80 });
+    assert.deepEqual(getProgress({ id: 'perfect_week' }, 0, { travels: 2, movies: 4, books: 1 }), { current: 7, target: 7, percentage: 100 });
+});
+
+test('achievement overview counts earned levels, not only achievement records', () => {
+    assert.match(source, /totalEarned = all\.reduce/);
+    assert.match(source, /Math\.min\(achievement\.levels\.length, Math\.max\(0, level\)\)/);
+    assert.match(source, /role="progressbar" aria-label="Прогресс достижения/);
+    assert.match(source, /escapeHTML\(e\?\.title \|\| a\.title\)/);
+});

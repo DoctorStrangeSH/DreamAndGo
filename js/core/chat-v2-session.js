@@ -49,9 +49,21 @@ export class ChatV2Session {
         return this.delivery.prepare(chatId, text);
     }
 
+    // Rehydrate an explicitly retained intent after restart; the caller owns
+    // secure persistence and must provide the original text and client UUID.
+    restore(chatId, text, clientMessageId) {
+        this._assertActive();
+        return this.delivery.restore(chatId, text, clientMessageId);
+    }
+
     send(clientMessageId) {
         this._assertActive();
         return this.delivery.send(clientMessageId);
+    }
+
+    discard(clientMessageId) {
+        this._assertActive();
+        return this.delivery.discard(clientMessageId);
     }
 
     reconcile(clientMessageId) {

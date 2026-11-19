@@ -1,15 +1,15 @@
 import { FieldValue } from 'firebase-admin/firestore';
 import { HttpsError } from 'firebase-functions/v2/https';
 import { isConversationBlocked } from './block-policy.js';
-import { otherChatParticipant, serverMessageDocumentId } from './message-policy.js';
+import { isValidUserId, isValidDocumentId, otherChatParticipant, serverMessageDocumentId } from './message-policy.js';
 
 // Candidate v2 only. A read receipt is written exclusively by the actual recipient.
 // The message ID is deterministic and bound to chat, original sender and client UUID.
 export async function markPrivateMessageReadTransaction(db, uid, chatId, messageId) {
-    if (typeof uid !== 'string' || !uid) {
+    if (!isValidUserId(uid)) {
         throw new HttpsError('unauthenticated', 'Требуется вход в аккаунт');
     }
-    if (typeof chatId !== 'string' || !chatId || chatId.length > 128 || chatId.includes('/') ||
+    if (!isValidDocumentId(chatId) ||
         typeof messageId !== 'string' || !/^[a-f0-9]{64}$/.test(messageId)) {
         throw new HttpsError('invalid-argument', 'Некорректное сообщение');
     }

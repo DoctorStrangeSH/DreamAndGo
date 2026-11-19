@@ -238,17 +238,21 @@ export class BooksModule {
         document.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                if (btn.disabled || !confirm('Удалить эту книгу?')) return;
+                const userId = window.app.currentUser?.uid;
+                if (!userId || btn.disabled || !confirm('Удалить эту книгу?')) return;
                 btn.disabled = true;
                 try {
-                    const result = await this.bookService.deleteBook(window.app.currentUser.uid, btn.dataset.id);
+                    const result = await this.bookService.deleteBook(userId, btn.dataset.id);
                     if (!result?.success) throw new Error('Удаление не выполнено');
+                    if (window.app.currentUser?.uid !== userId) return;
                     window.app.ui.showToast('Книга удалена', 'info');
                     await this.render();
-                    window.app.refreshUserData();
+                    if (window.app.currentUser?.uid === userId) window.app.refreshUserData();
                 } catch (error) {
-                    console.error('Не удалось удалить книга:', error);
-                    window.app.ui.showToast('Не удалось удалить запись. Попробуй снова.', 'error');
+                    console.error('Не удалось удалить книгу:', error);
+                    if (window.app.currentUser?.uid === userId) {
+                        window.app.ui.showToast('Не удалось удалить запись. Попробуй снова.', 'error');
+                    }
                 } finally {
                     btn.disabled = false;
                 }

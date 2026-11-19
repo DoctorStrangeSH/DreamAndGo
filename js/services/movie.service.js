@@ -257,7 +257,8 @@ export class MovieService {
                 ...updates,
                 updatedAt: serverTimestamp()
             });
-            
+            await this.updateUserStats(userId);
+
             return { success: true };
         } catch (error) {
             console.error('Ошибка обновления фильма:', error);

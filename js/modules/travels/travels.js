@@ -240,17 +240,21 @@ export class TravelsModule {
         document.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                if (btn.disabled || !confirm('Удалить это путешествие?')) return;
+                const userId = window.app.currentUser?.uid;
+                if (!userId || btn.disabled || !confirm('Удалить это путешествие?')) return;
                 btn.disabled = true;
                 try {
-                    const result = await this.travelService.deleteTravel(window.app.currentUser.uid, btn.dataset.id);
+                    const result = await this.travelService.deleteTravel(userId, btn.dataset.id);
                     if (!result?.success) throw new Error('Удаление не выполнено');
+                    if (window.app.currentUser?.uid !== userId) return;
                     window.app.ui.showToast('Путешествие удалено', 'info');
                     await this.render();
-                    window.app.refreshUserData();
+                    if (window.app.currentUser?.uid === userId) window.app.refreshUserData();
                 } catch (error) {
                     console.error('Не удалось удалить путешествие:', error);
-                    window.app.ui.showToast('Не удалось удалить запись. Попробуй снова.', 'error');
+                    if (window.app.currentUser?.uid === userId) {
+                        window.app.ui.showToast('Не удалось удалить запись. Попробуй снова.', 'error');
+                    }
                 } finally {
                     btn.disabled = false;
                 }
@@ -477,10 +481,8 @@ export class TravelsModule {
                     window.app.ui.showToast('Не удалось сохранить путешествие. Попробуй снова.', 'error');
                 }
             } finally {
-                if (saveButton.isConnected) {
-                    saveButton.disabled = false;
-                    saveButton.removeAttribute('aria-busy');
-                }
+                saveButton.disabled = false;
+                saveButton.removeAttribute('aria-busy');
             }
         });
     }

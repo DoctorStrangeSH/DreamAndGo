@@ -2,6 +2,7 @@ import { ChatV2Transport } from './chat-v2-transport.js';
 import { ChatDeliveryController } from './chat-delivery-controller.js';
 import { ChatUnreadController } from './chat-unread-controller.js';
 import { ChatReadVisibilityTracker } from './chat-read-visibility.js';
+import { isValidChatUid } from './chat-message-policy.js';
 
 // Explicitly opt-in candidate v2 wiring. It does not touch legacy chat, Firebase
 // initialization, realtime listeners or production DOM.
@@ -11,7 +12,7 @@ export class ChatV2Session {
             throw new TypeError('Требуется авторизованный транспорт');
         }
         const userId = getUserId();
-        if (typeof userId !== 'string' || !userId) {
+        if (!isValidChatUid(userId)) {
             throw new Error('Требуется вход в аккаунт');
         }
         this.getUserId = getUserId;

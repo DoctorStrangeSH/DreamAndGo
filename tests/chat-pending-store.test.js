@@ -91,3 +91,43 @@ test('pending store requires an explicit adapter and authenticated UID', () => {
         adapter: { security: { encryptionAtRest: true, integrityProtection: true, accountIsolation: true }, read() {}, write() {} }, getUserId: () => 'bad/user'
     }), /вход в аккаунт/);
 });
+
+
+test('concurrent pending saves are serialized without losing distinct intents', async () => {
+    const h = harness();
+    const secondId = '650e8400-e29b-41d4-a716-446655440000';
+    const thirdId = '750e8400-e29b-41d4-a716-446655440000';
+    await Promise.all([
+        h.store.save({ chatId: 'chat-a', text: 'First', clientMessageId: uuid }),
+        h.store.save({ chatId: 'chat-a', text: 'Second', clientMessageId: secondId }),
+        h.store.save({ chatId: 'chat-b', text: 'Third', clientMessageId: thirdId })
+    ]);
+    const records = await h.store.load();
+    assert.equal(records.length, 3);
+    assert.deepEqual(new Set(records.map(item => item.clientMessageId)), new Set([uuid, secondId, thirdId]));
+});
+
+test('account switch during a write rejects completion and never writes into the new account namespace', async () => {
+    let userId = 'alice', finishWrite;
+    const data = new Map();
+    const store = new ChatPendingIntentStore({
+        adapter: {
+            security: { encryptionAtRest: true, integrityProtection: true, accountIsolation: true },
+            async read(uid) { return data.get(uid) ?? []; },
+            write(uid, records) {
+                return new Promise(resolve => {
+                    finishWrite = () => { data.set(uid, structuredClone(records)); resolve(); };
+                });
+            }
+        },
+        getUserId: () => userId,
+        now: () => 1_800_000_000_000
+    });
+    const saving = store.save({ chatId: 'chat-a', text: 'Alice only', clientMessageId: uuid });
+    await new Promise(resolve => setImmediate(resolve));
+    userId = 'bob';
+    finishWrite();
+    await assert.rejects(saving, /Сессия изменилась/);
+    assert.equal(data.has('bob'), false);
+    assert.equal(data.has('alice'), true);
+});

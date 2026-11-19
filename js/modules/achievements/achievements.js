@@ -23,6 +23,15 @@ export function getAchievementMilestone(achievement, earnedLevel, stats = {}) {
     return { current, target, percentage: Math.round(current / target * 100) };
 }
 
+export function getAchievementTier(level) {
+    const safeLevel = Number.isFinite(Number(level)) ? Math.max(0, Math.floor(Number(level))) : 0;
+    if (safeLevel >= 4) return { id: 'legendary', label: 'Легендарное' };
+    if (safeLevel === 3) return { id: 'gold', label: 'Золотое' };
+    if (safeLevel === 2) return { id: 'silver', label: 'Серебряное' };
+    if (safeLevel === 1) return { id: 'bronze', label: 'Бронзовое' };
+    return { id: 'locked', label: 'Не открыто' };
+}
+
 export class AchievementsModule {
     constructor() { this.achievementsService = new AchievementsService(); }
 
@@ -59,12 +68,13 @@ export class AchievementsModule {
                     const e = earned.find(x=>x.id===a.id);
                     const earnedLevel = Math.min(a.levels.length, Math.max(0, Number(e?.level) || 0));
                     const milestone = getAchievementMilestone(a, earnedLevel, stats);
+                    const tier = getAchievementTier(earnedLevel);
                     return `<div class="col-12 col-md-6 achievement-item" data-category="${a.category}">
-                        <div class="card-premium p-3 h-100 ${e?'achievement-earned':'achievement-locked'}">
+                        <div class="card-premium p-3 h-100 achievement-tier--${tier.id} ${e?'achievement-earned':'achievement-locked'}">
                             <div class="d-flex align-items-center gap-3">
                                 <div class="achievement-icon ${e?'earned':''}"><span>${a.emoji}</span></div>
                                 <div class="flex-grow-1">
-                                    <div class="d-flex justify-content-between"><div><h6 class="fw-bold mb-0">${escapeHTML(e?.title || a.title)}</h6><p class="text-muted small mb-1">${escapeHTML(e?.description || a.description)}</p></div>${e?'<span class="badge bg-success fs-6"><i class="bi bi-check-lg"></i></span>':''}</div>
+                                    <div class="d-flex justify-content-between gap-2"><div><h6 class="fw-bold mb-0">${escapeHTML(e?.title || a.title)}</h6><p class="text-muted small mb-1">${escapeHTML(e?.description || a.description)}</p></div><span class="achievement-tier-badge achievement-tier-badge--${tier.id}">${tier.label}</span></div>
                                     ${a.levels.length>1?`<div class="achievement-levels mt-1">${a.levels.map((l,i)=>`<span class="achievement-level-dot ${earnedLevel>i?'earned':''} ${earnedLevel===l.level?'current':''}">${earnedLevel>i?'⭐':'○'}</span>`).join('')}<small class="text-muted ms-1">Ур.${earnedLevel}/${a.levels.length}</small></div>`:''}
                                     ${milestone?`<div class="mt-2"><div class="d-flex justify-content-between small text-muted mb-1"><span>До следующей награды</span><span>${milestone.current}/${milestone.target}</span></div><div class="progress" role="progressbar" aria-label="Прогресс достижения ${escapeHTML(a.title)}" aria-valuenow="${milestone.current}" aria-valuemin="0" aria-valuemax="${milestone.target}"><div class="progress-bar bg-warning" style="width:${milestone.percentage}%"></div></div></div>`:'<small class="text-success">Все уровни открыты!</small>'}
                                     ${e?`<small class="text-muted"><i class="bi bi-calendar me-1"></i>${escapeHTML(this.fdate(e.awardedAt))}</small>`:''}

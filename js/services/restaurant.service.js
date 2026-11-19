@@ -115,7 +115,7 @@ export class RestaurantService {
 
     async updateUserStats(userId) {
         try {
-            const restaurants = await this.getRestaurants(userId);
+            const restaurants = await this.getRestaurants(userId, {}, { throwOnError: true });
             const visited = restaurants.filter(r => r.status === 'visited').length;
             const wantToVisit = restaurants.filter(r => r.status === 'want_to_visit').length;
 

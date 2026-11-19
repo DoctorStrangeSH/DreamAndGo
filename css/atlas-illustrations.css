@@ -8,6 +8,7 @@
              linear-gradient(125deg,var(--bg-card),var(--bg-secondary));
   border:1px solid var(--border-color);border-radius:30px;box-shadow:var(--shadow-sm)
 }
+.atlas-empty[hidden] {display:none}
 .atlas-empty::before,.atlas-empty::after {
   content:"";position:absolute;z-index:-1;width:290px;height:290px;border:1px solid var(--border-color);
   border-radius:50%;opacity:.6;pointer-events:none

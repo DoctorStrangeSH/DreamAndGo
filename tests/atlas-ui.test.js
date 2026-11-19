@@ -50,6 +50,22 @@ test('mobile navigation closes for profile routes and exposes accessible icon co
   assert.match(theme, /#notificationsDropdown\s*\{[^}]*width:min\(340px,calc\(100vw - 2rem\)\)/);
 });
 
+test('social Atlas cards handle narrow screens and icon-only actions accessibly', () => {
+  const friends = read('js/modules/friends/friends.js');
+  const css = read('css/atlas-pages.css');
+  for (const label of ['Открыть профиль друга', 'Удалить из друзей', 'Принять заявку в друзья', 'Отклонить заявку в друзья']) {
+    assert.ok(friends.includes(`aria-label="${label}"`), `${label}: icon action has label`);
+  }
+  for (const selector of ['atlas-friend-card', 'atlas-friend-details', 'atlas-friend-actions']) {
+    assert.ok(friends.includes(selector), `${selector}: card markup`);
+    assert.ok(css.includes(`.${selector}`), `${selector}: layout rule`);
+  }
+  assert.match(css, /\.atlas-friend-details h6\s*\{overflow-wrap:anywhere/);
+  assert.match(css, /\.friends-tabs\s*\{flex-wrap:nowrap;overflow-x:auto/);
+  assert.match(css, /\.atlas-friend-actions \.btn\s*\{min-height:44px;min-width:44px\}/);
+  assert.match(css, /\.friends-tabs \+ #searchSection #searchUserBtn/);
+});
+
 test('shared Atlas loader communicates progress without depending on animation', () => {
   const ui = read('js/core/ui-components.js');
   const css = read('css/atlas-theme.css');

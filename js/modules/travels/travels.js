@@ -11,6 +11,7 @@ export class TravelsModule {
         this.requestId = 0;
         this.searchQuery = '';
         this.sortOrder = 'recent';
+        this.modalRequestId = 0;
     }
 
     async render() {
@@ -275,13 +276,17 @@ export class TravelsModule {
     }
 
     async showModal(travelId) {
+        const modalRequestId = ++this.modalRequestId;
+        const userId = window.app.currentUser?.uid;
+        if (!userId) return;
+
         document.getElementById('travelModal')?.remove();
         document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
         document.body.classList.remove('modal-open');
         document.body.style.overflow = '';
 
-        const userId = window.app.currentUser.uid;
         const travel = travelId ? await this.travelService.getTravel(userId, travelId) : null;
+        if (modalRequestId !== this.modalRequestId || window.app.currentUser?.uid !== userId) return;
         const isEdit = !!travel;
 
         const container = document.createElement('div');
@@ -435,12 +440,23 @@ export class TravelsModule {
                 return;
             }
 
+            if (window.app.currentUser?.uid !== userId) {
+                modal.hide();
+                return;
+            }
+
             saveButton.disabled = true;
             saveButton.setAttribute('aria-busy', 'true');
             try {
             const result = isEdit
                 ? await this.travelService.updateTravel(userId, travelId, data)
                 : await this.travelService.addTravel(userId, data);
+
+            // The write remains scoped to the original UID; never update a new session's UI.
+            if (window.app.currentUser?.uid !== userId) {
+                modal.hide();
+                return;
+            }
 
             if (result.success) {
                 modal.hide();
@@ -450,17 +466,21 @@ export class TravelsModule {
                     'success'
                 );
                 setTimeout(async () => {
-                    await this.render();
+                    if (window.app.currentUser?.uid === userId) await this.render();
                 }, 300);
             } else {
                 window.app.ui.showToast('Не удалось сохранить путешествие. Попробуй снова.', 'error');
             }
             } catch (error) {
-                console.error('Ошибка сохранения путешествие:', error);
-                window.app.ui.showToast('Не удалось сохранить путешествие. Попробуй снова.', 'error');
+                console.error('Ошибка сохранения путешествия:', error);
+                if (window.app.currentUser?.uid === userId) {
+                    window.app.ui.showToast('Не удалось сохранить путешествие. Попробуй снова.', 'error');
+                }
             } finally {
-                saveButton.disabled = false;
-                saveButton.removeAttribute('aria-busy');
+                if (saveButton.isConnected) {
+                    saveButton.disabled = false;
+                    saveButton.removeAttribute('aria-busy');
+                }
             }
         });
     }

@@ -110,14 +110,16 @@ export function createEncryptedChatPendingAdapter({
 
     async function getOrCreateKey(db, userId) {
         const read = db.transaction(KEYS_STORE, 'readonly');
+        const readDone = transactionFinished(read);
         const existing = await requestValue(read.objectStore(KEYS_STORE).get(userId));
-        await transactionFinished(read);
+        await readDone;
         if (existing?.key) return existing.key;
 
         const generated = await cryptoImpl.subtle.generateKey(
             { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
         );
         const write = db.transaction(KEYS_STORE, 'readwrite');
+        const writeDone = transactionFinished(write);
         const store = write.objectStore(KEYS_STORE);
         const lookup = store.get(userId);
         const chosen = await new Promise((resolve, reject) => {
@@ -133,7 +135,7 @@ export function createEncryptedChatPendingAdapter({
             };
             lookup.onerror = () => reject(lookup.error || new Error('Не удалось прочитать ключ очереди'));
         });
-        await transactionFinished(write);
+        await writeDone;
         return chosen;
     }
 
@@ -148,8 +150,9 @@ export function createEncryptedChatPendingAdapter({
             assertUid(userId);
             const db = await database();
             const tx = db.transaction(RECORDS_STORE, 'readonly');
+            const done = transactionFinished(tx);
             const record = await requestValue(tx.objectStore(RECORDS_STORE).get(userId));
-            await transactionFinished(tx);
+            await done;
             if (!record) return [];
             const key = await getOrCreateKey(db, userId);
             return decryptChatPendingRecords(record.envelope, userId, key, cryptoImpl);

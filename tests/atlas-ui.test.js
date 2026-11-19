@@ -50,6 +50,23 @@ test('mobile navigation closes for profile routes and exposes accessible icon co
   assert.match(theme, /#notificationsDropdown\s*\{[^}]*width:min\(340px,calc\(100vw - 2rem\)\)/);
 });
 
+test('shared Atlas loader communicates progress without depending on animation', () => {
+  const ui = read('js/core/ui-components.js');
+  const css = read('css/atlas-theme.css');
+  assert.match(ui, /class="atlas-loading[^\"]*" role="status" aria-live="polite"/);
+  assert.match(ui, /class="atlas-loading-label">Собираем твою историю…/);
+  assert.match(ui, /class="spinner-border \$\{sizes\[size\] \|\| ''\} text-primary" aria-hidden="true"/);
+  assert.match(css, /\.atlas-loading\s*\{min-height:155px/);
+});
+
+test('an empty popular movie feed is not mistaken for a connection failure', () => {
+  const movies = read('js/modules/movies/movies.js');
+  assert.match(movies, /Популярных фильмов пока нет/);
+  assert.match(movies, /data-open-movie-search/);
+  assert.match(movies, /this\.switchTab\('search'\)/);
+  assert.doesNotMatch(movies, /<h5 class="mt-3">Не удалось загрузить<\/h5>/);
+});
+
 test('pending collection actions show a visible, reduced-motion-friendly loading indicator', () => {
   const css = read('css/atlas-theme.css');
   assert.match(css, /\.btn\[aria-busy="true"\]::after\s*\{/);

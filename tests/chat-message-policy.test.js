@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { MAX_CHAT_MESSAGE_LENGTH, validateChatMessage, validChatParticipants, isValidChatUid } from '../js/core/chat-message-policy.js';
+import { MAX_CHAT_MESSAGE_LENGTH, validateChatMessage, validChatParticipants, isValidChatUid, isValidChatPathSegment } from '../js/core/chat-message-policy.js';
 
 const getChatId = (a, b) => [a, b].sort().join('_');
 
@@ -43,4 +43,14 @@ test('chat participant validation rejects unsafe IDs before deriving a chat path
     assert.equal(validChatParticipants('alice', 'alice', 'bad/uid', 'alice_bad/uid', getChatId), false);
     assert.equal(validChatParticipants('alice', 'alice', 'b'.repeat(129), 'alice_' + 'b'.repeat(129), getChatId), false);
     assert.equal(validChatParticipants('alice ', 'alice ', 'bob', 'alice _bob', getChatId), false);
+});
+
+
+test('conversation document IDs may contain two maximum-length UIDs', () => {
+    const longUid = 'u'.repeat(128);
+    const conversationId = getChatId(longUid, 'v'.repeat(128));
+    assert.equal(conversationId.length, 257);
+    assert.equal(isValidChatUid(conversationId), false);
+    assert.equal(isValidChatPathSegment(conversationId, 257), true);
+    assert.equal(isValidChatPathSegment(conversationId + 'x', 257), false);
 });

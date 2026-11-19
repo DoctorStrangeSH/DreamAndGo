@@ -370,7 +370,7 @@ test('collection save forms show progress and remain retryable on failure', () =
     assert.match(source, /saveButton\.disabled = true/);
     assert.match(source, /saveButton\.setAttribute\('aria-busy', 'true'\)/);
     assert.match(source, /saveButton\.removeAttribute\('aria-busy'\)/);
-    assert.match(source, /finally \{\s*saveButton\.disabled = false/);
+    assert.match(source, /finally \{\s*if \(saveButton\.isConnected\) \{\s*saveButton\.disabled = false/);
     assert.match(source, /Попробуй снова\./);
   }
 });

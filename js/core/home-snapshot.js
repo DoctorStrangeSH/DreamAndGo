@@ -8,6 +8,29 @@ export function safeCount(value) {
     return Math.min(999999, Math.floor(number));
 }
 
+const NEXT_MILESTONES = [
+    { id: 'first_dream', metric: 'dreams', targets: [1, 5], title: 'Мечтатель', icon: 'bi-star', href: '#dreams' },
+    { id: 'first_travel', metric: 'travels', targets: [1, 5, 15, 30], title: 'Путешественник', icon: 'bi-airplane', href: '#travels' },
+    { id: 'first_book', metric: 'books', targets: [1, 10, 25, 50], title: 'Читатель', icon: 'bi-book', href: '#books' },
+    { id: 'first_movie', metric: 'movies', targets: [1, 10, 50, 100], title: 'Киноман', icon: 'bi-film', href: '#movies' },
+    { id: 'first_restaurant', metric: 'restaurants', targets: [1, 10, 25], title: 'Гурман', icon: 'bi-shop', href: '#food' },
+    { id: 'first_friend', metric: 'friends', targets: [1, 5, 15], title: 'Душа компании', icon: 'bi-people', href: '#friends' }
+];
+
+export function getNextHomeAchievement(userData = {}) {
+    const stats = userData?.stats || {};
+    const earned = Array.isArray(userData?.achievements) ? userData.achievements : [];
+    const candidates = NEXT_MILESTONES.flatMap((item) => {
+        const level = Math.max(0, safeCount(earned.find(a => a?.id === item.id)?.level));
+        const target = item.targets[level];
+        if (!target) return [];
+        const current = Math.min(target, safeCount(stats[item.metric]));
+        return [{ ...item, current, target, percentage: Math.round(current / target * 100) }];
+    });
+    candidates.sort((a, b) => b.percentage - a.percentage || a.target - b.target);
+    return candidates[0] || null;
+}
+
 export function getHomeSnapshot(userData = {}) {
     const stats = userData?.stats || {};
     const counts = {

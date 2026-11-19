@@ -30,6 +30,6 @@ test('message mutations validate actor, conversation and message path segments',
         const body = source.slice(start, next < 0 ? source.length : next);
         assert.match(body, /isValidChatUid\(actorId\)/);
         assert.match(body, /isValidChatPathSegment\(chatId, 257\)/);
-        assert.match(body, /isValidChatUid\(messageId\)/);
+        assert.match(body, /isValidChatPathSegment\(messageId, 128\)/);
     }
 });

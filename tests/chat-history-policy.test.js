@@ -66,5 +66,6 @@ test('server response fails closed on invalid order, duplicate IDs or malformed 
     assert.throws(() => buildHistoryPage('chat-a', [message(4)], 4, 2), TypeError);
     assert.throws(() => buildHistoryPage('chat-a', [{ ...message(4), text: '' }], null, 2), TypeError);
     assert.throws(() => buildHistoryPage('chat-a', [{ ...message(4), read: 'no' }], null, 2), TypeError);
+    assert.throws(() => buildHistoryPage('chat-a', [{ ...message(4), senderId: 'alice/other' }], null, 2), TypeError);
     assert.throws(() => buildHistoryPage('chat-a', [message(5), message(4), message(3), message(2)], null, 2), TypeError);
 });

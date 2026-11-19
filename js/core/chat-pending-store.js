@@ -63,7 +63,11 @@ export class ChatPendingIntentStore {
         });
     }
 
-    async load() {
+    load() {
+        return this._enqueueMutation(() => this._loadInternal());
+    }
+
+    async _loadInternal() {
         this._assertOwner();
         const raw = await this.adapter.read(this.userId);
         this._assertOwner();
@@ -106,7 +110,7 @@ export class ChatPendingIntentStore {
             createdAt: now
         }, now);
         if (!record) throw new TypeError('Некорректное ожидающее сообщение');
-        const current = await this.load();
+        const current = await this._loadInternal();
         this._assertOwner();
         const existing = current.find(item => item.clientMessageId === record.clientMessageId);
         if (existing && (existing.chatId !== record.chatId || existing.text !== record.text)) {

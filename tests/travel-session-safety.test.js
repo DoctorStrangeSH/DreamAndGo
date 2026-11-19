@@ -24,3 +24,17 @@ test('travel save stays scoped to the starting account and does not refresh a ne
     assert.match(modal, /if \(window\.app\.currentUser\?\.uid === userId\) \{\s*window\.app\.ui\.showToast/);
     assert.match(modal, /if \(saveButton\.isConnected\) \{\s*saveButton\.disabled = false/);
 });
+
+test('travel deletion uses the initiating account and suppresses stale-session UI updates', () => {
+    const handlerStart = source.indexOf("document.querySelectorAll('.delete-btn').forEach");
+    const handlerEnd = source.indexOf("document.querySelectorAll('#statusFilters", handlerStart);
+    assert.ok(handlerStart >= 0 && handlerEnd > handlerStart, 'travel delete handler must exist');
+    const handler = source.slice(handlerStart, handlerEnd);
+    assert.match(handler, /const userId = window\.app\.currentUser\?\.uid/);
+    assert.match(handler, /if \(!userId \|\| btn\.disabled \|\| !confirm\(/);
+    assert.match(handler, /await this\.travelService\.deleteTravel\(userId, btn\.dataset\.id\)/);
+    assert.match(handler, /if \(window\.app\.currentUser\?\.uid !== userId\) return/);
+    assert.match(handler, /if \(window\.app\.currentUser\?\.uid === userId\) window\.app\.refreshUserData\(\)/);
+    assert.match(handler, /if \(window\.app\.currentUser\?\.uid === userId\) \{\s*window\.app\.ui\.showToast/);
+    assert.match(handler, /finally \{\s*btn\.disabled = false/);
+});

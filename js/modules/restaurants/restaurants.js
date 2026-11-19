@@ -226,17 +226,21 @@ export class RestaurantsModule {
         document.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                if (btn.disabled || !confirm('Удалить ресторан?')) return;
+                const userId = window.app.currentUser?.uid;
+                if (!userId || btn.disabled || !confirm('Удалить ресторан?')) return;
                 btn.disabled = true;
                 try {
-                    const result = await this.restaurantService.deleteRestaurant(window.app.currentUser.uid, btn.dataset.id);
+                    const result = await this.restaurantService.deleteRestaurant(userId, btn.dataset.id);
                     if (!result?.success) throw new Error('Удаление не выполнено');
+                    if (window.app.currentUser?.uid !== userId) return;
                     window.app.ui.showToast('Ресторан удалён', 'info');
                     await this.render();
-                    window.app.refreshUserData();
+                    if (window.app.currentUser?.uid === userId) window.app.refreshUserData();
                 } catch (error) {
                     console.error('Не удалось удалить ресторан:', error);
-                    window.app.ui.showToast('Не удалось удалить запись. Попробуй снова.', 'error');
+                    if (window.app.currentUser?.uid === userId) {
+                        window.app.ui.showToast('Не удалось удалить запись. Попробуй снова.', 'error');
+                    }
                 } finally {
                     btn.disabled = false;
                 }

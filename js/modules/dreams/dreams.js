@@ -6,6 +6,7 @@ export class DreamsModule {
         this.dreamsService = new DreamsService();
         this.currentFilter = { status: 'all', category: 'all' };
         this.searchQuery = '';
+        this.requestId = 0;
     }
 
     async render() {
@@ -15,16 +16,21 @@ export class DreamsModule {
         const userId = window.app.currentUser?.uid;
         if (!userId) return;
 
-        mainContent.innerHTML = window.app.ui.createLoader();
+        const requestId = ++this.requestId;
+        mainContent.innerHTML = `<div data-collection-request="dreams-${requestId}">${window.app.ui.createLoader()}</div>`;
+        const isCurrentRequest = () => requestId === this.requestId &&
+            window.app.currentUser?.uid === userId && mainContent.isConnected !== false &&
+            !!mainContent.querySelector(`[data-collection-request="dreams-${requestId}"]`);
 
         try {
-            const dreams = await this.dreamsService.getDreams(userId, this.currentFilter, { throwOnError: true });
-            if (window.app.currentUser?.uid !== userId) return;
+            const filters = { ...this.currentFilter };
+            const dreams = await this.dreamsService.getDreams(userId, filters, { throwOnError: true });
+            if (!isCurrentRequest()) return;
             mainContent.innerHTML = this.getTemplate(dreams);
             this.attachEventListeners();
         } catch (error) {
             console.error('Не удалось загрузить мечты:', error);
-            if (window.app.currentUser?.uid !== userId) return;
+            if (!isCurrentRequest()) return;
             mainContent.innerHTML = `
                 <section class="container py-5 text-center" role="alert" aria-labelledby="dreams-load-error">
                     <i class="bi bi-wifi-off display-5 text-warning" aria-hidden="true"></i>

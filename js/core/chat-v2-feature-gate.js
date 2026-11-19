@@ -1,4 +1,5 @@
 import { ChatV2Session } from './chat-v2-session.js';
+import { isValidChatUid } from './chat-message-policy.js';
 
 // A deployment-controlled, deny-by-default rollout gate for the candidate chat.
 // It is NOT an authorization boundary: callable Functions still enforce auth,
@@ -6,9 +7,9 @@ import { ChatV2Session } from './chat-v2-session.js';
 export function canStartChatV2(rollout, userId) {
     return rollout?.enabled === true &&
         rollout?.backendReady === true &&
-        typeof userId === 'string' && userId.length > 0 &&
+        isValidChatUid(userId) &&
         Array.isArray(rollout.allowedUserIds) &&
-        rollout.allowedUserIds.includes(userId);
+        rollout.allowedUserIds.some(allowedId => isValidChatUid(allowedId) && allowedId === userId);
 }
 
 export function createGatedChatV2Session({

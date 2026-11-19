@@ -111,7 +111,7 @@ export class DreamsService {
 
     async updateUserStats(userId) {
         try {
-            const dreams = await this.getDreams(userId);
+            const dreams = await this.getDreams(userId, {}, { throwOnError: true });
             const dreaming = dreams.filter(d => d.status === 'dreaming').length;
             const inProgress = dreams.filter(d => d.status === 'in_progress').length;
             const completed = dreams.filter(d => d.status === 'completed').length;

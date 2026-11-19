@@ -1,15 +1,15 @@
 import { HttpsError } from 'firebase-functions/v2/https';
 import { isConversationBlocked } from './block-policy.js';
-import { otherChatParticipant } from './message-policy.js';
+import { isValidUserId, isValidDocumentId, otherChatParticipant } from './message-policy.js';
 
 // Candidate v2 read-only source of truth. Count only incoming, individually
 // unread messages; a device-local cursor or materialized preview may be stale.
 // Requires the candidate composite index described in the protocol docs.
 export async function getPrivateChatUnreadCount(db, uid, chatId) {
-    if (typeof uid !== 'string' || !uid) {
+    if (!isValidUserId(uid)) {
         throw new HttpsError('unauthenticated', 'Требуется вход в аккаунт');
     }
-    if (typeof chatId !== 'string' || !chatId || chatId.length > 128 || chatId.includes('/')) {
+    if (!isValidDocumentId(chatId)) {
         throw new HttpsError('invalid-argument', 'Некорректный диалог');
     }
     const chatRef = db.collection('chats').doc(chatId);

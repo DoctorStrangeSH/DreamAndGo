@@ -1,5 +1,10 @@
 import { ChatOutbox } from './chat-outbox.js';
 
+const normalizeClientMessageId = value => typeof value === 'string' &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+    ? value.toLowerCase()
+    : null;
+
 // Candidate v2 view model. No persistence, no legacy transport integration.
 // Statuses are driven by transport results, never timers or local unread counters.
 export class ChatDeliveryController {
@@ -33,12 +38,16 @@ export class ChatDeliveryController {
     }
 
     get(clientMessageId) {
-        return this.messages.get(clientMessageId) || null;
+        const key = normalizeClientMessageId(clientMessageId);
+        return key ? this.messages.get(key) || null : null;
     }
 
     async send(clientMessageId) {
-        const intent = this.outbox.get(clientMessageId);
+        const key = normalizeClientMessageId(clientMessageId);
+        if (!key) return { success: false, error: 'Некорректный идентификатор отправки' };
+        const intent = this.outbox.get(key);
         if (!intent) return { success: false, error: 'Сообщение отсутствует в очереди' };
+        clientMessageId = intent.clientMessageId;
         const generation = this.generation;
         this._status(clientMessageId, 'sending');
         const result = await this.outbox.deliver(clientMessageId);
@@ -53,7 +62,11 @@ export class ChatDeliveryController {
     }
 
     async reconcile(clientMessageId) {
-        if (!this.outbox.get(clientMessageId)) return { status: 'absent' };
+        const key = normalizeClientMessageId(clientMessageId);
+        if (!key) return { status: 'absent' };
+        const intent = this.outbox.get(key);
+        if (!intent) return { status: 'absent' };
+        clientMessageId = intent.clientMessageId;
         const generation = this.generation;
         this._status(clientMessageId, 'checking');
         const result = await this.outbox.reconcile(clientMessageId, this.lookup);
@@ -69,6 +82,9 @@ export class ChatDeliveryController {
     // Poll the authenticated sender-only v2 status endpoint for an authoritative receipt.
     // A missing, malformed, stale or offline response can never invent a read marker.
     refreshRead(clientMessageId) {
+        const key = normalizeClientMessageId(clientMessageId);
+        if (!key) return Promise.resolve({ status: 'absent' });
+        clientMessageId = key;
         const current = this.messages.get(clientMessageId);
         if (!current || !['sent', 'read'].includes(current.deliveryStatus) || !current.messageId) {
             return Promise.resolve({ status: 'absent' });
@@ -99,6 +115,9 @@ export class ChatDeliveryController {
 
     // Only an authoritative per-message server receipt may call this method.
     acknowledgeRead(clientMessageId, serverMessageId) {
+        const key = normalizeClientMessageId(clientMessageId);
+        if (!key) return false;
+        clientMessageId = key;
         const current = this.messages.get(clientMessageId);
         if (!current || current.deliveryStatus !== 'sent' || !serverMessageId ||
             current.messageId !== serverMessageId) return false;
@@ -107,7 +126,9 @@ export class ChatDeliveryController {
     }
 
     discard(clientMessageId) {
-        if (!this.outbox.discard(clientMessageId)) return false;
+        const key = normalizeClientMessageId(clientMessageId);
+        if (!key || !this.outbox.discard(key)) return false;
+        clientMessageId = key;
         this.messages.delete(clientMessageId);
         this.receiptChecks.delete(clientMessageId);
         this.onChange(null, clientMessageId);

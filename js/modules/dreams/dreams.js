@@ -348,32 +348,39 @@ export class DreamsModule {
                                         <input type="date" class="form-control" name="deadline"
                                                value="${escapeHTML(dream?.deadline || '')}">
                                     </div>
-                                    <div class="col-12">
-                                        <label class="form-label fw-semibold small">Описание</label>
-                                        <textarea class="form-control" name="description" rows="3"
-                                                  placeholder="Опиши свою мечту...">${escapeHTML(dream?.description || '')}</textarea>
-                                    </div>
-                                    <div class="col-12">
-                                        <label class="form-label fw-semibold small">
-                                            <i class="bi bi-list-check me-1"></i>Шаги к мечте
-                                        </label>
-                                        <div id="stepsContainer">
-                                            ${steps.map((step, i) => `
-                                                <div class="input-group mb-2 step-row">
-                                                    <span class="input-group-text">
-                                                        <input type="checkbox" ${step.done ? 'checked' : ''} class="step-done">
-                                                    </span>
-                                                    <input type="text" class="form-control step-text"
-                                                           value="${escapeHTML(step.text || '')}" placeholder="Шаг ${i + 1}">
-                                                    <button type="button" class="btn btn-outline-danger btn-sm remove-step">
-                                                        <i class="bi bi-x"></i>
+                                    <div class="col-12 atlas-form-extras">
+                                        <details class="atlas-form-details" ${isEdit ? 'open' : ''}>
+                                            <summary>Описание и шаги к мечте</summary>
+                                            <div class="row g-3">
+                                                <div class="col-12">
+                                                    <label class="form-label fw-semibold small" for="dreamDescription">Описание</label>
+                                                    <textarea class="form-control" id="dreamDescription" name="description" rows="3"
+                                                              placeholder="Опиши свою мечту...">${escapeHTML(dream?.description || '')}</textarea>
+                                                </div>
+                                                <div class="col-12">
+                                                    <label class="form-label fw-semibold small" for="dreamStep0">
+                                                        <i class="bi bi-list-check me-1"></i>Шаги к мечте
+                                                    </label>
+                                                    <div id="stepsContainer">
+                                                        ${steps.map((step, i) => `
+                                                            <div class="input-group mb-2 step-row">
+                                                                <span class="input-group-text">
+                                                                    <input type="checkbox" ${step.done ? 'checked' : ''} class="step-done" aria-label="Шаг ${i + 1} выполнен">
+                                                                </span>
+                                                                <input type="text" class="form-control step-text" id="dreamStep${i}"
+                                                                       value="${escapeHTML(step.text || '')}" placeholder="Шаг ${i + 1}" aria-label="Шаг ${i + 1}">
+                                                                <button type="button" class="btn btn-outline-danger btn-sm remove-step" aria-label="Удалить шаг ${i + 1}">
+                                                                    <i class="bi bi-x" aria-hidden="true"></i>
+                                                                </button>
+                                                            </div>
+                                                        `).join('')}
+                                                    </div>
+                                                    <button type="button" class="btn btn-outline-primary btn-sm" id="addStepBtn">
+                                                        <i class="bi bi-plus me-1"></i>Добавить шаг
                                                     </button>
                                                 </div>
-                                            `).join('')}
-                                        </div>
-                                        <button type="button" class="btn btn-outline-primary btn-sm" id="addStepBtn">
-                                            <i class="bi bi-plus me-1"></i>Добавить шаг
-                                        </button>
+                                            </div>
+                                        </details>
                                     </div>
                                 </div>
                             </form>
@@ -412,9 +419,9 @@ export class DreamsModule {
             const row = document.createElement('div');
             row.className = 'input-group mb-2 step-row';
             row.innerHTML = `
-                <span class="input-group-text"><input type="checkbox" class="step-done"></span>
-                <input type="text" class="form-control step-text" placeholder="Новый шаг">
-                <button type="button" class="btn btn-outline-danger btn-sm remove-step"><i class="bi bi-x"></i></button>
+                <span class="input-group-text"><input type="checkbox" class="step-done" aria-label="Новый шаг выполнен"></span>
+                <input type="text" class="form-control step-text" placeholder="Новый шаг" aria-label="Новый шаг">
+                <button type="button" class="btn btn-outline-danger btn-sm remove-step" aria-label="Удалить шаг"><i class="bi bi-x" aria-hidden="true"></i></button>
             `;
             stepsContainer.appendChild(row);
             row.querySelector('.remove-step').addEventListener('click', () => row.remove());

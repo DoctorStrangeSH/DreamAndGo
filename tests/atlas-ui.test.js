@@ -93,6 +93,16 @@ test('Atlas browser checks cover compact landscape dialogs and keyboard-focused 
   assert.match(visual, /footerBottom > target\.height/);
 });
 
+test('dream creation keeps optional details collapsed and editing exposes saved steps', () => {
+  const dreams = read('js/modules/dreams/dreams.js');
+  assert.match(dreams, /<details class="atlas-form-details" \$\{isEdit \? 'open' : ''\}>/);
+  assert.match(dreams, /<summary>Описание и шаги к мечте<\/summary>/);
+  assert.match(dreams, /id="dreamDescription" name="description"/);
+  assert.match(dreams, /aria-label="Шаг \$\{i \+ 1\} выполнен"/);
+  assert.match(dreams, /aria-label="Удалить шаг \$\{i \+ 1\}"/);
+  assert.match(dreams, /aria-label="Новый шаг"/);
+});
+
 test('shared Atlas loader communicates progress without depending on animation', () => {
   const ui = read('js/core/ui-components.js');
   const css = read('css/atlas-theme.css');

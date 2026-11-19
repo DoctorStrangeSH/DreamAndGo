@@ -1,3 +1,5 @@
+import { isValidChatUid } from './chat-message-policy.js';
+
 // Candidate v2 transport adapter. The caller injects the Firebase callable
 // invoker (name, payload) => Promise<{ data }>, already bound to europe-west3.
 // Never routes a request to a legacy endpoint or stores credentials.
@@ -21,7 +23,7 @@ export class ChatV2Transport {
 
     async _call(endpoint, payload) {
         const userId = this.getUserId();
-        if (typeof userId !== 'string' || !userId) {
+        if (!isValidChatUid(userId)) {
             throw new Error('Требуется вход в аккаунт');
         }
         const generation = this.generation;
@@ -37,8 +39,7 @@ export class ChatV2Transport {
     }
 
     async createChat(partnerId) {
-        if (typeof partnerId !== 'string' || !partnerId || partnerId.length > 128 ||
-            partnerId.includes('/') || partnerId === this.getUserId()) {
+        if (!isValidChatUid(partnerId) || partnerId === this.getUserId()) {
             throw new TypeError('Некорректный собеседник');
         }
         const result = await this._call('createPrivateChatV2', { partnerId });

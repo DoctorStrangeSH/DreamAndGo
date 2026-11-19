@@ -174,6 +174,13 @@ export function createEncryptedChatPendingAdapter({
             const tx = db.transaction(RECORDS_STORE, 'readwrite');
             tx.objectStore(RECORDS_STORE).put({ userId, envelope });
             await transactionFinished(tx);
+        },
+
+        async close() {
+            if (!databasePromise) return;
+            const db = await databasePromise;
+            db.close();
+            databasePromise = null;
         }
     });
 }

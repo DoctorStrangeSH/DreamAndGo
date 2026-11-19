@@ -255,6 +255,11 @@ input:focus-visible,select:focus-visible,textarea:focus-visible {
 .navbar-premium .nav-link-premium {min-height:44px;display:flex;align-items:center;gap:.35rem}
 .navbar-premium .nav-link-premium:focus-visible,
 .navbar-premium .dropdown-item:focus-visible {outline:3px solid var(--accent)!important;outline-offset:2px}
+.atlas-loading {min-height:155px;gap:.85rem;text-align:center;color:var(--text-secondary)}
+.atlas-loading .spinner-border {width:2.1rem;height:2.1rem;border-width:.2rem}
+.atlas-loading .spinner-border-sm {width:1.1rem;height:1.1rem;border-width:.15rem}
+.atlas-loading .spinner-border-lg {width:2.8rem;height:2.8rem;border-width:.25rem}
+.atlas-loading-label {font-size:.88rem;font-weight:650;letter-spacing:.01em}
 @media(max-width:991.98px) {
   html {scroll-padding-top:76px}
   .navbar-premium .navbar-collapse {overscroll-behavior:contain}

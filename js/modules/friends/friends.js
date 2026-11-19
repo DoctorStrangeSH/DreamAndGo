@@ -269,15 +269,28 @@ export class FriendsModule {
         if (friendsList) friendsList.innerHTML = '';
         results.innerHTML = window.app.ui.createLoader();
 
-        const user = await this.friendsService.getUserByUsername(username);
+        let user;
+        try {
+            user = await this.friendsService.getUserByUsername(username);
+        } catch (error) {
+            console.error('Ошибка поиска пользователя:', error);
+            results.innerHTML = `
+                <div class="text-center py-3">
+                    <i class="bi bi-wifi-off fs-3 text-muted"></i>
+                    <p class="text-muted mt-2">Не удалось выполнить поиск. Проверь подключение и попробуй снова.</p>
+                </div>
+            `;
+            return;
+        }
 
         if (!user) {
             results.innerHTML = `
                 <div class="text-center py-3">
                     <i class="bi bi-emoji-frown fs-3 text-muted"></i>
-                    <p class="text-muted mt-2">Пользователь @${username} не найден</p>
+                    <p class="text-muted mt-2"></p>
                 </div>
             `;
+            results.querySelector('p').textContent = `Пользователь @${username} не найден`;
             return;
         }
 

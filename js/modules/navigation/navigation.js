@@ -12,7 +12,8 @@ export class Navigation {
                         Dream<span class="text-accent-warning">&</span>Go
                     </a>
                     
-                    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                            aria-controls="navbarNav" aria-expanded="false" aria-label="Открыть меню навигации">
                         <i class="bi bi-list fs-4"></i>
                     </button>
                     
@@ -60,16 +61,16 @@ export class Navigation {
 
     getUserMenu() {
         return `
-        <button class="btn btn-icon theme-toggle" onclick="window.app.themeService.toggleTheme()" title="Переключить тему">
+        <button class="btn btn-icon theme-toggle" onclick="window.app.themeService.toggleTheme()" title="Переключить тему" aria-label="Переключить тему">
             <i id="themeIcon" class="bi bi-moon-fill"></i>
         </button>
         
-        <button class="btn btn-icon" title="Поиск" onclick="window.app.openSearch()">
+        <button class="btn btn-icon" title="Поиск" aria-label="Поиск" onclick="window.app.openSearch()">
             <i class="bi bi-search"></i>
         </button>
         
         <div class="dropdown">
-            <button class="btn btn-icon position-relative" data-bs-toggle="dropdown" data-bs-auto-close="outside" title="Уведомления">
+            <button class="btn btn-icon position-relative" data-bs-toggle="dropdown" data-bs-auto-close="outside" title="Уведомления" aria-label="Уведомления">
                 <i class="bi bi-bell" id="notificationsBell"></i>
                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
                       id="notificationsBadge" style="font-size: 0.5rem; display: none;"></span>
@@ -82,7 +83,7 @@ export class Navigation {
         </div>
         
         <div class="dropdown">
-            <button class="btn btn-icon dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            <button class="btn btn-icon dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-label="Меню профиля">
                 <div class="avatar-circle" style="width: 32px; height: 32px; font-size: 14px;">
                     ${this.getUserInitials()}
                 </div>
@@ -135,14 +136,13 @@ export class Navigation {
             });
         }
 
-        document.querySelectorAll('.nav-link-premium').forEach(link => {
-            link.addEventListener('click', () => {
-                const navbarCollapse = document.getElementById('navbarNav');
-                if (navbarCollapse && navbarCollapse.classList.contains('show')) {
-                    const bsCollapse = bootstrap.Collapse.getInstance(navbarCollapse);
-                    if (bsCollapse) bsCollapse.hide();
-                }
-            });
+        document.getElementById('navbarNav')?.addEventListener('click', (event) => {
+            const link = event.target.closest('a[href^="#"]');
+            if (!link || link.id === 'logoutBtn' || link.getAttribute('href') === '#') return;
+            const navbarCollapse = document.getElementById('navbarNav');
+            if (navbarCollapse?.classList.contains('show')) {
+                bootstrap.Collapse.getOrCreateInstance(navbarCollapse).hide();
+            }
         });
     }
 }

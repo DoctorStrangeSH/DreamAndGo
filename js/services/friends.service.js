@@ -7,6 +7,12 @@ import {
     query, where, limit, serverTimestamp, writeBatch, setDoc
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
+function isValidFriendPair(userId, friendId) {
+    const isValidUid = value => typeof value === 'string' && value.length > 0 &&
+        value.length <= 128 && value.trim() === value && !value.includes('/');
+    return isValidUid(userId) && isValidUid(friendId) && userId !== friendId;
+}
+
 export class FriendsService {
     constructor() {
         this.db = db;
@@ -35,8 +41,10 @@ export class FriendsService {
     }
 
     async sendFriendRequest(fromUserId, toUserId) {
-        if (!fromUserId || !toUserId || fromUserId === toUserId) {
-            return { success: false, error: 'Нельзя отправить заявку самому себе.' };
+        if (!isValidFriendPair(fromUserId, toUserId)) {
+            return { success: false, error: fromUserId === toUserId
+                ? 'Нельзя отправить заявку самому себе.'
+                : 'Некорректные данные для отправки заявки.' };
         }
         try {
             // Both user-facing views must change atomically, or neither changes.
@@ -58,6 +66,9 @@ export class FriendsService {
     }
 
     async acceptFriendRequest(userId, friendId) {
+        if (!isValidFriendPair(userId, friendId)) {
+            return { success: false, error: 'Некорректные данные для принятия заявки.' };
+        }
         try {
             const batch = writeBatch(this.db);
 
@@ -87,6 +98,9 @@ export class FriendsService {
     }
 
     async rejectFriendRequest(userId, friendId) {
+        if (!isValidFriendPair(userId, friendId)) {
+            return { success: false, error: 'Некорректные данные для отклонения заявки.' };
+        }
         try {
             const batch = writeBatch(this.db);
 
@@ -103,6 +117,9 @@ export class FriendsService {
     }
 
     async removeFriend(userId, friendId) {
+        if (!isValidFriendPair(userId, friendId)) {
+            return { success: false, error: 'Некорректные данные для удаления друга.' };
+        }
         try {
             const batch = writeBatch(this.db);
 

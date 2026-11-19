@@ -197,6 +197,8 @@ export class MoviesModule {
 
     async loadPopularMovies() {
         const requestId = ++this.requestId;
+        const userId = window.app.currentUser?.uid;
+        if (!userId) return;
         const grid = document.getElementById('moviesGrid');
         if (!grid) return;
 
@@ -207,7 +209,8 @@ export class MoviesModule {
         try {
             const result = await this.movieService.getPopularMovies(this.popularPage, { throwOnError: true });
 
-            if (requestId !== this.requestId || this.currentTab !== 'popular' || !grid.isConnected) return;
+            if (requestId !== this.requestId || this.currentTab !== 'popular' || !grid.isConnected ||
+                window.app.currentUser?.uid !== userId) return;
 
             if (result.movies.length === 0) {
                 const pagination = document.getElementById('pagination');
@@ -230,7 +233,8 @@ export class MoviesModule {
             }
         } catch (error) {
             console.error('Не удалось загрузить популярные фильмы:', error);
-            if (requestId !== this.requestId || this.currentTab !== 'popular' || !grid.isConnected) return;
+            if (requestId !== this.requestId || this.currentTab !== 'popular' || !grid.isConnected ||
+                window.app.currentUser?.uid !== userId) return;
             grid.innerHTML = `<div class="col-12"><section class="atlas-empty atlas-empty--movie" role="alert">
                 <h3>Не удалось загрузить популярные фильмы</h3>
                 <p>Проверь подключение к интернету и попробуй ещё раз.</p>
@@ -242,6 +246,8 @@ export class MoviesModule {
 
     async searchMovies() {
         const requestId = ++this.requestId;
+        const userId = window.app.currentUser?.uid;
+        if (!userId) return;
         const grid = document.getElementById('moviesGrid');
         if (!grid || !this.searchQuery.trim()) return;
 
@@ -252,7 +258,8 @@ export class MoviesModule {
         try {
             const result = await this.movieService.searchMovies(this.searchQuery, this.searchPage, { throwOnError: true });
     
-            if (requestId !== this.requestId || this.currentTab !== 'search' || !grid.isConnected) return;
+            if (requestId !== this.requestId || this.currentTab !== 'search' || !grid.isConnected ||
+                window.app.currentUser?.uid !== userId) return;
     
             if (result.movies.length === 0) {
                 const pagination = document.getElementById('pagination');
@@ -270,7 +277,8 @@ export class MoviesModule {
             }
         } catch (error) {
             console.error('Не удалось выполнить поиск фильмов:', error);
-            if (requestId !== this.requestId || this.currentTab !== 'search' || !grid.isConnected) return;
+            if (requestId !== this.requestId || this.currentTab !== 'search' || !grid.isConnected ||
+                window.app.currentUser?.uid !== userId) return;
             const pagination = document.getElementById('pagination');
             if (pagination) { pagination.style.display = 'none'; pagination.innerHTML = ''; }
             grid.innerHTML = `<div class="col-12"><section class="atlas-empty atlas-empty--movie" role="alert">

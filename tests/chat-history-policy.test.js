@@ -20,6 +20,9 @@ test('history request requires a real session, safe chat ID and bounded cursor/p
     });
     for (const data of [
         { chatId: 'bad/id', limit: 1 },
+        { chatId: ' chat-a', limit: 1 },
+        { chatId: 'chat-a ', limit: 1 },
+        { chatId: 'c'.repeat(129), limit: 1 },
         { chatId: 'chat-a', limit: 0 },
         { chatId: 'chat-a', limit: 51 },
         { chatId: 'chat-a', limit: 10, beforeSequence: -1 },
@@ -27,6 +30,9 @@ test('history request requires a real session, safe chat ID and bounded cursor/p
         { chatId: 'chat-a', limit: 10, beforeSequence: 0 }
     ]) {
         assert.equal(normalizeHistoryRequest('alice', data).ok, false);
+    }
+    for (const uid of ['', ' alice', 'alice ', 'a/b', 'u'.repeat(129)]) {
+        assert.equal(normalizeHistoryRequest(uid, { chatId: 'chat-a', limit: 1 }).ok, false);
     }
 });
 

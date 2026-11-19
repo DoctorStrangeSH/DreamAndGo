@@ -1,6 +1,16 @@
 import { db } from '../../config/firebase.js';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
+function escapeHTML(value) {
+    return String(value ?? '').replace(/[&<>"']/g, character => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    })[character]);
+}
+
 export class SettingsModule {
     async render() {
         const mainContent = document.getElementById('main-content');
@@ -13,6 +23,7 @@ export class SettingsModule {
 
         const userRef = doc(db, 'users', userId);
         const userDoc = await getDoc(userRef);
+        if (window.app.currentUser?.uid !== userId || !mainContent.isConnected) return;
         const userData = userDoc.exists() ? userDoc.data() : {};
 
         mainContent.innerHTML = `
@@ -27,13 +38,13 @@ export class SettingsModule {
                             <h5 class="fw-bold mb-4">
                                 <i class="bi bi-person me-2"></i>Профиль
                             </h5>
-                            <form id="profileSettingsForm">
+                            <form id="profileSettingsForm" data-settings-owner="${escapeHTML(userId)}">
                                 <div class="mb-3">
                                     <label class="form-label fw-semibold">Никнейм</label>
                                     <div class="input-group">
                                         <span class="input-group-text">@</span>
                                         <input type="text" class="form-control" name="username" 
-                                               value="${userData.username || ''}" 
+                                               value="${escapeHTML(userData.username)}" 
                                                minlength="3" maxlength="20" required>
                                     </div>
                                     <div class="form-text">От 3 до 20 символов, только буквы, цифры и _</div>
@@ -42,20 +53,20 @@ export class SettingsModule {
                                 <div class="mb-3">
                                     <label class="form-label fw-semibold">Имя</label>
                                     <input type="text" class="form-control" name="displayName" 
-                                           value="${userData.displayName || ''}" 
+                                           value="${escapeHTML(userData.displayName)}" 
                                            placeholder="Как тебя зовут?">
                                 </div>
 
                                 <div class="mb-3">
                                     <label class="form-label fw-semibold">О себе</label>
                                     <textarea class="form-control" name="bio" rows="3" 
-                                              placeholder="Расскажи о себе...">${userData.bio || ''}</textarea>
+                                              placeholder="Расскажи о себе...">${escapeHTML(userData.bio)}</textarea>
                                 </div>
 
                                 <div class="mb-3">
                                     <label class="form-label fw-semibold">Город</label>
                                     <input type="text" class="form-control" name="location" 
-                                           value="${userData.location || ''}" 
+                                           value="${escapeHTML(userData.location)}" 
                                            placeholder="Твой город">
                                 </div>
 
@@ -130,6 +141,9 @@ export class SettingsModule {
     }
 
     async saveSettings(form) {
+        const uid = window.app.currentUser?.uid;
+        if (!uid || !form?.isConnected || form.dataset.settingsOwner !== uid) return;
+
         const formData = new FormData(form);
         const username = formData.get('username').trim();
         const displayName = formData.get('displayName').trim();
@@ -147,6 +161,7 @@ export class SettingsModule {
         submitBtn.disabled = true;
 
         try {
+            if (window.app.currentUser?.uid !== uid) return;
             const currentUser = window.app.userData;
 
             if (username !== currentUser?.username) {
@@ -162,7 +177,7 @@ export class SettingsModule {
                 }
             }
 
-            const userRef = doc(db, 'users', window.app.currentUser.uid);
+            const userRef = doc(db, 'users', uid);
             await updateDoc(userRef, {
                 username: username,
                 displayName: displayName,
@@ -170,14 +185,19 @@ export class SettingsModule {
                 location: location
             });
 
+            if (window.app.currentUser?.uid !== uid || !form.isConnected) return;
             window.app.userData = { ...window.app.userData, username, displayName, bio, location };
             window.app.ui.showToast('Настройки сохранены! ✨', 'success');
         } catch (error) {
             console.error('Ошибка сохранения:', error);
-            window.app.ui.showToast('Ошибка сохранения', 'error');
+            if (window.app.currentUser?.uid === uid && form.isConnected) {
+                window.app.ui.showToast('Ошибка сохранения', 'error');
+            }
+        } finally {
+            if (form.isConnected) {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
         }
-
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
     }
 }

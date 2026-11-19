@@ -159,3 +159,13 @@ test('stale authenticated identity cannot create trackers or send pending intent
     assert.equal(called, 0);
     session.dispose();
 });
+
+
+test('v2 session refuses malformed authenticated UID before creating transport', () => {
+    for (const userId of ['', ' alice', 'alice ', 'alice/other', 'x'.repeat(129)]) {
+        assert.throws(() => new ChatV2Session({
+            getUserId: () => userId,
+            invoke: async () => ({ data: {} })
+        }), /вход в аккаунт/);
+    }
+});

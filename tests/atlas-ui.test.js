@@ -489,3 +489,13 @@ test('collection modals keep essential fields visible and optional details acces
   assert.match(css, /\.atlas-form-details>summary:focus-visible/);
   assert.match(css, /\.atlas-form-details>summary\s*\{[^}]*min-height:44px/);
 });
+
+
+test('book save responses cannot update the interface after an account switch', () => {
+  const source = read('js/modules/books/books.js');
+  const save = source.slice(source.indexOf("document.getElementById('saveBookBtn').addEventListener"), source.indexOf('\n    pluralize('));
+  assert.match(save, /await this\.bookService\.(?:updateBook|addBook)\(userId/);
+  assert.match(save, /if \(window\.app\.currentUser\?\.uid !== userId\) return/);
+  assert.match(save, /if \(window\.app\.currentUser\?\.uid === userId\) await this\.render\(\)/);
+  assert.match(save, /if \(window\.app\.currentUser\?\.uid === userId\)\s*\{\s*window\.app\.ui\.showToast/);
+});

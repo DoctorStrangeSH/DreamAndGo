@@ -47,7 +47,7 @@ export function buildHistoryPage(chatId, rows, beforeSequence, requestedLimit) {
         if (!row || typeof row.id !== 'string' || !/^[a-f0-9]{64}$/.test(row.id) ||
             seen.has(row.id) || !Number.isSafeInteger(row.sequence) ||
             row.sequence <= 0 || row.sequence >= previous ||
-            typeof row.senderId !== 'string' || !row.senderId ||
+            !isValidUserId(row.senderId) ||
             typeof row.text !== 'string' || !row.text.trim() || row.text.length > 2000 ||
             typeof row.read !== 'boolean') {
             throw new TypeError('Повреждённая страница истории');

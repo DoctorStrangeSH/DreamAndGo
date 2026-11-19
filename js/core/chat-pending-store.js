@@ -11,7 +11,11 @@ const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f
 // encrypt data itself.
 export class ChatPendingIntentStore {
     constructor({ adapter, getUserId, now = () => Date.now(), ttlMs = CHAT_PENDING_INTENT_TTL_MS }) {
+        const security = adapter?.security;
         if (!adapter || typeof adapter.read !== 'function' || typeof adapter.write !== 'function' ||
+            security?.encryptionAtRest !== true ||
+            security?.integrityProtection !== true ||
+            security?.accountIsolation !== true ||
             typeof getUserId !== 'function' || typeof now !== 'function' ||
             !Number.isSafeInteger(ttlMs) || ttlMs <= 0) {
             throw new TypeError('Требуется защищённое хранилище ожидающих сообщений');

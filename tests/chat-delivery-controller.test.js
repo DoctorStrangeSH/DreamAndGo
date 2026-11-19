@@ -150,8 +150,6 @@ test('controller consistently normalizes restored UUIDs across status, retry, re
     assert.equal(controller.acknowledgeRead(upper, 'wrong'), false);
 
     const pendingId = '650e8400-e29b-41d4-a716-446655440000';
-    const pending = make(async () => ({ messageId: 'unused' }), async () => ({ status: 'missing' }),
-        () => {});
     // Use a distinct controller UUID factory for the second intent.
     const second = new ChatDeliveryController(async () => ({ messageId: 'unused' }),
         async () => ({ status: 'missing' }), 'alice', () => pendingId);

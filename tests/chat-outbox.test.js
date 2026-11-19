@@ -158,3 +158,30 @@ test('logout invalidates an in-progress server status response', async () => {
     assert.deepEqual(await checking, { status: 'stale' });
     assert.equal(outbox.get(id)?.text, 'New');
 });
+
+
+test('UUID casing is normalized consistently for restore, lookup, reconcile, retry and discard', async () => {
+    const upper = id.toUpperCase();
+    const outbox = new ChatOutbox(async payload => {
+        assert.equal(payload.clientMessageId, id);
+        return { messageId: 'server-record' };
+    });
+    const restored = outbox.restore('chat-1', 'Hello', upper);
+    assert.equal(restored.clientMessageId, id);
+    assert.strictEqual(outbox.get(upper), restored);
+    assert.deepEqual(await outbox.reconcile(upper, async payload => {
+        assert.equal(payload.clientMessageId, id);
+        return { status: 'missing' };
+    }), { status: 'missing' });
+    assert.deepEqual(await outbox.deliver(upper), { success: true, messageId: 'server-record' });
+    assert.equal(outbox.get(id), null);
+
+    outbox.restore('chat-1', 'Again', upper);
+    assert.equal(outbox.discard(upper), true);
+    assert.equal(outbox.get(id), null);
+    assert.equal(outbox.discard('not-a-uuid'), false);
+    assert.equal(outbox.get('not-a-uuid'), null);
+    assert.deepEqual(await outbox.deliver('not-a-uuid'), {
+        success: false, error: 'Некорректный идентификатор отправки'
+    });
+});

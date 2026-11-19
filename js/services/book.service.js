@@ -117,7 +117,8 @@ export class BookService {
 
     async updateUserStats(userId) {
         try {
-            const books = await this.getBooks(userId);
+            // Never overwrite valid counters with zeros when the collection read failed.
+            const books = await this.getBooks(userId, {}, { throwOnError: true });
             const reading = books.filter(b => b.status === 'reading').length;
             const read = books.filter(b => b.status === 'read').length;
             const wantToRead = books.filter(b => b.status === 'want_to_read').length;

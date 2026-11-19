@@ -438,6 +438,10 @@ export class BooksModule {
                 ? await this.bookService.updateBook(userId, bookId, data)
                 : await this.bookService.addBook(userId, data);
 
+            // A completed write belongs to the account that started it.
+            // Never update another account's UI after an auth switch.
+            if (window.app.currentUser?.uid !== userId) return;
+
             if (result.success) {
                 modal.hide();
                 window.app.onUserAction('add_book');
@@ -446,14 +450,16 @@ export class BooksModule {
                     'success'
                 );
                 setTimeout(async () => {
-                    await this.render();
+                    if (window.app.currentUser?.uid === userId) await this.render();
                 }, 300);
             } else {
                 window.app.ui.showToast('Не удалось сохранить книгу. Попробуй снова.', 'error');
             }
             } catch (error) {
-                console.error('Ошибка сохранения книгу:', error);
-                window.app.ui.showToast('Не удалось сохранить книгу. Попробуй снова.', 'error');
+                console.error('Ошибка сохранения книги:', error);
+                if (window.app.currentUser?.uid === userId) {
+                    window.app.ui.showToast('Не удалось сохранить книгу. Попробуй снова.', 'error');
+                }
             } finally {
                 saveButton.disabled = false;
                 saveButton.removeAttribute('aria-busy');

@@ -66,8 +66,15 @@ export class ChatPendingIntentStore {
             valid.push(normalized);
             if (valid.length === MAX_PENDING_INTENTS) break;
         }
-        if (!Array.isArray(raw) || valid.length !== raw.length ||
-            valid.some((record, index) => record !== raw[index])) {
+        const unchanged = Array.isArray(raw) && valid.length === raw.length &&
+            valid.every((record, index) => {
+                const original = raw[index];
+                return original && original.schemaVersion === record.schemaVersion &&
+                    original.userId === record.userId && original.chatId === record.chatId &&
+                    original.text === record.text && original.clientMessageId === record.clientMessageId &&
+                    original.createdAt === record.createdAt;
+            });
+        if (!unchanged) {
             await this.adapter.write(this.userId, valid);
             this._assertOwner();
         }

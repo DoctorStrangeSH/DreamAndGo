@@ -125,3 +125,41 @@ test('late read receipt cannot contaminate new account view after clear', async 
     assert.deepEqual(await receipt, { status: 'stale' });
     assert.equal(controller.get(id).deliveryStatus, 'checking');
 });
+
+
+test('controller consistently normalizes restored UUIDs across status, retry, receipts and discard', async () => {
+    const upper = id.toUpperCase();
+    let sends = 0;
+    let read = false;
+    const controller = make(async payload => {
+        sends++;
+        assert.equal(payload.clientMessageId, id);
+        return { messageId: 'server-normalized' };
+    }, async payload => {
+        assert.equal(payload.clientMessageId, id);
+        return { status: 'sent', messageId: 'server-normalized', read };
+    });
+    controller.restore('chat-1', 'Hello', upper);
+    assert.equal(controller.get(upper).deliveryStatus, 'checking');
+    assert.deepEqual(await controller.reconcile(upper), { status: 'sent', messageId: 'server-normalized' });
+    assert.equal(controller.get(upper).deliveryStatus, 'sent');
+    assert.equal(sends, 0);
+    read = true;
+    assert.deepEqual(await controller.refreshRead(upper), { status: 'read' });
+    assert.equal(controller.get(upper).deliveryStatus, 'read');
+    assert.equal(controller.acknowledgeRead(upper, 'wrong'), false);
+
+    const pendingId = '650e8400-e29b-41d4-a716-446655440000';
+    const pending = make(async () => ({ messageId: 'unused' }), async () => ({ status: 'missing' }),
+        () => {});
+    // Use a distinct controller UUID factory for the second intent.
+    const second = new ChatDeliveryController(async () => ({ messageId: 'unused' }),
+        async () => ({ status: 'missing' }), 'alice', () => pendingId);
+    second.prepare('chat-1', 'Discard me');
+    assert.equal(second.discard(pendingId.toUpperCase()), true);
+    assert.equal(second.get(pendingId), null);
+    assert.deepEqual(await second.send('not-a-uuid'), {
+        success: false, error: 'Некорректный идентификатор отправки'
+    });
+    assert.equal(controller.get('not-a-uuid'), null);
+});

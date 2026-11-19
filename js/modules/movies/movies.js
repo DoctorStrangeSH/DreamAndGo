@@ -527,17 +527,21 @@ export class MoviesModule {
         document.querySelectorAll('.delete-movie-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                if (btn.disabled || !confirm('Удалить фильм?')) return;
+                const userId = window.app.currentUser?.uid;
+                if (!userId || btn.disabled || !confirm('Удалить фильм?')) return;
                 btn.disabled = true;
                 try {
-                    const result = await this.movieService.deleteMovie(window.app.currentUser.uid, btn.dataset.movieId);
+                    const result = await this.movieService.deleteMovie(userId, btn.dataset.movieId);
                     if (!result?.success) throw new Error('Удаление не выполнено');
+                    if (window.app.currentUser?.uid !== userId || this.currentTab !== 'my') return;
                     window.app.ui.showToast('Фильм удалён', 'info');
                     await this.loadMyMovies();
-                    window.app.refreshUserData();
+                    if (window.app.currentUser?.uid === userId) window.app.refreshUserData();
                 } catch (error) {
                     console.error('Не удалось удалить фильм:', error);
-                    window.app.ui.showToast('Не удалось удалить фильм. Попробуй снова.', 'error');
+                    if (window.app.currentUser?.uid === userId && this.currentTab === 'my') {
+                        window.app.ui.showToast('Не удалось удалить фильм. Попробуй снова.', 'error');
+                    }
                 } finally {
                     btn.disabled = false;
                 }

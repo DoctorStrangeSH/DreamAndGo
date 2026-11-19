@@ -4,7 +4,7 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { conversationPairKey } from './chat-pair.js';
 import { isConversationBlocked } from './block-policy.js';
-import { normalizeChatMessage, normalizeClientMessageId } from './message-policy.js';
+import { isValidUserId, isValidDocumentId, normalizeChatMessage, normalizeClientMessageId } from './message-policy.js';
 import { sendPrivateMessageTransaction } from './chat-transactions.js';
 import { getPrivateMessageStatus } from './message-status.js';
 import { markPrivateMessageReadTransaction } from './chat-read-receipts.js';
@@ -25,8 +25,8 @@ export const createPrivateChatV2 = onCall({ region: 'europe-west3' }, async requ
     if (!uid) throw new HttpsError('unauthenticated', 'Требуется вход в аккаунт');
 
     const partnerId = request.data?.partnerId;
-    if (typeof partnerId !== 'string' || !partnerId || partnerId.length > 128 ||
-        partnerId.includes('/') || partnerId === uid) {
+    if (!isValidUserId(uid)) throw new HttpsError('unauthenticated', 'Требуется вход в аккаунт');
+    if (!isValidUserId(partnerId) || partnerId === uid) {
         throw new HttpsError('invalid-argument', 'Некорректный получатель');
     }
 
@@ -101,8 +101,7 @@ export const sendPrivateMessageV2 = onCall({ region: 'europe-west3' }, async req
     const chatId = request.data?.chatId;
     const text = normalizeChatMessage(request.data?.text);
     const clientMessageId = normalizeClientMessageId(request.data?.clientMessageId);
-    if (!clientMessageId || typeof chatId !== 'string' || !chatId || chatId.includes('/') || chatId.length > 128 ||
-        !text) {
+    if (!clientMessageId || !isValidDocumentId(chatId) || !text) {
         throw new HttpsError('invalid-argument', 'Некорректное сообщение');
     }
 

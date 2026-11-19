@@ -176,7 +176,7 @@ export class TravelService {
 
     async updateUserStats(userId) {
         try {
-            const allTravels = await this.getTravels(userId);
+            const allTravels = await this.getTravels(userId, {}, { throwOnError: true });
             const planned = allTravels.filter(t => t.status === 'planned').length;
             const visited = allTravels.filter(t => t.status === 'visited').length;
             

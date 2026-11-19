@@ -130,7 +130,8 @@ export class TravelService {
             });
             
             this.clearCache(userId);
-            
+            await this.updateUserStats(userId);
+
             return { success: true };
         } catch (error) {
             console.error('Ошибка обновления путешествия:', error);

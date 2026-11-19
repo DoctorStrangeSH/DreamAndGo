@@ -1,5 +1,5 @@
 import { auth, db } from '../config/firebase.js';
-import { validateChatMessage, validChatParticipants } from '../core/chat-message-policy.js';
+import { validateChatMessage, validChatParticipants, isValidChatUid } from '../core/chat-message-policy.js';
 import {
     collection, doc, getDocs, getDoc, updateDoc, deleteDoc,
     query, orderBy, limit, serverTimestamp, writeBatch, setDoc, increment, runTransaction
@@ -11,10 +11,14 @@ export class ChatService {
     }
 
     getChatId(userId1, userId2) {
+        if (!isValidChatUid(userId1) || !isValidChatUid(userId2) || userId1 === userId2) {
+            throw new TypeError('Некорректные участники диалога');
+        }
         return [userId1, userId2].sort().join('_');
     }
 
     async getChats(userId) {
+        if (!isValidChatUid(userId) || auth?.currentUser?.uid !== userId) return [];
         try {
             const chatsRef = collection(this.db, 'users', userId, 'chats');
             const q = query(chatsRef, orderBy('lastMessageTime', 'desc'));
@@ -47,7 +51,8 @@ export class ChatService {
     }
 
     async getOrCreateChat(userId, partnerId) {
-        if (!userId || !partnerId || userId === partnerId || auth?.currentUser?.uid !== userId) return null;
+        if (!isValidChatUid(userId) || !isValidChatUid(partnerId) ||
+            userId === partnerId || auth?.currentUser?.uid !== userId) return null;
         try {
             const ownRef = doc(this.db, 'users', userId, 'chats', partnerId);
             const peerRef = doc(this.db, 'users', partnerId, 'chats', userId);
@@ -125,7 +130,8 @@ export class ChatService {
     async deleteMessage(chatId, messageId) {
         try {
             const actorId = auth?.currentUser?.uid;
-            if (!actorId || !chatId || !messageId) return { success: false };
+            if (!actorId || !isValidChatUid(actorId) || !isValidChatUid(chatId) ||
+                !isValidChatUid(messageId)) return { success: false };
             const messageRef = doc(this.db, 'chats', chatId, 'messages', messageId);
             const existing = await getDoc(messageRef);
             if (!existing.exists() || existing.data().senderId !== actorId || auth?.currentUser?.uid !== actorId) return { success: false };
@@ -142,7 +148,8 @@ export class ChatService {
         if (!validation.valid) return { success: false, error: validation.error };
         try {
             const actorId = auth?.currentUser?.uid;
-            if (!actorId || !chatId || !messageId) return { success: false };
+            if (!actorId || !isValidChatUid(actorId) || !isValidChatUid(chatId) ||
+                !isValidChatUid(messageId)) return { success: false };
             const messageRef = doc(this.db, 'chats', chatId, 'messages', messageId);
             const existing = await getDoc(messageRef);
             if (!existing.exists() || existing.data().senderId !== actorId || auth?.currentUser?.uid !== actorId) return { success: false };
@@ -159,7 +166,8 @@ export class ChatService {
     }
 
     async markAsRead(userId, partnerId) {
-        if (!userId || !partnerId || userId === partnerId || auth?.currentUser?.uid !== userId) return;
+        if (!isValidChatUid(userId) || !isValidChatUid(partnerId) ||
+            userId === partnerId || auth?.currentUser?.uid !== userId) return;
         try {
             const chatRef = doc(this.db, 'users', userId, 'chats', partnerId);
             await updateDoc(chatRef, { unread: 0 });
@@ -169,7 +177,8 @@ export class ChatService {
     }
 
     async deleteChat(userId, partnerId) {
-        if (!userId || !partnerId || userId === partnerId || auth?.currentUser?.uid !== userId) {
+        if (!isValidChatUid(userId) || !isValidChatUid(partnerId) ||
+            userId === partnerId || auth?.currentUser?.uid !== userId) {
             return { success: false, error: 'Некорректный диалог' };
         }
         try {
@@ -201,7 +210,8 @@ export class ChatService {
     }
 
     async deleteChatLocal(userId, partnerId) {
-        if (!userId || !partnerId || userId === partnerId || auth?.currentUser?.uid !== userId) {
+        if (!isValidChatUid(userId) || !isValidChatUid(partnerId) ||
+            userId === partnerId || auth?.currentUser?.uid !== userId) {
             return { success: false };
         }
         try {

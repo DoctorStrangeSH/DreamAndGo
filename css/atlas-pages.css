@@ -91,6 +91,16 @@
 .achievement-tier-badge--silver {background:rgba(120,150,174,.16);color:var(--text-primary)}
 .achievement-tier-badge--gold {background:rgba(220,167,62,.16);color:#ac781e}
 .achievement-tier-badge--legendary {background:rgba(154,112,220,.17);color:#ae7bde}
+.atlas-achievement-toast {position:relative;overflow:hidden;min-width:min(350px,calc(100vw - 2rem));max-width:min(420px,calc(100vw - 2rem));border-radius:20px!important;border:1px solid rgba(222,171,75,.48)!important;background:var(--bg-card)!important;color:var(--text-primary)!important;box-shadow:0 18px 42px rgba(21,30,50,.22)!important}
+.atlas-achievement-toast::before {content:"";position:absolute;inset:0 0 auto;height:4px;background:linear-gradient(90deg,#a67342,#f2d58b)}
+.atlas-achievement-toast--silver::before {background:linear-gradient(90deg,#68849e,#d7e1ec)}
+.atlas-achievement-toast--gold::before {background:linear-gradient(90deg,#b87f26,#ffe19b)}
+.atlas-achievement-toast--legendary::before {background:linear-gradient(90deg,#7955bb,#dfb0fb,#edc36e)}
+.atlas-achievement-toast-icon {display:grid;place-items:center;flex-shrink:0;width:52px;height:52px;border-radius:15px;background:var(--bg-tertiary);font-size:1.65rem}
+.atlas-achievement-toast-kicker {display:block;margin-bottom:.2rem;color:var(--primary);font-weight:800;letter-spacing:.02em}
+.atlas-achievement-toast-link {display:inline-flex;gap:.3rem;align-items:center;margin-top:.5rem;font-size:.8rem;font-weight:750;color:var(--primary);text-decoration:none}
+.atlas-achievement-toast-link:hover {text-decoration:underline}
+.atlas-achievement-toast .btn-close {flex-shrink:0}
 @media(hover:hover) and (pointer:fine) {.achievement-item .achievement-earned:hover {transform:translateY(-3px);box-shadow:var(--shadow-md)}}
 @media(max-width:575.98px) {.achievement-tier-badge {font-size:.62rem;padding:.2rem .4rem}.achievement-item .card-premium .d-flex.gap-3 {gap:.7rem!important}}
 @media(prefers-reduced-motion:reduce) {.achievement-item .card-premium {transition:none!important}.achievement-item .achievement-earned:hover {transform:none!important}.achievement-item .achievement-level-dot.current {animation:none!important}}

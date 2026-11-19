@@ -2,6 +2,7 @@ import { TravelService } from '../../services/travel.service.js';
 import { escapeHTML } from '../../core/escape-html.js';
 import { safeAvatarURL } from '../../core/safe-avatar-url.js';
 import { APP_CONFIG } from '../../config/constants.js';
+import { applyCollectionSearchAndSort } from '../../core/collection-search.js';
 
 export class TravelsModule {
     constructor() {
@@ -269,26 +270,8 @@ export class TravelsModule {
     }
 
     applySearchAndSort() {
-        const query = this.searchQuery.trim().toLocaleLowerCase();
-        const grid = document.getElementById('travelsGrid');
-        if (!grid) return;
-        const cards = [...grid.querySelectorAll('[data-travel-card]')];
-        const sorted = [...cards].sort((a, b) => {
-            if (this.sortOrder === 'name') return a.dataset.name.localeCompare(b.dataset.name, 'ru') || Number(a.dataset.originalIndex) - Number(b.dataset.originalIndex);
-            if (this.sortOrder === 'rating') return Number(b.dataset.rating) - Number(a.dataset.rating) || Number(a.dataset.originalIndex) - Number(b.dataset.originalIndex);
-            return Number(a.dataset.originalIndex) - Number(b.dataset.originalIndex);
-        });
-        for (const card of sorted) grid.appendChild(card);
-        let matches = 0;
-        for (const card of cards) {
-            const visible = !query || card.dataset.search.includes(query);
-            card.hidden = !visible;
-            if (visible) matches++;
-        }
-        const empty = document.getElementById('travelSearchEmpty');
-        if (empty) empty.hidden = !query || matches > 0 || cards.length === 0;
-        const count = document.getElementById('travelSearchCount');
-        if (count) count.textContent = query && cards.length ? `Найдено: ${matches} из ${cards.length}` : '';
+        return applyCollectionSearchAndSort({ document, gridId: 'travelsGrid', cardSelector: '[data-travel-card]',
+            emptyId: 'travelSearchEmpty', countId: 'travelSearchCount', query: this.searchQuery, order: this.sortOrder });
     }
 
     async showModal(travelId) {

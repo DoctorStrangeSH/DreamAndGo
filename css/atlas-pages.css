@@ -254,6 +254,29 @@
   border-radius:10px;color:var(--primary);font-size:.73rem;font-weight:800
 }
 
+/* Social cards: long handles, compact screens and touch-first actions. */
+.atlas-friend-card {height:100%;border-radius:21px;min-width:0}
+.atlas-friend-content {min-width:0}
+.atlas-friend-details {min-width:0}
+.atlas-friend-details h6 {overflow-wrap:anywhere;line-height:1.4}
+.atlas-friend-details small {white-space:nowrap}
+.atlas-friend-card .friend-avatar-placeholder {flex-shrink:0}
+.atlas-friend-actions {flex-shrink:0;align-items:center}
+.atlas-friend-actions .btn {display:inline-flex;align-items:center;justify-content:center;min-width:40px;min-height:40px}
+.atlas-friend-actions .btn:focus-visible {outline:3px solid var(--accent);outline-offset:2px}
+@media (max-width:575.98px) {
+  .friends-tabs {flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-inline:contain;scrollbar-width:thin;padding-bottom:.35rem}
+  .friends-tabs .nav-item {flex:0 0 auto}
+  .friends-tabs .nav-link {white-space:nowrap;min-height:44px}
+  .atlas-friend-content {flex-wrap:wrap;gap:.75rem!important}
+  .atlas-friend-details {flex:1 1 calc(100% - 75px);min-width:0}
+  .atlas-friend-actions {width:100%;justify-content:flex-end;border-top:1px solid var(--border-light);padding-top:.65rem}
+  .atlas-friend-actions .btn {min-height:44px;min-width:44px}
+  .friends-tabs + #searchSection .input-group {flex-wrap:wrap;gap:.5rem}
+  .friends-tabs + #searchSection .input-group .form-control {flex:1 1 calc(100% - 54px);min-width:0}
+  .friends-tabs + #searchSection #searchUserBtn {flex:1 1 100%;min-height:44px;border-radius:12px}
+}
+
 
 /* Atlas mobile usability: reachable actions, readable cards and compact controls. */
 .movie-card:focus-within .movie-poster-overlay {opacity:1}

@@ -20,10 +20,14 @@ try {
     const page = await browser.newPage({ viewport: { width: target.width, height: target.height }, deviceScaleFactor: 1 });
     page.on('pageerror', error => errors.push(target.name + ': ' + error.message));
     await page.goto(url.href);
+    const lightOverflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+    if (lightOverflow) errors.push(target.name + ': horizontal overflow in light theme');
     await page.screenshot({ path: path.join(root, 'atlas-screenshots', target.name + '-light.png'), fullPage: true });
     await page.getByRole('button', { name: 'Тёмная тема' }).click();
     const theme = await page.locator('html').getAttribute('data-bs-theme');
     if (theme !== 'dark') errors.push(target.name + ': theme did not switch');
+    const darkOverflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+    if (darkOverflow) errors.push(target.name + ': horizontal overflow in dark theme');
     await page.screenshot({ path: path.join(root, 'atlas-screenshots', target.name + '-dark.png'), fullPage: true });
     const touchTargets = await page.evaluate(() => {
       const selectors = ['#themeSwitch', '[data-preview-action="new-travel"]',
@@ -40,6 +44,13 @@ try {
         errors.push(target.name + ': undersized target ' + targetBox.selector);
       }
     }
+    // Keyboard navigation must expose a visible focus ring in dark mode.
+    await page.keyboard.press('Tab');
+    const focusVisibility = await page.evaluate(() => {
+      const active = document.activeElement;
+      return active && active !== document.body && getComputedStyle(active).outlineStyle !== 'none';
+    });
+    if (!focusVisibility) errors.push(target.name + ': keyboard focus is not visible');
     await page.getByRole('button', { name: 'Мой профиль' }).click();
     await page.getByRole('tab', { name: 'Достижения' }).click();
     await page.getByRole('heading', { name: '🏆 Первые открытия' }).waitFor();

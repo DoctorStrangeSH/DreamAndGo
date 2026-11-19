@@ -37,6 +37,19 @@ test('Atlas narrow-phone collection headers stack actions and keep touch control
   }
 });
 
+test('mobile navigation closes for profile routes and exposes accessible icon controls', () => {
+  const navigation = read('js/modules/navigation/navigation.js');
+  const theme = read('css/atlas-theme.css');
+  assert.match(navigation, /aria-controls="navbarNav" aria-expanded="false" aria-label="Открыть меню навигации"/);
+  for (const label of ['Переключить тему', 'Поиск', 'Уведомления', 'Меню профиля']) {
+    assert.ok(navigation.includes(`aria-label="${label}"`), `${label}: accessible button`);
+  }
+  assert.match(navigation, /navbarNav'\)\?\.addEventListener\('click'/);
+  assert.match(navigation, /event\.target\.closest\('a\[href\^="#"\]'\)/);
+  assert.match(navigation, /bootstrap\.Collapse\.getOrCreateInstance\(navbarCollapse\)\.hide\(\)/);
+  assert.match(theme, /#notificationsDropdown\s*\{[^}]*width:min\(340px,calc\(100vw - 2rem\)\)/);
+});
+
 test('pending collection actions show a visible, reduced-motion-friendly loading indicator', () => {
   const css = read('css/atlas-theme.css');
   assert.match(css, /\.btn\[aria-busy="true"\]::after\s*\{/);

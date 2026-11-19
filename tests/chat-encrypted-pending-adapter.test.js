@@ -90,6 +90,14 @@ test('IndexedDB adapter encrypts account queues and clears data plus key', async
             false
         );
 
+        await new Promise((resolve, reject) => {
+            const tx = inspectionDb.transaction('pendingKeys', 'readwrite');
+            tx.objectStore('pendingKeys').delete('alice');
+            tx.oncomplete = resolve;
+            tx.onerror = () => reject(tx.error);
+        });
+        await assert.rejects(adapter.read('alice'), /ключ/);
+
         await store.clear();
         assert.deepEqual(await adapter.read('alice'), []);
         const keyRecord = await new Promise((resolve, reject) => {

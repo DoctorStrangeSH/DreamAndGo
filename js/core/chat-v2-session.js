@@ -7,7 +7,7 @@ import { isValidChatUid } from './chat-message-policy.js';
 // Explicitly opt-in candidate v2 wiring. It does not touch legacy chat, Firebase
 // initialization, realtime listeners or production DOM.
 export class ChatV2Session {
-    constructor({ invoke, getUserId, createId, onDeliveryChange, onUnreadChange }) {
+    constructor({ invoke, getUserId, createId, onDeliveryChange, onUnreadChange, pendingStore = null }) {
         if (typeof getUserId !== 'function' || typeof invoke !== 'function') {
             throw new TypeError('Требуется авторизованный транспорт');
         }
@@ -17,6 +17,13 @@ export class ChatV2Session {
         }
         this.getUserId = getUserId;
         this.userId = userId;
+        if (pendingStore && (
+            typeof pendingStore.save !== 'function' ||
+            typeof pendingStore.load !== 'function' ||
+            typeof pendingStore.remove !== 'function' ||
+            typeof pendingStore.clear !== 'function'
+        )) throw new TypeError('Некорректное защищённое хранилище очереди');
+        this.pendingStore = pendingStore;
         this.disposed = false;
         this.trackers = new Set();
         this.transport = new ChatV2Transport(invoke, getUserId);
@@ -56,9 +63,70 @@ export class ChatV2Session {
         return this.delivery.restore(chatId, text, clientMessageId);
     }
 
-    send(clientMessageId) {
+    async send(clientMessageId) {
         this._assertActive();
-        return this.delivery.send(clientMessageId);
+        const intent = this.delivery.outbox.get(clientMessageId);
+        if (!intent) return this.delivery.send(clientMessageId);
+        if (this.pendingStore) {
+            await this.pendingStore.save(intent);
+            this._assertActive();
+        }
+        const current = this.delivery.get(clientMessageId);
+        if (current?.deliveryStatus === 'checking') {
+            const reconciliation = await this.delivery.reconcile(clientMessageId);
+            this._assertActive();
+            if (reconciliation.status === 'sent') {
+                if (this.pendingStore) await this.pendingStore.remove(clientMessageId);
+                this._assertActive();
+                return { success: true, messageId: reconciliation.messageId, reconciled: true };
+            }
+            if (reconciliation.status !== 'missing') {
+                return { success: false, error: 'Не удалось подтвердить состояние сообщения' };
+            }
+        }
+        const result = await this.delivery.send(clientMessageId);
+        this._assertActive();
+        if (result.success && this.pendingStore) {
+            await this.pendingStore.remove(clientMessageId);
+            this._assertActive();
+        }
+        return result;
+    }
+
+    async restorePending() {
+        this._assertActive();
+        if (!this.pendingStore) return [];
+        const records = await this.pendingStore.load();
+        this._assertActive();
+        const results = [];
+        for (const record of records) {
+            this._assertActive();
+            const intent = this.delivery.restore(record.chatId, record.text, record.clientMessageId);
+            const status = await this.delivery.reconcile(intent.clientMessageId);
+            this._assertActive();
+            if (status.status === 'sent') {
+                await this.pendingStore.remove(intent.clientMessageId);
+                this._assertActive();
+            }
+            results.push({ clientMessageId: intent.clientMessageId, status });
+        }
+        return results;
+    }
+
+    async discardPending(clientMessageId) {
+        this._assertActive();
+        if (!this.pendingStore) return this.delivery.discard(clientMessageId);
+        const removed = await this.pendingStore.remove(clientMessageId);
+        this._assertActive();
+        if (removed) this.delivery.discard(clientMessageId);
+        return removed;
+    }
+
+    async logout() {
+        this._assertActive();
+        if (this.pendingStore) await this.pendingStore.clear();
+        this._assertActive();
+        this.dispose();
     }
 
     discard(clientMessageId) {

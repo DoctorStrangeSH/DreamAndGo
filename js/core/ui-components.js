@@ -108,7 +108,7 @@ export class UIComponents {
         toast.show();
     }
 
-    // Спиннер загрузки
+    // Спиннер загрузки — единое состояние для коллекций и страниц.
     createLoader(size = 'md') {
         const sizes = {
             sm: 'spinner-border-sm',
@@ -116,11 +116,11 @@ export class UIComponents {
             lg: 'spinner-border-lg'
         };
         return `
-            <div class="d-flex justify-content-center align-items-center p-5">
-                <div class="spinner-border ${sizes[size]} text-primary" role="status">
-                    <span class="visually-hidden">Загрузка...</span>
+            <div class="atlas-loading d-flex flex-column justify-content-center align-items-center p-5" role="status" aria-live="polite">
+                <div class="spinner-border ${sizes[size] || ''} text-primary" aria-hidden="true"></div>
+                <span class="atlas-loading-label">Собираем твою историю…</span>
+                <span class="visually-hidden">Загрузка данных</span>
                 </div>
-            </div>
         `;
     }
 

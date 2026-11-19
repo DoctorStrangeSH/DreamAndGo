@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizeChatMessage, otherChatParticipant, normalizeClientMessageId, serverMessageDocumentId } from '../server/message-policy.js';
+import { normalizeChatMessage, otherChatParticipant, normalizeClientMessageId, serverMessageDocumentId, isValidUserId, isValidDocumentId } from '../server/message-policy.js';
 
 test('server message normalization rejects empty, invalid and oversized input', () => {
     for (const value of ['', '  ', '\n', null, undefined, 13, {}, 'x'.repeat(2001)]) {
@@ -52,4 +52,27 @@ test('message ID validation rejects arbitrary, malformed or non-v4 request keys'
     }
     assert.equal(serverMessageDocumentId('', 'alice', '550e8400-e29b-41d4-a716-446655440000'), null);
     assert.equal(serverMessageDocumentId('chat_1', '', '550e8400-e29b-41d4-a716-446655440000'), null);
+});
+
+
+test('server participant and Firestore path identifiers reject malformed values', () => {
+    for (const uid of ['alice', 'u'.repeat(128)]) assert.equal(isValidUserId(uid), true);
+    for (const uid of ['', ' ', ' alice', 'alice ', 'a/b', 'u'.repeat(129), null, 42]) {
+        assert.equal(isValidUserId(uid), false);
+        assert.equal(otherChatParticipant([uid, 'bob'], uid), null);
+    }
+    assert.equal(isValidDocumentId('chat-123'), true);
+    assert.equal(isValidDocumentId('c'.repeat(129)), false);
+    assert.equal(isValidDocumentId('chat/child'), false);
+    assert.equal(isValidDocumentId(' chat'), false);
+});
+
+test('server message document IDs refuse malformed chat and sender path segments', () => {
+    const uuid = '550e8400-e29b-41d4-a716-446655440000';
+    for (const chatId of ['', ' chat', 'chat ', 'chat/child', 'c'.repeat(129)]) {
+        assert.equal(serverMessageDocumentId(chatId, 'alice', uuid), null);
+    }
+    for (const senderId of ['', ' alice', 'alice ', 'alice/other', 'u'.repeat(129)]) {
+        assert.equal(serverMessageDocumentId('chat-123', senderId, uuid), null);
+    }
 });

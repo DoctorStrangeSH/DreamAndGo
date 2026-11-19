@@ -33,17 +33,32 @@ export function getAchievementTier(level) {
 }
 
 export class AchievementsModule {
-    constructor() { this.achievementsService = new AchievementsService(); }
+    constructor() { this.achievementsService = new AchievementsService(); this.requestId = 0; }
 
     async render() {
         const mc = document.getElementById('main-content'); if (!mc) return;
         const uid = window.app.currentUser?.uid; if (!uid) return;
-        mc.innerHTML = window.app.ui.createLoader();
-        const earned = await this.achievementsService.getUserAchievements(uid);
-        const all = this.achievementsService.getAllAchievements();
-        const stats = window.app.userData?.stats || {};
-        mc.innerHTML = this.getTemplate(earned, all, stats);
-        this.attachListeners();
+        const requestId = ++this.requestId;
+        mc.innerHTML = `<div data-achievements-request="${requestId}">${window.app.ui.createLoader()}</div>`;
+        const isCurrent = () => requestId === this.requestId && window.app.currentUser?.uid === uid &&
+            mc.isConnected !== false && !!mc.querySelector(`[data-achievements-request="${requestId}"]`);
+        try {
+            const earned = await this.achievementsService.getUserAchievements(uid, { throwOnError: true });
+            if (!isCurrent()) return;
+            const all = this.achievementsService.getAllAchievements();
+            const stats = window.app.userData?.stats || {};
+            mc.innerHTML = this.getTemplate(earned, all, stats);
+            this.attachListeners();
+        } catch (error) {
+            console.error('Не удалось загрузить достижения:', error);
+            if (!isCurrent()) return;
+            mc.innerHTML = `<section class="atlas-empty atlas-empty--achievement" role="alert">
+                <h2>Не удалось загрузить достижения</h2>
+                <p>Проверь подключение и попробуй снова. Награды сохранены.</p>
+                <button type="button" class="btn btn-premium" data-retry-achievements>Повторить</button>
+            </section>`;
+            mc.querySelector('[data-retry-achievements]')?.addEventListener('click', () => this.render());
+        }
     }
 
     getTemplate(earned, all, stats) {

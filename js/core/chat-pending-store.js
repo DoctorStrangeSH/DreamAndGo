@@ -25,7 +25,14 @@ export class ChatPendingIntentStore {
         this.userId = getUserId();
         this.now = now;
         this.ttlMs = ttlMs;
+        this.mutations = Promise.resolve();
         if (!isValidChatUid(this.userId)) throw new Error('Требуется вход в аккаунт');
+    }
+
+    _enqueueMutation(operation) {
+        const task = this.mutations.then(operation);
+        this.mutations = task.catch(() => {});
+        return task;
     }
 
     _assertOwner() {
@@ -85,7 +92,8 @@ export class ChatPendingIntentStore {
         return valid;
     }
 
-    async save(intent) {
+    save(intent) {
+        return this._enqueueMutation(async () => {
         this._assertOwner();
         const now = this.now();
         const record = this._normalize({
@@ -108,9 +116,11 @@ export class ChatPendingIntentStore {
         await this.adapter.write(this.userId, next);
         this._assertOwner();
         return existing || record;
+        });
     }
 
-    async remove(clientMessageId) {
+    remove(clientMessageId) {
+        return this._enqueueMutation(async () => {
         this._assertOwner();
         if (typeof clientMessageId !== 'string' || !UUID_V4.test(clientMessageId)) return false;
         const current = await this.load();
@@ -121,11 +131,14 @@ export class ChatPendingIntentStore {
         await this.adapter.write(this.userId, next);
         this._assertOwner();
         return true;
+        });
     }
 
-    async clear() {
-        this._assertOwner();
-        await this.adapter.write(this.userId, []);
-        this._assertOwner();
+    clear() {
+        return this._enqueueMutation(async () => {
+            this._assertOwner();
+            await this.adapter.write(this.userId, []);
+            this._assertOwner();
+        });
     }
 }

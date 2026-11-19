@@ -81,6 +81,18 @@ test('collection dialogs keep actions visible and scroll forms within short view
   }
 });
 
+test('Atlas browser checks cover compact landscape dialogs and keyboard-focused fields', () => {
+  const visual = read('tests/atlas-visual.mjs');
+  for (const size of ['short-mobile', 'landscape-mobile']) {
+    assert.ok(visual.includes(`name: '${size}'`), `${size}: viewport included`);
+  }
+  assert.match(visual, /fixture\.id = 'atlas-dialog-fixture'/);
+  assert.match(visual, /lastInput\.focus\(\)/);
+  assert.match(visual, /lastInputReachable/);
+  assert.match(visual, /bodyScrollable/);
+  assert.match(visual, /footerBottom > target\.height/);
+});
+
 test('shared Atlas loader communicates progress without depending on animation', () => {
   const ui = read('js/core/ui-components.js');
   const css = read('css/atlas-theme.css');

@@ -13,6 +13,7 @@ import { getPrivateChatUnreadCount } from './chat-unread-status.js';
 import { loadPrivateChatHistory } from './chat-history-service.js';
 import { createFirestoreHistoryAdapter } from './chat-history-firestore.js';
 import { loadPublicProfile, findPublicProfileByUsername, loadPublicProfiles } from './public-profile-service.js';
+import { setPublicProfileVisibility } from './public-profile-visibility.js';
 import { consumeProfileLookupQuota } from './profile-lookup-quota.js';
 import { registerProfileWithReservedUsername } from './username-reservation.js';
 import { getRegistrationState } from './registration-state.js';
@@ -198,6 +199,24 @@ export const getPublicProfilesV2 = onCall({ region: 'europe-west3', enforceAppCh
     if (!result.ok) throw new HttpsError(result.code, 'Профили недоступны');
     return { profiles: result.profiles };
 });
+
+// Explicit owner consent. Enabling is blocked until the audited username
+// registry backfill is complete; disabling remains available immediately.
+export const setPublicProfileVisibilityV2 = onCall({ region: 'europe-west3', enforceAppCheck: true }, async request => {
+    const uid = request.auth?.uid;
+    if (!isValidUserId(uid)) throw new HttpsError('unauthenticated', 'Требуется вход в аккаунт');
+    const result = await setPublicProfileVisibility(
+        getFirestore(), uid, request.data?.enabled, () => FieldValue.serverTimestamp()
+    );
+    if (!result.ok) {
+        const message = result.code === 'failed-precondition'
+            ? 'Публичный профиль пока нельзя включить: безопасная миграция никнеймов ещё не завершена'
+            : 'Не удалось изменить видимость профиля';
+        throw new HttpsError(result.code, message);
+    }
+    return { enabled: result.enabled };
+});
+
 
 
 // Candidate secure signup finalization. This does NOT bypass the mandatory

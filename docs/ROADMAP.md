@@ -194,7 +194,7 @@ Dream&Go — социальное пространство мечтаний, п�
 
 - [x] Emulator rules tests explicitly deny owner browser writes of `publicProfileEnabled: true` and `false`; only the server callable may mutate consent.
 - [x] Client and server projection tests assert `publicProfileEnabled` is never returned in public profile payloads.
-- [ ] Re-run Firebase Emulator workflow and verify test suite against the current candidate rules.
+- [x] Re-ran Firebase Emulator workflow on `c4c50b130cb8a4b64ead9615fac7be039df17c4e`; candidate rules and server emulator tests passed ([run 44799092635](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44799092635)).
 
 
 ### Privacy regression CI and branch reconciliation — 2026-11-20
@@ -203,3 +203,13 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Firebase Emulator candidate-rules suite passed on commit `8a498cf65fc00c5b9bda0900ced6f487751009c8` ([run 44797490658](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44797490658)).
 - [x] Direct client writes to `publicProfileEnabled` are explicitly denied in the candidate Rules tests; public DTOs omit the consent flag.
 - [ ] PR #1 branch reconciliation remains open: feature branch is 53 commits behind current `main` and GitHub reports a divergent history. Do not merge until a controlled rebase/merge conflict review and fresh CI.
+
+
+### Server unit test coverage in default CI — 2026-11-20
+
+- [x] Root `npm test` now runs both `tests/*.test.js` and `server/*.test.js`.
+- [x] Added five focused tests for profile lookup quota limits, expiry boundaries, malformed state recovery, per-user isolation, and input validation.
+- [x] Fixed a previously unexecuted profile statistics test expectation (`friends: 0`).
+- [x] Root Checks passed on `c4c50b130cb8a4b64ead9615fac7be039df17c4e` ([run 44799092633](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44799092633)).
+- [x] Firebase Emulator suite passed on the same HEAD ([run 44799092635](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44799092635)).
+- [ ] PR #1 branch reconciliation remains blocked pending controlled integration with current `main`; do not force-push or merge the divergent history.

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { publicProfileFromPrivate, loadPublicProfile, findPublicProfileByUsername } from '../server/public-profile-service.js';
 
 const privateUser = {
+    publicProfileEnabled: true,
     username: 'Sherlock', displayName: ' Sherlock ',
     email: 'private@example.com', phone: '+7-000', roles: ['admin'],
     preferences: { private: true }, privacy: { dreams: 'private' },
@@ -22,7 +23,7 @@ test('server projection never returns email, roles or arbitrary nested data', ()
 
 test('malformed public fields are bounded or rejected', () => {
     const result = publicProfileFromPrivate('alice', {
-        username: 'x'.repeat(200), displayName: [], avatar: 'javascript:alert(1)',
+        publicProfileEnabled: true, username: 'x'.repeat(200), displayName: [], avatar: 'javascript:alert(1)',
         bio: 'b'.repeat(2000), stats: { friends: -1, dreams: '400' }
     });
     assert.equal(result.username.length, 40);
@@ -102,4 +103,12 @@ test('username lookup supports exact legacy fallback and missing users', async (
     assert.deepEqual(operations, [
         ['usernameNormalized', 'sherlock'], ['username', 'Sherlock']
     ]);
+});
+
+
+test('server projection fails closed when public visibility is absent or disabled', () => {
+    assert.equal(publicProfileFromPrivate('private-user', { username: 'private_user' }), null);
+    assert.equal(publicProfileFromPrivate('private-user', {
+        username: 'private_user', publicProfileEnabled: false
+    }), null);
 });

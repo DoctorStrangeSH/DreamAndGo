@@ -48,3 +48,18 @@ The rules audit must explicitly test:
 5. Only after those gates, propose a reviewed rules deployment with backup and rollback plan.
 
 No production rules, App Check enforcement, Cloud Functions, or user data were changed by this audit.
+
+
+### SEC-FRIENDS-01 — client-side friend actions accepted caller-supplied identities
+
+**Status:** hardened in candidate branch; server authorization still unverified.
+
+- Friend service actions now require the supplied actor UID to match Firebase Auth's current UID.
+- Request creation now uses a Firestore transaction, rejects an existing friendship, duplicate outgoing request, and reverse pending request, and writes both request views together.
+- Accept/reject operations now transactionally verify that the incoming request exists and that its from/to/status fields match the expected participants before changing friendship state.
+- Friend removal now requires an existing friendship record and performs both side deletions in a transaction.
+- Friend/request list reads and client-side friend-count updates are scoped to the signed-in user.
+- Client friend-count updates no longer attempt to write the other user's profile. A trusted server-side aggregate or a derived count is still needed if both profiles must show immediately consistent counts.
+- Extracted pure identity/path validation into js/core/friend-action-policy.js and added tests/friend-action-policy.test.js. npm test discovers the new test automatically; npm run check syntax-checks the policy module.
+
+**Limit:** these client-side guards are defense in depth, not authorization. Firestore Rules must independently enforce actor ownership, request direction/status, reciprocal friendship invariants, and protected stats fields. No rules export or production rules change was available in this pass.

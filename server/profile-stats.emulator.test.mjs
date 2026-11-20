@@ -23,15 +23,15 @@ test('server recomputes owned collection stats and preserves unrelated profile c
         db.doc('users/' + uid + '/dreams/dream-1').set({ status: 'completed' }),
         db.doc('users/' + uid + '/friends/bob').set({ friendId: 'bob' }),
         db.doc('users/' + uid + '/friends/charlie').set({ friendId: 'charlie' }),
-        db.doc('users/' + uid + '/xpEvents/travel-week-1').set({ action: 'travels', xpGained: 50, occurredAt: new Date() }),
-        db.doc('users/' + uid + '/xpEvents/travel-week-2').set({ action: 'travels', xpGained: 50, occurredAt: new Date() }),
-        db.doc('users/' + uid + '/xpEvents/restaurant-week-1').set({ action: 'restaurants', xpGained: 30, occurredAt: new Date() }),
-        db.doc('users/' + uid + '/xpEvents/restaurant-week-2').set({ action: 'restaurants', xpGained: 30, occurredAt: new Date() }),
-        db.doc('users/' + uid + '/xpEvents/movie-week-1').set({ action: 'movies', xpGained: 20, occurredAt: new Date() }),
-        db.doc('users/' + uid + '/xpEvents/book-week-1').set({ action: 'books', xpGained: 25, occurredAt: new Date() }),
-        db.doc('users/' + uid + '/xpEvents/dream-week-1').set({ action: 'dreams', xpGained: 15, occurredAt: new Date() }),
-        db.doc('users/' + uid + '/xpEvents/friend-week-excluded').set({ action: 'friends', xpGained: 40, occurredAt: new Date() }),
-        db.doc('users/' + uid + '/xpEvents/old-week-excluded').set({ action: 'travels', xpGained: 50, occurredAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000) })
+        db.doc('serverXp/' + uid + '/events/travel-week-1').set({ action: 'travels', xpGained: 50, occurredAt: new Date() }),
+        db.doc('serverXp/' + uid + '/events/travel-week-2').set({ action: 'travels', xpGained: 50, occurredAt: new Date() }),
+        db.doc('serverXp/' + uid + '/events/restaurant-week-1').set({ action: 'restaurants', xpGained: 30, occurredAt: new Date() }),
+        db.doc('serverXp/' + uid + '/events/restaurant-week-2').set({ action: 'restaurants', xpGained: 30, occurredAt: new Date() }),
+        db.doc('serverXp/' + uid + '/events/movie-week-1').set({ action: 'movies', xpGained: 20, occurredAt: new Date() }),
+        db.doc('serverXp/' + uid + '/events/book-week-1').set({ action: 'books', xpGained: 25, occurredAt: new Date() }),
+        db.doc('serverXp/' + uid + '/events/dream-week-1').set({ action: 'dreams', xpGained: 15, occurredAt: new Date() }),
+        db.doc('serverXp/' + uid + '/events/friend-week-excluded').set({ action: 'friends', xpGained: 40, occurredAt: new Date() }),
+        db.doc('serverXp/' + uid + '/events/old-week-excluded').set({ action: 'travels', xpGained: 50, occurredAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000) })
     ]);
 
     const result = await refreshUserStatsTransaction(db, uid);

@@ -1,3 +1,4 @@
+import { escapeHTML, safeDocumentId, safeCount } from '../../core/security.js';
 import { DreamsService } from '../../services/dreams.service.js';
 
 export class DreamsModule {
@@ -102,6 +103,8 @@ export class DreamsModule {
             completed: { badge: 'Сбылось!', color: 'success' }
         };
         const status = statuses[dream.status] || statuses.dreaming;
+        const progress = safeCount(dream.progress, 100);
+        const dreamId = safeDocumentId(dream.id);
 
         return `
             <div class="col-12 col-md-6 col-lg-4 fade-in-up" style="animation-delay: ${index * 0.06}s">
@@ -109,7 +112,7 @@ export class DreamsModule {
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <span class="badge bg-${status.color} bg-opacity-10 text-${status.color}">${status.badge}</span>
                         <div class="dream-card-actions">
-                            <button class="btn btn-sm btn-outline-secondary rounded-circle me-1 edit-btn" data-id="${dream.id}">
+                            <button class="btn btn-sm btn-outline-secondary rounded-circle me-1 edit-btn" data-id="${escapeHTML(dreamId)}">
                                 <i class="bi bi-pencil"></i>
                             </button>
                             <button class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="${dream.id}">
@@ -117,23 +120,23 @@ export class DreamsModule {
                             </button>
                         </div>
                     </div>
-                    <h6 class="fw-bold mb-1">${dream.title || 'Без названия'}</h6>
+                    <h6 class="fw-bold mb-1">${escapeHTML(dream.title || 'Без названия')}</h6>
                     ${dream.category
-                ? `<span class="badge bg-light text-dark me-1"><i class="bi bi-tag me-1"></i>${dream.category}</span>`
+                ? `<span class="badge bg-light text-dark me-1"><i class="bi bi-tag me-1"></i>${escapeHTML(dream.category)}</span>`
                 : ''
             }
                     ${dream.description
-                ? `<p class="text-muted small mt-2 mb-2">${dream.description.substring(0, 100)}...</p>`
+                ? `<p class="text-muted small mt-2 mb-2">${escapeHTML(String(dream.description).substring(0, 100))}...</p>`
                 : ''
             }
                     ${dream.status !== 'completed'
                 ? `<div class="mb-2">
                             <div class="d-flex justify-content-between small">
                                 <span>Прогресс</span>
-                                <span>${dream.progress || 0}%</span>
+                                <span>${progress}%</span>
                             </div>
                             <div class="progress" style="height: 5px;">
-                                <div class="progress-bar bg-${status.color}" style="width: ${dream.progress || 0}%"></div>
+                                <div class="progress-bar bg-${status.color}" style="width: ${progress}%"></div>
                             </div>
                         </div>`
                 : ''

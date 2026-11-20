@@ -101,3 +101,13 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 
 
 **CI verification — 2026-11-20:** GitHub Actions run for commit `bc4684240093da4fd434504b44c551be6b00762d` completed successfully. `npm test`: 390 passed, 0 failed. `npm run check`: passed. Earlier intermediate commits in this pass were red while extracted-service test harnesses were being updated; the latest head is green.
+
+
+### SEC-COLLECTIONS-03 — schema validation for travel, books, movies, and restaurants
+
+- Added `js/core/collection-input-policy.js` with per-domain allowlists, required fields, enum validation, bounded text/numeric fields, date validation, nested budget validation, HTTPS-only image URLs, and bounded arrays.
+- Create operations persist normalized allowlisted projections rather than spreading caller-provided objects. Update operations accept only allowlisted partial fields and validate them before Firestore writes.
+- Added `tests/collection-input-policy.test.js` covering valid records, unknown/protected fields, invalid enum values, invalid URLs/dates, numeric bounds, and partial updates.
+- Latest GitHub Actions run for `966bc3d9d75aa3f701abd4bb52feded4ff2ce5f7`: 395/395 tests passed; `npm run check` passed.
+
+**Scope note:** these browser-side validators are defense in depth. Firestore Rules must independently enforce field-level constraints; the deployed rules are still not present in this repository branch and must be reviewed in Firebase Console before release.

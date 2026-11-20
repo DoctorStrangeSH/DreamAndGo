@@ -1,4 +1,4 @@
-import { escapeHTML, safeDocumentId } from '../../core/security.js';
+import { escapeHTML, safeDocumentId, safeCount } from '../../core/security.js';
 
 import { ChatService } from '../../services/chat.service.js';
 import { FriendsService } from '../../services/friends.service.js';
@@ -122,8 +122,9 @@ export class ChatModule {
 
                 chatList.innerHTML = chats.map(chat => {
                     const time = this.formatTime(chat.lastMessageTime);
-                    const unreadBadge = chat.unread > 0
-                        ? `<span class="badge bg-primary rounded-pill">${chat.unread}</span>`
+                    const unreadCount = safeCount(chat.unread);
+                    const unreadBadge = unreadCount > 0
+                        ? `<span class="badge bg-primary rounded-pill">${unreadCount}</span>`
                         : '';
                     const isActive = this.currentChat === chat.partnerId;
 

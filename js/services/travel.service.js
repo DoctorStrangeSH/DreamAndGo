@@ -1,5 +1,6 @@
 import { auth, db } from '../config/firebase.js';
 import { isAuthenticatedOwner, isValidFirestoreDocumentId } from '../core/owner-access-policy.js';
+import { refreshUserStats } from './profile-stats.service.js';
 import { validateTravelInput } from '../core/collection-input-policy.js';
 import { 
     collection,
@@ -186,27 +187,5 @@ export class TravelService {
 
     async updateUserStats(userId) {
         if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid)) return;
-        try {
-            const allTravels = await this.getTravels(userId, {}, { throwOnError: true });
-            const planned = allTravels.filter(t => t.status === 'planned').length;
-            const visited = allTravels.filter(t => t.status === 'visited').length;
-            
-            const userRef = doc(this.db, 'users', userId);
-            await updateDoc(userRef, {
-                'stats.travels': allTravels.length,
-                'stats.travelsPlanned': planned,
-                'stats.travelsVisited': visited
-            });
-        } catch (error) {
-            console.error('Ошибка обновления статистики:', error);
-        }
-    }
-
-    clearCache(userId) {
-        for (const key of this.cache.keys()) {
-            if (key.includes(userId)) {
-                this.cache.delete(key);
-            }
-        }
-    }
-}
+        await refreshUserStats(userId);
+    }}

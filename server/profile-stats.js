@@ -41,3 +41,31 @@ export function mergeOwnedStats(existingStats, calculatedStats) {
         !Array.isArray(existingStats) ? existingStats : {};
     return { ...safeExisting, ...calculatedStats };
 }
+
+export async function refreshUserStatsTransaction(db, uid) {
+    if (typeof uid !== 'string' || !uid || uid.length > 128 || uid.includes('/')) {
+        const error = new TypeError('Invalid authenticated user ID');
+        error.code = 'invalid-argument';
+        throw error;
+    }
+    const userRef = db.collection('users').doc(uid);
+    return db.runTransaction(async transaction => {
+        const names = Object.keys(COLLECTIONS);
+        const [profile, ...snapshots] = await Promise.all([
+            transaction.get(userRef),
+            ...names.map(name => transaction.get(db.collection('users').doc(uid).collection(name)))
+        ]);
+        if (!profile.exists) {
+            const error = new Error('User profile does not exist');
+            error.code = 'not-found';
+            throw error;
+        }
+        const collectionSnapshots = Object.fromEntries(
+            names.map((name, index) => [name, snapshots[index]])
+        );
+        const calculated = summarizeOwnedCollections(collectionSnapshots);
+        const merged = mergeOwnedStats(profile.get('stats'), calculated);
+        transaction.update(userRef, { stats: merged });
+        return calculated;
+    });
+}

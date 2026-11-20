@@ -145,3 +145,14 @@ Dream&Go — социальное пространство мечтаний, п�
 - [ ] Утвердить публичную семантику каждой коллекции и сверить legacy документы без PII.
 - [ ] Добавить полный набор Emulator create/update positive/negative tests для travel, book, movie и restaurant.
 - [ ] Подготовить Rules candidate только после проверки схем и legacy compatibility.
+
+
+### Public profile privacy gate — 2026-11-20
+
+- [x] Найден риск: серверный callable мог формировать публичную проекцию для любого существующего аккаунта без явного согласия владельца.
+- [x] Client и server projection helpers теперь fail-closed: требуется `publicProfileEnabled === true`.
+- [x] Поиск ника не раскрывает профиль аккаунта без opt-in; прямой lookup возвращает generic not-found.
+- [x] Migration script пропускает приватные/не opted-in аккаунты и не перезаписывает существующие проекции.
+- [x] Username collisions проверяются по всем аккаунтам, включая приватные, чтобы не допустить неоднозначного публичного поиска.
+- [ ] Добавить явную настройку приватности профиля в UI и owner-only Rules для изменения флага.
+- [ ] Добавить Emulator-тесты для opt-in, opt-out, смены видимости и прямого доступа к private/public documents.

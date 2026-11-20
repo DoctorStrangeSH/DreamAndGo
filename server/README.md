@@ -68,7 +68,7 @@
 
 `refreshUserStatsV2` is an authenticated, App-Check-protected callable in `europe-west3`. It accepts an empty payload: UID is derived exclusively from `request.auth.uid`. The server transaction reads the user's profile and their own `travels`, `restaurants`, `movies`, `books`, `dreams`, and `friends` subcollections, ignores legacy `_init` placeholders, recomputes counters, and preserves unrelated stats keys. Browser collection services call this endpoint rather than writing collection counters directly.
 
-The endpoint is not deployed or enabled in production by this branch. Emulator coverage validates the transaction and aggregation, not deployed Functions, App Check enforcement, or production Firestore Rules. XP awards and achievement writes remain separate client-authoritative flows and are not covered by this callable.
+The endpoint is not deployed or enabled in production by this branch. Emulator coverage validates the transaction and aggregation, not deployed Functions, App Check enforcement, or production Firestore Rules. XP and achievement awards have separate candidate server-side paths described below.
 
 
 ## Server-authoritative XP rewards (candidate, not deployed)

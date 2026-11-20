@@ -12,6 +12,16 @@ const utcDateKey = value => {
     return date.toISOString().slice(0, 10);
 };
 
+function publicTaskSnapshot(data) {
+    return {
+        dateKey: data.dateKey,
+        tasks: data.tasks,
+        allCompleted: data.allCompleted === true,
+        bonusClaimed: data.bonusClaimed === true,
+        bonusClaimedXp: Number.isSafeInteger(data.bonusClaimedXp) ? data.bonusClaimedXp : 0
+    };
+}
+
 export async function ensureDailyTasks(db, uid, now = new Date()) {
     if (!validSegment(uid)) throw new TypeError('Invalid user ID');
     const dateKey = utcDateKey(now);
@@ -21,7 +31,7 @@ export async function ensureDailyTasks(db, uid, now = new Date()) {
         const [userSnapshot, snapshot] = await Promise.all([tx.get(userRef), tx.get(taskRef)]);
         if (!userSnapshot.exists) return null;
         if (snapshot.exists && snapshot.get('dateKey') === dateKey) {
-            return snapshot.data();
+            return publicTaskSnapshot(snapshot.data());
         }
         const tasks = createDailyTaskSet(uid, dateKey);
         const assignment = {
@@ -29,11 +39,13 @@ export async function ensureDailyTasks(db, uid, now = new Date()) {
             tasks,
             allCompleted: false,
             bonusClaimed: false,
-            bonusClaimedXp: 0,
+            bonusClaimedXp: 0
+        };
+        tx.set(taskRef, {
+            ...assignment,
             createdAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp()
-        };
-        tx.set(taskRef, assignment);
+        });
         return assignment;
     });
 }

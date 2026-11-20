@@ -1,5 +1,6 @@
 import { auth, db } from '../config/firebase.js';
 import { isAuthenticatedOwner, isValidFirestoreDocumentId } from '../core/owner-access-policy.js';
+import { validateMovieInput } from '../core/collection-input-policy.js';
 import { APP_CONFIG } from '../config/constants.js';
 import { 
     collection,
@@ -230,11 +231,14 @@ export class MovieService {
 
     async addMovie(userId, movieData) {
         if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid)) return { success: false, error: 'Недостаточно прав.' };
+        let safeData;
+        try { safeData = validateMovieInput(movieData); }
+        catch (error) { return { success: false, error: error.message }; }
         try {
             const moviesRef = collection(this.db, 'users', userId, 'movies');
             
             const newMovie = {
-                ...movieData,
+                ...safeData,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
                 status: movieData.status || 'to_watch',
@@ -255,10 +259,13 @@ export class MovieService {
 
     async updateMovie(userId, movieId, updates) {
         if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid) || !isValidFirestoreDocumentId(movieId)) return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
+        let safeUpdates;
+        try { safeUpdates = validateMovieInput(updates, { partial: true }); }
+        catch (error) { return { success: false, error: error.message }; }
         try {
             const movieRef = doc(this.db, 'users', userId, 'movies', movieId);
             await updateDoc(movieRef, {
-                ...updates,
+                ...safeUpdates,
                 updatedAt: serverTimestamp()
             });
             await this.updateUserStats(userId);

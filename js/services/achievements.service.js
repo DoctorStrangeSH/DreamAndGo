@@ -1,6 +1,8 @@
-import { db } from '../config/firebase.js';
+import { auth, db } from '../config/firebase.js';
+import { isAuthenticatedOwner } from '../core/owner-access-policy.js';
+import { calculateAchievementAwards } from '../core/achievement-award-policy.js';
 import {
-    doc, updateDoc, getDoc, serverTimestamp
+    doc, getDoc, runTransaction
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 // Все достижения в одном месте — легко добавлять новые
@@ -135,11 +137,15 @@ export class AchievementsService {
 
     // Получить все достижения пользователя
     async getUserAchievements(userId, { throwOnError = false } = {}) {
+        if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid)) {
+            if (throwOnError) throw new Error('Недостаточно прав для доступа к достижениям.');
+            return [];
+        }
         try {
             const userDoc = await getDoc(doc(this.db, 'users', userId));
             if (!userDoc.exists()) return [];
-
-            return userDoc.data().achievements || [];
+            const achievements = userDoc.data().achievements;
+            return Array.isArray(achievements) ? achievements : [];
         } catch (error) {
             console.error('Ошибка загрузки достижений:', error);
             if (throwOnError) throw error;
@@ -147,75 +153,29 @@ export class AchievementsService {
         }
     }
 
-    // Проверить и выдать новые достижения
+    // Transaction prevents concurrent award checks from overwriting one another.
     async checkAndAwardAchievements(userId) {
+        if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid)) return [];
         try {
-            const userDoc = await getDoc(doc(this.db, 'users', userId));
-            if (!userDoc.exists()) return [];
+            const userRef = doc(this.db, 'users', userId);
+            const awardedAt = new Date().toISOString();
+            return await runTransaction(this.db, async (transaction) => {
+                const userDoc = await transaction.get(userRef);
+                if (!userDoc.exists()) return [];
 
-            const userData = userDoc.data();
-            const stats = userData.stats || {};
-            const currentAchievements = userData.achievements || [];
+                const userData = userDoc.data();
+                const result = calculateAchievementAwards(
+                    userData.stats || {},
+                    userData.achievements || [],
+                    ACHIEVEMENTS,
+                    awardedAt
+                );
 
-            const newAchievements = [];
-
-            for (const [key, achievement] of Object.entries(ACHIEVEMENTS)) {
-                const existing = currentAchievements.find(a => a.id === key);
-                const currentLevel = existing ? (existing.level || 1) : 0;
-
-                // Если есть основное условие и оно не выполнено — пропускаем
-                if (achievement.condition && !achievement.condition(stats)) continue;
-
-                // Если есть уровни — проверяем следующий
-                if (achievement.levels && achievement.levels.length > 0) {
-                    const nextLevel = achievement.levels.find(l => l.level === currentLevel + 1);
-
-                    if (nextLevel && nextLevel.condition && nextLevel.condition(stats)) {
-                        const awarded = {
-                            id: key,
-                            icon: achievement.icon,
-                            emoji: achievement.emoji,
-                            title: nextLevel.title,
-                            description: nextLevel.description,
-                            level: nextLevel.level,
-                            category: achievement.category,
-                            awardedAt: new Date().toISOString()
-                        };
-
-                        newAchievements.push(awarded);
-
-                        const existingIndex = currentAchievements.findIndex(a => a.id === key);
-                        if (existingIndex >= 0) {
-                            currentAchievements[existingIndex] = awarded;
-                        } else {
-                            currentAchievements.push(awarded);
-                        }
-                    }
-                } else if (currentLevel === 0) {
-                    // Нет уровней — просто выдаём достижение
-                    const awarded = {
-                        id: key,
-                        icon: achievement.icon,
-                        emoji: achievement.emoji,
-                        title: achievement.title,
-                        description: achievement.description,
-                        level: 1,
-                        category: achievement.category,
-                        awardedAt: new Date().toISOString()
-                    };
-
-                    newAchievements.push(awarded);
-                    currentAchievements.push(awarded);
+                if (result.newAchievements.length > 0) {
+                    transaction.update(userRef, { achievements: result.updatedAchievements });
                 }
-            }
-
-            if (newAchievements.length > 0) {
-                await updateDoc(doc(this.db, 'users', userId), {
-                    achievements: currentAchievements
-                });
-            }
-
-            return newAchievements;
+                return result.newAchievements;
+            });
         } catch (error) {
             console.error('Ошибка проверки достижений:', error);
             return [];

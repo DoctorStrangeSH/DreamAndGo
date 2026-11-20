@@ -115,3 +115,11 @@
 - [x] Batch reads are bounded to 50 IDs and use one callable per batch.
 - [x] Profile route keeps direct Firestore read only for the signed-in owner's own document.
 - [ ] Verify no other module performs direct cross-user reads before tightening production Firestore Rules.
+
+
+### Public profile privacy control cleanup
+
+- [x] Replaced any future client-side privacy-flag mutation requirement with one server-owned callable.
+- [x] Added an explicit settings switch, fail-closed default, optimistic rollback on errors, and account-switch guards.
+- [x] Added server policy tests and client wiring tests.
+- [ ] Emulator/staging end-to-end validation remains required before production rollout.

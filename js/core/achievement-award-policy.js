@@ -5,12 +5,17 @@ export function calculateAchievementAwards(stats = {}, storedAchievements = [], 
             Number.isFinite(Number(value)) && Number(value) >= 0 ? Number(value) : 0
         ])
     );
-    const current = Array.isArray(storedAchievements)
-        ? storedAchievements.filter(item => item && typeof item === 'object' && !Array.isArray(item) &&
-            typeof item.id === 'string' && Number.isInteger(item.level) && item.level > 0)
-            .map(item => ({ ...item }))
-        : [];
-    const next = current.map(item => ({ ...item }));
+    const byId = new Map();
+    if (Array.isArray(storedAchievements)) {
+        for (const item of storedAchievements) {
+            if (!item || typeof item !== 'object' || Array.isArray(item) || typeof item.id !== 'string') continue;
+            const level = Number.isInteger(item.level) && item.level > 0 ? item.level : 1;
+            const normalized = { ...item, level };
+            const previous = byId.get(item.id);
+            if (!previous || normalized.level > previous.level) byId.set(item.id, normalized);
+        }
+    }
+    const next = [...byId.values()].map(item => ({ ...item }));
     const awarded = [];
 
     for (const [key, achievement] of Object.entries(catalog)) {

@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import { initializeApp, deleteApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import {
-    awardXpForVerifiedEvent, XP_DAILY_LIMIT, XP_DAILY_ACTION_LIMIT,
-    isDreamCompletionTransition
+    awardXpForVerifiedEvent, XP_DAILY_LIMIT, XP_DAILY_ACTION_LIMIT
 } from './xp-rewards.js';
+import { isDreamCompletionTransition } from '../js/core/xp-reward-policy.js';
 
 assert.ok(process.env.FIRESTORE_EMULATOR_HOST, 'Must run against Firestore emulator only');
 const app = initializeApp({ projectId: 'demo-dreamandgo-chat-rules' }, 'xp-reward-tests');

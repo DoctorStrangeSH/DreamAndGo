@@ -1,3 +1,4 @@
+import { escapeHTML, safeDocumentId, safeCount, safeInternalRoute } from '../../core/security.js';
 import { FriendsService } from '../../services/friends.service.js';
 
 export class FriendsModule {
@@ -155,17 +156,20 @@ export class FriendsModule {
     }
 
     createCard(user, type) {
-        const initials = (user.username || 'U')[0].toUpperCase();
+        const uid = safeDocumentId(user.uid);
+        if (!uid) return '';
+        const profileLink = safeInternalRoute(`#profile/${uid}`);
+        const initials = String(user.username || 'U').charAt(0).toUpperCase();
         const stats = user.stats || {};
 
         let actions = '';
 
         if (type === 'friend') {
             actions = `
-                <a href="#profile/${user.uid}" class="btn btn-outline-primary btn-sm" title="Профиль">
+                <a href="${escapeHTML(profileLink)}" class="btn btn-outline-primary btn-sm" title="Профиль">
                     <i class="bi bi-person"></i>
                 </a>
-                <button class="btn btn-outline-danger btn-sm remove-friend-btn" data-uid="${user.uid}" title="Удалить">
+                <button class="btn btn-outline-danger btn-sm remove-friend-btn" data-uid="${escapeHTML(uid)}" title="Удалить">
                     <i class="bi bi-person-x"></i>
                 </button>
             `;
@@ -196,18 +200,18 @@ export class FriendsModule {
             <div class="col-12 col-md-6">
                 <div class="card-premium p-3">
                     <div class="d-flex align-items-center gap-3">
-                        <div class="friend-avatar-placeholder">${initials}</div>
+                        <div class="friend-avatar-placeholder">${escapeHTML(initials)}</div>
                         <div class="flex-grow-1 min-width-0">
-                            <h6 class="fw-bold mb-0">@${user.username}</h6>
+                            <h6 class="fw-bold mb-0">@${escapeHTML(user.username)}</h6>
                             <div class="d-flex gap-2 mt-1">
                                 <small class="text-muted">
-                                    <i class="bi bi-airplane me-1"></i>${stats.travels || 0}
+                                    <i class="bi bi-airplane me-1"></i>${safeCount(stats.travels)}
                                 </small>
                                 <small class="text-muted">
-                                    <i class="bi bi-film me-1"></i>${stats.movies || 0}
+                                    <i class="bi bi-film me-1"></i>${safeCount(stats.movies)}
                                 </small>
                                 <small class="text-muted">
-                                    <i class="bi bi-book me-1"></i>${stats.books || 0}
+                                    <i class="bi bi-book me-1"></i>${safeCount(stats.books)}
                                 </small>
                             </div>
                         </div>

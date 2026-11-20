@@ -17,7 +17,8 @@ import { consumeProfileLookupQuota } from './profile-lookup-quota.js';
 import { registerProfileWithReservedUsername } from './username-reservation.js';
 import { getRegistrationState } from './registration-state.js';
 import { refreshUserStatsTransaction } from './profile-stats.js';
-import { awardXpForVerifiedEvent, isDreamCompletionTransition } from './xp-rewards.js';
+import { awardXpForVerifiedEvent } from './xp-rewards.js';
+import { isDreamCompletionTransition } from '../js/core/xp-reward-policy.js';
 
 if (getApps().length === 0) initializeApp();
 

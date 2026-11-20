@@ -5,7 +5,7 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebas
 // No client-supplied UID or counter value is sent to the callable.
 export async function refreshUserStats(requestedUid) {
     const uid = auth?.currentUser?.uid;
-    if (!uid || uid !== requestedUid || !functions) return false;
+    if (!uid || uid !== requestedUid || !functions) return null;
     try {
         const callable = httpsCallable(functions, 'refreshUserStatsV2');
         const response = await callable({});

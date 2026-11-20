@@ -81,9 +81,11 @@ export class DailyTasksWidget {
                     if (result?.claimed) {
                         window.app.ui.showToast(`Награда получена: +${result.xpGained} XP`);
                     }
+                    this.busy = false;
                     await window.app.renderNavWidgets();
-                } catch {
-                    window.app.ui.showToast('Награда пока недоступна. Обнови задания и попробуй ещё раз.', 'warning');
+                } catch (error) {
+                    const limited = error?.code === 'functions/resource-exhausted';
+                    window.app.ui.showToast(limited ? 'Дневной лимит XP исчерпан. Попробуй завтра.' : 'Награда пока недоступна. Обнови задания и попробуй ещё раз.', 'warning');
                     button.disabled = false;
                 } finally {
                     this.busy = false;
@@ -103,9 +105,11 @@ export class DailyTasksWidget {
                     if (result?.claimed) {
                         window.app.ui.showToast(`Бонус получен: +${result.xpGained} XP`);
                     }
+                    this.busy = false;
                     await window.app.renderNavWidgets();
-                } catch {
-                    window.app.ui.showToast('Бонус пока недоступен. Обнови задания и попробуй ещё раз.', 'warning');
+                } catch (error) {
+                    const limited = error?.code === 'functions/resource-exhausted';
+                    window.app.ui.showToast(limited ? 'Дневной лимит XP исчерпан. Попробуй завтра.' : 'Бонус пока недоступен. Обнови задания и попробуй ещё раз.', 'warning');
                     button.disabled = false;
                 } finally {
                     this.busy = false;

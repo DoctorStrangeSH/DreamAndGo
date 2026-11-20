@@ -1,6 +1,6 @@
 import { FieldValue } from 'firebase-admin/firestore';
 import {
-    createDailyTaskSet, DAILY_TASK_BONUS_XP, isValidDailyTaskId
+    createDailyTaskSet, DAILY_TASK_CATALOG, DAILY_TASK_BONUS_XP, isValidDailyTaskId
 } from '../js/core/daily-task-policy.js';
 
 const validSegment = value => typeof value === 'string' &&
@@ -129,7 +129,7 @@ async function claimReward(db, uid, claimId, rewardXp, now, mutateTask) {
             updatedAt: FieldValue.serverTimestamp()
         }, { merge: true });
         tx.update(taskRef, {
-            ...validation.patch,
+            ...validation.patch(xpGained),
             updatedAt: FieldValue.serverTimestamp()
         });
         tx.create(claimRef, {
@@ -143,11 +143,11 @@ async function claimReward(db, uid, claimId, rewardXp, now, mutateTask) {
 export async function claimDailyTaskReward(db, uid, taskId, now = new Date()) {
     if (!isValidDailyTaskId(taskId)) return { claimed: false, reason: 'invalid-task', xpGained: 0 };
     const dateKey = utcDateKey(now);
-    const definition = createDailyTaskSet(uid, dateKey).find(task => task.id === taskId);
+    const definition = DAILY_TASK_CATALOG.find(task => task.id === taskId);
     const catalogXp = definition?.xp;
     // Use the immutable catalog reward even when today's selected set differs.
     const reward = catalogXp ?? 0;
-    return claimReward(db, uid, dateKey + '_' + taskId, reward, now, data => {
+    return claimReward(db, uid, dateKey + '_' + taskId, reward, now, (data, xpGained) => {
         const tasks = Array.isArray(data.tasks) ? data.tasks : [];
         const task = tasks.find(item => item.id === taskId);
         if (!task || !task.completed || task.claimed) {
@@ -155,11 +155,11 @@ export async function claimDailyTaskReward(db, uid, taskId, now = new Date()) {
         }
         return {
             ok: true,
-            patch: {
+            patch: xpGained => ({
                 tasks: tasks.map(item => item.id === taskId
-                    ? { ...item, claimed: true, claimedXp: Math.min(reward, 300) }
+                    ? { ...item, claimed: true, claimedXp: xpGained }
                     : item)
-            }
+            })
         };
     });
 }
@@ -170,7 +170,7 @@ export async function claimDailyTaskBonus(db, uid, now = new Date()) {
         if (!data.allCompleted || data.bonusClaimed) return { ok: false, reason: 'not-claimable' };
         return {
             ok: true,
-            patch: { bonusClaimed: true, bonusClaimedXp: DAILY_TASK_BONUS_XP }
+            patch: xpGained => ({ bonusClaimed: true, bonusClaimedXp: xpGained })
         };
     });
 }

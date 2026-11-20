@@ -15,6 +15,7 @@ test('public projection excludes private and unknown properties at every level',
     assert.equal(profile.stats.dreams, 3);
     assert.equal(profile.stats.friends, 2);
     assert.equal(JSON.stringify(profile).includes('secret'), false);
+    assert.equal('publicProfileEnabled' in profile, false);
     assert.equal(JSON.stringify(profile).includes('example.com/avatar.png'), true);
 });
 

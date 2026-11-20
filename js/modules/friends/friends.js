@@ -345,7 +345,7 @@ export class FriendsModule {
 
         document.querySelectorAll('.cancel-request-btn').forEach(btn => {
             btn.addEventListener('click', () => this.runFriendAction(btn,
-                uid => this.friendsService.rejectFriendRequest(btn.dataset.uid, uid),
+                uid => this.friendsService.cancelFriendRequest(uid, btn.dataset.uid),
                 'Заявка отменена', 'Не удалось отменить заявку', () => this.subscribeToSent()));
         });
 

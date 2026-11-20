@@ -8,10 +8,11 @@ export async function refreshUserStats(requestedUid) {
     if (!uid || uid !== requestedUid || !functions) return false;
     try {
         const callable = httpsCallable(functions, 'refreshUserStatsV2');
-        await callable({});
-        return auth?.currentUser?.uid === uid;
+        const response = await callable({});
+        if (auth?.currentUser?.uid !== uid) return null;
+        return Array.isArray(response.data?.newAchievements) ? response.data.newAchievements : [];
     } catch (error) {
         console.error('Не удалось обновить статистику профиля:', error);
-        return false;
+        return null;
     }
 }

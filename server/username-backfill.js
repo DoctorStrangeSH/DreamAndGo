@@ -16,7 +16,11 @@ const snapshotReservations = snapshots => snapshots.map(snapshot => ({
 export async function runUsernameReservationBackfill(db, {
     apply = false,
     registrationFrozen = false,
-    serverTimestamp
+    serverTimestamp,
+    usersCollection = 'users',
+    reservationsCollection = 'usernameReservations',
+    registryCollection = 'system',
+    registryDocument = 'usernameRegistry'
 } = {}) {
     if (!db || typeof db.collection !== 'function') {
         throw new TypeError('A Firestore database is required');
@@ -25,10 +29,10 @@ export async function runUsernameReservationBackfill(db, {
         throw new Error('Apply mode requires a frozen registration window and server timestamp provider');
     }
 
-    const registryRef = db.collection('system').doc('usernameRegistry');
+    const registryRef = db.collection(registryCollection).doc(registryDocument);
     const [users, reservations, control] = await Promise.all([
-        db.collection('users').get(),
-        db.collection('usernameReservations').get(),
+        db.collection(usersCollection).get(),
+        db.collection(reservationsCollection).get(),
         registryRef.get()
     ]);
     if (control.exists && control.get('ready') === true) {
@@ -60,7 +64,7 @@ export async function runUsernameReservationBackfill(db, {
     let created = 0;
     let alreadyPresent = 0;
     for (const candidate of plan.missing) {
-        const ref = db.collection('usernameReservations').doc(candidate.key);
+        const ref = db.collection(reservationsCollection).doc(candidate.key);
         try {
             await ref.create({
                 uid: candidate.uid,
@@ -79,8 +83,8 @@ export async function runUsernameReservationBackfill(db, {
     }
 
     const [afterUsers, afterReservations, afterControl] = await Promise.all([
-        db.collection('users').get(),
-        db.collection('usernameReservations').get(),
+        db.collection(usersCollection).get(),
+        db.collection(reservationsCollection).get(),
         registryRef.get()
     ]);
     const after = planUsernameBackfill(

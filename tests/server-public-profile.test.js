@@ -112,3 +112,24 @@ test('server projection fails closed when public visibility is absent or disable
         username: 'private_user', publicProfileEnabled: false
     }), null);
 });
+
+
+test('direct profile lookup does not reveal whether a private account exists', async () => {
+    const db = { collection: () => ({ doc: () => ({
+        get: async () => ({ exists: true, data: () => ({ username: 'private_user' }) })
+    }) }) };
+    assert.deepEqual(await loadPublicProfile(db, 'bob', 'private-user'), {
+        ok: false, code: 'not-found'
+    });
+});
+
+test('username search returns no projection for accounts without explicit opt-in', async () => {
+    const db = { collection: () => ({ where: () => ({
+        limit: () => ({ get: async () => ({
+            docs: [{ id: 'private-user', data: () => ({ username: 'private_user' }) }]
+        }) })
+    }) }) };
+    assert.deepEqual(await findPublicProfileByUsername(db, 'bob', 'private_user'), {
+        ok: true, profile: null
+    });
+});

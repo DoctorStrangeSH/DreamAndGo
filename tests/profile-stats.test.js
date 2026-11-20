@@ -4,7 +4,7 @@ import { summarizeOwnedCollections, mergeOwnedStats } from '../server/profile-st
 
 function snapshot(records) {
     return { docs: records.map((data, index) => ({
-        id: data.id || String(index),
+        id: data.id || data.friendId || String(index),
         data: () => data
     })) };
 }

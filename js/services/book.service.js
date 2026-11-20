@@ -1,4 +1,4 @@
-import { db } from '../config/firebase.js';
+import { auth, db } from '../config/firebase.js';
 import { 
     collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc,
     query, orderBy, serverTimestamp, where
@@ -10,6 +10,7 @@ export class BookService {
     }
 
     async getBooks(userId, filters = {}, { throwOnError = false } = {}) {
+        if (!this.isOwner(userId)) { if (throwOnError) throw new Error('Недостаточно прав.'); return []; }
         try {
             const booksRef = collection(this.db, 'users', userId, 'books');
             let q = query(booksRef, orderBy('createdAt', 'desc'));
@@ -51,6 +52,7 @@ export class BookService {
     }
 
     async addBook(userId, data) {
+        if (!this.isOwner(userId)) return { success: false, error: 'Недостаточно прав.' };
         try {
             const booksRef = collection(this.db, 'users', userId, 'books');
             const newBook = {
@@ -75,6 +77,7 @@ export class BookService {
     }
 
     async updateBook(userId, bookId, updates) {
+        if (!this.isOwner(userId) || !this.isValidDocumentId(bookId)) return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
         try {
             const bookRef = doc(this.db, 'users', userId, 'books', bookId);
             await updateDoc(bookRef, {
@@ -90,6 +93,7 @@ export class BookService {
     }
 
     async deleteBook(userId, bookId) {
+        if (!this.isOwner(userId) || !this.isValidDocumentId(bookId)) return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
         try {
             const bookRef = doc(this.db, 'users', userId, 'books', bookId);
             await deleteDoc(bookRef);
@@ -102,6 +106,7 @@ export class BookService {
     }
 
     async getBook(userId, bookId) {
+        if (!this.isOwner(userId) || !this.isValidDocumentId(bookId)) return null;
         try {
             const bookRef = doc(this.db, 'users', userId, 'books', bookId);
             const bookDoc = await getDoc(bookRef);
@@ -115,7 +120,17 @@ export class BookService {
         }
     }
 
+    isOwner(userId) {
+        return typeof userId === 'string' && !!userId && auth?.currentUser?.uid === userId;
+    }
+
+    isValidDocumentId(value) {
+        return typeof value === 'string' && value.length > 0 && value.length <= 1500 &&
+            value !== '.' && value !== '..' && !value.includes('/') && value.trim() === value;
+    }
+
     async updateUserStats(userId) {
+        if (!this.isOwner(userId)) return;
         try {
             // Never overwrite valid counters with zeros when the collection read failed.
             const books = await this.getBooks(userId, {}, { throwOnError: true });

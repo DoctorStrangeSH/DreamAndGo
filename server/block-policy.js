@@ -1,5 +1,9 @@
-// Candidate v2 policy: presence of either user's block record denies communication.
-// This schema is not yet exposed to the client or protected by production rules.
+// Candidate v2 policy: either user's block record denies communication.
+// Firestore snapshots must be well-formed. Missing/malformed snapshots fail closed.
 export function isConversationBlocked(senderBlock, recipientBlock) {
-    return senderBlock?.exists !== false || recipientBlock?.exists !== false;
+    if (!senderBlock || typeof senderBlock.exists !== 'boolean' ||
+        !recipientBlock || typeof recipientBlock.exists !== 'boolean') {
+        return true;
+    }
+    return senderBlock.exists || recipientBlock.exists;
 }

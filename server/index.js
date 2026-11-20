@@ -5,6 +5,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { onDocumentCreated, onDocumentUpdated } from 'firebase-functions/v2/firestore';
 import { conversationPairKey } from './chat-pair.js';
 import { isConversationBlocked } from './block-policy.js';
+import { mutateFriendship } from './friendship-transactions.js';
 import { isValidUserId, isValidDocumentId, normalizeChatMessage, normalizeClientMessageId } from './message-policy.js';
 import { sendPrivateMessageTransaction } from './chat-transactions.js';
 import { getPrivateMessageStatus } from './message-status.js';
@@ -355,4 +356,41 @@ export const claimDailyTaskBonusV2 = onCall({ region: 'europe-west3', enforceApp
         throw new HttpsError(code, 'Бонус пока недоступен');
     }
     return result;
+});
+
+
+// Server-owned friendship lifecycle. The caller UID is always taken from Auth;
+// clients never write relationship documents belonging to another account.
+export const mutateFriendshipV2 = onCall({ region: 'europe-west3', enforceAppCheck: true }, async request => {
+    const uid = request.auth?.uid;
+    const targetUid = request.data?.targetUid;
+    const action = request.data?.action;
+    if (!isValidUserId(uid)) throw new HttpsError('unauthenticated', 'Требуется вход в аккаунт');
+    if (!isValidUserId(targetUid) || targetUid === uid ||
+        !['send', 'accept', 'reject', 'cancel', 'remove'].includes(action)) {
+        throw new HttpsError('invalid-argument', 'Некорректная операция с друзьями');
+    }
+
+    if (action === 'send') {
+        try {
+            await getAuth().getUser(targetUid);
+        } catch {
+            throw new HttpsError('not-found', 'Пользователь не найден');
+        }
+    }
+
+    const result = await mutateFriendship(
+        getFirestore(), uid, targetUid, action, () => FieldValue.serverTimestamp()
+    );
+    if (!result.ok) {
+        const message = result.code === 'already-exists'
+            ? 'Вы уже друзья или связь уже существует'
+            : result.code === 'not-found'
+                ? 'Заявка или дружба не найдена'
+                : result.code === 'failed-precondition'
+                    ? 'Состояние заявки изменилось. Обнови список и попробуй снова'
+                    : 'Некорректная операция с друзьями';
+        throw new HttpsError(result.code, message);
+    }
+    return { success: true, action };
 });

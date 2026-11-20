@@ -18,11 +18,15 @@ test('application action flow no longer submits client-selected XP actions', () 
     assert.doesNotMatch(method, /awardXP\(|addXP\(/);
 });
 
-test('daily tasks cannot grant XP while their progress is client-maintained', () => {
+test('daily tasks use authenticated server callables and never submit client progress', () => {
     const service = read('../js/services/daily-tasks.service.js');
     const widget = read('../js/modules/daily-tasks/daily-tasks.js');
     assert.doesNotMatch(service, /levelService\.addXP\(|return 150;/);
-    assert.match(widget, /Награда скоро/);
-    assert.match(widget, /Бонус станет доступен после серверной проверки/);
-    assert.doesNotMatch(widget, /claim-task-btn|claim-bonus-btn/);
+    assert.match(service, /httpsCallable\(functions, 'getDailyTasksV2'\)/);
+    assert.match(service, /claimDailyTaskRewardV2/);
+    assert.match(service, /claimDailyTaskBonusV2/);
+    assert.doesNotMatch(service, /setDoc\(|updateDoc\(|addDoc\(/);
+    assert.match(widget, /claim-task-btn/);
+    assert.match(widget, /claim-bonus-btn/);
+    assert.match(widget, /Награда получена/);
 });

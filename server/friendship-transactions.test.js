@@ -79,7 +79,7 @@ test('send rejects existing, reverse and already-friend relationships without wr
 
 test('accept validates the recipient-owned pending request and creates symmetric friendship', async () => {
     const incomingPath = 'users/alice/friendRequests/bob';
-    const outgoingPath = 'users/bob/sentRequests/alice';
+    const outgoingPath = 'users/alice/sentRequests/bob';
     const incoming = { ...request, from: 'alice', to: 'bob' };
     const outgoing = { ...request };
     const state = fixture({ [incomingPath]: incoming, [outgoingPath]: outgoing });
@@ -93,7 +93,7 @@ test('accept validates the recipient-owned pending request and creates symmetric
 
 test('reject removes only a validated incoming request and its matching sent index', async () => {
     const incomingPath = 'users/alice/friendRequests/bob';
-    const outgoingPath = 'users/bob/sentRequests/alice';
+    const outgoingPath = 'users/alice/sentRequests/bob';
     const state = fixture({
         [incomingPath]: { ...request, from: 'alice', to: 'bob' },
         [outgoingPath]: request

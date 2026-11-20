@@ -29,7 +29,7 @@ export class BookService {
                     const data = doc.data();
                     books.push({
                         id: doc.id,
-                        ...safeData,
+                        ...data,
                         createdAt: data.createdAt?.toDate?.() || new Date()
                     });
                 }
@@ -61,7 +61,7 @@ export class BookService {
         try {
             const booksRef = collection(this.db, 'users', userId, 'books');
             const newBook = {
-                ...data,
+                ...safeData,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
                 userRating: data.userRating || 0,

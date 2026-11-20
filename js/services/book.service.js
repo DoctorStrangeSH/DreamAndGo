@@ -1,5 +1,6 @@
 import { auth, db } from '../config/firebase.js';
 import { isAuthenticatedOwner, isValidFirestoreDocumentId } from '../core/owner-access-policy.js';
+import { validateBookInput } from '../core/collection-input-policy.js';
 import { 
     collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc,
     query, orderBy, serverTimestamp, where
@@ -28,7 +29,7 @@ export class BookService {
                     const data = doc.data();
                     books.push({
                         id: doc.id,
-                        ...data,
+                        ...safeData,
                         createdAt: data.createdAt?.toDate?.() || new Date()
                     });
                 }
@@ -54,6 +55,9 @@ export class BookService {
 
     async addBook(userId, data) {
         if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid)) return { success: false, error: 'Недостаточно прав.' };
+        let safeData;
+        try { safeData = validateBookInput(data); }
+        catch (error) { return { success: false, error: error.message }; }
         try {
             const booksRef = collection(this.db, 'users', userId, 'books');
             const newBook = {
@@ -79,10 +83,13 @@ export class BookService {
 
     async updateBook(userId, bookId, updates) {
         if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid) || !isValidFirestoreDocumentId(bookId)) return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
+        let safeUpdates;
+        try { safeUpdates = validateBookInput(updates, { partial: true }); }
+        catch (error) { return { success: false, error: error.message }; }
         try {
             const bookRef = doc(this.db, 'users', userId, 'books', bookId);
             await updateDoc(bookRef, {
-                ...updates,
+                ...safeUpdates,
                 updatedAt: serverTimestamp()
             });
             await this.updateUserStats(userId);

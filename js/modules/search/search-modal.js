@@ -54,16 +54,17 @@ export class SearchModal {
         `;
 
         const modalElement = document.getElementById('searchModal');
+        let searchTimeout;
         const modal = new bootstrap.Modal(modalElement);
         modal.show();
 
         modalElement.addEventListener('hidden.bs.modal', () => {
+            clearTimeout(searchTimeout);
             this.searchRequestId++;
             container.remove();
             document.body.style.overflow = '';
         });
 
-        let searchTimeout;
         const input = document.getElementById('searchModalInput');
         input.addEventListener('input', (event) => {
             clearTimeout(searchTimeout);

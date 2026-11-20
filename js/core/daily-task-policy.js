@@ -19,12 +19,15 @@ function hashSeed(value) {
 }
 
 export function createDailyTaskSet(uid, dateKey) {
-    if (typeof uid !== 'string' || !uid || typeof dateKey !== 'string' ||
-        !/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
+    const safeUid = typeof uid === 'string' ? uid.trim() : '';
+    const safeDateKey = typeof dateKey === 'string' ? dateKey : '';
+    const parsedDate = new Date(safeDateKey + 'T00:00:00.000Z');
+    if (!safeUid || !Number.isFinite(parsedDate.getTime()) ||
+        parsedDate.toISOString().slice(0, 10) !== safeDateKey) {
         throw new TypeError('Invalid daily task assignment identity');
     }
     const pool = DAILY_TASK_CATALOG.map(task => ({ ...task }));
-    let seed = hashSeed(uid + ':' + dateKey);
+    let seed = hashSeed(safeUid + ':' + safeDateKey);
     for (let index = pool.length - 1; index > 0; index--) {
         seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
         const target = seed % (index + 1);

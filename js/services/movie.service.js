@@ -229,7 +229,7 @@ export class MovieService {
     }
 
     async addMovie(userId, movieData) {
-        if (!this.isOwner(userId)) return { success: false, error: 'Недостаточно прав.' };
+        if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid)) return { success: false, error: 'Недостаточно прав.' };
         try {
             const moviesRef = collection(this.db, 'users', userId, 'movies');
             
@@ -254,7 +254,7 @@ export class MovieService {
     }
 
     async updateMovie(userId, movieId, updates) {
-        if (!this.isOwner(userId) || !isValidFirestoreDocumentId(movieId)) return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
+        if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid) || !isValidFirestoreDocumentId(movieId)) return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
         try {
             const movieRef = doc(this.db, 'users', userId, 'movies', movieId);
             await updateDoc(movieRef, {
@@ -271,7 +271,7 @@ export class MovieService {
     }
 
     async deleteMovie(userId, movieId) {
-        if (!this.isOwner(userId) || !this.isValidDocumentId(movieId)) return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
+        if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid) || !isValidFirestoreDocumentId(movieId)) return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
         try {
             const movieRef = doc(this.db, 'users', userId, 'movies', movieId);
             await deleteDoc(movieRef);
@@ -285,7 +285,7 @@ export class MovieService {
     }
 
     async updateUserStats(userId) {
-        if (!this.isOwner(userId)) return;
+        if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid)) return;
         try {
             const movies = await this.getUserMovies(userId, {}, { throwOnError: true });
             const watched = movies.filter(m => m.status === 'watched').length;

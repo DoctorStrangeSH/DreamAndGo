@@ -30,7 +30,6 @@ import { ExportService } from './services/export.service.js';
 import { SearchModal } from './modules/search/search-modal.js';
 import { LevelService } from './services/level.service.js';
 import { LevelWidget } from './modules/level/level-widget.js';
-import { DailyTasksService } from './services/daily-tasks.service.js';
 import { DailyTasksWidget } from './modules/daily-tasks/daily-tasks.js';
 
 class DreamAndGo {
@@ -53,7 +52,6 @@ class DreamAndGo {
         this.searchModal = new SearchModal();
         this.levelService = new LevelService();
         this.levelWidget = new LevelWidget();
-        this.dailyTasksService = new DailyTasksService();
         this.dailyTasksWidget = new DailyTasksWidget();
 
         this.currentUser = null;

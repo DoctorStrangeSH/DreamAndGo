@@ -25,8 +25,9 @@ export async function awardXpForVerifiedEvent(db, {
     }
     const dayKey = date.toISOString().slice(0, 10);
     const userRef = db.collection('users').doc(uid);
-    const eventRef = userRef.collection('xpEvents').doc(eventKey);
-    const dailyRef = userRef.collection('xpDaily').doc(dayKey);
+    const serverXpRef = db.collection('serverXp').doc(uid);
+    const eventRef = serverXpRef.collection('events').doc(eventKey);
+    const dailyRef = serverXpRef.collection('daily').doc(dayKey);
     const requestedXp = XP_REWARDS[action];
 
     return db.runTransaction(async tx => {

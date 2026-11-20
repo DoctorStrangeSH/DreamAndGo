@@ -150,24 +150,19 @@ export class FriendsService {
     async getFriends(userId) {
         if (!isCurrentUser(userId)) return [];
         try {
-            const friendsRef = collection(this.db, 'users', userId, 'friends');
-            const snapshot = await getDocs(friendsRef);
-            
-            const friends = [];
-            for (const docSnap of snapshot.docs) {
-                if (docSnap.id !== '_init') {
-                    const friendData = await this.getUserProfile(docSnap.id);
-                    if (friendData) {
-                        friends.push({
-                            uid: docSnap.id,
-                            ...friendData,
-                            addedAt: docSnap.data().addedAt?.toDate?.() || new Date()
-                        });
-                    }
-                }
-            }
-
-            return friends;
+            const recordsRef = collection(this.db, 'users', userId, 'friends');
+            const snapshot = await getDocs(recordsRef);
+            const records = snapshot.docs.filter(item => item.id !== '_init');
+            const profiles = await getPublicProfilesByIds(records.map(item => item.id));
+            const byId = new Map(profiles.map(profile => [profile.uid, profile]));
+            return records.flatMap(item => {
+                const profile = byId.get(item.id);
+                return profile ? [{
+                    uid: item.id,
+                    ...profile,
+                    addedAt: item.data().addedAt?.toDate?.() || new Date()
+                }] : [];
+            });
         } catch (error) {
             console.error('Ошибка загрузки друзей:', error);
             return [];
@@ -177,24 +172,19 @@ export class FriendsService {
     async getFriendRequests(userId) {
         if (!isCurrentUser(userId)) return [];
         try {
-            const requestsRef = collection(this.db, 'users', userId, 'friendRequests');
-            const snapshot = await getDocs(requestsRef);
-            
-            const requests = [];
-            for (const docSnap of snapshot.docs) {
-                if (docSnap.id !== '_init') {
-                    const userData = await this.getUserProfile(docSnap.id);
-                    if (userData) {
-                        requests.push({
-                            uid: docSnap.id,
-                            ...userData,
-                            createdAt: docSnap.data().createdAt?.toDate?.() || new Date()
-                        });
-                    }
-                }
-            }
-
-            return requests;
+            const recordsRef = collection(this.db, 'users', userId, 'friendRequests');
+            const snapshot = await getDocs(recordsRef);
+            const records = snapshot.docs.filter(item => item.id !== '_init');
+            const profiles = await getPublicProfilesByIds(records.map(item => item.id));
+            const byId = new Map(profiles.map(profile => [profile.uid, profile]));
+            return records.flatMap(item => {
+                const profile = byId.get(item.id);
+                return profile ? [{
+                    uid: item.id,
+                    ...profile,
+                    createdAt: item.data().createdAt?.toDate?.() || new Date()
+                }] : [];
+            });
         } catch (error) {
             console.error('Ошибка загрузки заявок:', error);
             return [];
@@ -204,24 +194,19 @@ export class FriendsService {
     async getSentRequests(userId) {
         if (!isCurrentUser(userId)) return [];
         try {
-            const sentRef = collection(this.db, 'users', userId, 'sentRequests');
-            const snapshot = await getDocs(sentRef);
-            
-            const sent = [];
-            for (const docSnap of snapshot.docs) {
-                if (docSnap.id !== '_init') {
-                    const userData = await this.getUserProfile(docSnap.id);
-                    if (userData) {
-                        sent.push({
-                            uid: docSnap.id,
-                            ...userData,
-                            createdAt: docSnap.data().createdAt?.toDate?.() || new Date()
-                        });
-                    }
-                }
-            }
-
-            return sent;
+            const recordsRef = collection(this.db, 'users', userId, 'sentRequests');
+            const snapshot = await getDocs(recordsRef);
+            const records = snapshot.docs.filter(item => item.id !== '_init');
+            const profiles = await getPublicProfilesByIds(records.map(item => item.id));
+            const byId = new Map(profiles.map(profile => [profile.uid, profile]));
+            return records.flatMap(item => {
+                const profile = byId.get(item.id);
+                return profile ? [{
+                    uid: item.id,
+                    ...profile,
+                    createdAt: item.data().createdAt?.toDate?.() || new Date()
+                }] : [];
+            });
         } catch (error) {
             console.error('Ошибка загрузки отправленных заявок:', error);
             return [];

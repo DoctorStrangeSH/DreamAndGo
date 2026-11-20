@@ -166,3 +166,11 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - Canonical task state is stored under serverDailyTasks/{uid}; XP event and daily ledgers under serverXp/{uid}. Browser clients are denied access in candidate emulator rules.
 - App Check browser bootstrap is wired for the protected callables.
 - Not deployed. Production rules and live App Check must be verified before rollout.
+
+
+### Combined verification snapshot — 2026-11-20
+
+- Code implementation head 88a128e8c3b635226cd6d0bb8d08d2e2307622a5: 415/415 repository tests; npm run check passed.
+- Firebase Emulator: 6/6 candidate Firestore Rules tests and 56/56 server/emulator transaction tests passed.
+- Later commits 4ce66c254e38a8c739eb78afb99f6d35c7dcbd and 248be52ee8970a7f732462c80fbf43661ebc8fc5 are documentation-only.
+- No production deploy or live user-data changes.

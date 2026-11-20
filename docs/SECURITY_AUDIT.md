@@ -63,3 +63,21 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 - Extracted pure identity/path validation into js/core/friend-action-policy.js and added tests/friend-action-policy.test.js. npm test discovers the new test automatically; npm run check syntax-checks the policy module.
 
 **Limit:** these client-side guards are defense in depth, not authorization. Firestore Rules must independently enforce actor ownership, request direction/status, reciprocal friendship invariants, and protected stats fields. No rules export or production rules change was available in this pass.
+
+
+### SEC-COLLECTIONS-01 — personal collection services did not bind caller UID to Firebase Auth
+
+**Status:** client-side defense-in-depth added to candidate branch; production Rules remain the security boundary.
+
+- Dreams, travels, books, movies, and restaurants services now verify that the requested owner UID equals the active Firebase Auth UID before list/read/create/update/delete/stat-refresh operations.
+- Item update/delete/read operations reject malformed document IDs before constructing Firestore paths.
+- Dream writes now pass through the existing `validateDreamInput()` policy. Updates load the current record, merge only the editable fields with submitted changes, validate the complete result, and write the normalized projection. Client-supplied protected or unknown fields are rejected.
+- Dream list filters are restricted to known status and category values.
+- Travel/book/movie/restaurant service syntax checks and the dreams service syntax check are part of `npm run check`.
+
+**Limitations and remaining work:**
+
+- These checks run in the browser and can be bypassed by a modified client. Firestore Rules must independently enforce owner-only access and field-level restrictions.
+- Travel, book, movie and restaurant write payloads still need dedicated schema validators and field allowlists; this pass adds authenticated-owner checks but does not claim complete payload validation.
+- No Firestore Rules were changed or deployed. The production ruleset remains unverified; see SEC-RULES-01.
+- No live data or user records were accessed or modified.

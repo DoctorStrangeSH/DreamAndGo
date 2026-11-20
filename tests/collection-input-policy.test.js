@@ -66,6 +66,7 @@ test('restaurant schema validates cuisine, dates, rating, dishes and photo URLs'
 test('partial updates accept only explicitly supplied allowlisted fields', () => {
     assert.deepEqual(validateTravelInput({ notes: 'Новые заметки' }, { partial: true }), { notes: 'Новые заметки' });
     assert.deepEqual(validateBookInput({ review: 'Хорошая книга' }, { partial: true }), { review: 'Хорошая книга' });
+    assert.deepEqual(validateBookInput({ currentPage: 120 }, { partial: true }), { currentPage: 120 });
     assert.deepEqual(validateMovieInput({ status: 'watched' }, { partial: true }), { status: 'watched' });
     assert.deepEqual(validateRestaurantInput({ userRating: 10 }, { partial: true }), { userRating: 10 });
     assert.throws(() => validateBookInput({ role: 'admin' }, { partial: true }), TypeError);

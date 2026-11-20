@@ -134,10 +134,10 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 - Cloud Functions v2 document triggers award XP only after persisted records are created in the user's travels, restaurants, movies, books, dreams, and friends collections. Required record fields and status enums are validated server-side. Dream completion is a separate transition trigger.
 - Each reward uses a stable event ledger entry and Firestore transaction, so duplicate trigger delivery cannot double-award XP.
 - Added per-action daily limit (5 events) and total daily XP ceiling (300) to reduce farming with newly generated document IDs.
-- Daily task progress remains client-maintained; its XP and bonus claims are temporarily disabled and visibly marked as pending server verification. Do not re-enable until task progress and claims are server-owned.
+- Daily task progress and claims have since moved to server-owned transactions; see SEC-DAILY-01. Canonical task state and XP ledgers live outside client-owned user paths.
 - Added unit and Firestore Emulator tests for idempotency, profile ownership, daily caps, missing profiles and dream status transitions.
 
-**Compatibility/rollout:** XP values currently retained for collection actions: travel 50, restaurant 30, movie 20, book 25, dream 15, friend 40, dream completion 100. Message, login and daily-task rewards are not awarded by this pipeline. Functions have not been deployed. Existing profile XP is preserved; no migration or production data changes were made.
+**Compatibility/rollout:** XP values currently retained for collection actions: travel 50, restaurant 30, movie 20, book 25, dream 15, friend 40, dream completion 100. Message and login rewards are not awarded by this pipeline. Daily-task rewards are handled by the separate SEC-DAILY-01 transaction flow. Functions have not been deployed. Existing profile XP is preserved; no migration or production data changes were made.
 
 
 ### SEC-ACH-01 — browser-side achievement awards
@@ -155,3 +155,18 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 
 
 **Final verification snapshot — 2026-11-20:** implementation commit 8b7843d065e8d6d8b0caecf74479355d3337029c passed 410/410 repository tests, 5/5 Firestore Rules tests, and 51/51 server/emulator tests. npm run check passed. Documentation-only commits followed. No production deployment or data mutation occurred.
+
+
+### SEC-DAILY-01 — server-owned daily task lifecycle
+
+**Status:** candidate implementation and emulator coverage complete; not deployed.
+
+- Replaced client-generated assignments and client-written progress with `getDailyTasksV2`, deterministic server assignment of three tasks per UTC day, and Firestore create-event progress updates.
+- The pool contains only six server-validated collection/friend creation events: travel, restaurant, movie, book, dream and friend. Ratings, reviews and chat messages remain excluded until their events can be validated server-side.
+- Claims and the all-tasks bonus are authenticated App-Check-protected callables. A Firestore transaction verifies completion, records the claim, updates profile XP and applies the same 300 XP UTC-day ceiling as ordinary XP rewards. Partial remaining XP is persisted as the actual amount.
+- Browser code cannot assign tasks, mutate progress or choose an XP amount. The old client-side update path is now a no-op and is no longer called by the app.
+- **Security boundary:** canonical state is stored under top-level `serverDailyTasks/{uid}`; XP event and daily ledgers are stored under `serverXp/{uid}`. Candidate Firestore rules deny browser reads/writes to these paths. They are not stored beneath `users/{uid}`, where broad owner rules could accidentally expose server state.
+- Added emulator coverage for assignment stability, duplicate event delivery, atomic claims, partial XP ceiling, bonus claims and browser denial of server-owned ledger paths.
+- App Check browser bootstrap now initializes the configured reCAPTCHA Enterprise provider before protected callables are used.
+
+**Rollout:** all code remains candidate-only. Production Firestore Rules, App Check enforcement, Functions deployment and the live client rollout must be reviewed together. UTC midnight is the explicit task reset boundary.

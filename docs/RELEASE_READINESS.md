@@ -210,3 +210,10 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [ ] Obtain the actual deployed Rules and sanitized live schema inventory.
 - [ ] Implement and test the complete production Rules set in Emulator; candidate rules remain test-only.
 - [ ] Staging test with two accounts, backup, rollback plan and manual production rollout.
+
+
+### Read-only recovery Rules negative tests — 2026-11-20
+
+- [x] Extended owner-read Emulator coverage to deny owner writes to social, notification, chat and daily-task documents in recovery mode.
+- [x] Added direct-path deny checks for server-owned XP/tasks, username registry/reservations, chat pairs, public profiles and Chat V2 records.
+- [ ] CI must pass on the resulting HEAD. This remains a recovery prototype and does not close the production Rules blocker.

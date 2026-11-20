@@ -4,7 +4,8 @@ import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/
 const REGION = 'europe-west3';
 const ENDPOINTS = Object.freeze({
     findByUsername: 'findPublicProfileByUsernameV2',
-    getByIds: 'getPublicProfilesV2'
+    getByIds: 'getPublicProfilesV2',
+    setVisibility: 'setPublicProfileVisibilityV2'
 });
 
 function createInvoker() {
@@ -48,4 +49,11 @@ export async function getPublicProfilesByIds(userIds) {
         if (Array.isArray(data?.profiles)) profiles.push(...data.profiles);
     }
     return profiles;
+}
+
+
+export async function setPublicProfileVisibility(enabled) {
+    if (typeof enabled !== 'boolean') throw new TypeError('Некорректная настройка приватности');
+    const data = await getInvoker()('setVisibility', { enabled });
+    return data?.enabled === true;
 }

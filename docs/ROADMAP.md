@@ -160,3 +160,14 @@ Dream&Go — социальное пространство мечтаний, п�
 
 
 - [x] CI на HEAD `515c9861f2d49895c34bfc027d5fbac3347261f2` прошёл успешно: [run 44780842923](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44780842923).
+
+
+### Public profile client cutover — 2026-11-20
+
+- [x] Добавлен batch callable `getPublicProfilesV2`: Auth + App Check, до 50 UID на запрос, один расход квоты на batch.
+- [x] Добавлен browser service `public-profile-callable.service.js` с пакетной загрузкой группами до 50.
+- [x] `FriendsService`: поиск по нику и загрузка друзей/заявок/исходящих заявок идут через защищённые callable; прямое чтение чужих `users/{uid}` удалено из сервиса.
+- [x] `ProfileModule`: чужой профиль загружается через callable; прямой read `users/{uid}` оставлен только для собственного профиля.
+- [x] Добавлены тесты на client cutover и server batch projection.
+- [ ] Проверить полный flow на Firebase Emulator и staging с двумя аккаунтами; callable rollout требует App Check.
+- [ ] Реализовать owner-facing opt-in UI и серверное изменение видимости; до этого публичные профили остаются выключенными по умолчанию.

@@ -86,11 +86,7 @@ export class TravelService {
                 ...safeData,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
-                photos: travelData.photos || [],
-                budget: travelData.budget || { spent: 0, planned: 0, currency: 'RUB' },
-                rating: travelData.rating || 0,
-                notes: travelData.notes || '',
-                isPublic: travelData.isPublic !== false
+                isPublic: true
             };
             
             const docRef = await addDoc(travelsRef, newTravel);

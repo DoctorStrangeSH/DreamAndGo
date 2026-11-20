@@ -84,3 +84,10 @@ Cloud Functions v2 exports document triggers for newly created travel, restauran
 - Daily task rewards are intentionally disabled while their progress is client-maintained. Re-enable only after task assignment, progress verification and reward claiming move to trusted server code.
 
 The triggers are candidate code only. Do not deploy until production Firestore Rules, App Check, staging accounts and the full user-flow rollout are reviewed. This pipeline does not award XP for login, messages, reviews or daily tasks.
+
+
+### Server-authoritative achievements
+
+The shared achievement catalog lives in js/core/achievement-catalog.js. The refreshUserStatsV2 callable uses that catalog and calculateAchievementAwards() inside the same Firestore transaction that recomputes personal collection counters. Newly earned levels are persisted with the stats update and returned to the signed-in client only for display toasts. The browser achievement service is read-only.
+
+Do not deploy or merge the client switch independently of the Functions rollout. The known perfect_week lifetime-vs-seven-day condition remains a separate product-logic issue.

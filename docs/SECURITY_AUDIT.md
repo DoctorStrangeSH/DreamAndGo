@@ -84,3 +84,17 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 
 
 **Implementation refinement:** extracted the shared `js/core/owner-access-policy.js` helper for exact authenticated-UID matching and single-segment Firestore document IDs. Added `tests/owner-access-policy.test.js`; `npm run check` includes the policy module. All five personal collection services consume the shared helper rather than maintaining separate implementations.
+
+
+### SEC-COLLECTIONS-02 — achievement concurrency and private export ownership
+
+**Status:** implemented on the candidate branch; requires CI and staging verification.
+
+- Achievement reads and award checks now require the active Firebase Auth UID to match the requested profile.
+- Achievement awards are calculated by a pure policy module and persisted inside a Firestore transaction. Concurrent award checks therefore re-read the latest profile state instead of overwriting each other's array updates.
+- The policy sanitizes counters, ignores malformed records, normalizes legacy entries, removes duplicate IDs while retaining the highest level, and advances only one eligible level per check.
+- Added regression tests for first awards, level progression, repeat checks, malformed counters, and duplicate legacy records.
+- Fixed progress calculations for special achievements and missing counters; the collector target is explicitly five categories.
+- Data export now requires the active owner UID and rechecks it after asynchronous reads and immediately before download, preventing an account switch during export from completing a download.
+
+**Known product logic issue:** the achievement named `perfect_week` currently evaluates lifetime totals, not events within a seven-day window. It is not safe to claim this is a weekly achievement until event timestamps and a rolling-window policy are implemented. This is tracked as a product correctness item, not silently changed during this security pass.

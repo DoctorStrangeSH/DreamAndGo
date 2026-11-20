@@ -100,3 +100,10 @@
 - [x] Audited Admin SDK callable/trigger surfaces for registration, public profiles, Chat V2, stats/achievements, XP and daily tasks.
 - [x] Added a consolidated access matrix and Emulator attack/negative-test checklist in `docs/FIRESTORE_ACCESS_MATRIX.md`.
 - [ ] Rules implementation remains intentionally blocked until production Rules and sanitized live schema are confirmed; do not derive production permissions from client-side checks alone.
+
+
+### Public profile consent audit
+
+- [x] Public projections now fail closed unless the owner has explicitly set `publicProfileEnabled: true`.
+- [x] Migration skips private profiles and checks username collisions across all users.
+- [ ] Privacy setting UI and production Rules remain open; do not treat the candidate field as a finished product setting.

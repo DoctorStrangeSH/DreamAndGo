@@ -173,3 +173,6 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 
 
 **Latest combined verification — 2026-11-20:** code implementation commit 88a128e8c3b635226cd6d0bb8d08d2e2307622a5 passed 415/415 repository tests, 6/6 candidate Firestore Rules tests, and 56/56 server/emulator tests. `npm run check` passed. Later commits 4ce66c254e38a8c739eb78afafb99f6d35c7dcbd and 248be52ee8970a7f732462c80fbf43661ebc8fc5 changed documentation only. No production Functions deployment, production Rules change, or user-data migration was performed.
+
+
+**Username registry rehearsal verification — 2026-11-20:** implementation head `def09284616fedcea822b3a28eeda9cf59b5f30a` passed 415/415 repository tests and `npm run check`. Firebase Emulator passed 6/6 isolated Rules tests and 59/59 server/Auth/Firestore emulator tests, including dry-run, explicit freeze gate, idempotent backfill apply, case-insensitive collision blocking, active-registry protection, two-account Auth signup/reconnect and duplicate-name competition. Emulator server suites now run serially because multiple integration tests intentionally exercise the shared registry control document. No production backup, migration, flag activation or deployment was performed.

@@ -107,3 +107,11 @@
 - [x] Public projections now fail closed unless the owner has explicitly set `publicProfileEnabled: true`.
 - [x] Migration skips private profiles and checks username collisions across all users.
 - [ ] Privacy setting UI and production Rules remain open; do not treat the candidate field as a finished product setting.
+
+
+### Public profile read path cleanup
+
+- [x] Friend search and social profile cards no longer need direct reads of other users' private profile documents.
+- [x] Batch reads are bounded to 50 IDs and use one callable per batch.
+- [x] Profile route keeps direct Firestore read only for the signed-in owner's own document.
+- [ ] Verify no other module performs direct cross-user reads before tightening production Firestore Rules.

@@ -100,3 +100,10 @@ node scripts/backfill-username-reservations.mjs --project dream-and-go --apply -
 CI запускает `--only auth,firestore` в `tests/firebase-emulator/firebase.json`; тест аварийно прекращается без обоих `*_EMULATOR_HOST`. Никогда не используйте эти сквозные тесты с production credentials.
 
 Этот тест ещё **не проверяет браузерный экран и App Check**, поскольку callable обёртка вызывается напрямую через сервис, а не через настоящий клиентский HTTPS-запрос. Для production дополнительно нужен пилотный браузерный прогон на staging.
+
+
+## Legacy signup hardening follow-up — 2026-11-20
+
+The still-active legacy signup path in js/services/auth.service.js now validates the username format and rejects leading/trailing whitespace before creating a Firebase Auth account. It also validates the basic email/password shape before account creation. Legacy username collision lookups are capped at one result per query to avoid unbounded reads.
+
+**Important:** this does not make legacy username allocation atomic. A race between two clients can still pass the preflight query and attempt to create the same normalized username. The legacy path must remain a release blocker and must be replaced by registerProfileV2 only after the registry backfill, registration freeze, production Rules/App Check review, and staging journey tests are complete. The signup-v2 flags remain disabled.

@@ -235,3 +235,15 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [ ] Owner-facing privacy setting and owner-only Firestore Rules are not yet implemented.
 - [ ] Emulator coverage for opt-in/opt-out transitions and direct public projection reads is required before enabling profile endpoints or migration.
 - **Release status remains HOLD.** Do not deploy public profile endpoints or run the migration until the consent UI and Rules are verified.
+
+
+### Explicit public-profile consent hardening — 2026-11-20
+
+- [x] Public profile projection is fail-closed unless `publicProfileEnabled === true` on the owner's private profile.
+- [x] Direct profile lookup conceals non-public profiles as not-found; exact username lookup returns no projection.
+- [x] Create-only migration skips non-opted-in accounts and checks case-insensitive username collisions across all accounts.
+- [x] Unit tests cover explicit opt-in, opt-out, private lookup and collision cases.
+- [x] CI passed on HEAD `515c9861f2d49895c34bfc027d5fbac3347261f2` ([run 44780842923](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44780842923)).
+- [ ] The owner-facing privacy setting and Firestore Rules for changing the opt-in flag are not implemented.
+- [ ] `FriendsService.getUserByUsername` still queries `users` directly from the browser; migrate it to the App-Check-protected callable before enforcing private-user read rules.
+- **Decision:** keep public profile endpoints and migration disabled until the UI, Rules and callable client cutover are tested together.

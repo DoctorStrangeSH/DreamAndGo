@@ -271,17 +271,14 @@ class DreamAndGo {
         } catch (error) { console.error('Ошибка проверки достижений:', error); }
     }
 
-    async awardXP(action) {
-        if (!this.currentUser) return;
-        try {
-            const result = await this.levelService.addXP(this.currentUser.uid, action);
-            if (result) this.renderNavWidgets();
-            return result;
-        } catch (error) { return null; }
+    // Kept as a compatibility shim for older modules. The browser may
+    // display XP but can no longer create or award XP events.
+    async awardXP() {
+        return null;
     }
 
     async onUserAction(action) {
-        await this.awardXP(action);
+        if (!this.currentUser) return;
         try { await this.dailyTasksService?.updateTaskProgress(this.currentUser.uid, action); } catch (e) { }
     }
 

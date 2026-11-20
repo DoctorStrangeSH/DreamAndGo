@@ -22,7 +22,8 @@ test('recomputes all personal collection counters from server snapshots', () => 
         restaurants: 2, restaurantsVisited: 1, restaurantsWantToVisit: 1,
         movies: 2, moviesWatched: 1, moviesToWatch: 1,
         books: 3, booksRead: 1, booksReading: 1, booksWantToRead: 1,
-        dreams: 3, dreamsCompleted: 1, dreamsInProgress: 1
+        dreams: 3, dreamsCompleted: 1, dreamsInProgress: 1,
+        friends: 0
     });
 });
 

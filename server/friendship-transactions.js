@@ -30,12 +30,13 @@ export async function mutateFriendship(db, uid, targetUid, action, serverTimesta
         const data = (snapshots, names, name) => get(snapshots, names, name)?.data?.() || {};
 
         if (action === 'send') {
-            const names = ['outgoing', 'reverseIncoming', 'ownFriend', 'targetFriend'];
+            const names = ['outgoing', 'reverseIncoming', 'reverseOutgoing', 'ownFriend', 'targetFriend'];
             const snapshots = await read(names);
             if (exists(snapshots, names, 'ownFriend') || exists(snapshots, names, 'targetFriend')) {
                 return resultError('already-exists');
             }
-            if (exists(snapshots, names, 'outgoing') || exists(snapshots, names, 'reverseIncoming')) {
+            if (exists(snapshots, names, 'outgoing') || exists(snapshots, names, 'reverseIncoming') ||
+                exists(snapshots, names, 'reverseOutgoing')) {
                 return resultError('failed-precondition');
             }
             const request = {
@@ -82,8 +83,14 @@ export async function mutateFriendship(db, uid, targetUid, action, serverTimesta
             if (request.from !== uid || request.to !== targetUid || request.status !== 'pending') {
                 return resultError('failed-precondition');
             }
+            if (exists(snapshots, names, 'incoming')) {
+                const incoming = data(snapshots, names, 'incoming');
+                if (incoming.from !== uid || incoming.to !== targetUid || incoming.status !== 'pending') {
+                    return resultError('failed-precondition');
+                }
+                tx.delete(refs.incoming);
+            }
             tx.delete(refs.outgoing);
-            if (exists(snapshots, names, 'incoming')) tx.delete(refs.incoming);
             return { ok: true, action };
         }
 

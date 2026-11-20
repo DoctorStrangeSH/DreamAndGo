@@ -16,21 +16,29 @@ const NOTIFICATION_ICONS = new Set([
 export class NotificationsWidget {
     constructor() {
         this.unsubscribe = null;
+        this.subscriptionGeneration = 0;
+        this.ownerUid = null;
     }
 
     init() {
+        this.destroy();
         const userId = window.app.currentUser?.uid;
         if (!userId) return;
 
+        this.ownerUid = userId;
+        const generation = ++this.subscriptionGeneration;
         this.unsubscribe = window.app.notificationsService.subscribeToNotifications(userId, (notifications) => {
-            if (window.app.currentUser?.uid !== userId) return;
-            this.renderDropdown(notifications);
-            this.updateBadge(notifications);
+            if (generation !== this.subscriptionGeneration ||
+                this.ownerUid !== userId || window.app.currentUser?.uid !== userId) return;
+            const safeNotifications = Array.isArray(notifications) ? notifications.filter(Boolean) : [];
+            this.renderDropdown(safeNotifications);
+            this.updateBadge(safeNotifications);
         });
     }
 
     updateBadge(notifications) {
-        const unread = notifications.filter(n => !n.read).length;
+        const safeNotifications = Array.isArray(notifications) ? notifications.filter(Boolean) : [];
+        const unread = safeNotifications.filter(n => !n.read).length;
         const badge = document.getElementById('notificationsBadge');
         const bell = document.getElementById('notificationsBell');
 
@@ -137,6 +145,8 @@ export class NotificationsWidget {
     }
 
     destroy() {
+        this.subscriptionGeneration++;
+        this.ownerUid = null;
         if (this.unsubscribe) {
             this.unsubscribe();
             this.unsubscribe = null;

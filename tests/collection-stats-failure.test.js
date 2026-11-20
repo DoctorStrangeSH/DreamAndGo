@@ -18,7 +18,7 @@ for (const [name, reader] of collections) {
 
     test(`${name}: read failure cannot overwrite saved counters`, async () => {
         let writes = 0;
-        const Collection = new Function('doc', 'updateDoc', 'console', `
+        const Collection = new Function('doc', 'updateDoc', 'console', 'isAuthenticatedOwner', 'auth', `
             return class Collection {
                 constructor() { this.db = {}; }
                 ${reader}(_uid, _filters, options) {
@@ -30,7 +30,9 @@ for (const [name, reader] of collections) {
         `)(
             () => 'user-doc',
             async () => { writes++; },
-            { error() {} }
+            { error() {} },
+            (requestedUid, activeUid) => requestedUid === activeUid,
+            { currentUser: { uid: 'alice' } }
         );
         const instance = new Collection();
         await instance.updateUserStats('alice');

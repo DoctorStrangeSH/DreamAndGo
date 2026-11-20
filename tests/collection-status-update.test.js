@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { validateTravelInput } from '../js/core/collection-input-policy.js';
+import { validateMovieInput } from '../js/core/collection-input-policy.js';
 
 for (const [name, singular] of [['travel', 'Travel'], ['movie', 'Movie']]) {
     const source = readFileSync(new URL(`../js/services/${name}.service.js`, import.meta.url), 'utf8');
@@ -27,8 +29,8 @@ for (const [name, singular] of [['travel', 'Travel'], ['movie', 'Movie']]) {
             (requestedUid, activeUid) => requestedUid === activeUid,
             value => typeof value === 'string' && value.length > 0 && !value.includes('/'),
             { currentUser: { uid: 'alice' } },
-            input => input,
-            input => input
+            validateTravelInput,
+            validateMovieInput
         );
         const result = await new Service()[`update${singular}`]('alice', 'record-1', { status: 'visited' });
         assert.deepEqual(result, { success: true });

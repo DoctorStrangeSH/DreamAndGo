@@ -11,7 +11,7 @@ for (const [name, singular] of [['travel', 'Travel'], ['movie', 'Movie']]) {
 
     test(`${name}: editing a status refreshes profile statistics`, async () => {
         const calls = [];
-        const Service = new Function('doc', 'updateDoc', 'serverTimestamp', 'calls', 'console', 'isAuthenticatedOwner', 'isValidFirestoreDocumentId', 'auth', 'validateInput', `
+        const Service = new Function('doc', 'updateDoc', 'serverTimestamp', 'calls', 'console', 'isAuthenticatedOwner', 'isValidFirestoreDocumentId', 'auth', 'validateTravelInput', 'validateMovieInput', `
             return class Service {
                 constructor() { this.db = {}; }
                 clearCache(uid) { calls.push(['clear', uid]); }
@@ -27,6 +27,7 @@ for (const [name, singular] of [['travel', 'Travel'], ['movie', 'Movie']]) {
             (requestedUid, activeUid) => requestedUid === activeUid,
             value => typeof value === 'string' && value.length > 0 && !value.includes('/'),
             { currentUser: { uid: 'alice' } },
+            input => input,
             input => input
         );
         const result = await new Service()[`update${singular}`]('alice', 'record-1', { status: 'visited' });

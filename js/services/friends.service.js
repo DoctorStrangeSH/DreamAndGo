@@ -1,16 +1,21 @@
-import { db } from '../config/firebase.js';
+import { auth, db } from '../config/firebase.js';
 import { normalizeUsername, isValidUsername } from '../core/username.js';
 import { toPublicProfile } from '../core/public-profile.js';
 import { countFriendRecords } from '../core/friend-count.js';
 import { 
     collection, doc, getDocs, getDoc, updateDoc,
-    query, where, limit, serverTimestamp, writeBatch, setDoc
+    query, where, limit, serverTimestamp, writeBatch, setDoc, runTransaction
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 function isValidFriendPair(userId, friendId) {
     const isValidUid = value => typeof value === 'string' && value.length > 0 &&
         value.length <= 128 && value.trim() === value && !value.includes('/');
     return isValidUid(userId) && isValidUid(friendId) && userId !== friendId;
+}
+
+
+function isCurrentUser(userId) {
+    return typeof userId === 'string' && auth?.currentUser?.uid === userId;
 }
 
 export class FriendsService {
@@ -41,7 +46,7 @@ export class FriendsService {
     }
 
     async sendFriendRequest(fromUserId, toUserId) {
-        if (!isValidFriendPair(fromUserId, toUserId)) {
+        if (!isCurrentUser(fromUserId) || !isValidFriendPair(fromUserId, toUserId)) {
             return { success: false, error: fromUserId === toUserId
                 ? 'Нельзя отправить заявку самому себе.'
                 : 'Некорректные данные для отправки заявки.' };
@@ -66,79 +71,85 @@ export class FriendsService {
     }
 
     async acceptFriendRequest(userId, friendId) {
-        if (!isValidFriendPair(userId, friendId)) {
+        if (!isCurrentUser(userId) || !isValidFriendPair(userId, friendId)) {
             return { success: false, error: 'Некорректные данные для принятия заявки.' };
         }
         try {
-            const batch = writeBatch(this.db);
+            const requestRef = doc(this.db, 'users', userId, 'friendRequests', friendId);
+            const sentRef = doc(this.db, 'users', friendId, 'sentRequests', userId);
+            const ownFriendRef = doc(this.db, 'users', userId, 'friends', friendId);
+            const peerFriendRef = doc(this.db, 'users', friendId, 'friends', userId);
 
-            batch.set(doc(this.db, 'users', userId, 'friends', friendId), {
-                friendId: friendId,
-                addedAt: serverTimestamp()
+            await runTransaction(this.db, async transaction => {
+                const request = await transaction.get(requestRef);
+                if (!request.exists()) throw new Error('Заявка не найдена или уже обработана.');
+                const data = request.data();
+                if (data.from !== friendId || data.to !== userId || data.status !== 'pending') {
+                    throw new Error('Заявка не прошла проверку.');
+                }
+                transaction.set(ownFriendRef, { friendId, addedAt: serverTimestamp() });
+                transaction.set(peerFriendRef, { friendId: userId, addedAt: serverTimestamp() });
+                transaction.delete(requestRef);
+                transaction.delete(sentRef);
             });
-
-            batch.set(doc(this.db, 'users', friendId, 'friends', userId), {
-                friendId: userId,
-                addedAt: serverTimestamp()
-            });
-
-            batch.delete(doc(this.db, 'users', userId, 'friendRequests', friendId));
-            batch.delete(doc(this.db, 'users', friendId, 'sentRequests', userId));
-
-            await batch.commit();
 
             await this.updateFriendsCount(userId);
             await this.updateFriendsCount(friendId);
-
             return { success: true };
         } catch (error) {
             console.error('Ошибка принятия заявки:', error);
-            return { success: false, error: error.message };
+            return { success: false, error: error.message || 'Не удалось принять заявку.' };
         }
     }
 
     async rejectFriendRequest(userId, friendId) {
-        if (!isValidFriendPair(userId, friendId)) {
+        if (!isCurrentUser(userId) || !isValidFriendPair(userId, friendId)) {
             return { success: false, error: 'Некорректные данные для отклонения заявки.' };
         }
         try {
-            const batch = writeBatch(this.db);
-
-            batch.delete(doc(this.db, 'users', userId, 'friendRequests', friendId));
-            batch.delete(doc(this.db, 'users', friendId, 'sentRequests', userId));
-
-            await batch.commit();
-
+            const requestRef = doc(this.db, 'users', userId, 'friendRequests', friendId);
+            const sentRef = doc(this.db, 'users', friendId, 'sentRequests', userId);
+            await runTransaction(this.db, async transaction => {
+                const request = await transaction.get(requestRef);
+                if (!request.exists()) throw new Error('Заявка не найдена или уже обработана.');
+                const data = request.data();
+                if (data.from !== friendId || data.to !== userId || data.status !== 'pending') {
+                    throw new Error('Заявка не прошла проверку.');
+                }
+                transaction.delete(requestRef);
+                transaction.delete(sentRef);
+            });
             return { success: true };
         } catch (error) {
             console.error('Ошибка отклонения заявки:', error);
-            return { success: false, error: error.message };
+            return { success: false, error: error.message || 'Не удалось отклонить заявку.' };
         }
     }
 
     async removeFriend(userId, friendId) {
-        if (!isValidFriendPair(userId, friendId)) {
+        if (!isCurrentUser(userId) || !isValidFriendPair(userId, friendId)) {
             return { success: false, error: 'Некорректные данные для удаления друга.' };
         }
         try {
-            const batch = writeBatch(this.db);
-
-            batch.delete(doc(this.db, 'users', userId, 'friends', friendId));
-            batch.delete(doc(this.db, 'users', friendId, 'friends', userId));
-
-            await batch.commit();
-
+            const ownFriendRef = doc(this.db, 'users', userId, 'friends', friendId);
+            const peerFriendRef = doc(this.db, 'users', friendId, 'friends', userId);
+            await runTransaction(this.db, async transaction => {
+                const ownFriend = await transaction.get(ownFriendRef);
+                if (!ownFriend.exists()) throw new Error('Пользователь не находится в списке друзей.');
+                transaction.delete(ownFriendRef);
+                transaction.delete(peerFriendRef);
+            });
             await this.updateFriendsCount(userId);
             await this.updateFriendsCount(friendId);
-
             return { success: true };
         } catch (error) {
             console.error('Ошибка удаления друга:', error);
-            return { success: false, error: error.message };
+            return { success: false, error: error.message || 'Не удалось удалить друга.' };
         }
     }
 
     async getFriends(userId) {
+        if (!isCurrentUser(userId)) return [];
         try {
             const friendsRef = collection(this.db, 'users', userId, 'friends');
             const snapshot = await getDocs(friendsRef);
@@ -165,6 +176,7 @@ export class FriendsService {
     }
 
     async getFriendRequests(userId) {
+        if (!isCurrentUser(userId)) return [];
         try {
             const requestsRef = collection(this.db, 'users', userId, 'friendRequests');
             const snapshot = await getDocs(requestsRef);
@@ -191,6 +203,7 @@ export class FriendsService {
     }
 
     async getSentRequests(userId) {
+        if (!isCurrentUser(userId)) return [];
         try {
             const sentRef = collection(this.db, 'users', userId, 'sentRequests');
             const snapshot = await getDocs(sentRef);
@@ -229,6 +242,7 @@ export class FriendsService {
     }
 
     async updateFriendsCount(userId) {
+        if (!isCurrentUser(userId)) return;
         try {
             const friendsRef = collection(this.db, 'users', userId, 'friends');
             const snapshot = await getDocs(friendsRef);

@@ -1,0 +1,33 @@
+# Dependencies
+**/node_modules/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+.firebase/
+
+# Firebase / emulator local state and logs
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+*.log
+firebase-export-*/
+
+# Test output
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editor and temporary files
+*.swp
+*.swo
+*~
+*.tmp

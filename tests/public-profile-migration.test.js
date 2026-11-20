@@ -44,3 +44,15 @@ test('migration skips private profiles without counting them as invalid username
     assert.equal(plan.disabledCount, 2);
     assert.equal(plan.invalidCount, 0);
 });
+
+
+test('private accounts still participate in case-insensitive username collision checks', () => {
+    const plan = planPublicProfileMigration([
+        { id: 'private', data: { username: 'Sherlock', publicProfileEnabled: false } },
+        { id: 'public', data: { username: 'sherlock', publicProfileEnabled: true } }
+    ]);
+    assert.equal(plan.conflictCount, 1);
+    assert.equal(plan.profiles.length, 1);
+    assert.equal(plan.profiles[0].uid, 'public');
+    assert.equal(plan.disabledCount, 1);
+});

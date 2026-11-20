@@ -76,6 +76,7 @@ The endpoint is not deployed or enabled in production by this branch. Emulator c
 Cloud Functions v2 exports document triggers for newly created travel, restaurant, movie, book, dream and friendship records, plus a transition trigger when a dream first becomes `completed`. Triggers call `awardXpForVerifiedEvent()`, which writes a stable per-event ledger record and updates `users/{uid}.stats.xp` in one Firestore transaction.
 
 - The event key is derived from the collection path and record ID, not supplied by the browser.
+- Required fields and status/category enums are checked before any XP award is granted.
 - Duplicate Cloud Functions delivery is idempotent.
 - Per-action cap: 5 events per UTC day.
 - Total cap: 300 XP per UTC day.

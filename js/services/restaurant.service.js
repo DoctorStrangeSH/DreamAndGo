@@ -1,5 +1,6 @@
 import { auth, db } from '../config/firebase.js';
 import { isAuthenticatedOwner, isValidFirestoreDocumentId } from '../core/owner-access-policy.js';
+import { validateRestaurantInput } from '../core/collection-input-policy.js';
 import { 
     collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc,
     query, orderBy, serverTimestamp, where
@@ -31,7 +32,7 @@ export class RestaurantService {
                     const data = doc.data();
                     restaurants.push({
                         id: doc.id,
-                        ...data,
+                        ...safeData,
                         createdAt: data.createdAt?.toDate?.() || new Date()
                     });
                 }
@@ -51,6 +52,9 @@ export class RestaurantService {
 
     async addRestaurant(userId, data) {
         if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid)) return { success: false, error: 'Недостаточно прав.' };
+        let safeData;
+        try { safeData = validateRestaurantInput(data); }
+        catch (error) { return { success: false, error: error.message }; }
         try {
             const restaurantsRef = collection(this.db, 'users', userId, 'restaurants');
             const newRestaurant = {
@@ -77,10 +81,13 @@ export class RestaurantService {
 
     async updateRestaurant(userId, restaurantId, updates) {
         if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid) || !isValidFirestoreDocumentId(restaurantId)) return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
+        let safeUpdates;
+        try { safeUpdates = validateRestaurantInput(updates, { partial: true }); }
+        catch (error) { return { success: false, error: error.message }; }
         try {
             const restaurantRef = doc(this.db, 'users', userId, 'restaurants', restaurantId);
             await updateDoc(restaurantRef, {
-                ...updates,
+                ...safeUpdates,
                 updatedAt: serverTimestamp()
             });
             await this.updateUserStats(userId);

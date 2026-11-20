@@ -1,5 +1,6 @@
 import { auth, db } from '../config/firebase.js';
 import { isAuthenticatedOwner, isValidFirestoreDocumentId } from '../core/owner-access-policy.js';
+import { validateTravelInput } from '../core/collection-input-policy.js';
 import { 
     collection,
     doc,
@@ -75,11 +76,14 @@ export class TravelService {
 
     async addTravel(userId, travelData) {
         if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid)) return { success: false, error: 'Недостаточно прав.' };
+        let safeData;
+        try { safeData = validateTravelInput(travelData); }
+        catch (error) { return { success: false, error: error.message }; }
         try {
             const travelsRef = collection(this.db, 'users', userId, 'travels');
             
             const newTravel = {
-                ...travelData,
+                ...safeData,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
                 photos: travelData.photos || [],
@@ -125,11 +129,14 @@ export class TravelService {
 
     async updateTravel(userId, travelId, updates) {
         if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid) || !isValidFirestoreDocumentId(travelId)) return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
+        let safeUpdates;
+        try { safeUpdates = validateTravelInput(updates, { partial: true }); }
+        catch (error) { return { success: false, error: error.message }; }
         try {
             const travelRef = doc(this.db, 'users', userId, 'travels', travelId);
             
             await updateDoc(travelRef, {
-                ...updates,
+                ...safeUpdates,
                 updatedAt: serverTimestamp()
             });
             

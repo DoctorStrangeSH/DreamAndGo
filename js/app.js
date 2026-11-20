@@ -278,8 +278,21 @@ class DreamAndGo {
     }
 
     async onUserAction(action) {
-        if (!this.currentUser) return;
-        try { await this.dailyTasksService?.updateTaskProgress(this.currentUser.uid, action); } catch (e) { }
+        const uid = this.currentUser?.uid;
+        if (!uid) return;
+        try { await this.dailyTasksService?.updateTaskProgress(uid, action); } catch (e) { }
+
+        // Firestore reward triggers run asynchronously. Refresh the level
+        // widget after they have had time to commit, without crossing accounts.
+        const rewardActions = new Set([
+            'add_travel', 'add_restaurant', 'add_movie', 'add_book',
+            'add_dream', 'add_friend', 'complete_dream'
+        ]);
+        if (rewardActions.has(action)) {
+            setTimeout(() => {
+                if (this.currentUser?.uid === uid) this.renderNavWidgets();
+            }, 1500);
+        }
     }
 
     updateHomeStats() {

@@ -221,7 +221,7 @@ export class RestaurantsModule {
                                     <div class="col-md-8">
                                         <label class="form-label fw-semibold small">Название *</label>
                                         <input type="text" class="form-control" name="name"
-                                               value="${restaurant?.name || ''}" required>
+                                               value="${escapeHTML(restaurant?.name || '')}" required>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Кухня</label>
@@ -246,39 +246,39 @@ export class RestaurantsModule {
                                     <div class="col-md-6">
                                         <label class="form-label fw-semibold small">Адрес</label>
                                         <input type="text" class="form-control" name="address"
-                                               value="${restaurant?.address || ''}">
+                                               value="${escapeHTML(restaurant?.address || '')}">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Дата посещения</label>
                                         <input type="date" class="form-control" name="visitDate"
-                                               value="${restaurant?.visitDate || ''}">
+                                               value="${escapeHTML(restaurant?.visitDate || '')}">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Средний чек</label>
                                         <input type="number" class="form-control" name="avgBill"
-                                               value="${restaurant?.avgBill || ''}" placeholder="₽">
+                                               value="${safeCount(restaurant?.avgBill, 100000000)}" placeholder="₽">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Моя оценка</label>
                                         <div class="d-flex align-items-center gap-2 pt-2">
                                             <input type="range" class="form-range" name="userRating"
-                                                   min="0" max="10" value="${restaurant?.userRating || 0}"
+                                                   min="0" max="10" value="${safeCount(restaurant?.userRating, 10)}"
                                                    id="ratingSlider" style="flex: 1;">
                                             <span class="badge bg-primary" id="ratingValue">
-                                                ${restaurant?.userRating || 0}/10
+                                                ${safeCount(restaurant?.userRating, 10)}/10
                                             </span>
                                         </div>
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label fw-semibold small">Любимые блюда</label>
                                         <input type="text" class="form-control" name="favoriteDishes"
-                                               value="${restaurant?.favoriteDishes?.join(', ') || ''}"
+                                               value="${escapeHTML(Array.isArray(restaurant?.favoriteDishes) ? restaurant.favoriteDishes.join(', ') : '')}"
                                                placeholder="Через запятую: паста, пицца, тирамису">
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label fw-semibold small">Рецензия</label>
                                         <textarea class="form-control" name="review" rows="3"
-                                                  placeholder="Твои впечатления...">${restaurant?.review || ''}</textarea>
+                                                  placeholder="Твои впечатления...">${escapeHTML(restaurant?.review || '')}</textarea>
                                     </div>
                                 </div>
                             </form>

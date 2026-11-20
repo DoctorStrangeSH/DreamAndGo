@@ -221,7 +221,7 @@ export class TravelsModule {
                                     <div class="col-md-8">
                                         <label class="form-label fw-semibold small">Название *</label>
                                         <input type="text" class="form-control" name="title"
-                                               value="${travel?.title || ''}" placeholder="Например: Париж, Франция" required>
+                                               value="${escapeHTML(travel?.title || '')}" placeholder="Например: Париж, Франция" required>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Тип</label>
@@ -241,26 +241,26 @@ export class TravelsModule {
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Местоположение</label>
                                         <input type="text" class="form-control" name="location"
-                                               value="${travel?.location || ''}" placeholder="Страна, город">
+                                               value="${escapeHTML(travel?.location || '')}" placeholder="Страна, город">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Оценка</label>
                                         <div class="d-flex align-items-center gap-2 pt-2">
                                             <input type="range" class="form-range" name="rating"
-                                                   min="0" max="10" value="${travel?.rating || 0}"
+                                                   min="0" max="10" value="${safeCount(travel?.rating, 10)}"
                                                    id="ratingSlider" style="flex: 1;">
-                                            <span class="badge bg-primary" id="ratingValue">${travel?.rating || 0}/10</span>
+                                            <span class="badge bg-primary" id="ratingValue">${safeCount(travel?.rating, 10)}/10</span>
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Бюджет (план)</label>
                                         <input type="number" class="form-control" name="budgetPlanned"
-                                               value="${travel?.budget?.planned || ''}" placeholder="0">
+                                               value="${safeCount(travel?.budget?.planned, 100000000)}" placeholder="0">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Потрачено</label>
                                         <input type="number" class="form-control" name="budgetSpent"
-                                               value="${travel?.budget?.spent || ''}" placeholder="0">
+                                               value="${safeCount(travel?.budget?.spent, 100000000)}" placeholder="0">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Валюта</label>
@@ -273,14 +273,14 @@ export class TravelsModule {
                                     <div class="col-12">
                                         <label class="form-label fw-semibold small">Описание</label>
                                         <textarea class="form-control" name="description" rows="3"
-                                                  placeholder="Опиши свои впечатления или планы...">${travel?.description || ''}</textarea>
+                                                  placeholder="Опиши свои впечатления или планы...">${escapeHTML(travel?.description || '')}</textarea>
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label fw-semibold small">
                                             <i class="bi bi-journal-text me-1"></i>Заметки / Дневник
                                         </label>
                                         <textarea class="form-control" name="notes" rows="2"
-                                                  placeholder="Личные заметки...">${travel?.notes || ''}</textarea>
+                                                  placeholder="Личные заметки...">${escapeHTML(travel?.notes || '')}</textarea>
                                     </div>
                                 </div>
                             </form>

@@ -12,6 +12,7 @@ export class ProfileModule {
         this.tabRequestId = 0;
         this.profileIsOwn = false;
         this.profileUserId = null;
+        this.profileRequestId = 0;
     }
 
     async render(params = {}) {
@@ -19,6 +20,7 @@ export class ProfileModule {
         if (!mainContent) return;
 
         const currentUserId = window.app.currentUser?.uid;
+        const requestId = ++this.profileRequestId;
         const userId = (params.id && params.id.length > 20) ? params.id : currentUserId;
         const isOwnProfile = userId === currentUserId;
         this.profileIsOwn = isOwnProfile;
@@ -29,6 +31,9 @@ export class ProfileModule {
         mainContent.innerHTML = window.app.ui.createLoader();
 
         const userData = await this.loadUserProfile(userId);
+
+        // Do not let a slower profile request replace a newer route or a different signed-in account.
+        if (requestId !== this.profileRequestId || window.app.currentUser?.uid !== currentUserId) return;
 
         if (!userData) {
             mainContent.innerHTML = `

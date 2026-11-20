@@ -188,3 +188,10 @@ Dream&Go — социальное пространство мечтаний, п�
 
 - [x] Root CI `test` job passed on implementation HEAD `8a570eeee68fad84574ded2bd8bdf7297fd18ad1` ([run 44796782146](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44796782146)).
 - [ ] Emulator/staging two-account journey remains outstanding; production rollout remains blocked on username registry backup/dry-run/backfill and live Rules/App Check verification.
+
+
+### Privacy flag abuse regression coverage — 2026-11-20
+
+- [x] Emulator rules tests explicitly deny owner browser writes of `publicProfileEnabled: true` and `false`; only the server callable may mutate consent.
+- [x] Client and server projection tests assert `publicProfileEnabled` is never returned in public profile payloads.
+- [ ] Re-run Firebase Emulator workflow and verify test suite against the current candidate rules.

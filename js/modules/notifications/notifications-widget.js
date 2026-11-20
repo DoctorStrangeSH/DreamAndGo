@@ -1,3 +1,5 @@
+import { escapeHTML, safeInternalRoute, safeIconClass, safeDocumentId } from '../../core/security.js';
+
 export class NotificationsWidget {
     constructor() {
         this.unsubscribe = null;
@@ -69,15 +71,17 @@ export class NotificationsWidget {
                 
                 await window.app.notificationsService.markAsRead(window.app.currentUser.uid, notifId);
                 
-                if (link) {
-                    window.app.router.navigate(link.replace('#', ''));
-                }
+                const safeRoute = safeInternalRoute(link);
+                if (safeRoute) window.app.router.navigate(safeRoute.replace(/^#/, ''));
             });
         });
     }
 
     createNotificationItem(n) {
         const time = this.formatTime(n.createdAt);
+        const notifId = safeDocumentId(n.id);
+        const route = safeInternalRoute(n.link);
+        const icon = safeIconClass(n.icon);
         const colors = {
             primary: '#6C5CE7', success: '#00B894', warning: '#FDCB6E',
             danger: '#E17055', info: '#74b9ff'
@@ -85,18 +89,18 @@ export class NotificationsWidget {
 
         return `
             <div class="notification-item p-2 border-bottom ${!n.read ? 'unread' : ''}" 
-                 data-notif-id="${n.id}" data-link="${n.link || ''}"
+                 data-notif-id="${escapeHTML(notifId)}" data-link="${escapeHTML(route)}"
                  style="cursor: pointer; transition: background 0.15s;">
                 <div class="d-flex gap-2">
                     <div class="notification-icon" style="background: ${colors[n.color] || colors.primary}20; color: ${colors[n.color] || colors.primary};">
-                        <i class="bi ${n.icon}"></i>
+                        <i class="bi ${icon}"></i>
                     </div>
                     <div class="flex-grow-1 min-width-0">
                         <div class="d-flex justify-content-between">
-                            <small class="fw-bold">${n.title}</small>
+                            <small class="fw-bold">${escapeHTML(n.title)}</small>
                             <small class="text-muted" style="font-size: 0.65rem;">${time}</small>
                         </div>
-                        <small class="text-muted">${n.message}</small>
+                        <small class="text-muted">${escapeHTML(n.message)}</small>
                     </div>
                     ${!n.read ? `<div class="unread-dot"></div>` : ''}
                 </div>

@@ -81,3 +81,6 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 - Travel, book, movie and restaurant write payloads still need dedicated schema validators and field allowlists; this pass adds authenticated-owner checks but does not claim complete payload validation.
 - No Firestore Rules were changed or deployed. The production ruleset remains unverified; see SEC-RULES-01.
 - No live data or user records were accessed or modified.
+
+
+**Implementation refinement:** extracted the shared `js/core/owner-access-policy.js` helper for exact authenticated-UID matching and single-segment Firestore document IDs. Added `tests/owner-access-policy.test.js`; `npm run check` includes the policy module. All five personal collection services consume the shared helper rather than maintaining separate implementations.

@@ -1,5 +1,5 @@
 import { db } from '../config/firebase.js';
-import { getLevelFromXP } from '../core/level-policy.js';
+import { getLevelFromXP, normalizeXP } from '../core/level-policy.js';
 import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 // Конфигурация уровней
@@ -36,7 +36,7 @@ export class LevelService {
             const userDoc = await getDoc(doc(this.db, 'users', userId));
             if (!userDoc.exists()) return { level: 1, xp: 0, progress: 0 };
             
-            const xp = userDoc.data().stats?.xp ?? 0;
+            const xp = normalizeXP(userDoc.data().stats?.xp ?? 0);
             return {
                 xp: xp,
                 ...getLevelFromXP(xp)

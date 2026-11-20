@@ -82,7 +82,17 @@ export class DreamsService {
             const dreamRef = doc(this.db, 'users', userId, 'dreams', dreamId);
             const existing = await getDoc(dreamRef);
             if (!existing.exists()) return { success: false, error: 'Мечта не найдена.' };
-            const safeData = validateDreamInput({ ...existing.data(), ...updates });
+            const current = existing.data();
+            const editable = {
+                title: current.title,
+                category: current.category,
+                status: current.status,
+                description: current.description,
+                progress: current.progress,
+                deadline: current.deadline,
+                steps: current.steps
+            };
+            const safeData = validateDreamInput({ ...editable, ...updates });
             await updateDoc(dreamRef, {
                 ...safeData,
                 updatedAt: serverTimestamp()

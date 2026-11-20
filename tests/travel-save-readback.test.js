@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { validateTravelInput } from '../js/core/collection-input-policy.js';
 
 const source = readFileSync(new URL('../js/services/travel.service.js', import.meta.url), 'utf8');
 const start = source.indexOf('    async addTravel(userId, travelData) {');
@@ -26,7 +27,7 @@ function service({ write, read }) {
         state,
         (requestedUid, activeUid) => requestedUid === activeUid,
         { currentUser: { uid: 'alice' } },
-        input => input
+        validateTravelInput
     );
     return { instance: new Travel(), state };
 }
@@ -36,7 +37,7 @@ test('successful travel write is not reported as failure if read-back fails', as
         write: async () => ({ id: 'new-travel' }),
         read: async () => { throw new Error('network lost after commit'); }
     });
-    const result = await instance.addTravel('alice', { title: 'Путешествие' });
+    const result = await instance.addTravel('alice', { title: 'Путешествие', type: 'city', status: 'planned', location: '', description: '', budget: { planned: 0, spent: 0, currency: 'RUB' }, rating: 0, notes: '', photos: [] });
     assert.equal(result.success, true);
     assert.equal(result.id, 'new-travel');
     assert.equal(result.travel.title, 'Путешествие');
@@ -51,7 +52,7 @@ test('successful read-back returns server document', async () => {
         write: async () => ({ id: 'travel-2' }),
         read: async () => ({ exists: () => true, data: () => ({ title: 'Saved title' }) })
     });
-    const result = await instance.addTravel('alice', { title: 'Draft' });
+    const result = await instance.addTravel('alice', { title: 'Draft', type: 'city', status: 'planned', location: '', description: '', budget: { planned: 0, spent: 0, currency: 'RUB' }, rating: 0, notes: '', photos: [] });
     assert.equal(result.success, true);
     assert.equal(result.travel.title, 'Saved title');
 });
@@ -61,7 +62,7 @@ test('failed travel write reports failure and does not claim success', async () 
         write: async () => { throw new Error('permission denied'); },
         read: async () => { throw new Error('must not read'); }
     });
-    const result = await instance.addTravel('alice', { title: 'Denied' });
+    const result = await instance.addTravel('alice', { title: 'Denied', type: 'city', status: 'planned', location: '', description: '', budget: { planned: 0, spent: 0, currency: 'RUB' }, rating: 0, notes: '', photos: [] });
     assert.equal(result.success, false);
     assert.equal(state.writeCalls, 1);
     assert.equal(state.readCalls, 0);

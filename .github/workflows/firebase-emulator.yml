@@ -33,4 +33,4 @@ jobs:
         run: >-
           npx -y firebase-tools@latest emulators:exec
           --project demo-dreamandgo-chat-rules --only auth,firestore --config firebase.json
-          "npm test && node --test ../../server/*.emulator.test.mjs"
+          "npm test && node --test --test-concurrency=1 ../../server/*.emulator.test.mjs"

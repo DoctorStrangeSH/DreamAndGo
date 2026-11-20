@@ -6,7 +6,7 @@ test('public projection excludes private and unknown properties at every level',
     const profile = toPublicProfile('person-1', {
         email: 'secret@example.com', password: 'secret', preferences: { theme: 'private' },
         privacy: { dreams: 'private' }, friends: ['hidden'], tokens: { admin: true },
-        username: ' Sherlock ', displayName: ' Sherlock ', avatar: 'https://example.com/avatar.png',
+        publicProfileEnabled: true, username: ' Sherlock ', displayName: ' Sherlock ', avatar: 'https://example.com/avatar.png',
         stats: { dreams: 3, friends: 2, secretBalance: 9000 }
     });
     assert.deepEqual(Object.keys(profile).sort(), ['uid','username','usernameNormalized','displayName','avatar','bio','stats'].sort());
@@ -20,7 +20,7 @@ test('public projection excludes private and unknown properties at every level',
 
 test('public projection sanitizes malformed and unsafe fields', () => {
     const profile = toPublicProfile('person-2', {
-        username: 10, avatar: 'javascript:alert(1)', bio: { private: true },
+        publicProfileEnabled: true, username: 10, avatar: 'javascript:alert(1)', bio: { private: true },
         stats: { dreams: -7, books: '7', movies: 1.2, travels: 2 }
     });
     assert.equal(profile.username, '');
@@ -30,4 +30,11 @@ test('public projection sanitizes malformed and unsafe fields', () => {
     assert.equal(profile.stats.books, 0);
     assert.equal(profile.stats.movies, 0);
     assert.equal(profile.stats.travels, 2);
+});
+
+
+test('public profile projection is denied unless the owner explicitly opts in', () => {
+    assert.equal(toPublicProfile('private-user', { username: 'private_user' }), null);
+    assert.equal(toPublicProfile('private-user', { username: 'private_user', publicProfileEnabled: false }), null);
+    assert.equal(toPublicProfile('public-user', { username: 'public_user', publicProfileEnabled: true }).uid, 'public-user');
 });

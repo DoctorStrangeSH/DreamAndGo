@@ -17,7 +17,9 @@ export async function ensureDailyTasks(db, uid, now = new Date()) {
     const dateKey = utcDateKey(now);
     const taskRef = db.collection('users').doc(uid).collection('dailyTasks').doc('current');
     return db.runTransaction(async tx => {
-        const snapshot = await tx.get(taskRef);
+        const userRef = db.collection('users').doc(uid);
+        const [userSnapshot, snapshot] = await Promise.all([tx.get(userRef), tx.get(taskRef)]);
+        if (!userSnapshot.exists) return null;
         if (snapshot.exists && snapshot.get('dateKey') === dateKey) {
             return snapshot.data();
         }
@@ -101,10 +103,7 @@ async function claimReward(db, uid, claimId, rewardXp, now, mutateTask) {
         if (claimSnapshot.exists) return { claimed: false, reason: 'duplicate', xpGained: 0 };
 
         const taskData = taskSnapshot.data();
-        if (taskData.dateKey !== utcDay) {
-            // The local task day may differ from UTC. The claim ID embeds the
-            // task date, while the reward ceiling is always calculated by UTC day.
-        }
+        if (taskData.dateKey !== utcDay) return { claimed: false, reason: 'tasks-expired', xpGained: 0 };
         const validation = mutateTask(taskData);
         if (!validation.ok) return { claimed: false, reason: validation.reason, xpGained: 0 };
 
@@ -147,7 +146,7 @@ export async function claimDailyTaskReward(db, uid, taskId, now = new Date()) {
     const catalogXp = definition?.xp;
     // Use the immutable catalog reward even when today's selected set differs.
     const reward = catalogXp ?? 0;
-    return claimReward(db, uid, dateKey + '_' + taskId, reward, now, (data, xpGained) => {
+    return claimReward(db, uid, dateKey + '_' + taskId, reward, now, data => {
         const tasks = Array.isArray(data.tasks) ? data.tasks : [];
         const task = tasks.find(item => item.id === taskId);
         if (!task || !task.completed || task.claimed) {

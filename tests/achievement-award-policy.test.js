@@ -38,10 +38,10 @@ test('advances one level at a time and never duplicates already awarded levels',
     assert.equal(repeated.newAchievements.length, 0);
 });
 
-test('ignores malformed stored entries and treats invalid counters as zero', () => {
+test('ignores malformed counters and safely normalizes legacy stored achievements', () => {
     const result = calculateAchievementAwards({ books: 'not-a-number', travels: -1 }, [null, {}, { id: 'reader', level: 0 }], catalog);
     assert.deepEqual(result.newAchievements, []);
-    assert.deepEqual(result.updatedAchievements, []);
+    assert.deepEqual(result.updatedAchievements, [{ id: 'reader', level: 1 }]);
 });
 
 test('deduplicates legacy achievement entries and preserves the highest attained level', () => {

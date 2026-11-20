@@ -113,3 +113,15 @@ Dream&Go — социальное пространство мечтаний, п�
 - [ ] Выполнить production backup, read-only dry-run и независимую сверку без вывода персональных данных.
 - [ ] Провести согласованное окно заморозки регистрации, staging rehearsal и ручное включение registry readiness только после postflight-аудита.
 
+
+
+## Firestore V1 access matrix — 2026-11-20
+
+- [x] Сверены фактические операции клиентских сервисов: auth, пять личных коллекций, friends, notifications, legacy chat, profile/achievements, export/search, daily tasks.
+- [x] Сверены server callable и trigger операции: registration, public profile lookup, chat V2, stats/achievements, XP и daily tasks.
+- [x] Создана `docs/FIRESTORE_ACCESS_MATRIX.md`: роли доступа по путям, серверные-only коллекции, несовместимости legacy API и минимальная матрица Emulator тестов.
+- [x] Зафиксированы критические несовместимости: клиентское создание уведомлений для произвольного UID, cross-user writes дружбы, legacy chat writes в два профиля, legacy поиск по приватным users.
+- [ ] Согласовать схемы профиля и пяти личных коллекций, публичные мечты, friendship lifecycle, notifications и cutover legacy chat.
+- [ ] Получить актуальные production Rules и реальный schema inventory без PII.
+- [ ] Реализовать полный deny-by-default Rules набор и покрыть все разрешённые/запрещённые операции Emulator тестами.
+- [ ] Провести staging rehearsal с двумя аккаунтами и согласовать ручной rollout/rollback.

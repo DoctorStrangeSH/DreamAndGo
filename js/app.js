@@ -1,3 +1,4 @@
+import { escapeHTML, safeCount } from './core/security.js';
 import { auth, db, checkFirebaseConnection } from './config/firebase.js';
 import { AuthService } from './services/auth.service.js';
 import { ThemeService } from './services/theme.service.js';
@@ -190,7 +191,7 @@ class DreamAndGo {
         try {
             const newAchievements = await this.achievementsService.checkAndAwardAchievements(this.currentUser.uid);
             if (newAchievements.length > 0) {
-                newAchievements.forEach(a => this.ui.showToast(`${a.emoji} ${a.title} — ${a.description}`, 'success'));
+                newAchievements.forEach(a => this.ui.showToast(`${escapeHTML(a.emoji)} ${escapeHTML(a.title)} — ${escapeHTML(a.description)}`, 'success'));
             }
         } catch (error) { console.error('Ошибка проверки достижений:', error); }
     }
@@ -256,7 +257,7 @@ class DreamAndGo {
                     <div class="card-premium p-4 p-md-5" style="background: linear-gradient(135deg, rgba(108,92,231,0.05) 0%, rgba(168,85,247,0.05) 100%);">
                         <div class="row align-items-center">
                             <div class="col-12 col-lg-7">
-                                <h1 class="display-4 fw-bold mb-2">Привет, <span class="text-gradient">@${userName}</span>! ✨</h1>
+                                <h1 class="display-4 fw-bold mb-2">Привет, <span class="text-gradient">@${escapeHTML(userName)}</span>! ✨</h1>
                                 <p class="lead text-secondary mb-3">${this.getRandomGreeting()}</p>
                                 <div class="d-flex gap-2 flex-wrap">
                                     <a href="#travels" class="btn btn-premium btn-sm"><i class="bi bi-plus-lg me-1"></i>Добавить путешествие</a>
@@ -266,7 +267,7 @@ class DreamAndGo {
                             </div>
                             <div class="col-12 col-lg-5 text-center mt-3 mt-lg-0">
                                 <div class="position-relative d-inline-block">
-                                    <div class="avatar-circle" style="width: 100px; height: 100px; font-size: 2.5rem;">${userName[0].toUpperCase()}</div>
+                                    <div class="avatar-circle" style="width: 100px; height: 100px; font-size: 2.5rem;">${escapeHTML(String(userName).charAt(0).toUpperCase())}</div>
                                     <span class="position-absolute bottom-0 end-0 bg-success rounded-circle p-1" style="width: 20px; height: 20px;"></span>
                                 </div>
                             </div>
@@ -275,10 +276,10 @@ class DreamAndGo {
                 </div>
 
                 <div class="row g-3 mb-4 fade-in-up" style="animation-delay: 0.1s;">
-                    <div class="col-6 col-md-3"><div class="card-premium stat-card p-3 text-center h-100"><div class="stat-icon mb-2 mx-auto" style="background: rgba(108,92,231,0.1); color: #6C5CE7;"><i class="bi bi-airplane fs-3"></i></div><h4 class="fw-bold mb-0" data-stat="travels">${stats.travels || 0}</h4><small class="text-muted">Путешествий</small></div></div>
-                    <div class="col-6 col-md-3"><div class="card-premium stat-card p-3 text-center h-100"><div class="stat-icon mb-2 mx-auto" style="background: rgba(0,184,148,0.1); color: #00B894;"><i class="bi bi-shop fs-3"></i></div><h4 class="fw-bold mb-0" data-stat="restaurants">${stats.restaurants || 0}</h4><small class="text-muted">Ресторанов</small></div></div>
-                    <div class="col-6 col-md-3"><div class="card-premium stat-card p-3 text-center h-100"><div class="stat-icon mb-2 mx-auto" style="background: rgba(253,203,110,0.1); color: #FDCB6E;"><i class="bi bi-film fs-3"></i></div><h4 class="fw-bold mb-0" data-stat="movies">${stats.movies || 0}</h4><small class="text-muted">Фильмов</small></div></div>
-                    <div class="col-6 col-md-3"><div class="card-premium stat-card p-3 text-center h-100"><div class="stat-icon mb-2 mx-auto" style="background: rgba(225,112,85,0.1); color: #E17055;"><i class="bi bi-book fs-3"></i></div><h4 class="fw-bold mb-0" data-stat="books">${stats.books || 0}</h4><small class="text-muted">Книг</small></div></div>
+                    <div class="col-6 col-md-3"><div class="card-premium stat-card p-3 text-center h-100"><div class="stat-icon mb-2 mx-auto" style="background: rgba(108,92,231,0.1); color: #6C5CE7;"><i class="bi bi-airplane fs-3"></i></div><h4 class="fw-bold mb-0" data-stat="travels">${safeCount(stats.travels)}</h4><small class="text-muted">Путешествий</small></div></div>
+                    <div class="col-6 col-md-3"><div class="card-premium stat-card p-3 text-center h-100"><div class="stat-icon mb-2 mx-auto" style="background: rgba(0,184,148,0.1); color: #00B894;"><i class="bi bi-shop fs-3"></i></div><h4 class="fw-bold mb-0" data-stat="restaurants">${safeCount(stats.restaurants)}</h4><small class="text-muted">Ресторанов</small></div></div>
+                    <div class="col-6 col-md-3"><div class="card-premium stat-card p-3 text-center h-100"><div class="stat-icon mb-2 mx-auto" style="background: rgba(253,203,110,0.1); color: #FDCB6E;"><i class="bi bi-film fs-3"></i></div><h4 class="fw-bold mb-0" data-stat="movies">${safeCount(stats.movies)}</h4><small class="text-muted">Фильмов</small></div></div>
+                    <div class="col-6 col-md-3"><div class="card-premium stat-card p-3 text-center h-100"><div class="stat-icon mb-2 mx-auto" style="background: rgba(225,112,85,0.1); color: #E17055;"><i class="bi bi-book fs-3"></i></div><h4 class="fw-bold mb-0" data-stat="books">${safeCount(stats.books)}</h4><small class="text-muted">Книг</small></div></div>
                 </div>
 
                 <div class="row g-4 fade-in-up" style="animation-delay: 0.2s;">

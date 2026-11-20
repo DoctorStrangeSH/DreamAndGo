@@ -1,4 +1,5 @@
 import { auth, db } from '../config/firebase.js';
+import { toPublicProfile } from '../core/public-profile.js';
 import { validateChatMessage, validChatParticipants, isValidChatUid, isValidChatPathSegment } from '../core/chat-message-policy.js';
 import {
     collection, doc, getDocs, getDoc, updateDoc, deleteDoc,
@@ -228,7 +229,9 @@ export class ChatService {
         try {
             const userDoc = await getDoc(doc(this.db, 'users', uid));
             if (userDoc.exists()) {
-                return userDoc.data();
+                // Keep the chat UI on the same explicit public allowlist as friends/search.
+                // This is defense in depth; Firestore Rules must still restrict document reads.
+                return toPublicProfile(uid, userDoc.data());
             }
             return null;
         } catch (error) {

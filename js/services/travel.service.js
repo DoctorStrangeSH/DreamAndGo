@@ -74,7 +74,7 @@ export class TravelService {
     }
 
     async addTravel(userId, travelData) {
-        if (!this.isOwner(userId)) return { success: false, error: 'Недостаточно прав.' };
+        if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid)) return { success: false, error: 'Недостаточно прав.' };
         try {
             const travelsRef = collection(this.db, 'users', userId, 'travels');
             
@@ -124,7 +124,7 @@ export class TravelService {
     }
 
     async updateTravel(userId, travelId, updates) {
-        if (!this.isOwner(userId) || !isValidFirestoreDocumentId(travelId)) return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
+        if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid) || !isValidFirestoreDocumentId(travelId)) return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
         try {
             const travelRef = doc(this.db, 'users', userId, 'travels', travelId);
             
@@ -144,7 +144,7 @@ export class TravelService {
     }
 
     async deleteTravel(userId, travelId) {
-        if (!this.isOwner(userId) || !this.isValidDocumentId(travelId)) return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
+        if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid) || !isValidFirestoreDocumentId(travelId)) return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
         try {
             const travelRef = doc(this.db, 'users', userId, 'travels', travelId);
             await deleteDoc(travelRef);
@@ -160,7 +160,7 @@ export class TravelService {
     }
 
     async getTravel(userId, travelId) {
-        if (!this.isOwner(userId) || !this.isValidDocumentId(travelId)) return null;
+        if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid) || !isValidFirestoreDocumentId(travelId)) return null;
         try {
             const travelRef = doc(this.db, 'users', userId, 'travels', travelId);
             const travelDoc = await getDoc(travelRef);
@@ -182,7 +182,7 @@ export class TravelService {
     }
 
     async updateUserStats(userId) {
-        if (!this.isOwner(userId)) return;
+        if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid)) return;
         try {
             const allTravels = await this.getTravels(userId, {}, { throwOnError: true });
             const planned = allTravels.filter(t => t.status === 'planned').length;

@@ -123,3 +123,27 @@ test('chat membership protects message lists, immutable authorship and closed ro
         await env.cleanup();
     }
 });
+
+test('server-owned XP and daily task ledgers are inaccessible to browser clients', async () => {
+    assert.ok(process.env.FIRESTORE_EMULATOR_HOST, 'Run with Firebase Firestore emulator');
+    const env = await initializeTestEnvironment({ projectId, firestore: { rules } });
+    try {
+        const alice = env.authenticatedContext('alice').firestore();
+        const guest = env.unauthenticatedContext().firestore();
+        const serverTasks = doc(alice, 'serverDailyTasks', 'alice');
+        const taskEvents = doc(alice, 'serverDailyTasks', 'alice', 'events', 'created_travels_trip-1');
+        const taskClaims = doc(alice, 'serverDailyTasks', 'alice', 'claims', '2026-11-20_add_travel');
+        const serverXp = doc(alice, 'serverXp', 'alice');
+        const xpEvents = doc(alice, 'serverXp', 'alice', 'events', 'created_travels_trip-1');
+        const xpDaily = doc(alice, 'serverXp', 'alice', 'daily', '2026-11-20');
+
+        for (const reference of [serverTasks, taskEvents, taskClaims, serverXp, xpEvents, xpDaily]) {
+            await assertFails(getDoc(reference));
+            await assertFails(setDoc(reference, { progress: 999, xpEarned: 0, xpGained: 999999 }));
+        }
+        await assertFails(getDoc(doc(guest, 'serverXp', 'alice')));
+        await assertFails(setDoc(doc(guest, 'serverDailyTasks', 'alice'), { allCompleted: true }));
+    } finally {
+        await env.cleanup();
+    }
+});

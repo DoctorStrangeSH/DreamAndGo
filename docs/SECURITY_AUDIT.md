@@ -131,7 +131,7 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 **Status:** candidate server event pipeline implemented; emulator verification pending on latest head; not deployed.
 
 - Browser-side `LevelService.addXP()` no longer writes `stats.xp`. The app no longer submits arbitrary XP action names.
-- Cloud Functions v2 document triggers award XP only after persisted records are created in the user's travels, restaurants, movies, books, dreams, and friends collections. Dream completion is a separate transition trigger.
+- Cloud Functions v2 document triggers award XP only after persisted records are created in the user's travels, restaurants, movies, books, dreams, and friends collections. Required record fields and status enums are validated server-side. Dream completion is a separate transition trigger.
 - Each reward uses a stable event ledger entry and Firestore transaction, so duplicate trigger delivery cannot double-award XP.
 - Added per-action daily limit (5 events) and total daily XP ceiling (300) to reduce farming with newly generated document IDs.
 - Daily task progress remains client-maintained; its XP and bonus claims are temporarily disabled and visibly marked as pending server verification. Do not re-enable until task progress and claims are server-owned.

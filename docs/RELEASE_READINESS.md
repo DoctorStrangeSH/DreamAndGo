@@ -128,3 +128,13 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - CI on `42a0ad0e320d2f4ca7fa4678c54c132d86a5314c`: 401 tests passed, 0 failed; syntax checks passed.
 - Dedicated Firebase Emulator workflow passed on implementation commit `42a0ad0e320d2f4ca7fa4678c54c132d86a5314c`: 5 rules tests + 46 server/emulator tests passed, 0 failed. The latest `4c55d7f86c8a92c089374758a8f392ded29d5666` commit contains documentation-only changes; a rerun was in progress at the time of this note.
 - Remaining security gap: XP and achievement writes are still client-authoritative and require a separate server-side design. Callable code has not been deployed; production Rules/App Check remain release blockers.
+
+
+### Server-authoritative XP — 2026-11-20
+
+- XP is granted from Firestore create/update triggers for collection records and friendship records; dream completion requires a real status transition.
+- Each event is idempotent through a stable server-derived ledger key and Firestore transaction.
+- Limits: 5 rewards per action/day and 300 XP total per UTC day.
+- Browser XP writes are disabled. Daily-task XP/bonus claims are visibly pending and cannot grant XP until task progress is server-verified.
+- Candidate implementation is not deployed. Staging and production Rules/App Check verification remain mandatory.
+- CI and Emulator checks must be green on the latest head before closing SEC-XP-01.

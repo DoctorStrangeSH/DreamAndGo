@@ -132,7 +132,7 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Добавлены проверки, что владелец не может создавать/изменять/удалять социальные, notification, chat и daily-task документы в ограниченном recovery prototype.
 - [x] Добавлены deny assertions для server-owned XP, daily tasks, username registry/reservations, chat pairs, public profiles и Chat V2 документов.
 - [x] Обновлена инструкция Emulator: эти проверки подтверждают только deny-by-default recovery prototype, а не production Rules.
-- [ ] Выполнить CI на новом HEAD и сохранить результат.
+- [x] Выполнить CI на новом HEAD `df122f4d484d12128ee146da5097c96c78723862`: GitHub Actions PASS, run `44778054402`.
 - [ ] После согласования схем и серверных cutover-протоколов реализовать отдельные разрешённые write-paths с тестами; не расширять recovery prototype до production наугад.
 
 

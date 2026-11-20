@@ -78,25 +78,29 @@ test('send rejects existing, reverse and already-friend relationships without wr
 });
 
 test('accept validates the recipient-owned pending request and creates symmetric friendship', async () => {
+    const incomingPath = 'users/alice/friendRequests/bob';
+    const outgoingPath = 'users/bob/sentRequests/alice';
     const incoming = { ...request, from: 'alice', to: 'bob' };
     const outgoing = { ...request };
-    const state = fixture({ [paths.incoming]: incoming, [paths.outgoing]: outgoing });
+    const state = fixture({ [incomingPath]: incoming, [outgoingPath]: outgoing });
     assert.deepEqual(await mutateFriendship(state.db, 'bob', 'alice', 'accept', timestamp), { ok: true, action: 'accept' });
     assert.equal(state.docs.get('users/bob/friends/alice').friendId, 'alice');
     assert.equal(state.docs.get('users/alice/friends/bob').friendId, 'bob');
-    assert.equal(state.docs.has(paths.incoming), false);
-    assert.equal(state.docs.has(paths.outgoing), false);
+    assert.equal(state.docs.has(incomingPath), false);
+    assert.equal(state.docs.has(outgoingPath), false);
     assert.equal(state.writes.filter(x => x.type === 'create').length, 2);
 });
 
 test('reject removes only a validated incoming request and its matching sent index', async () => {
+    const incomingPath = 'users/alice/friendRequests/bob';
+    const outgoingPath = 'users/bob/sentRequests/alice';
     const state = fixture({
-        [paths.incoming]: { ...request, from: 'alice', to: 'bob' },
-        [paths.outgoing]: request
+        [incomingPath]: { ...request, from: 'alice', to: 'bob' },
+        [outgoingPath]: request
     });
     assert.deepEqual(await mutateFriendship(state.db, 'bob', 'alice', 'reject', timestamp), { ok: true, action: 'reject' });
-    assert.equal(state.docs.has(paths.incoming), false);
-    assert.equal(state.docs.has(paths.outgoing), false);
+    assert.equal(state.docs.has(incomingPath), false);
+    assert.equal(state.docs.has(outgoingPath), false);
     assert.equal(state.writes.length, 2);
 });
 
@@ -123,7 +127,7 @@ test('remove deletes only a verified symmetric friendship', async () => {
 test('missing, malformed and asymmetric relationships fail closed', async () => {
     const cases = [
         ['accept', {}],
-        ['reject', { [paths.incoming]: { ...request, from: 'mallory', to: 'bob' } }],
+        ['reject', { 'users/alice/friendRequests/bob': { ...request, from: 'mallory', to: 'bob' } }],
         ['cancel', { [paths.outgoing]: { ...request, from: 'mallory', to: 'bob' } }],
         ['remove', { [paths.ownFriend]: { friendId: 'bob' } }],
         ['remove', {

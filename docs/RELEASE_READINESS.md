@@ -281,3 +281,12 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [x] Added emulator assertions that direct browser updates/creates cannot set `publicProfileEnabled`, including attempts to set it true or false.
 - [x] Added client/server projection assertions that the consent flag itself is never exposed.
 - [ ] Firebase Emulator workflow must pass on the final updated HEAD before this area is marked verified.
+
+
+### Privacy regression verification and integration blocker
+
+- [x] Root Checks passed on `0a7b40379abb7d48f0b2ea86e244b49752c2a5f6` (run 44797565985).
+- [x] Firebase Emulator candidate Rules suite passed on `8a498cf65fc00c5b9bda0900ced6f487751009c8` (run 44797490658).
+- [x] Browser-side attempts to set public visibility are denied by candidate Rules tests.
+- [ ] PR #1 currently diverges from `main` (feature branch is 53 commits behind); resolve branch history before release.
+- [ ] Staging two-account callable/App Check verification and production username-registry backup/backfill remain mandatory.

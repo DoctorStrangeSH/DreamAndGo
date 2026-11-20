@@ -149,3 +149,11 @@
 - The profile page may read `users/{uid}` directly only when `uid == request.auth.uid`. Other-account profile pages use the server-side allowlisted projection.
 - The callable endpoints require Auth, App Check and the per-account lookup quota. Do not enable the client cutover in production until App Check enforcement and deployed Functions are verified.
 - This code cutover does not itself enable public visibility. `publicProfileEnabled` remains explicit opt-in and missing/false means private.
+
+
+## 11. Public profile visibility mutation
+
+- Only `setPublicProfileVisibilityV2` may change `users/{uid}.publicProfileEnabled`; it derives UID from Firebase Auth and requires App Check.
+- Browser clients must never write this field through generic profile settings updates.
+- Opt-out is allowed immediately. Opt-in requires `system/usernameRegistry` to be ready with schema version 1 and completed legacy backfill, plus `usernameReservations/{usernameNormalized}.uid == request.auth.uid`.
+- The callable updates only the caller's private profile and a server timestamp. Public projections remain allowlisted and are returned only by protected callables.

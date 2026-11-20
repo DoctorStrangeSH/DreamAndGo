@@ -118,7 +118,7 @@ export class BooksModule {
                             <button class="btn btn-sm btn-outline-secondary rounded-circle me-1 edit-btn" data-id="${escapeHTML(bookId)}">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="${book.id}">
+                            <button class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="${escapeHTML(bookId)}">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </div>

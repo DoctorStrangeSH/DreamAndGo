@@ -111,3 +111,16 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 - Latest GitHub Actions run for `966bc3d9d75aa3f701abd4bb52feded4ff2ce5f7`: 395/395 tests passed; `npm run check` passed.
 
 **Scope note:** these browser-side validators are defense in depth. Firestore Rules must independently enforce field-level constraints; the deployed rules are still not present in this repository branch and must be reviewed in Firebase Console before release.
+
+
+### SEC-STATS-01 — client-written profile counters replaced with trusted recomputation
+
+**Status:** candidate implementation and emulator coverage complete; not deployed.
+
+- Added `refreshUserStatsV2`, an authenticated Firebase callable in `europe-west3` with App Check enforcement. It accepts no UID or counter payload; the server derives the caller UID from Firebase Auth.
+- The server reads the caller's own travels, restaurants, movies, books, dreams and friends subcollections inside a Firestore transaction, recomputes status totals, ignores legacy `_init` placeholders, and updates only computed stats while preserving unrelated counters.
+- Five personal collection services and the friend service now delegate counter refresh to the callable instead of writing `users/{uid}.stats` directly from the browser.
+- Added pure policy tests, client delegation tests and a real Firestore Emulator transaction test.
+- Latest Checks run on `42a0ad0e320d2f4ca7fa4678c54c132d86a5314c`: 401/401 tests passed; `npm run check` passed. The dedicated Firebase Emulator workflow is running for the same commit and must be green before this block is closed.
+
+**Limitations:** this callable is candidate code and has not been deployed. It does not yet move XP (`stats.xp`) or achievement awards out of client code. The current `LevelService.addXP()` still writes a client-selected UID and action directly, and achievement persistence still runs from the client. These are separate authorization/integrity blockers. Production Firestore Rules and App Check settings remain unverified.

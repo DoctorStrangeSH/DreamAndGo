@@ -1,4 +1,5 @@
 import { auth, db } from '../config/firebase.js';
+import { isAuthenticatedOwner, isValidFirestoreDocumentId } from '../core/owner-access-policy.js';
 import { APP_CONFIG } from '../config/constants.js';
 import { 
     collection,
@@ -192,7 +193,7 @@ export class MovieService {
     }
 
     async getUserMovies(userId, filters = {}, { throwOnError = false } = {}) {
-        if (!this.isOwner(userId)) { if (throwOnError) throw new Error('Недостаточно прав.'); return []; }
+        if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid)) { if (throwOnError) throw new Error('Недостаточно прав.'); return []; }
         try {
             const moviesRef = collection(this.db, 'users', userId, 'movies');
             let q = query(moviesRef, orderBy('createdAt', 'desc'));
@@ -253,7 +254,7 @@ export class MovieService {
     }
 
     async updateMovie(userId, movieId, updates) {
-        if (!this.isOwner(userId) || !this.isValidDocumentId(movieId)) return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
+        if (!this.isOwner(userId) || !isValidFirestoreDocumentId(movieId)) return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
         try {
             const movieRef = doc(this.db, 'users', userId, 'movies', movieId);
             await updateDoc(movieRef, {
@@ -281,15 +282,6 @@ export class MovieService {
             console.error('Ошибка удаления фильма:', error);
             return { success: false, error: error.message };
         }
-    }
-
-    isOwner(userId) {
-        return typeof userId === 'string' && !!userId && auth?.currentUser?.uid === userId;
-    }
-
-    isValidDocumentId(value) {
-        return typeof value === 'string' && value.length > 0 && value.length <= 1500 &&
-            value !== '.' && value !== '..' && !value.includes('/') && value.trim() === value;
     }
 
     async updateUserStats(userId) {

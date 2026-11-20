@@ -70,5 +70,15 @@
 - [x] Проверен Git tree: `package-lock.json` отсутствует. При нулевом npm dependency graph lockfile не нужен; не создавать пустой lockfile ради формальности.
 - [x] Проверена CI install strategy: workflow использует Node.js 22 и запускает `npm test` / `npm run check`, не устанавливая npm-пакеты.
 - [x] Все 8 CSS-файлов проверены на локальные `url(...)` ссылки; локальных CSS asset references не найдено.
-- [ ] Внешние CDN imports/runtime SDK остаются отдельным пунктом проверки доступности и pinning версий.
+- [x] Зафиксированы используемые CDN/runtime SDK и их закреплённые версии.
+- [ ] Проверить CDN availability, CSP, API-key restrictions и App Check в staging.
 - [ ] Динамические импорты, HTML templates и runtime-loaded asset paths требуют отдельного полного графа ссылок.
+
+
+### External runtime dependencies — 2026-11-20
+
+- [x] Reviewed the app entry HTML and Firebase config imports.
+- [x] Browser runtime uses pinned CDN versions: Firebase JS SDK 10.7.1, Bootstrap 5.3.2, Bootstrap Icons 1.11.3; Google Fonts (Inter/Manrope) are externally hosted.
+- [x] Firebase web config contains a client API key and reCAPTCHA Enterprise site key, which are browser-public identifiers, not server secrets. No secret value is copied into this audit. Restrict the Firebase API key to the intended APIs/domains in Google Cloud/Firebase Console and maintain Security Rules/App Check as the actual access controls.
+- [ ] Confirm CDN availability, CSP compatibility, API-key restrictions and App Check enforcement in staging.
+- [ ] Review commit history and current source content for actual secrets; this targeted config review is not a full secret scan.

@@ -51,7 +51,7 @@
 |---|---|---|
 | `auth.service.js` | Legacy query по `users.username/usernameNormalized`; создание профиля и `_init`; обновление `lastLogin` | Legacy поиск по приватным users отключить после перехода на public profile / callable. Регистрация V2 — Server. Не разрешать произвольный create/update профиля |
 | `dreams/travel/book/movie/restaurant.service.js` | CRUD в собственной подколлекции пользователя; фильтры по статусу/категории/кухне | Owner CRUD только по конкретной схеме; проверить все поля на create и update |
-| `friends.service.js` | Транзакция создаёт/удаляет документы сразу в двух user деревьях; lookup делает query users | Перевести дружбу и поиск на callable / publicProfiles; не открывать cross-user writes общим правилом |
+| `friends.service.js` / `friendship-callable.service.js` | Читает только собственные списки; send/accept/reject/cancel/remove вызывают `mutateFriendshipV2` | Все изменения дружбы — Server only через Auth + App Check callable; UID берётся из Auth, парные записи проверяются и изменяются одной Admin SDK транзакцией. Двухаккаунтный staging-прогон обязателен |
 | `notifications.service.js` | Клиент создаёт уведомление в произвольном `users/{userId}`; подписка читает своё; update меняет read | Создание — Server only. Клиенту оставить ограниченное изменение read-state и чтение своего списка |
 | `chat.service.js` | Legacy client пишет messages и оба chat indexes, редактирует/удаляет сообщения | Не пытаться чинить общими правилами. Сначала cutover на серверный Chat V2 и подтверждённая миграция истории |
 | `profile-stats.service.js`, `daily-tasks.service.js` | Callable refresh/claim с UID из Auth; клиент не отправляет счётчики | Служебные документы закрыты от клиента; endpoint сам проверяет Auth и App Check |
@@ -111,7 +111,8 @@
 - [ ] Получить актуальные production Rules и подтвердить, что аварийный deny-all действительно опубликован.
 - [ ] Утвердить, сохраняется ли публичная мечта в V1.0 и через какую проекцию она доступна.
 - [ ] Решить, какие уведомления могут создаваться только сервером; текущий общий клиентский `addNotification` недостаточно безопасен.
-- [ ] Перевести friendship writes на серверный протокол.
+- [x] Перевести friendship writes на `mutateFriendshipV2`: Auth UID, App Check, проверка получателя и атомарная транзакция для обеих сторон; браузерные записи удалены из `FriendsService`.
+- [ ] Провести staging two-account проверку всех пяти операций и подтвердить App Check на реально развернутой callable.
 - [ ] Определить момент и совместимость миграции legacy chat → Chat V2.
 - [ ] Утвердить точные схемы всех пяти коллекций и profile update allowlist.
 - [ ] Согласовать доступ к Storage, если V1.0 использует Firebase Storage.

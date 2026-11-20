@@ -1,4 +1,4 @@
-import { db } from '../config/firebase.js';
+import { auth, db } from '../config/firebase.js';
 import { 
     collection,
     doc,
@@ -21,6 +21,7 @@ export class TravelService {
     }
 
     async getTravels(userId, filters = {}, { throwOnError = false } = {}) {
+        if (!this.isOwner(userId)) { if (throwOnError) throw new Error('Недостаточно прав.'); return []; }
         try {
             const cacheKey = `travels_${userId}_${JSON.stringify(filters)}`;
             
@@ -72,6 +73,7 @@ export class TravelService {
     }
 
     async addTravel(userId, travelData) {
+        if (!this.isOwner(userId)) return { success: false, error: 'Недостаточно прав.' };
         try {
             const travelsRef = collection(this.db, 'users', userId, 'travels');
             
@@ -121,6 +123,7 @@ export class TravelService {
     }
 
     async updateTravel(userId, travelId, updates) {
+        if (!this.isOwner(userId) || !this.isValidDocumentId(travelId)) return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
         try {
             const travelRef = doc(this.db, 'users', userId, 'travels', travelId);
             
@@ -140,6 +143,7 @@ export class TravelService {
     }
 
     async deleteTravel(userId, travelId) {
+        if (!this.isOwner(userId) || !this.isValidDocumentId(travelId)) return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
         try {
             const travelRef = doc(this.db, 'users', userId, 'travels', travelId);
             await deleteDoc(travelRef);
@@ -155,6 +159,7 @@ export class TravelService {
     }
 
     async getTravel(userId, travelId) {
+        if (!this.isOwner(userId) || !this.isValidDocumentId(travelId)) return null;
         try {
             const travelRef = doc(this.db, 'users', userId, 'travels', travelId);
             const travelDoc = await getDoc(travelRef);
@@ -175,7 +180,17 @@ export class TravelService {
         }
     }
 
+    isOwner(userId) {
+        return typeof userId === 'string' && !!userId && auth?.currentUser?.uid === userId;
+    }
+
+    isValidDocumentId(value) {
+        return typeof value === 'string' && value.length > 0 && value.length <= 1500 &&
+            value !== '.' && value !== '..' && !value.includes('/') && value.trim() === value;
+    }
+
     async updateUserStats(userId) {
+        if (!this.isOwner(userId)) return;
         try {
             const allTravels = await this.getTravels(userId, {}, { throwOnError: true });
             const planned = allTravels.filter(t => t.status === 'planned').length;

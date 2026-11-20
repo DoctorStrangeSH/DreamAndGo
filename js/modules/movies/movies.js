@@ -240,14 +240,14 @@ export class MoviesModule {
                 ? `<button class="btn btn-success btn-sm add-movie-btn" data-movie-id="${escapeHTML(movieId)}">
                                         <i class="bi bi-plus-lg"></i> Добавить
                                     </button>`
-                : `<button class="btn btn-light btn-sm edit-movie-btn" data-movie-id="${movie.id}">
+                : `<button class="btn btn-light btn-sm edit-movie-btn" data-movie-id="${escapeHTML(movieId)}">
                                         <i class="bi bi-pencil"></i>
                                     </button>
-                                    <button class="btn btn-danger btn-sm delete-movie-btn" data-movie-id="${movie.id}">
+                                    <button class="btn btn-danger btn-sm delete-movie-btn" data-movie-id="${escapeHTML(movieId)}">
                                         <i class="bi bi-trash"></i>
                                     </button>`
             }
-                                <button class="btn btn-info btn-sm details-movie-btn" data-movie-id="${movie.id}">
+                                <button class="btn btn-info btn-sm details-movie-btn" data-movie-id="${escapeHTML(movieId)}">
                                     <i class="bi bi-info-circle"></i> Детали
                                 </button>
                             </div>
@@ -492,7 +492,7 @@ export class MoviesModule {
                                 <div class="col-md-8">
                                     <h4 class="fw-bold">${escapeHTML(movieData.title)}</h4>
                                     ${movieData.originalTitle ? `<p class="text-muted">${escapeHTML(movieData.originalTitle)}</p>` : ''}
-                                    ${movieData.tagline ? `<p class="fst-italic text-muted">"${movieData.tagline}"</p>` : ''}
+                                    ${movieData.tagline ? `<p class="fst-italic text-muted">"${escapeHTML(movieData.tagline)}"</p>` : ''}
 
                                     <div class="mb-2">
                                         ${movieData.genres ? movieData.genres.map(g =>

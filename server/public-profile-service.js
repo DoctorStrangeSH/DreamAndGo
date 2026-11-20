@@ -5,7 +5,8 @@ const nonnegative = value => Number.isSafeInteger(value) && value >= 0 ? value :
 
 export function publicProfileFromPrivate(uid, source) {
     if (typeof uid !== 'string' || !uid || uid.length > 128 || uid.includes('/') ||
-        !source || typeof source !== 'object' || Array.isArray(source)) {
+        !source || typeof source !== 'object' || Array.isArray(source) ||
+        source.publicProfileEnabled !== true) {
         return null;
     }
     const username = bounded(source.username, 40);

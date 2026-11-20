@@ -17,7 +17,7 @@ import { consumeProfileLookupQuota } from './profile-lookup-quota.js';
 import { registerProfileWithReservedUsername } from './username-reservation.js';
 import { getRegistrationState } from './registration-state.js';
 import { refreshUserStatsTransaction } from './profile-stats.js';
-import { awardXpForVerifiedEvent } from './xp-rewards.js';
+import { awardXpForVerifiedEvent, isRewardableCollectionRecord } from './xp-rewards.js';
 import { isDreamCompletionTransition } from '../js/core/xp-reward-policy.js';
 
 if (getApps().length === 0) initializeApp();
@@ -239,7 +239,7 @@ function createCollectionXpTrigger(collectionName, action) {
         region: 'europe-west3'
     }, async event => {
         const { userId, recordId } = event.params;
-        if (recordId === '_init' || !event.data) return;
+        if (!event.data || !isRewardableCollectionRecord(collectionName, event.data.data(), recordId)) return;
         await awardXpForVerifiedEvent(getFirestore(), {
             uid: userId,
             action,
@@ -265,7 +265,7 @@ export const awardDreamCompletionXpV2 = onDocumentUpdated({
         event.data.before.data(), event.data.after.data()
     )) return;
     const { userId, recordId } = event.params;
-    if (recordId === '_init') return;
+    if (!isRewardableCollectionRecord('dreams', event.data.after.data(), recordId)) return;
     await awardXpForVerifiedEvent(getFirestore(), {
         uid: userId,
         action: 'complete_dream',

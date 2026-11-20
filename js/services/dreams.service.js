@@ -1,4 +1,4 @@
-import { db } from '../config/firebase.js';
+import { auth, db } from '../config/firebase.js';
 import { validateDreamInput } from '../core/dream-input-policy.js';
 import { 
     collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc,
@@ -11,6 +11,10 @@ export class DreamsService {
     }
 
     async getDreams(userId, filters = {}, { throwOnError = false } = {}) {
+        if (!this.isOwner(userId)) {
+            if (throwOnError) throw new Error('Недостаточно прав для доступа к мечтам.');
+            return [];
+        }
         try {
             const dreamsRef = collection(this.db, 'users', userId, 'dreams');
             let q = query(dreamsRef, orderBy('createdAt', 'desc'));
@@ -46,10 +50,12 @@ export class DreamsService {
     }
 
     async addDream(userId, data) {
+        if (!this.isOwner(userId)) return { success: false, error: 'Недостаточно прав.' };
         try {
+            const safeData = validateDreamInput(data);
             const dreamsRef = collection(this.db, 'users', userId, 'dreams');
             const newDream = {
-                ...data,
+                ...safeData,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
                 status: data.status || 'dreaming',
@@ -69,10 +75,16 @@ export class DreamsService {
     }
 
     async updateDream(userId, dreamId, updates) {
+        if (!this.isOwner(userId) || !this.isValidDocumentId(dreamId)) {
+            return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
+        }
         try {
             const dreamRef = doc(this.db, 'users', userId, 'dreams', dreamId);
+            const existing = await getDoc(dreamRef);
+            if (!existing.exists()) return { success: false, error: 'Мечта не найдена.' };
+            const safeData = validateDreamInput({ ...existing.data(), ...updates });
             await updateDoc(dreamRef, {
-                ...updates,
+                ...safeData,
                 updatedAt: serverTimestamp()
             });
             await this.updateUserStats(userId);
@@ -84,6 +96,9 @@ export class DreamsService {
     }
 
     async deleteDream(userId, dreamId) {
+        if (!this.isOwner(userId) || !this.isValidDocumentId(dreamId)) {
+            return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
+        }
         try {
             const dreamRef = doc(this.db, 'users', userId, 'dreams', dreamId);
             await deleteDoc(dreamRef);
@@ -96,6 +111,7 @@ export class DreamsService {
     }
 
     async getDream(userId, dreamId) {
+        if (!this.isOwner(userId) || !this.isValidDocumentId(dreamId)) return null;
         try {
             const dreamRef = doc(this.db, 'users', userId, 'dreams', dreamId);
             const dreamDoc = await getDoc(dreamRef);
@@ -109,7 +125,17 @@ export class DreamsService {
         }
     }
 
+    isOwner(userId) {
+        return typeof userId === 'string' && !!userId && auth?.currentUser?.uid === userId;
+    }
+
+    isValidDocumentId(value) {
+        return typeof value === 'string' && value.length > 0 && value.length <= 1500 &&
+            value !== '.' && value !== '..' && !value.includes('/') && value.trim() === value;
+    }
+
     async updateUserStats(userId) {
+        if (!this.isOwner(userId)) return;
         try {
             const dreams = await this.getDreams(userId, {}, { throwOnError: true });
             const dreaming = dreams.filter(d => d.status === 'dreaming').length;

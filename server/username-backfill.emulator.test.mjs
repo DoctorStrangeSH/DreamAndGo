@@ -5,30 +5,38 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { runUsernameReservationBackfill } from './username-backfill.js';
 
 assert.ok(process.env.FIRESTORE_EMULATOR_HOST, 'Must run against Firestore emulator only');
-const app = initializeApp({ projectId: 'demo-dreamandgo-username-backfill' }, 'username-backfill-tests');
+const app = initializeApp({ projectId: 'demo-dreamandgo-chat-rules' }, 'username-backfill-tests');
 const db = getFirestore(app);
 const timestamp = () => FieldValue.serverTimestamp();
+const collections = {
+    usersCollection: 'migrationTestUsers',
+    reservationsCollection: 'migrationTestReservations',
+    registryCollection: 'system',
+    registryDocument: 'usernameRegistryBackfillTest'
+};
+const runBackfill = options => runUsernameReservationBackfill(db, { ...collections, ...options });
+const registry = db.collection('system').doc(collections.registryDocument);
 
 test('dry-run is read-only and apply creates only missing reservations without opening registry', async () => {
-    const control = db.doc('system/usernameRegistry');
+    const control = registry;
     await control.set({ ready: false, schemaVersion: 1, legacyBackfillComplete: false });
-    await db.doc('users/backfill-user-a').set({ username: 'Backfill_Alice' });
-    await db.doc('users/backfill-user-b').set({ username: 'Backfill_Bob' });
-    await db.doc('usernameReservations/backfill_alice').set({
+    await db.collection(collections.usersCollection).doc('backfill-user-a').set({ username: 'Backfill_Alice' });
+    await db.collection(collections.usersCollection).doc('backfill-user-b').set({ username: 'Backfill_Bob' });
+    await db.collection(collections.reservationsCollection).doc('backfill_alice').set({
         uid: 'backfill-user-a', username: 'Backfill_Alice'
     });
 
-    const dryRun = await runUsernameReservationBackfill(db);
+    const dryRun = await runBackfill();
     assert.equal(dryRun.safe, true);
     assert.equal(dryRun.missingReservations, 1);
     assert.equal(dryRun.applied, false);
-    assert.equal((await db.doc('usernameReservations/backfill_bob').get()).exists, false);
+    assert.equal((await db.collection(collections.reservationsCollection).doc('backfill_bob').get()).exists, false);
 
     await assert.rejects(
-        runUsernameReservationBackfill(db, { apply: true, registrationFrozen: false, serverTimestamp: timestamp }),
+        runBackfill({ apply: true, registrationFrozen: false, serverTimestamp: timestamp }),
         /frozen registration window/
     );
-    const applied = await runUsernameReservationBackfill(db, {
+    const applied = await runBackfill({
         apply: true, registrationFrozen: true, serverTimestamp: timestamp
     });
     assert.equal(applied.safe, true);
@@ -50,8 +58,8 @@ test('dry-run is read-only and apply creates only missing reservations without o
 test('case-insensitive legacy collisions block every write and keep registry closed', async () => {
     const control = db.doc('system/usernameRegistry');
     await control.set({ ready: false, schemaVersion: 1, legacyBackfillComplete: false });
-    await db.doc('users/backfill-collision-a').set({ username: 'Collision_Name' });
-    await db.doc('users/backfill-collision-b').set({ username: 'collision_name' });
+    await db.collection(collections.usersCollection).doc('backfill-collision-a').set({ username: 'Collision_Name' });
+    await db.collection(collections.usersCollection).doc('backfill-collision-b').set({ username: 'collision_name' });
 
     const result = await runUsernameReservationBackfill(db, {
         apply: true, registrationFrozen: true, serverTimestamp: timestamp
@@ -59,16 +67,16 @@ test('case-insensitive legacy collisions block every write and keep registry clo
     assert.equal(result.safe, false);
     assert.equal(result.reason, 'preflight-blocked');
     assert.equal(result.applied, false);
-    assert.equal((await db.doc('usernameReservations/collision_name').get()).exists, false);
+    assert.equal((await db.collection(collections.reservationsCollection).doc('collision_name').get()).exists, false);
     assert.equal((await control.get()).get('ready'), false);
 });
 
 test('active registry prevents a backfill from running', async () => {
-    await db.doc('system/usernameRegistry').set({
+    await registry.set({
         ready: true, schemaVersion: 1, legacyBackfillComplete: true
     });
     await assert.rejects(
-        runUsernameReservationBackfill(db, {
+        runBackfill({
             apply: true, registrationFrozen: true, serverTimestamp: timestamp
         }),
         /already active/

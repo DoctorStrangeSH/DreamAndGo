@@ -1,4 +1,5 @@
 import { auth, db } from '../config/firebase.js';
+import { isAuthenticatedOwner, isValidFirestoreDocumentId } from '../core/owner-access-policy.js';
 import { 
     collection,
     doc,
@@ -21,7 +22,7 @@ export class TravelService {
     }
 
     async getTravels(userId, filters = {}, { throwOnError = false } = {}) {
-        if (!this.isOwner(userId)) { if (throwOnError) throw new Error('Недостаточно прав.'); return []; }
+        if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid)) { if (throwOnError) throw new Error('Недостаточно прав.'); return []; }
         try {
             const cacheKey = `travels_${userId}_${JSON.stringify(filters)}`;
             
@@ -123,7 +124,7 @@ export class TravelService {
     }
 
     async updateTravel(userId, travelId, updates) {
-        if (!this.isOwner(userId) || !this.isValidDocumentId(travelId)) return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
+        if (!this.isOwner(userId) || !isValidFirestoreDocumentId(travelId)) return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
         try {
             const travelRef = doc(this.db, 'users', userId, 'travels', travelId);
             
@@ -178,15 +179,6 @@ export class TravelService {
             console.error('Ошибка загрузки путешествия:', error);
             return null;
         }
-    }
-
-    isOwner(userId) {
-        return typeof userId === 'string' && !!userId && auth?.currentUser?.uid === userId;
-    }
-
-    isValidDocumentId(value) {
-        return typeof value === 'string' && value.length > 0 && value.length <= 1500 &&
-            value !== '.' && value !== '..' && !value.includes('/') && value.trim() === value;
     }
 
     async updateUserStats(userId) {

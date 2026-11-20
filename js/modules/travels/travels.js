@@ -1,3 +1,4 @@
+import { escapeHTML, safeDocumentId, safeCount, safeHttpsURL } from '../../core/security.js';
 import { TravelService } from '../../services/travel.service.js';
 import { APP_CONFIG } from '../../config/constants.js';
 
@@ -95,6 +96,9 @@ export class TravelsModule {
         const typeInfo = APP_CONFIG.TRAVEL_TYPES.find(t => t.id === travel.type)
             || { icon: 'bi-geo-alt', label: 'Другое' };
 
+        const photoURL = safeHttpsURL(travel.photos?.[0]);
+        const travelId = safeDocumentId(travel.id);
+        const rating = safeCount(travel.rating, 10);
         const statusBadge = travel.status === 'visited'
             ? '<span class="badge bg-success bg-opacity-10 text-success">✓ Посетил</span>'
             : '<span class="badge bg-warning bg-opacity-10 text-warning">☆ Планирую</span>';
@@ -103,15 +107,15 @@ export class TravelsModule {
             <div class="col-12 col-md-6 col-lg-4 fade-in-up" style="animation-delay: ${index * 0.06}s">
                 <div class="card-premium h-100 travel-card">
                     <div class="restaurant-card-header">
-                        ${travel.photos && travel.photos[0]
-                ? `<img src="${travel.photos[0]}" class="restaurant-photo" alt="${travel.title}">`
+                        ${photoURL
+                ? `<img src="${escapeHTML(photoURL)}" class="restaurant-photo" alt="${escapeHTML(travel.title)}">`
                 : `<div class="restaurant-placeholder">
                                 <i class="bi ${typeInfo.icon} display-4 text-white opacity-25"></i>
                             </div>`
             }
                         <div class="position-absolute top-0 start-0 p-2">${statusBadge}</div>
                         <div class="restaurant-card-actions">
-                            <button class="btn btn-light btn-sm rounded-circle me-1 edit-btn" data-id="${travel.id}">
+                            <button class="btn btn-light btn-sm rounded-circle me-1 edit-btn" data-id="${escapeHTML(travelId)}">
                                 <i class="bi bi-pencil"></i>
                             </button>
                             <button class="btn btn-light btn-sm rounded-circle delete-btn" data-id="${travel.id}">
@@ -121,27 +125,27 @@ export class TravelsModule {
                     </div>
                     <div class="p-3">
                         <div class="d-flex justify-content-between align-items-start mb-1">
-                            <h6 class="fw-bold mb-0">${travel.title || 'Без названия'}</h6>
+                            <h6 class="fw-bold mb-0">${escapeHTML(travel.title || 'Без названия')}</h6>
                             ${travel.rating
-                ? `<span class="badge" style="background: var(--primary);">${travel.rating}/10</span>`
+                ? `<span class="badge" style="background: var(--primary);">${rating}/10</span>`
                 : ''
             }
                         </div>
                         <p class="text-muted small mb-2">
                             <i class="bi ${typeInfo.icon} text-primary me-1"></i>${typeInfo.label}
                             ${travel.location
-                ? `<span class="mx-1">·</span><i class="bi bi-geo-alt text-danger me-1"></i>${travel.location}`
+                ? `<span class="mx-1">·</span><i class="bi bi-geo-alt text-danger me-1"></i>${escapeHTML(travel.location)}`
                 : ''
             }
                         </p>
                         ${travel.description
-                ? `<p class="text-muted small mb-2">${travel.description.substring(0, 100)}...</p>`
+                ? `<p class="text-muted small mb-2">${escapeHTML(String(travel.description).substring(0, 100))}...</p>`
                 : ''
             }
                         <div class="d-flex justify-content-between align-items-center">
                             <small class="text-muted">
                                 <i class="bi bi-wallet2 me-1"></i>
-                                ${travel.budget?.planned || 0} ${travel.budget?.currency || 'RUB'}
+                                ${safeCount(travel.budget?.planned, 100000000)} ${escapeHTML(travel.budget?.currency || 'RUB')}
                             </small>
                             <small class="text-muted">${this.formatDate(travel.createdAt)}</small>
                         </div>

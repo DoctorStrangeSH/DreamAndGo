@@ -1,10 +1,10 @@
 # DreamAndGo — release readiness for PR #1
 
-Last review: 2026-11-16. Branch: `refactor/security-foundation` → `main`.
+Last review: 2026-11-20. Branch: `refactor/security-foundation` → `main`.
 
 ## Current decision
 
-**HOLD — not ready to merge to production.** The repository is already serving real users. This PR changes 191 files (17,111 additions, 5,192 deletions at review), including auth, routing, chat, profile and personal collections. CI passing is necessary but not sufficient.
+**HOLD — not ready to merge to production.** The repository is already serving real users. This PR currently changes 235 files (latest PR metadata; totals may continue to change), including auth, routing, chat, profile and personal collections. CI passing is necessary but not sufficient.
 
 ## Confirmed automatically
 
@@ -57,7 +57,7 @@ These are targeted fixes, **not completion of the full XSS audit**. Remaining re
 
 ### Latest candidate commit
 
-- Head: `5203d9311f9cbc65f754bbfe7e29c74d4281b0d5`
+- Head: `ac684d20481ed91c2e1ff4b4aa915e05dd04e2f0`
 - PR #1 remains open; mergeability is not confirmed.
 - GitHub combined status and PR-filtered workflow-run lookup returned no checks/runs for this exact SHA at review time. Do not interpret an empty result as a passing CI run.
 - Staging verification, real production rules review, two-account browser tests, backup and rollback ownership remain release blockers.

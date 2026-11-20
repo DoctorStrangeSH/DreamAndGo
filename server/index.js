@@ -2,6 +2,7 @@ import { initializeApp, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { onDocumentCreated, onDocumentUpdated } from 'firebase-functions/v2/firestore';
 import { conversationPairKey } from './chat-pair.js';
 import { isConversationBlocked } from './block-policy.js';
 import { isValidUserId, isValidDocumentId, normalizeChatMessage, normalizeClientMessageId } from './message-policy.js';
@@ -16,6 +17,7 @@ import { consumeProfileLookupQuota } from './profile-lookup-quota.js';
 import { registerProfileWithReservedUsername } from './username-reservation.js';
 import { getRegistrationState } from './registration-state.js';
 import { refreshUserStatsTransaction } from './profile-stats.js';
+import { awardXpForVerifiedEvent, isDreamCompletionTransition } from './xp-rewards.js';
 
 if (getApps().length === 0) initializeApp();
 
@@ -225,4 +227,49 @@ export const refreshUserStatsV2 = onCall({ region: 'europe-west3', enforceAppChe
         }
         throw new HttpsError('internal', 'Не удалось обновить статистику профиля');
     }
+});
+
+
+// XP is awarded only from persisted Firestore events. Stable event IDs and a
+// transaction make retries idempotent; daily limits constrain low-effort farming.
+function createCollectionXpTrigger(collectionName, action) {
+    return onDocumentCreated({
+        document: `users/{userId}/${collectionName}/{recordId}`,
+        region: 'europe-west3'
+    }, async event => {
+        const { userId, recordId } = event.params;
+        if (recordId === '_init' || !event.data) return;
+        await awardXpForVerifiedEvent(getFirestore(), {
+            uid: userId,
+            action,
+            sourceId: recordId,
+            eventKey: `created_${collectionName}_${recordId}`,
+            occurredAt: event.time
+        });
+    });
+}
+
+export const awardTravelXpV2 = createCollectionXpTrigger('travels', 'travels');
+export const awardRestaurantXpV2 = createCollectionXpTrigger('restaurants', 'restaurants');
+export const awardMovieXpV2 = createCollectionXpTrigger('movies', 'movies');
+export const awardBookXpV2 = createCollectionXpTrigger('books', 'books');
+export const awardDreamXpV2 = createCollectionXpTrigger('dreams', 'dreams');
+export const awardFriendXpV2 = createCollectionXpTrigger('friends', 'friends');
+
+export const awardDreamCompletionXpV2 = onDocumentUpdated({
+    document: 'users/{userId}/dreams/{recordId}',
+    region: 'europe-west3'
+}, async event => {
+    if (!event.data || !isDreamCompletionTransition(
+        event.data.before.data(), event.data.after.data()
+    )) return;
+    const { userId, recordId } = event.params;
+    if (recordId === '_init') return;
+    await awardXpForVerifiedEvent(getFirestore(), {
+        uid: userId,
+        action: 'complete_dream',
+        sourceId: recordId,
+        eventKey: `completed_dream_${recordId}`,
+        occurredAt: event.time
+    });
 });

@@ -40,3 +40,14 @@ export function safeCount(value, max = 9999) {
     if (!Number.isFinite(count)) return 0;
     return Math.min(max, Math.max(0, Math.floor(count)));
 }
+
+export function safeHttpsURL(value) {
+    if (typeof value !== 'string' || !value.trim()) return '';
+    try {
+        const url = new URL(value);
+        if (url.protocol !== 'https:' || url.username || url.password) return '';
+        return url.href;
+    } catch {
+        return '';
+    }
+}

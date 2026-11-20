@@ -191,3 +191,11 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - Targeted review covered notifications, global search, chat bubbles, friend cards, achievements and the primary personal collection/profile renderers. User text is escaped and dynamic enums/routes/icons/colors are allowlisted in reviewed paths.
 - Shared modal content and empty-state action parameters remain trusted-markup APIs and must not receive raw user input.
 - Full XSS audit remains open until every HTML sink and modal/form template has been reviewed.
+
+
+### Security audit follow-up — 2026-11-20
+
+- [x] Targeted credential-pattern scan completed for 20 high-risk current-branch files; no common private-key/token patterns found in that sample. Full tracked-file and Git-history scan remains open.
+- [x] Confirmed candidate Firestore rules are isolated under `tests/firebase-emulator/`; no production root rules/config files are present in this branch.
+- [ ] Production Firestore Rules remain a hard blocker: current candidate files are test-only and intentionally deny portions of the product. Create a complete ruleset from the approved V1.0 data model and verify every user flow in the emulator before any production deployment.
+- [ ] Validate Firebase API-key restrictions, App Check enforcement and Functions deployment in staging.

@@ -92,3 +92,11 @@
 - [x] Reviewed `owner-read.rules`: broad catch-all denies all unspecified access; private collection writes and profile creation are intentionally disabled. This is a read-only recovery prototype, not a complete production ruleset.
 - [x] Reviewed `chat.rules`: it only models the proposed `chats/{chatId}/messages` membership model and denies unrelated collections. It is not a drop-in ruleset for the current application.
 - [ ] Build and test a complete production Rules set against the actual V1.0 data model and every client/server operation. Do not deploy either candidate rules file as-is.
+
+
+### Firestore access matrix — 2026-11-20
+
+- [x] Audited actual client Firestore paths and CRUD operations across auth, dreams, travels, books, movies, restaurants, friends, notifications, legacy chat, profile, achievements, search and export.
+- [x] Audited Admin SDK callable/trigger surfaces for registration, public profiles, Chat V2, stats/achievements, XP and daily tasks.
+- [x] Added a consolidated access matrix and Emulator attack/negative-test checklist in `docs/FIRESTORE_ACCESS_MATRIX.md`.
+- [ ] Rules implementation remains intentionally blocked until production Rules and sanitized live schema are confirmed; do not derive production permissions from client-side checks alone.

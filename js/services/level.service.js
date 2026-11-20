@@ -1,4 +1,5 @@
 import { db } from '../config/firebase.js';
+import { getLevelFromXP } from '../core/level-policy.js';
 import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 // Конфигурация уровней
@@ -16,28 +17,7 @@ export const LEVEL_CONFIG = {
         daily_login: 5
     },
     
-    // Формула XP для уровня: level * 100 + 50
-    getXPForLevel(level) {
-        return level * 100 + 50;
-    },
-    
-    // Получить уровень по XP
-    getLevelFromXP(xp) {
-        let level = 1;
-        let totalXP = 0;
-        
-        while (totalXP + this.getXPForLevel(level) <= xp) {
-            totalXP += this.getXPForLevel(level);
-            level++;
-        }
-        
-        return {
-            level: level,
-            currentLevelXP: this.getXPForLevel(level),
-            totalXPForLevel: xp - totalXP,
-            progress: Math.round(((xp - totalXP) / this.getXPForLevel(level)) * 100)
-        };
-    }
+    // Pure, bounded policy lives in core/level-policy.js.
 };
 
 export class LevelService {
@@ -56,10 +36,10 @@ export class LevelService {
             const userDoc = await getDoc(doc(this.db, 'users', userId));
             if (!userDoc.exists()) return { level: 1, xp: 0, progress: 0 };
             
-            const xp = userDoc.data().stats?.xp || 0;
+            const xp = userDoc.data().stats?.xp ?? 0;
             return {
                 xp: xp,
-                ...LEVEL_CONFIG.getLevelFromXP(xp)
+                ...getLevelFromXP(xp)
             };
         } catch (error) {
             return { level: 1, xp: 0, progress: 0 };

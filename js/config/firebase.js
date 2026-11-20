@@ -44,6 +44,18 @@ try {
     auth = getAuth(app);
     db = getFirestore(app);
     functions = getFunctions(app, 'europe-west3');
+    try {
+        appCheck = initializeWebAppCheck({
+            app,
+            siteKey: appCheckSiteKey,
+            initializeAppCheck,
+            Provider: ReCaptchaEnterpriseProvider
+        });
+    } catch (appCheckError) {
+        // Keep Auth and read-only parts of the app available, but App-Check
+        // protected callables will remain unavailable until provider setup is fixed.
+        console.error('Firebase App Check не инициализирован:', appCheckError);
+    }
     
     // Подключаемся к эмулятору только для разработки (если нужно)
     // connectFirestoreEmulator(db, 'localhost', 8080);

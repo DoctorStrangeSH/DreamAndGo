@@ -32,7 +32,7 @@ export class RestaurantService {
                     const data = doc.data();
                     restaurants.push({
                         id: doc.id,
-                        ...safeData,
+                        ...data,
                         createdAt: data.createdAt?.toDate?.() || new Date()
                     });
                 }
@@ -58,7 +58,7 @@ export class RestaurantService {
         try {
             const restaurantsRef = collection(this.db, 'users', userId, 'restaurants');
             const newRestaurant = {
-                ...data,
+                ...safeData,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
                 photos: data.photos || [],

@@ -30,7 +30,7 @@ test('awards XP once for a persisted event and ignores duplicate delivery', asyn
     assert.equal(duplicate.reason, 'duplicate');
     assert.equal(profile.get('stats.xp'), 60);
     assert.equal(profile.get('stats.friends'), 2);
-    assert.equal((await db.doc('users/' + uid + '/xpEvents/created_travels_trip-1').get()).exists, true);
+    assert.equal((await db.doc('serverXp/' + uid + '/events/created_travels_trip-1').get()).exists, true);
 });
 
 test('daily limits prevent farming with newly generated event IDs', async () => {
@@ -64,7 +64,7 @@ test('global daily XP ceiling is enforced across reward categories', async () =>
         }
     }
     const saved = await db.doc('users/' + uid).get();
-    const daily = await db.doc('users/' + uid + '/xpDaily/2026-11-20').get();
+    const daily = await db.doc('serverXp/' + uid + '/daily/2026-11-20').get();
     assert.equal(daily.get('xpEarned'), XP_DAILY_LIMIT);
     assert.equal(saved.get('stats.xp'), XP_DAILY_LIMIT);
 });

@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { XP_REWARDS, XP_DAILY_LIMIT, XP_DAILY_ACTION_LIMIT, isDreamCompletionTransition } from '../js/core/xp-reward-policy.js';
-import { isRewardableCollectionRecord } from '../js/core/xp-reward-policy.js';
+import { XP_REWARDS, XP_DAILY_LIMIT, XP_DAILY_ACTION_LIMIT, isDreamCompletionTransition, isRewardableCollectionRecord } from '../js/core/xp-reward-policy.js';
 
 test('server XP rewards are explicit and do not grant unknown default rewards', () => {
     assert.deepEqual(XP_REWARDS, {

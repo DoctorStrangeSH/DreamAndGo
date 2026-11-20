@@ -268,3 +268,9 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [x] Unit tests cover valid opt-in, immediate opt-out, invalid input, missing profile, and UI/callable wiring.
 - [ ] Run Firebase Emulator and staging two-account tests for visibility transitions, search, direct lookup and private-field isolation.
 - [ ] Complete production registry backup/dry-run/backfill before enabling public profiles for any account.
+
+
+### Verification note — public profile privacy control
+
+- [x] Root CI `test` job passed on implementation HEAD `8a570eeee68fad84574ded2bd8bdf7297fd18ad1` ([run 44796782146](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44796782146)).
+- [ ] Emulator/staging two-account journey remains outstanding; production rollout remains blocked on username registry backup/dry-run/backfill and live Rules/App Check verification.

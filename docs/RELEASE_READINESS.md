@@ -73,3 +73,12 @@ Additional asynchronous UI isolation fixes on the candidate branch:
 - `npm run check` now includes syntax checks for the chat and profile modules.
 
 These changes reduce stale-response and cross-account UI leakage risks. They do not replace server-side Firestore authorization or a real two-account browser test. CI execution remains unconfirmed until GitHub reports checks for the current PR head.
+
+
+## Security audit follow-up — 2026-11-20
+
+- Fixed SEC-CHAT-PROFILE-01: ChatService.getUserProfile() now returns the shared toPublicProfile() allowlist instead of exposing the raw Firestore user document to chat callers. The existing npm run check already syntax-checks js/services/chat.service.js.
+- Added docs/SECURITY_AUDIT.md with the finding, required authorization matrix, and evidence gates.
+- SEC-RULES-01 remains a release blocker: no deployable root firestore.rules / firebase.json was found on the candidate branch, and active production rules have not been read directly. The previously reported emergency deny-all state is not treated as current verified evidence.
+- No production Firebase rules, App Check settings, Functions, or user data were changed.
+- The current PR head has no reported commit status or workflow runs available yet; CI is not claimed as passing.

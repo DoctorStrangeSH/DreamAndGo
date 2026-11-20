@@ -115,7 +115,7 @@ export class DreamsModule {
                             <button class="btn btn-sm btn-outline-secondary rounded-circle me-1 edit-btn" data-id="${escapeHTML(dreamId)}">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="${dream.id}">
+                            <button class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="${escapeHTML(dreamId)}">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </div>

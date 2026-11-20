@@ -25,6 +25,20 @@ const COLLECTIONS = {
     friends: { total: 'friends', statuses: {} }
 };
 
+const WEEKLY_ACTIVITY_ACTIONS = new Set(['travels', 'restaurants', 'movies', 'books', 'dreams']);
+
+export function countWeeklyCollectionEvents(snapshot, now = new Date()) {
+    const cutoff = now.getTime() - 7 * 24 * 60 * 60 * 1000;
+    const docs = Array.isArray(snapshot?.docs) ? snapshot.docs : [];
+    return docs.filter(document => {
+        const data = document?.data?.() || {};
+        if (!WEEKLY_ACTIVITY_ACTIONS.has(data.action) || data.xpGained <= 0) return false;
+        const occurredAt = data.occurredAt?.toDate?.() || data.occurredAt;
+        const timestamp = occurredAt instanceof Date ? occurredAt.getTime() : Date.parse(occurredAt);
+        return Number.isFinite(timestamp) && timestamp >= cutoff && timestamp <= now.getTime();
+    }).length;
+}
+
 export function summarizeOwnedCollections(collectionSnapshots) {
     const stats = {};
     for (const [collectionName, config] of Object.entries(COLLECTIONS)) {
@@ -55,10 +69,14 @@ export async function refreshUserStatsTransaction(db, uid) {
     const userRef = db.collection('users').doc(uid);
     return db.runTransaction(async transaction => {
         const names = Object.keys(COLLECTIONS);
-        const [profile, ...snapshots] = await Promise.all([
+        const activityCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        const activityQuery = userRef.collection('xpEvents').where('occurredAt', '>=', activityCutoff);
+        const [profile, ...snapshotsAndActivity] = await Promise.all([
             transaction.get(userRef),
-            ...names.map(name => transaction.get(db.collection('users').doc(uid).collection(name)))
+            ...names.map(name => transaction.get(db.collection('users').doc(uid).collection(name))),
+            transaction.get(activityQuery)
         ]);
+        const activitySnapshot = snapshotsAndActivity.pop();
         if (!profile.exists) {
             const error = new Error('User profile does not exist');
             error.code = 'not-found';
@@ -67,7 +85,10 @@ export async function refreshUserStatsTransaction(db, uid) {
         const collectionSnapshots = Object.fromEntries(
             names.map((name, index) => [name, snapshots[index]])
         );
-        const calculated = summarizeOwnedCollections(collectionSnapshots);
+        const calculated = {
+            ...summarizeOwnedCollections(collectionSnapshots),
+            weeklyActivityCount: countWeeklyCollectionEvents(activitySnapshot)
+        };
         const merged = mergeOwnedStats(profile.get('stats'), calculated);
         const achievementResult = calculateAchievementAwards(
             calculated,

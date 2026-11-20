@@ -41,6 +41,11 @@ export async function getPublicProfilesByIds(userIds) {
         throw new TypeError('Можно загрузить не более 50 профилей за раз');
     }
     if (userIds.length === 0) return [];
-    const data = await getInvoker()('getByIds', { userIds });
-    return Array.isArray(data?.profiles) ? data.profiles : [];
+    const profiles = [];
+    for (let offset = 0; offset < userIds.length; offset += 50) {
+        const batch = userIds.slice(offset, offset + 50);
+        const data = await getInvoker()('getByIds', { userIds: batch });
+        if (Array.isArray(data?.profiles)) profiles.push(...data.profiles);
+    }
+    return profiles;
 }

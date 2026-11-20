@@ -107,3 +107,17 @@ CI запускает `--only auth,firestore` в `tests/firebase-emulator/fireba
 The still-active legacy signup path in js/services/auth.service.js now validates the username format and rejects leading/trailing whitespace before creating a Firebase Auth account. It also validates the basic email/password shape before account creation. Legacy username collision lookups are capped at one result per query to avoid unbounded reads.
 
 **Important:** this does not make legacy username allocation atomic. A race between two clients can still pass the preflight query and attempt to create the same normalized username. The legacy path must remain a release blocker and must be replaced by registerProfileV2 only after the registry backfill, registration freeze, production Rules/App Check review, and staging journey tests are complete. The signup-v2 flags remain disabled.
+
+
+## Rehearsal of the migration tool — 2026-11-20
+
+The CLI now delegates to `server/username-backfill.js`, a separately testable operation. Firestore Emulator coverage verifies:
+- dry-run performs no writes;
+- apply mode refuses to run unless the caller explicitly confirms the registration freeze;
+- only missing reservations are created;
+- repeated apply is idempotent;
+- case-insensitive legacy collisions block all writes;
+- an active registry cannot be backfilled;
+- the registry readiness flag is never activated by the migration helper.
+
+These tests use only the isolated Firestore Emulator. They do not constitute a production backup, maintenance freeze, or approval to run the CLI against the live project.

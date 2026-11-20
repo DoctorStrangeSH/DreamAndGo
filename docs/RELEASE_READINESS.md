@@ -152,7 +152,7 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 
 ### Verification snapshot — 2026-11-20
 
-- Checks on implementation commit 8b7843d065e8d6d8b0caecf74479355d3337029c: 410 passed, 0 failed; npm run check passed.
-- Firebase Emulator on the same implementation commit: 5 Firestore Rules tests and 51 server/emulator tests passed, 0 failed.
-- Later changes through 71433437d895fda1a20654095b8aed54e0da70f9 update documentation only. A final CI rerun for that documentation head was queued at the time of this update.
+- Checks on implementation commit a150f2fee1e40a012f5e989168584806450bdf2c: 411 passed, 0 failed; npm run check passed.
+- Firebase Emulator on the same implementation commit: 5 Firestore Rules tests and 51 server/emulator tests passed, 0 failed. XP triggers also reject malformed collection records before awarding.
+- Later change f25821a699a62747662dbbca3b5637eba31ceb39 only consolidates imports; its emulator rerun was in progress.
 - No production Functions deployment, Firestore Rules change, or live user-data migration was performed.

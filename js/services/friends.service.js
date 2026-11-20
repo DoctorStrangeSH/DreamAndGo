@@ -4,7 +4,7 @@ import { toPublicProfile } from '../core/public-profile.js';
 import { countFriendRecords } from '../core/friend-count.js';
 import { 
     collection, doc, getDocs, getDoc, updateDoc,
-    query, where, limit, serverTimestamp, writeBatch, setDoc, runTransaction
+    query, where, limit, serverTimestamp, runTransaction
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 function isValidFriendPair(userId, friendId) {
@@ -52,21 +52,37 @@ export class FriendsService {
                 : 'Некорректные данные для отправки заявки.' };
         }
         try {
-            // Both user-facing views must change atomically, or neither changes.
-            const batch = writeBatch(this.db);
-            const request = {
-                from: fromUserId,
-                to: toUserId,
-                status: 'pending',
-                createdAt: serverTimestamp()
-            };
-            batch.set(doc(this.db, 'users', toUserId, 'friendRequests', fromUserId), request);
-            batch.set(doc(this.db, 'users', fromUserId, 'sentRequests', toUserId), request);
-            await batch.commit();
+            const outgoingRef = doc(this.db, 'users', fromUserId, 'sentRequests', toUserId);
+            const incomingRef = doc(this.db, 'users', toUserId, 'friendRequests', fromUserId);
+            const reverseIncomingRef = doc(this.db, 'users', fromUserId, 'friendRequests', toUserId);
+            const reverseOutgoingRef = doc(this.db, 'users', toUserId, 'sentRequests', fromUserId);
+            const ownFriendRef = doc(this.db, 'users', fromUserId, 'friends', toUserId);
+            const peerFriendRef = doc(this.db, 'users', toUserId, 'friends', fromUserId);
+
+            await runTransaction(this.db, async transaction => {
+                const [outgoing, reverseIncoming, ownFriend, peerFriend] = await Promise.all([
+                    transaction.get(outgoingRef),
+                    transaction.get(reverseIncomingRef),
+                    transaction.get(ownFriendRef),
+                    transaction.get(peerFriendRef)
+                ]);
+                if (!isCurrentUser(fromUserId)) throw new Error('Сессия изменилась.');
+                if (ownFriend.exists() || peerFriend.exists()) throw new Error('Вы уже друзья.');
+                if (outgoing.exists()) throw new Error('Заявка уже отправлена.');
+                if (reverseIncoming.exists()) throw new Error('Этот пользователь уже отправил тебе заявку.');
+                const request = {
+                    from: fromUserId,
+                    to: toUserId,
+                    status: 'pending',
+                    createdAt: serverTimestamp()
+                };
+                transaction.set(incomingRef, request);
+                transaction.set(outgoingRef, request);
+            });
             return { success: true };
         } catch (error) {
             console.error('Ошибка отправки заявки:', error);
-            return { success: false, error: 'Не удалось отправить заявку. Попробуй ещё раз.' };
+            return { success: false, error: error.message || 'Не удалось отправить заявку. Попробуй ещё раз.' };
         }
     }
 

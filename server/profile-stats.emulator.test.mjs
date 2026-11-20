@@ -42,6 +42,13 @@ test('server recomputes owned collection stats and preserves unrelated profile c
     assert.equal(saved.get('stats.travels'), 2);
     assert.equal(saved.get('stats.travelsPlanned'), 1);
     assert.equal(saved.get('stats.friends'), 2);
+    assert.ok(Array.isArray(saved.get('achievements')));
+    assert.ok(saved.get('achievements').length > 0);
+
+    const repeated = await refreshUserStatsTransaction(db, uid);
+    assert.equal(repeated.newAchievements.length, 0);
+    const afterRepeat = await user.get();
+    assert.equal(afterRepeat.get('achievements').length, saved.get('achievements').length);
 });
 
 test('server refuses to create or mutate a missing profile during stats refresh', async () => {

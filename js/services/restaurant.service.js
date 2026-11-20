@@ -50,7 +50,7 @@ export class RestaurantService {
     }
 
     async addRestaurant(userId, data) {
-        if (!this.isOwner(userId)) return { success: false, error: 'Недостаточно прав.' };
+        if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid)) return { success: false, error: 'Недостаточно прав.' };
         try {
             const restaurantsRef = collection(this.db, 'users', userId, 'restaurants');
             const newRestaurant = {
@@ -76,7 +76,7 @@ export class RestaurantService {
     }
 
     async updateRestaurant(userId, restaurantId, updates) {
-        if (!this.isOwner(userId) || !isValidFirestoreDocumentId(restaurantId)) return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
+        if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid) || !isValidFirestoreDocumentId(restaurantId)) return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
         try {
             const restaurantRef = doc(this.db, 'users', userId, 'restaurants', restaurantId);
             await updateDoc(restaurantRef, {
@@ -92,7 +92,7 @@ export class RestaurantService {
     }
 
     async deleteRestaurant(userId, restaurantId) {
-        if (!this.isOwner(userId) || !this.isValidDocumentId(restaurantId)) return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
+        if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid) || !isValidFirestoreDocumentId(restaurantId)) return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
         try {
             const restaurantRef = doc(this.db, 'users', userId, 'restaurants', restaurantId);
             await deleteDoc(restaurantRef);
@@ -105,7 +105,7 @@ export class RestaurantService {
     }
 
     async getRestaurant(userId, restaurantId) {
-        if (!this.isOwner(userId) || !this.isValidDocumentId(restaurantId)) return null;
+        if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid) || !isValidFirestoreDocumentId(restaurantId)) return null;
         try {
             const restaurantRef = doc(this.db, 'users', userId, 'restaurants', restaurantId);
             const restaurantDoc = await getDoc(restaurantRef);
@@ -120,7 +120,7 @@ export class RestaurantService {
     }
 
     async updateUserStats(userId) {
-        if (!this.isOwner(userId)) return;
+        if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid)) return;
         try {
             const restaurants = await this.getRestaurants(userId, {}, { throwOnError: true });
             const visited = restaurants.filter(r => r.status === 'visited').length;

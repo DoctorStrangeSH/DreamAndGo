@@ -155,4 +155,8 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Migration script пропускает приватные/не opted-in аккаунты и не перезаписывает существующие проекции.
 - [x] Username collisions проверяются по всем аккаунтам, включая приватные, чтобы не допустить неоднозначного публичного поиска.
 - [ ] Добавить явную настройку приватности профиля в UI и owner-only Rules для изменения флага.
+- [ ] Перевести `FriendsService.getUserByUsername` с прямого клиентского чтения `users` на `findPublicProfileByUsernameV2`; сейчас legacy путь ещё запрашивает приватную коллекцию и будет несовместим с deny-by-default Rules.
 - [ ] Добавить Emulator-тесты для opt-in, opt-out, смены видимости и прямого доступа к private/public documents.
+
+
+- [x] CI на HEAD `515c9861f2d49895c34bfc027d5fbac3347261f2` прошёл успешно: [run 44780842923](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44780842923).

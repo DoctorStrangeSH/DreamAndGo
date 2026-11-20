@@ -156,3 +156,13 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - Firebase Emulator on the same implementation commit: 5 Firestore Rules tests and 51 server/emulator tests passed, 0 failed. XP triggers also reject malformed collection records before awarding.
 - Later change f25821a699a62747662dbbca3b5637eba31ceb39 only consolidates imports; its emulator rerun was in progress.
 - No production Functions deployment, Firestore Rules change, or live user-data migration was performed.
+
+
+### Server-owned daily tasks — 2026-11-20
+
+- Server assigns three deterministic tasks per UTC day; progress is derived from schema-validated Firestore creation events.
+- Claims and the completion bonus are transactional, idempotent, and share the 300 XP/day ceiling.
+- Only travel, restaurant, movie, book, dream and friend creation tasks are enabled. Rating/review/chat tasks are deferred.
+- Canonical task state is stored under serverDailyTasks/{uid}; XP event and daily ledgers under serverXp/{uid}. Browser clients are denied access in candidate emulator rules.
+- App Check browser bootstrap is wired for the protected callables.
+- Not deployed. Production rules and live App Check must be verified before rollout.

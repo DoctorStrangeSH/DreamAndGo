@@ -10,7 +10,7 @@ const method = source.slice(start, end);
 
 function service({ write, read }) {
     const state = { writeCalls: 0, readCalls: 0, cacheClears: 0, statUpdates: 0 };
-    const Travel = new Function('collection', 'addDoc', 'getDoc', 'serverTimestamp', 'console', 'state', 'isAuthenticatedOwner', 'auth',
+    const Travel = new Function('collection', 'addDoc', 'getDoc', 'serverTimestamp', 'console', 'state', 'isAuthenticatedOwner', 'auth', 'validateTravelInput',
         `return class Travel {
             constructor() { this.db = {}; }
             clearCache() { state.cacheClears++; }
@@ -25,7 +25,8 @@ function service({ write, read }) {
         { error() {}, warn() {} },
         state,
         (requestedUid, activeUid) => requestedUid === activeUid,
-        { currentUser: { uid: 'alice' } }
+        { currentUser: { uid: 'alice' } },
+        input => input
     );
     return { instance: new Travel(), state };
 }

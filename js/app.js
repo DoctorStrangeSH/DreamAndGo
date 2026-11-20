@@ -80,6 +80,7 @@ class DreamAndGo {
             const version = ++this.authVersion;
             const previousUid = this.currentUser?.uid;
             if (previousUid && previousUid !== user?.uid) {
+                this.notificationsWidget.destroy();
                 this.realtimeService.unsubscribeAll();
                 this.userData = null;
                 this.dataLoaded = false;
@@ -113,7 +114,8 @@ class DreamAndGo {
                     }, 500);
                 }
             } else {
-                // Снимаем слушатели предыдущего аккаунта до показа формы входа.
+                // Снимаем все пользовательские подписки до показа формы входа.
+                this.notificationsWidget.destroy();
                 this.realtimeService.unsubscribeAll();
                 this.userData = null;
                 this.dataLoaded = false;

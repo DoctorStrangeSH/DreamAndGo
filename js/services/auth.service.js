@@ -2,7 +2,7 @@ import { app } from '../config/firebase.js';
 import { completeSignupV2 } from '../core/signup-v2-flow.js';
 import { canUseSignupV2 } from '../core/signup-v2-policy.js';
 import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
-import { normalizeUsername } from '../core/username.js';
+import { normalizeUsername, isValidUsername } from '../core/username.js';
 import { 
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
@@ -18,6 +18,7 @@ import {
     collection,
     where,
     getDocs,
+    limit,
     serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
@@ -121,6 +122,13 @@ export class AuthService {
             return this.signUpWithEmailV2(email, password, username);
         }
         try {
+            if (typeof username !== 'string' || username !== username.trim() || !isValidUsername(username)) {
+                return { success: false, error: 'Никнейм: 3–20 латинских букв, цифр или _.' };
+            }
+            if (typeof email !== 'string' || !email.trim() || typeof password !== 'string' || password.length < 6) {
+                return { success: false, error: 'Проверь email и пароль (минимум 6 символов).' };
+            }
+
             console.log('📝 Попытка регистрации:', email, username);
             
             // Проверяем уникальность ника
@@ -220,8 +228,8 @@ export class AuthService {
             const usersRef = collection(this.db, 'users');
             const normalized = normalizeUsername(username);
             const [indexed, legacy] = await Promise.all([
-                getDocs(query(usersRef, where('usernameNormalized', '==', normalized))),
-                getDocs(query(usersRef, where('username', '==', username.trim())))
+                getDocs(query(usersRef, where('usernameNormalized', '==', normalized), limit(1))),
+                getDocs(query(usersRef, where('username', '==', username.trim()), limit(1)))
             ]);
             const isUnique = indexed.empty && legacy.empty;
             

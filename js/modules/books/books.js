@@ -1,3 +1,4 @@
+import { escapeHTML, safeDocumentId, safeCount } from '../../core/security.js';
 import { BookService } from '../../services/book.service.js';
 
 export class BooksModule {
@@ -102,9 +103,11 @@ export class BooksModule {
             want_to_read: { badge: 'Хочу прочитать', color: 'warning' }
         };
         const status = statuses[book.status] || statuses.want_to_read;
-        const progress = book.totalPages && book.currentPage
-            ? Math.round((book.currentPage / book.totalPages) * 100)
-            : 0;
+        const totalPages = safeCount(book.totalPages, 10000000);
+        const currentPage = safeCount(book.currentPage, totalPages);
+        const progress = totalPages > 0 ? Math.min(100, Math.round((currentPage / totalPages) * 100)) : 0;
+        const bookId = safeDocumentId(book.id);
+        const userRating = safeCount(book.userRating, 10);
 
         return `
             <div class="col-12 col-md-6 col-lg-4 fade-in-up" style="animation-delay: ${index * 0.06}s">
@@ -112,7 +115,7 @@ export class BooksModule {
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <span class="badge bg-${status.color} bg-opacity-10 text-${status.color}">${status.badge}</span>
                         <div class="book-card-actions">
-                            <button class="btn btn-sm btn-outline-secondary rounded-circle me-1 edit-btn" data-id="${book.id}">
+                            <button class="btn btn-sm btn-outline-secondary rounded-circle me-1 edit-btn" data-id="${escapeHTML(bookId)}">
                                 <i class="bi bi-pencil"></i>
                             </button>
                             <button class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="${book.id}">
@@ -120,16 +123,16 @@ export class BooksModule {
                             </button>
                         </div>
                     </div>
-                    <h6 class="fw-bold mb-1">${book.title || 'Без названия'}</h6>
-                    <p class="text-muted small mb-2">${book.author || 'Автор не указан'}</p>
+                    <h6 class="fw-bold mb-1">${escapeHTML(book.title || 'Без названия')}</h6>
+                    <p class="text-muted small mb-2">${escapeHTML(book.author || 'Автор не указан')}</p>
                     ${book.genres && book.genres.length
-                ? `<div class="mb-2">${book.genres.map(g => `<span class="badge bg-light text-dark me-1">${g}</span>`).join('')}</div>`
+                ? `<div class="mb-2">${book.genres.map(g => `<span class="badge bg-light text-dark me-1">${escapeHTML(g)}</span>`).join('')}</div>`
                 : ''
             }
                     ${book.status === 'reading' && progress > 0
                 ? `<div class="mb-2">
                             <div class="d-flex justify-content-between small">
-                                <span>${book.currentPage}/${book.totalPages} стр.</span>
+                                <span>${currentPage}/${totalPages} стр.</span>
                                 <span>${progress}%</span>
                             </div>
                             <div class="progress" style="height: 4px;">
@@ -140,7 +143,7 @@ export class BooksModule {
             }
                     <div class="d-flex justify-content-between align-items-center">
                         ${book.userRating
-                ? `<span class="badge bg-primary">${book.userRating}/10</span>`
+                ? `<span class="badge bg-primary">${userRating}/10</span>`
                 : '<span></span>'
             }
                         <small class="text-muted">${this.formatDate(book.createdAt)}</small>

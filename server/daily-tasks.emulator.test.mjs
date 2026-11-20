@@ -35,7 +35,7 @@ test('only a persisted matching collection event advances progress and duplicate
     const duplicate = await recordDailyTaskProgress(db, {
         uid, action: selected.action, sourceId: 'record-1', occurredAt: now
     });
-    const saved = await db.doc('serverDailyTasks/' + uid').get();
+    const saved = await db.doc('serverDailyTasks/' + uid).get();
     const task = saved.get('tasks').find(item => item.id === selected.id);
 
     assert.equal(first.updated, true);
@@ -57,7 +57,7 @@ test('completed task reward is atomic, capped and idempotent', async () => {
     const first = await claimDailyTaskReward(db, uid, selected.id, now);
     const duplicate = await claimDailyTaskReward(db, uid, selected.id, now);
     const profile = await db.doc('users/' + uid).get();
-    const taskDoc = await db.doc('serverDailyTasks/' + uid').get();
+    const taskDoc = await db.doc('serverDailyTasks/' + uid).get();
     const savedTask = taskDoc.get('tasks').find(item => item.id === selected.id);
 
     assert.equal(first.claimed, true);
@@ -82,7 +82,7 @@ test('reward claim respects the shared 300 XP daily ceiling and stores the actua
 
     const result = await claimDailyTaskReward(db, uid, selected.id, now);
     const profile = await db.doc('users/' + uid).get();
-    const taskDoc = await db.doc('serverDailyTasks/' + uid').get();
+    const taskDoc = await db.doc('serverDailyTasks/' + uid).get();
     const savedTask = taskDoc.get('tasks').find(item => item.id === selected.id);
 
     assert.equal(result.claimed, true);
@@ -106,7 +106,7 @@ test('all three server-verified tasks unlock one atomic bonus claim', async () =
     const first = await claimDailyTaskBonus(db, uid, now);
     const duplicate = await claimDailyTaskBonus(db, uid, now);
     const profile = await db.doc('users/' + uid).get();
-    const saved = await db.doc('serverDailyTasks/' + uid').get();
+    const saved = await db.doc('serverDailyTasks/' + uid).get();
 
     assert.equal(saved.get('allCompleted'), true);
     assert.equal(first.claimed, true);

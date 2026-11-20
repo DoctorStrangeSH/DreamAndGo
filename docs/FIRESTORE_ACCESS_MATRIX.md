@@ -157,3 +157,10 @@
 - Browser clients must never write this field through generic profile settings updates.
 - Opt-out is allowed immediately. Opt-in requires `system/usernameRegistry` to be ready with schema version 1 and completed legacy backfill, plus `usernameReservations/{usernameNormalized}.uid == request.auth.uid`.
 - The callable updates only the caller's private profile and a server timestamp. Public projections remain allowlisted and are returned only by protected callables.
+
+
+## 12. Consent flag is never client-writable or publicly projected
+
+- Emulator regression tests deny owner browser attempts to create or update `publicProfileEnabled` with either boolean value.
+- Only the authenticated, App-Check protected `setPublicProfileVisibilityV2` Admin SDK callable can mutate the flag.
+- Public profile DTOs explicitly omit `publicProfileEnabled`; disclosure of consent metadata is not part of the public contract.

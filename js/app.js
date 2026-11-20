@@ -334,8 +334,8 @@ class DreamAndGo {
         if (recent.length === 0) return '<p class="text-muted small mb-0">Пока нет достижений. Начни пользоваться сайтом!</p>';
         return recent.map(a => `
             <div class="d-flex align-items-center gap-2 mb-2">
-                <span style="font-size:1.2rem">${a.emoji}</span>
-                <div><small class="fw-semibold">${a.title}</small><small class="text-muted d-block" style="font-size:0.7rem">${a.description}</small></div>
+                <span style="font-size:1.2rem">${escapeHTML(a.emoji)}</span>
+                <div><small class="fw-semibold">${escapeHTML(a.title)}</small><small class="text-muted d-block" style="font-size:0.7rem">${escapeHTML(a.description)}</small></div>
             </div>`).join('');
     }
 

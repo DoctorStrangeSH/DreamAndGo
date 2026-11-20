@@ -122,3 +122,10 @@
 - [ ] Добавить Emulator tests на валидный create/update и негативные значения каждой из четырёх коллекций.
 - [ ] Сверить все update payloads с validators и запретить изменение server timestamps.
 - [ ] Только после этого создавать production-ready Rules candidate.
+
+
+## 8. Public profile consent field (candidate contract)
+
+`users/{uid}.publicProfileEnabled` is a boolean opt-in gate for public profile projection. Missing, false, or malformed values mean **private**. It must only be changed by the authenticated owner through an explicit privacy setting; no client may set it through arbitrary profile payloads. Public projections remain a separate allowlisted document and never expose the private `users/{uid}` document.
+
+This is a candidate security contract: the settings UI and production Firestore Rules are not yet complete. Migration is create-only and includes only accounts with the field explicitly set to true. It still scans all valid usernames for case-insensitive collisions, including private accounts.

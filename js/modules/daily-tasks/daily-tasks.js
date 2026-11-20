@@ -37,9 +37,7 @@ export class DailyTasksWidget {
                                     </div>
                                 </div>
                                 ${task.completed && !task.claimed ? `
-                                    <button class="btn btn-success btn-sm claim-task-btn" data-task-id="${task.id}">
-                                        +${task.xp} XP
-                                    </button>
+                                    <span class="badge text-bg-secondary" title="Награда станет доступна после серверной проверки">Награда скоро</span>
                                 ` : task.claimed ? `
                                     <i class="bi bi-check-circle-fill text-success"></i>
                                 ` : `
@@ -49,9 +47,7 @@ export class DailyTasksWidget {
                         </div>
                     `).join('')}
                     ${data.allCompleted && !data.bonusClaimed ? `
-                        <button class="btn btn-warning btn-sm w-100 mt-2 claim-bonus-btn">
-                            🎁 Забрать бонус +150 XP
-                        </button>
+                        <div class="small text-muted text-center mt-2">Бонус станет доступен после серверной проверки заданий</div>
                     ` : ''}
                 </div>
             </div>

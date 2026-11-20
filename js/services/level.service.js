@@ -1,5 +1,5 @@
 import { db } from '../config/firebase.js';
-import { doc, updateDoc, getDoc, increment } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 // Конфигурация уровней
 export const LEVEL_CONFIG = {
@@ -45,32 +45,10 @@ export class LevelService {
         this.db = db;
     }
 
-    async addXP(userId, action) {
-        const xp = LEVEL_CONFIG.XP_PER_ACTION[action] || 5;
-        
-        try {
-            const userRef = doc(this.db, 'users', userId);
-            await updateDoc(userRef, {
-                'stats.xp': increment(xp)
-            });
-            
-            // Проверяем новый уровень
-            const userDoc = await getDoc(userRef);
-            const userData = userDoc.data();
-            const totalXP = (userData.stats?.xp || 0) + xp;
-            const levelInfo = LEVEL_CONFIG.getLevelFromXP(totalXP);
-            
-            return {
-                xpGained: xp,
-                totalXP: totalXP,
-                level: levelInfo.level,
-                progress: levelInfo.progress,
-                leveledUp: false
-            };
-        } catch (error) {
-            console.error('Ошибка начисления XP:', error);
-            return null;
-        }
+    // Client-side XP mutation is intentionally disabled. Rewards are granted
+    // only by server triggers after verified Firestore events.
+    async addXP() {
+        return null;
     }
 
     async getUserLevel(userId) {

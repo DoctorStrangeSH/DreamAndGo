@@ -20,7 +20,8 @@ test('achievement progress follows the next level and clamps malformed stats', (
 test('completed dreams and all collection categories use their actual milestones', () => {
     assert.deepEqual(getProgress({ id: 'first_dream' }, 2, { dreams: 99, dreamsCompleted: 2 }), { current: 2, target: 3, percentage: 67 });
     assert.deepEqual(getProgress({ id: 'collector' }, 0, { travels: 2, restaurants: 1, movies: 3, books: 0, dreams: 1 }), { current: 4, target: 5, percentage: 80 });
-    assert.deepEqual(getProgress({ id: 'perfect_week' }, 0, { travels: 2, movies: 4, books: 1 }), { current: 7, target: 7, percentage: 100 });
+    assert.deepEqual(getProgress({ id: 'perfect_week' }, 0, { travels: 99, movies: 40, books: 12, weeklyActivityCount: 7 }), { current: 7, target: 7, percentage: 100 });
+    assert.deepEqual(getProgress({ id: 'perfect_week' }, 0, { travels: 99, movies: 40, books: 12, weeklyActivityCount: 2 }), { current: 2, target: 7, percentage: 29 });
 });
 
 test('achievement overview counts earned levels, not only achievement records', () => {

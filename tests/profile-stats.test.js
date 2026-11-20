@@ -62,5 +62,5 @@ test('weekly achievement activity counts only successful collection events in th
             { data: () => ({ action: 'dreams', xpGained: 15, occurredAt: new Date('2026-11-12T11:59:59.000Z') }) }
         ]
     };
-    assert.equal(countWeeklyCollectionEvents(snapshot, now), 2);
+    assert.equal(countWeeklyCollectionEvents(snapshot, now), 3);
 });

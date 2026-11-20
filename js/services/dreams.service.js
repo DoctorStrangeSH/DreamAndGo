@@ -57,7 +57,7 @@ export class DreamsService {
     }
 
     async addDream(userId, data) {
-        if (!this.isOwner(userId)) return { success: false, error: 'Недостаточно прав.' };
+        if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid)) return { success: false, error: 'Недостаточно прав.' };
         try {
             const safeData = validateDreamInput(data);
             const dreamsRef = collection(this.db, 'users', userId, 'dreams');
@@ -79,7 +79,7 @@ export class DreamsService {
     }
 
     async updateDream(userId, dreamId, updates) {
-        if (!this.isOwner(userId) || !isValidFirestoreDocumentId(dreamId)) {
+        if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid) || !isValidFirestoreDocumentId(dreamId)) {
             return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
         }
         try {
@@ -110,7 +110,7 @@ export class DreamsService {
     }
 
     async deleteDream(userId, dreamId) {
-        if (!this.isOwner(userId) || !this.isValidDocumentId(dreamId)) {
+        if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid) || !isValidFirestoreDocumentId(dreamId)) {
             return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
         }
         try {
@@ -125,7 +125,7 @@ export class DreamsService {
     }
 
     async getDream(userId, dreamId) {
-        if (!this.isOwner(userId) || !this.isValidDocumentId(dreamId)) return null;
+        if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid) || !isValidFirestoreDocumentId(dreamId)) return null;
         try {
             const dreamRef = doc(this.db, 'users', userId, 'dreams', dreamId);
             const dreamDoc = await getDoc(dreamRef);
@@ -140,7 +140,7 @@ export class DreamsService {
     }
 
     async updateUserStats(userId) {
-        if (!this.isOwner(userId)) return;
+        if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid)) return;
         try {
             const dreams = await this.getDreams(userId, {}, { throwOnError: true });
             const dreaming = dreams.filter(d => d.status === 'dreaming').length;

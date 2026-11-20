@@ -22,7 +22,7 @@ import { FriendsModule } from './modules/friends/friends.js';
 import { ChatModule } from './modules/chat/chat.js';
 import { SettingsModule } from './modules/settings/settings.js';
 import { AchievementsModule } from './modules/achievements/achievements.js';
-import { AchievementsService } from './services/achievements.service.js';
+import { refreshUserStats } from './services/profile-stats.service.js';
 import { NotificationsService } from './services/notifications.service.js';
 import { NotificationsWidget } from './modules/notifications/notifications-widget.js';
 import { SearchService } from './services/search.service.js';
@@ -46,7 +46,6 @@ class DreamAndGo {
         this.ui = new UIComponents();
         this.eventBus = new EventBus();
         this.realtimeService = new RealtimeService();
-        this.achievementsService = new AchievementsService();
         this.notificationsService = new NotificationsService();
         this.notificationsWidget = new NotificationsWidget();
         this.searchService = new SearchService();
@@ -260,15 +259,17 @@ class DreamAndGo {
 
     async checkAchievements() {
         if (!this.currentUser) return;
+        const requestedUid = this.currentUser.uid;
+        const version = this.authVersion;
         try {
-            const requestedUid = this.currentUser.uid;
-            const version = this.authVersion;
-            const newAchievements = await this.achievementsService.checkAndAwardAchievements(requestedUid);
+            const newAchievements = await refreshUserStats(requestedUid);
             if (version !== this.authVersion || this.currentUser?.uid !== requestedUid) return;
-            if (newAchievements.length > 0) {
-                newAchievements.forEach(a => this.ui.showAchievementToast(a));
+            if (Array.isArray(newAchievements) && newAchievements.length > 0) {
+                newAchievements.forEach(achievement => this.ui.showAchievementToast(achievement));
             }
-        } catch (error) { console.error('Ошибка проверки достижений:', error); }
+        } catch (error) {
+            console.error('Ошибка проверки достижений:', error);
+        }
     }
 
     // Kept as a compatibility shim for older modules. The browser may
@@ -290,7 +291,10 @@ class DreamAndGo {
         ]);
         if (rewardActions.has(action)) {
             setTimeout(() => {
-                if (this.currentUser?.uid === uid) this.renderNavWidgets();
+                if (this.currentUser?.uid === uid) {
+                    this.checkAchievements();
+                    this.renderNavWidgets();
+                }
             }, 1500);
         }
     }

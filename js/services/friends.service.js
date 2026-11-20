@@ -1,11 +1,11 @@
 import { auth, db } from '../config/firebase.js';
 import { normalizeUsername, isValidUsername } from '../core/username.js';
-import { toPublicProfile } from '../core/public-profile.js';
+import { findPublicProfileByUsername, getPublicProfilesByIds } from './public-profile-callable.service.js';
 import { refreshUserStats } from './profile-stats.service.js';
 import { isValidFriendPair, isCurrentFriendActor } from '../core/friend-action-policy.js';
 import { 
-    collection, doc, getDocs, getDoc,
-    query, where, limit, serverTimestamp, runTransaction
+    collection, doc, getDocs,
+    serverTimestamp, runTransaction
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 function isCurrentUser(userId) {
@@ -22,17 +22,7 @@ export class FriendsService {
         if (!isValidUsername(normalized)) return null;
 
         try {
-            const usersRef = collection(this.db, 'users');
-            // New profiles use the canonical key. Legacy profiles are still
-            // available via exact-case username until a safe backfill exists.
-            const indexed = await getDocs(query(usersRef, where('usernameNormalized', '==', normalized), limit(1)));
-            let match = indexed.docs[0];
-            if (!match) {
-                const legacy = await getDocs(query(usersRef, where('username', '==', String(username).trim()), limit(1)));
-                match = legacy.docs[0];
-            }
-            if (!match) return null;
-            return toPublicProfile(match.id, match.data());
+            return await findPublicProfileByUsername(normalized);
         } catch (error) {
             console.error('Ошибка поиска пользователя:', error);
             throw new Error('Не удалось выполнить поиск. Проверь подключение к интернету и повтори попытку.');
@@ -240,12 +230,10 @@ export class FriendsService {
 
     async getUserProfile(uid) {
         try {
-            const userDoc = await getDoc(doc(this.db, 'users', uid));
-            if (userDoc.exists()) {
-                return toPublicProfile(uid, userDoc.data());
-            }
-            return null;
+            const profiles = await getPublicProfilesByIds([uid]);
+            return profiles[0] || null;
         } catch (error) {
+            console.error('Не удалось загрузить публичный профиль:', error);
             return null;
         }
     }

@@ -1,4 +1,5 @@
 import { auth, db } from '../config/firebase.js';
+import { isAuthenticatedOwner, isValidFirestoreDocumentId } from '../core/owner-access-policy.js';
 import { 
     collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc,
     query, orderBy, serverTimestamp, where
@@ -10,7 +11,7 @@ export class RestaurantService {
     }
 
     async getRestaurants(userId, filters = {}, { throwOnError = false } = {}) {
-        if (!this.isOwner(userId)) { if (throwOnError) throw new Error('Недостаточно прав.'); return []; }
+        if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid)) { if (throwOnError) throw new Error('Недостаточно прав.'); return []; }
         try {
             const restaurantsRef = collection(this.db, 'users', userId, 'restaurants');
             let q = query(restaurantsRef, orderBy('createdAt', 'desc'));
@@ -75,7 +76,7 @@ export class RestaurantService {
     }
 
     async updateRestaurant(userId, restaurantId, updates) {
-        if (!this.isOwner(userId) || !this.isValidDocumentId(restaurantId)) return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
+        if (!this.isOwner(userId) || !isValidFirestoreDocumentId(restaurantId)) return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
         try {
             const restaurantRef = doc(this.db, 'users', userId, 'restaurants', restaurantId);
             await updateDoc(restaurantRef, {
@@ -116,15 +117,6 @@ export class RestaurantService {
             console.error('Ошибка загрузки ресторана:', error);
             return null;
         }
-    }
-
-    isOwner(userId) {
-        return typeof userId === 'string' && !!userId && auth?.currentUser?.uid === userId;
-    }
-
-    isValidDocumentId(value) {
-        return typeof value === 'string' && value.length > 0 && value.length <= 1500 &&
-            value !== '.' && value !== '..' && !value.includes('/') && value.trim() === value;
     }
 
     async updateUserStats(userId) {

@@ -1,5 +1,6 @@
 import { auth, db } from '../config/firebase.js';
 import { isAuthenticatedOwner, isValidFirestoreDocumentId } from '../core/owner-access-policy.js';
+import { refreshUserStats } from './profile-stats.service.js';
 import { validateDreamInput } from '../core/dream-input-policy.js';
 import { 
     collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc,
@@ -141,20 +142,5 @@ export class DreamsService {
 
     async updateUserStats(userId) {
         if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid)) return;
-        try {
-            const dreams = await this.getDreams(userId, {}, { throwOnError: true });
-            const dreaming = dreams.filter(d => d.status === 'dreaming').length;
-            const inProgress = dreams.filter(d => d.status === 'in_progress').length;
-            const completed = dreams.filter(d => d.status === 'completed').length;
-
-            const userRef = doc(this.db, 'users', userId);
-            await updateDoc(userRef, {
-                'stats.dreams': dreams.length,
-                'stats.dreamsCompleted': completed,
-                'stats.dreamsInProgress': inProgress
-            });
-        } catch (error) {
-            console.error('Ошибка обновления статистики:', error);
-        }
-    }
-}
+        await refreshUserStats(userId);
+    }}

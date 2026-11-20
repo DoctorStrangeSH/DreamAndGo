@@ -194,7 +194,7 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 
 ### SEC-LEVEL-01 — untrusted XP could stall or inject markup into the level widget
 
-**Status:** fixed in candidate branch; CI verification pending.
+**Status:** fixed in candidate branch; verified by CI on implementation HEAD `5cef355c105477008f1f2ed017d17baaec791184` and documentation-only HEAD `066e9e797092f84b521270991201830b279894cd`.
 
 - The previous XP-to-level calculation used an unbounded loop over a Firestore profile value. A non-finite value such as `Infinity` could keep the loop running indefinitely.
 - The level widget also rendered the raw XP value into an HTML template. A malformed string in the profile field could therefore become markup.

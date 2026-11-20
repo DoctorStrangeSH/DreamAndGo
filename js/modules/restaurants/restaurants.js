@@ -1,3 +1,4 @@
+import { escapeHTML, safeDocumentId, safeCount, safeHttpsURL } from '../../core/security.js';
 import { RestaurantService } from '../../services/restaurant.service.js';
 import { APP_CONFIG } from '../../config/constants.js';
 
@@ -94,6 +95,9 @@ export class RestaurantsModule {
     }
 
     createCard(restaurant, index) {
+        const photoURL = safeHttpsURL(restaurant.photos?.[0]);
+        const restaurantId = safeDocumentId(restaurant.id);
+        const rating = safeCount(restaurant.userRating, 10);
         const statusBadge = restaurant.status === 'visited'
             ? '<span class="badge bg-success bg-opacity-10 text-success">✓ Посетил</span>'
             : '<span class="badge bg-warning bg-opacity-10 text-warning">☆ Хочу</span>';
@@ -102,15 +106,15 @@ export class RestaurantsModule {
             <div class="col-12 col-md-6 col-lg-4 fade-in-up" style="animation-delay: ${index * 0.06}s">
                 <div class="card-premium h-100 restaurant-card">
                     <div class="restaurant-card-header">
-                        ${restaurant.photos && restaurant.photos[0]
-                ? `<img src="${restaurant.photos[0]}" class="restaurant-photo" alt="${restaurant.name}">`
+                        ${photoURL
+                ? `<img src="${escapeHTML(photoURL)}" class="restaurant-photo" alt="${escapeHTML(restaurant.name)}">`
                 : `<div class="restaurant-placeholder">
                                 <i class="bi bi-shop display-4 text-white opacity-25"></i>
                             </div>`
             }
                         <div class="position-absolute top-0 start-0 p-2">${statusBadge}</div>
                         <div class="restaurant-card-actions">
-                            <button class="btn btn-light btn-sm rounded-circle me-1 edit-btn" data-id="${restaurant.id}">
+                            <button class="btn btn-light btn-sm rounded-circle me-1 edit-btn" data-id="${escapeHTML(restaurantId)}">
                                 <i class="bi bi-pencil"></i>
                             </button>
                             <button class="btn btn-light btn-sm rounded-circle delete-btn" data-id="${restaurant.id}">
@@ -120,26 +124,26 @@ export class RestaurantsModule {
                     </div>
                     <div class="p-3">
                         <div class="d-flex justify-content-between align-items-start mb-1">
-                            <h6 class="fw-bold mb-0">${restaurant.name || 'Без названия'}</h6>
+                            <h6 class="fw-bold mb-0">${escapeHTML(restaurant.name || 'Без названия')}</h6>
                             ${restaurant.userRating
-                ? `<span class="badge" style="background: var(--primary);">${restaurant.userRating}/10</span>`
+                ? `<span class="badge" style="background: var(--primary);">${rating}/10</span>`
                 : ''
             }
                         </div>
                         <p class="text-muted small mb-2">
-                            <i class="bi bi-egg-fried me-1"></i>${restaurant.cuisine || 'Кухня не указана'}
+                            <i class="bi bi-egg-fried me-1"></i>${escapeHTML(restaurant.cuisine || 'Кухня не указана')}
                             ${restaurant.address
-                ? `<span class="mx-1">·</span><i class="bi bi-geo-alt me-1"></i>${restaurant.address}`
+                ? `<span class="mx-1">·</span><i class="bi bi-geo-alt me-1"></i>${escapeHTML(restaurant.address)}`
                 : ''
             }
                         </p>
                         ${restaurant.review
-                ? `<p class="text-muted small mb-2">${restaurant.review.substring(0, 100)}...</p>`
+                ? `<p class="text-muted small mb-2">${escapeHTML(String(restaurant.review).substring(0, 100))}...</p>`
                 : ''
             }
                         ${restaurant.favoriteDishes && restaurant.favoriteDishes.length
                 ? `<p class="small mb-0">
-                                <i class="bi bi-heart me-1 text-danger"></i>${restaurant.favoriteDishes.slice(0, 2).join(', ')}
+                                <i class="bi bi-heart me-1 text-danger"></i>${escapeHTML(restaurant.favoriteDishes.slice(0, 2).map(String).join(', '))}
                             </p>`
                 : ''
             }

@@ -91,12 +91,9 @@ export class DailyTasksService {
         task.claimed = true;
         await updateDoc(taskRef, { tasks: data.tasks });
 
-        // Начисляем XP
-        const { LevelService } = await import('./level.service.js');
-        const levelService = new LevelService();
-        await levelService.addXP(userId, task.action);
-
-        return task.xp;
+        // Daily task progress is still client-maintained, so it cannot grant
+        // trusted XP until task completion itself is verified server-side.
+        return null;
     }
 
     async claimBonusReward(userId) {
@@ -107,10 +104,8 @@ export class DailyTasksService {
         const data = taskDoc.data();
         if (!data.allCompleted || data.bonusClaimed) return null;
 
-        data.bonusClaimed = true;
-        await updateDoc(taskRef, { bonusClaimed: true });
-
-        return 150;
+        // Bonus claims are disabled until the daily task lifecycle is server-owned.
+        return null;
     }
 
     getTimeUntilReset() {

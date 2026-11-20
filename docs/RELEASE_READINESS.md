@@ -174,3 +174,11 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - Firebase Emulator: 6/6 candidate Firestore Rules tests and 56/56 server/emulator transaction tests passed.
 - Later commits 4ce66c254e38a8c739eb78afb99f6d35c7dcbd and 248be52ee8970a7f732462c80fbf43661ebc8fc5 are documentation-only.
 - No production deploy or live user-data changes.
+
+
+### Username registry rehearsal — verified 2026-11-20
+
+- Migration logic extracted to `server/username-backfill.js`; CLI remains dry-run by default and requires an explicit registration-freeze acknowledgement for apply.
+- Emulator confirms dry-run is read-only, apply is idempotent and creates only missing reservations, collisions block writes, and the helper never activates the registry.
+- Latest implementation head `def09284616fedcea822b3a28eeda9cf59b5f30a`: 415/415 repository tests, 6/6 Rules tests, 59/59 server/Auth/Firestore emulator tests; `npm run check` passed.
+- Production backup, real-data dry-run, independent audit, registration freeze, staging browser QA and manual readiness activation remain outstanding.

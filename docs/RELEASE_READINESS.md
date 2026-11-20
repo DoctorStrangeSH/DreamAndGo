@@ -109,3 +109,12 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - Updated friend validation tests to exercise the extracted shared policy directly.
 - Updated legacy achievement test expectations to reflect backward-compatible level-1 normalization.
 - Latest GitHub Actions result: 390/390 tests passed; `npm run check` passed on `bc4684240093da4fd434504b44c551be6b00762d`.
+
+
+### Collection write schema pass — 2026-11-20
+
+- Added strict allowlist and field validation for travel, books, movies, and restaurants.
+- Service create paths now persist normalized payloads; update paths reject unknown/protected fields and invalid values before writes.
+- Added regression coverage for nested budgets, ratings, statuses, genres, page progress, movie metadata, cuisine, dates, HTTPS photos, and partial updates.
+- Latest CI: 395 tests passed, 0 failed; syntax checks passed on `966bc3d9d75aa3f701abd4bb52feded4ff2ce5f7`.
+- Firestore Rules review remains a release blocker; client-side validation does not replace server-side authorization.

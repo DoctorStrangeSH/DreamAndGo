@@ -12,7 +12,7 @@ import { markPrivateMessageReadTransaction } from './chat-read-receipts.js';
 import { getPrivateChatUnreadCount } from './chat-unread-status.js';
 import { loadPrivateChatHistory } from './chat-history-service.js';
 import { createFirestoreHistoryAdapter } from './chat-history-firestore.js';
-import { loadPublicProfile, findPublicProfileByUsername } from './public-profile-service.js';
+import { loadPublicProfile, findPublicProfileByUsername, loadPublicProfiles } from './public-profile-service.js';
 import { consumeProfileLookupQuota } from './profile-lookup-quota.js';
 import { registerProfileWithReservedUsername } from './username-reservation.js';
 import { getRegistrationState } from './registration-state.js';
@@ -180,6 +180,25 @@ export const findPublicProfileByUsernameV2 = onCall({ region: 'europe-west3', en
     if (!result.ok) throw new HttpsError(result.code, 'Поиск пользователя недоступен');
     return { profile: result.profile };
 });
+
+// Bounded batch lookup for friends, incoming and outgoing request lists.
+// One authenticated/App-Check request per screen load, not one request per row.
+export const getPublicProfilesV2 = onCall({ region: 'europe-west3', enforceAppCheck: true }, async request => {
+    const db = getFirestore();
+    const uid = request.auth?.uid;
+    if (!uid) throw new HttpsError('unauthenticated', 'Требуется вход в аккаунт');
+    const userIds = request.data?.userIds;
+    if (!Array.isArray(userIds) || userIds.length > 50) {
+        throw new HttpsError('invalid-argument', 'Некорректный список профилей');
+    }
+    if (!await consumeProfileLookupQuota(db, uid)) {
+        throw new HttpsError('resource-exhausted', 'Слишком много запросов к профилям');
+    }
+    const result = await loadPublicProfiles(db, uid, userIds);
+    if (!result.ok) throw new HttpsError(result.code, 'Профили недоступны');
+    return { profiles: result.profiles };
+});
+
 
 // Candidate secure signup finalization. This does NOT bypass the mandatory
 // legacy migration gate at system/usernameRegistry, and is not wired to the UI.

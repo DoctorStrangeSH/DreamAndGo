@@ -20,7 +20,7 @@ function hashSeed(value) {
 
 export function createDailyTaskSet(uid, dateKey) {
     if (typeof uid !== 'string' || !uid || typeof dateKey !== 'string' ||
-        !/^\\d{4}-\\d{2}-\\d{2}$/.test(dateKey)) {
+        !/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
         throw new TypeError('Invalid daily task assignment identity');
     }
     const pool = DAILY_TASK_CATALOG.map(task => ({ ...task }));

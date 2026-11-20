@@ -199,3 +199,14 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [x] Confirmed candidate Firestore rules are isolated under `tests/firebase-emulator/`; no production root rules/config files are present in this branch.
 - [ ] Production Firestore Rules remain a hard blocker: current candidate files are test-only and intentionally deny portions of the product. Create a complete ruleset from the approved V1.0 data model and verify every user flow in the emulator before any production deployment.
 - [ ] Validate Firebase API-key restrictions, App Check enforcement and Functions deployment in staging.
+
+
+### Firestore V1 access matrix — 2026-11-20
+
+- [x] Added `docs/FIRESTORE_ACCESS_MATRIX.md` based on inspected client services and server callable/trigger implementations.
+- [x] Classified private profile, five personal collections, friends/requests, notifications, legacy chat, Chat V2, public profiles, username registry, XP, daily tasks and migration/system documents.
+- [x] Documented current legacy incompatibilities: client-generated notifications for arbitrary recipients, cross-user friendship writes, legacy chat writes to both user indexes, and username search over private `users`.
+- [ ] Confirm exact V1 schemas and product decisions before authoring production Rules.
+- [ ] Obtain the actual deployed Rules and sanitized live schema inventory.
+- [ ] Implement and test the complete production Rules set in Emulator; candidate rules remain test-only.
+- [ ] Staging test with two accounts, backup, rollback plan and manual production rollout.

@@ -77,6 +77,7 @@ export async function refreshUserStatsTransaction(db, uid) {
             transaction.get(activityQuery)
         ]);
         const activitySnapshot = snapshotsAndActivity.pop();
+        const snapshots = snapshotsAndActivity;
         if (!profile.exists) {
             const error = new Error('User profile does not exist');
             error.code = 'not-found';

@@ -138,3 +138,17 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 - Added unit and Firestore Emulator tests for idempotency, profile ownership, daily caps, missing profiles and dream status transitions.
 
 **Compatibility/rollout:** XP values currently retained for collection actions: travel 50, restaurant 30, movie 20, book 25, dream 15, friend 40, dream completion 100. Message, login and daily-task rewards are not awarded by this pipeline. Functions have not been deployed. Existing profile XP is preserved; no migration or production data changes were made.
+
+
+### SEC-ACH-01 — browser-side achievement awards
+
+**Status:** candidate server-side award path implemented and emulator-verified; not deployed.
+
+- Extracted the achievement catalog into the pure shared module js/core/achievement-catalog.js; both the UI and trusted server use the same conditions and descriptions.
+- AchievementsService is now read-only. Its legacy checkAndAwardAchievements() entry point is a no-op and cannot persist awards from the browser.
+- refreshUserStatsV2 now calculates collection counters and achievement awards in the same Firestore transaction, writes both together, and returns only newly earned awards for UI notifications.
+- The app displays award toasts from the trusted callable response and retains account-version checks so late responses from a previous session are ignored.
+- Emulator test confirms awards are persisted and repeated refreshes do not issue duplicate levels.
+- Latest head 64301219df2298e6c44d52f5a5e5a4ec504775ba: Checks 409/409 passed; Firebase Emulator 5/5 rules tests and 51/51 server/emulator tests passed.
+
+**Known product issue retained:** perfect_week still uses lifetime collection totals instead of a rolling seven-day window. This must be corrected with event timestamps in a separate product-logic change. Server functions are not deployed; the client/server rollout must be coordinated before merge.

@@ -18,7 +18,8 @@ const COLLECTIONS = {
     dreams: {
         total: 'dreams',
         statuses: { completed: 'dreamsCompleted', in_progress: 'dreamsInProgress', dreaming: null }
-    }
+    },
+    friends: { total: 'friends', statuses: {} }
 };
 
 export function summarizeOwnedCollections(collectionSnapshots) {

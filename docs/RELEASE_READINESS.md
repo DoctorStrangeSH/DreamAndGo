@@ -226,3 +226,12 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [x] Flagged inconsistent current `isPublic` defaults across collections; public flags do not grant access to private user documents.
 - [ ] Product decision required for public visibility before public projection or Rules implementation.
 - [ ] Emulator positive/negative tests for all four not-yet-modeled collection schemas remain open.
+
+
+### Public profile consent blocker — 2026-11-20
+
+- [x] Server and client projection helpers require explicit `publicProfileEnabled === true`; missing/false is private.
+- [x] Public profile migration skips accounts without explicit opt-in and checks username collisions across all accounts.
+- [ ] Owner-facing privacy setting and owner-only Firestore Rules are not yet implemented.
+- [ ] Emulator coverage for opt-in/opt-out transitions and direct public projection reads is required before enabling profile endpoints or migration.
+- **Release status remains HOLD.** Do not deploy public profile endpoints or run the migration until the consent UI and Rules are verified.

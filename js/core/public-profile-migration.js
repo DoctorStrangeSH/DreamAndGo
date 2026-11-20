@@ -1,7 +1,9 @@
 import { isValidUsername } from './username.js';
 import { toPublicProfile } from './public-profile.js';
 
-/** Pure, testable preflight. Legacy collisions or invalid usernames block writes. */
+/** Pure, testable preflight. Username collisions are checked across all accounts;
+ * only accounts with explicit public-profile consent enter the public projection.
+ */
 export function planPublicProfileMigration(records) {
     const profiles = [];
     const usernameOwners = new Map();
@@ -10,23 +12,30 @@ export function planPublicProfileMigration(records) {
     let disabledCount = 0;
     for (const record of records || []) {
         const source = record?.data;
-        if (!source || source.publicProfileEnabled !== true) {
-            disabledCount++;
+        if (!source || typeof source !== 'object' || Array.isArray(source)) {
+            if (source?.publicProfileEnabled === true) invalidCount++;
+            else disabledCount++;
             continue;
         }
-        const profile = toPublicProfile(record.id, source);
-        if (!profile) {
-            disabledCount++;
+
+        // Inspect normalized usernames across every account to detect collisions,
+        // including private accounts that must never be copied to publicProfiles.
+        const profile = toPublicProfile(record.id, { ...source, publicProfileEnabled: true });
+        if (!profile || !profile.uid || !isValidUsername(profile.usernameNormalized)) {
+            if (source.publicProfileEnabled === true) invalidCount++;
+            else disabledCount++;
             continue;
         }
+
         const username = profile.usernameNormalized;
-        if (!profile.uid || !isValidUsername(username)) {
-            invalidCount++;
-            continue;
-        }
         const previousOwner = usernameOwners.get(username);
         if (previousOwner && previousOwner !== profile.uid) conflicts.add(username);
         usernameOwners.set(username, profile.uid);
+
+        if (source.publicProfileEnabled !== true) {
+            disabledCount++;
+            continue;
+        }
         profiles.push(profile);
     }
     return { profiles, conflictCount: conflicts.size, invalidCount, disabledCount };

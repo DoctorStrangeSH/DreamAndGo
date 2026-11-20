@@ -7,7 +7,8 @@ const paths = [
     '../js/services/book.service.js',
     '../js/services/movie.service.js',
     '../js/services/restaurant.service.js',
-    '../js/services/dreams.service.js'
+    '../js/services/dreams.service.js',
+    '../js/services/friends.service.js'
 ];
 
 test('all personal collection services delegate stats writes to the trusted callable', () => {

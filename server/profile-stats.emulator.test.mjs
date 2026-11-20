@@ -20,7 +20,9 @@ test('server recomputes owned collection stats and preserves unrelated profile c
         db.doc('users/' + uid + '/books/book-2').set({ status: 'reading' }),
         db.doc('users/' + uid + '/movies/movie-1').set({ status: 'watched' }),
         db.doc('users/' + uid + '/restaurants/restaurant-1').set({ status: 'want_to_visit' }),
-        db.doc('users/' + uid + '/dreams/dream-1').set({ status: 'completed' })
+        db.doc('users/' + uid + '/dreams/dream-1').set({ status: 'completed' }),
+        db.doc('users/' + uid + '/friends/bob').set({ friendId: 'bob' }),
+        db.doc('users/' + uid + '/friends/charlie').set({ friendId: 'charlie' })
     ]);
 
     const result = await refreshUserStatsTransaction(db, uid);
@@ -33,12 +35,14 @@ test('server recomputes owned collection stats and preserves unrelated profile c
     assert.equal(result.moviesWatched, 1);
     assert.equal(result.restaurantsWantToVisit, 1);
     assert.equal(result.dreamsCompleted, 1);
+    assert.equal(result.friends, 2);
 
     const saved = await user.get();
     assert.equal(saved.get('stats.friends'), 4);
     assert.equal(saved.get('stats.customCounter'), 12);
     assert.equal(saved.get('stats.travels'), 2);
     assert.equal(saved.get('stats.travelsPlanned'), 1);
+    assert.equal(saved.get('stats.friends'), 2);
 });
 
 test('server refuses to create or mutate a missing profile during stats refresh', async () => {

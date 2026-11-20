@@ -70,7 +70,7 @@ export async function refreshUserStatsTransaction(db, uid) {
     return db.runTransaction(async transaction => {
         const names = Object.keys(COLLECTIONS);
         const activityCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-        const activityQuery = userRef.collection('xpEvents').where('occurredAt', '>=', activityCutoff);
+        const activityQuery = db.collection('serverXp').doc(uid).collection('events').where('occurredAt', '>=', activityCutoff);
         const [profile, ...snapshotsAndActivity] = await Promise.all([
             transaction.get(userRef),
             ...names.map(name => transaction.get(db.collection('users').doc(uid).collection(name))),

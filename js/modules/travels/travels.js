@@ -118,7 +118,7 @@ export class TravelsModule {
                             <button class="btn btn-light btn-sm rounded-circle me-1 edit-btn" data-id="${escapeHTML(travelId)}">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <button class="btn btn-light btn-sm rounded-circle delete-btn" data-id="${travel.id}">
+                            <button class="btn btn-light btn-sm rounded-circle delete-btn" data-id="${escapeHTML(travelId)}">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </div>

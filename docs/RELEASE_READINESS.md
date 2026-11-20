@@ -216,7 +216,7 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 
 - [x] Extended owner-read Emulator coverage to deny owner writes to social, notification, chat and daily-task documents in recovery mode.
 - [x] Added direct-path deny checks for server-owned XP/tasks, username registry/reservations, chat pairs, public profiles and Chat V2 records.
-- [ ] CI must pass on the resulting HEAD. This remains a recovery prototype and does not close the production Rules blocker.
+- [x] CI passed on the audited test/doc HEAD (`df122f4d484d12128ee146da5097c96c78723862`, run `44778054402`). This remains a recovery prototype and does not close the production Rules blocker.
 
 
 ### Firestore V1 data schema audit — 2026-11-20

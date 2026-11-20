@@ -5,6 +5,8 @@ import { isValidFriendPair } from '../js/core/friend-action-policy.js';
 
 const source = readFileSync(new URL('../js/services/friends.service.js', import.meta.url), 'utf8');
 const uiSource = readFileSync(new URL('../js/modules/friends/friends.js', import.meta.url), 'utf8');
+const serverSource = readFileSync(new URL('../server/index.js', import.meta.url), 'utf8');
+const callableSource = readFileSync(new URL('../js/services/friendship-callable.service.js', import.meta.url), 'utf8');
 
 test('all friendship mutations are delegated to one authenticated callable boundary', () => {
     assert.match(source, /import \{ mutateFriendship \} from '\.\/friendship-callable\.service\.js'/);

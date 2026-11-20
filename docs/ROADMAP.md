@@ -171,3 +171,14 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Добавлены тесты на client cutover и server batch projection.
 - [ ] Проверить полный flow на Firebase Emulator и staging с двумя аккаунтами; callable rollout требует App Check.
 - [ ] Реализовать owner-facing opt-in UI и серверное изменение видимости; до этого публичные профили остаются выключенными по умолчанию.
+
+
+### Public profile owner consent control — 2026-11-20
+
+- [x] Добавлена настройка «Публичный профиль» в Settings; отсутствие флага отображается как выключенное состояние.
+- [x] Включение/выключение выполняется только через Auth + App Check callable `setPublicProfileVisibilityV2`; браузер не пишет privacy-флаг напрямую.
+- [x] Отключение доступно сразу; включение закрыто до завершения username registry backfill и подтверждения reservation UID.
+- [x] Добавлена серверная policy с проверкой владельца, схемы реестра, нормализованного никнейма и принадлежащей пользователю резервации.
+- [x] Добавлены unit-тесты server policy и UI/callable wiring.
+- [ ] Прогнать Firebase Emulator и staging с двумя аккаунтами; проверить включение/отключение, поиск, прямой lookup и отсутствие утечки приватных полей.
+- [ ] Завершить production username registry backup/dry-run/backfill; до этого публичность нельзя включить.

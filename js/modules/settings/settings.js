@@ -1,6 +1,7 @@
 import { db } from '../../config/firebase.js';
 import { escapeHTML } from '../../core/escape-html.js';
 import { validateProfileSettings } from '../../core/profile-settings-policy.js';
+import { setPublicProfileVisibility } from '../../services/public-profile-callable.service.js';
 import { doc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 export class SettingsModule {
@@ -87,6 +88,27 @@ export class SettingsModule {
                         </div>
 
                         <div class="card-premium p-4 mb-4">
+                            <h5 class="fw-bold mb-3">
+                                <i class="bi bi-shield-lock me-2"></i>Приватность профиля
+                            </h5>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch"
+                                       id="publicProfileEnabled"
+                                       ${userData.publicProfileEnabled === true ? 'checked' : ''}>
+                                <label class="form-check-label fw-semibold" for="publicProfileEnabled">
+                                    Публичный профиль
+                                </label>
+                            </div>
+                            <p class="form-text mt-2 mb-1">
+                                Если включено, другие пользователи смогут найти тебя по никнейму и увидеть имя,
+                                аватар, описание и общую статистику. Email, город, личные записи и настройки не публикуются.
+                            </p>
+                            <p class="small text-muted mb-0" id="publicProfileVisibilityStatus" aria-live="polite">
+                                ${userData.publicProfileEnabled === true ? 'Профиль отмечен как публичный.' : 'Сейчас профиль приватный.'}
+                            </p>
+                        </div>
+
+                        <div class="card-premium p-4 mb-4">
                             <h5 class="fw-bold mb-4">
                                 <i class="bi bi-palette me-2"></i>Оформление
                             </h5>
@@ -120,6 +142,37 @@ export class SettingsModule {
         document.getElementById('profileSettingsForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             await this.saveSettings(e.target);
+        });
+
+        const visibilityToggle = document.getElementById('publicProfileEnabled');
+        visibilityToggle?.addEventListener('change', async () => {
+            const uid = window.app.currentUser?.uid;
+            if (!uid || uid !== userId || !visibilityToggle.isConnected || visibilityToggle.disabled) return;
+            const requested = visibilityToggle.checked;
+            const status = document.getElementById('publicProfileVisibilityStatus');
+            visibilityToggle.disabled = true;
+            if (status) status.textContent = 'Сохраняем настройку...';
+            try {
+                const enabled = await setPublicProfileVisibility(requested);
+                if (window.app.currentUser?.uid !== uid || !visibilityToggle.isConnected) return;
+                visibilityToggle.checked = enabled;
+                window.app.userData = { ...window.app.userData, publicProfileEnabled: enabled };
+                if (status) status.textContent = enabled
+                    ? 'Публичный профиль включён.'
+                    : 'Профиль теперь приватный.';
+                window.app.ui.showToast(enabled ? 'Публичный профиль включён' : 'Профиль скрыт', 'success');
+            } catch (error) {
+                console.error('Не удалось изменить видимость профиля:', error);
+                if (window.app.currentUser?.uid === uid && visibilityToggle.isConnected) {
+                    visibilityToggle.checked = !requested;
+                    if (status) status.textContent = error?.code === 'functions/failed-precondition'
+                        ? 'Включение станет доступно после безопасной миграции никнеймов.'
+                        : 'Не удалось сохранить настройку. Попробуй ещё раз.';
+                    window.app.ui.showToast(status?.textContent || 'Ошибка настройки приватности', 'warning');
+                }
+            } finally {
+                if (visibilityToggle.isConnected) visibilityToggle.disabled = false;
+            }
         });
 
         document.querySelectorAll('.theme-btn').forEach(btn => {

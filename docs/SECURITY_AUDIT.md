@@ -176,3 +176,17 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 
 
 **Username registry rehearsal verification — 2026-11-20:** implementation head `def09284616fedcea822b3a28eeda9cf59b5f30a` passed 415/415 repository tests and `npm run check`. Firebase Emulator passed 6/6 isolated Rules tests and 59/59 server/Auth/Firestore emulator tests, including dry-run, explicit freeze gate, idempotent backfill apply, case-insensitive collision blocking, active-registry protection, two-account Auth signup/reconnect and duplicate-name competition. Emulator server suites now run serially because multiple integration tests intentionally exercise the shared registry control document. No production backup, migration, flag activation or deployment was performed.
+
+
+### SEC-UI-01 — notification subscription lifetime and XSS sink review
+
+**Status:** notification lifecycle fix implemented; targeted renderer review performed; full application XSS inventory remains open.
+
+- Notification widget now owns an explicit subscription generation and owner UID. Re-initialization tears down the previous listener, and queued snapshots are ignored after logout, account changes, or widget teardown.
+- App auth transitions explicitly destroy the notification widget subscription before clearing or replacing the active account UI.
+- Notification payloads are normalized to an array of non-null records before rendering and badge calculation.
+- Reviewed notification and global-search renderers: text is HTML-escaped; icons, colors and navigation routes use allowlists. Reviewed chat bubbles, friend cards, achievements, movie/book/travel/restaurant/dream cards and own-profile collection summaries for dynamic text interpolation; reviewed fields are escaped or reduced to fixed allowlisted values.
+- Raw markup parameters in shared `UIComponents.createModal({ content })` and `createEmptyState({ action })` remain trusted-caller APIs. They must only receive static application markup or markup assembled from correctly escaped/allowlisted values; never pass raw user content.
+- Added regression tests for notification listener replacement, cross-account queued callbacks, teardown and malformed snapshots.
+
+**Not complete:** every remaining HTML sink and modal/form template still requires a file-by-file review, especially less frequently used paths and dynamically assembled markup. This targeted review is not a claim that the entire XSS audit is closed.

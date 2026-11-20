@@ -52,7 +52,7 @@ export class BooksModule {
                         <div class="col-auto">
                             <select class="form-select form-select-sm" id="genreFilter" style="min-width: 130px;">
                                 ${genres.map(g => `
-                                    <option value="${g}" ${activeGenre === g ? 'selected' : ''}>
+                                    <option value="${escapeHTML(g)}" ${activeGenre === g ? 'selected' : ''}>
                                         ${g === 'all' ? 'Все жанры' : g}
                                     </option>
                                 `).join('')}
@@ -220,12 +220,12 @@ export class BooksModule {
                                     <div class="col-md-8">
                                         <label class="form-label fw-semibold small">Название *</label>
                                         <input type="text" class="form-control" name="title"
-                                               value="${book?.title || ''}" required>
+                                               value="${escapeHTML(book?.title || '')}" required>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Автор *</label>
                                         <input type="text" class="form-control" name="author"
-                                               value="${book?.author || ''}" required>
+                                               value="${escapeHTML(book?.author || '')}" required>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Статус</label>
@@ -239,7 +239,7 @@ export class BooksModule {
                                         <label class="form-label fw-semibold small">Жанры</label>
                                         <select class="form-select" name="genres" multiple size="3">
                                             ${genres.map(g => `
-                                                <option value="${g}" ${book?.genres?.includes(g) ? 'selected' : ''}>${g}</option>
+                                                <option value="${g}" ${book?.genres?.includes(g) ? 'selected' : ''}>${escapeHTML(g)}</option>
                                             `).join('')}
                                         </select>
                                         <small class="text-muted">Ctrl+клик для нескольких</small>
@@ -247,38 +247,38 @@ export class BooksModule {
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Год издания</label>
                                         <input type="number" class="form-control" name="year"
-                                               value="${book?.year || ''}" min="1000" max="2099">
+                                               value="${safeCount(book?.year, 2099)}" min="1000" max="2099">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Всего страниц</label>
                                         <input type="number" class="form-control" name="totalPages"
-                                               value="${book?.totalPages || ''}">
+                                               value="${safeCount(book?.totalPages, 10000000)}">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Прочитано</label>
                                         <input type="number" class="form-control" name="currentPage"
-                                               value="${book?.currentPage || ''}">
+                                               value="${safeCount(book?.currentPage, 10000000)}">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Моя оценка</label>
                                         <div class="d-flex align-items-center gap-2 pt-2">
                                             <input type="range" class="form-range" name="userRating"
-                                                   min="0" max="10" value="${book?.userRating || 0}"
+                                                   min="0" max="10" value="${safeCount(book?.userRating, 10)}"
                                                    id="ratingSlider" style="flex: 1;">
-                                            <span class="badge bg-primary" id="ratingValue">${book?.userRating || 0}/10</span>
+                                            <span class="badge bg-primary" id="ratingValue">${safeCount(book?.userRating, 10)}/10</span>
                                         </div>
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label fw-semibold small">Рецензия</label>
                                         <textarea class="form-control" name="review" rows="3"
-                                                  placeholder="Твои мысли о книге...">${book?.review || ''}</textarea>
+                                                  placeholder="Твои мысли о книге...">${escapeHTML(book?.review || '')}</textarea>
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label fw-semibold small">
                                             <i class="bi bi-chat-quote me-1"></i>Любимые цитаты
                                         </label>
                                         <textarea class="form-control" name="quotes" rows="2"
-                                                  placeholder="Разделяй цитаты символом |">${book?.quotes?.join('|') || ''}</textarea>
+                                                  placeholder="Разделяй цитаты символом |">${escapeHTML(Array.isArray(book?.quotes) ? book.quotes.join('|') : '')}</textarea>
                                     </div>
                                 </div>
                             </form>

@@ -101,3 +101,11 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - Achievement progress no longer throws for special achievements or missing statistics.
 - JSON backup export is bound to the active owner and aborts if the account changes during collection reads.
 - Known product correctness follow-up: `perfect_week` currently counts lifetime collection totals and needs a timestamp-based rolling seven-day implementation before it can be described as weekly.
+
+
+### CI recovery — 2026-11-20
+
+- Updated service-extraction test harnesses to inject the shared authenticated-owner and document-ID policies rather than relying on removed instance helpers.
+- Updated friend validation tests to exercise the extracted shared policy directly.
+- Updated legacy achievement test expectations to reflect backward-compatible level-1 normalization.
+- Latest GitHub Actions result: 390/390 tests passed; `npm run check` passed on `bc4684240093da4fd434504b44c551be6b00762d`.

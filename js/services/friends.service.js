@@ -1,10 +1,10 @@
 import { auth, db } from '../config/firebase.js';
 import { normalizeUsername, isValidUsername } from '../core/username.js';
 import { toPublicProfile } from '../core/public-profile.js';
-import { countFriendRecords } from '../core/friend-count.js';
+import { refreshUserStats } from './profile-stats.service.js';
 import { isValidFriendPair, isCurrentFriendActor } from '../core/friend-action-policy.js';
 import { 
-    collection, doc, getDocs, getDoc, updateDoc,
+    collection, doc, getDocs, getDoc,
     query, where, limit, serverTimestamp, runTransaction
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
@@ -252,14 +252,5 @@ export class FriendsService {
 
     async updateFriendsCount(userId) {
         if (!isCurrentUser(userId)) return;
-        try {
-            const friendsRef = collection(this.db, 'users', userId, 'friends');
-            const snapshot = await getDocs(friendsRef);
-            const count = countFriendRecords(snapshot.docs);
-            const userRef = doc(this.db, 'users', userId);
-            await updateDoc(userRef, { 'stats.friends': count });
-        } catch (error) {
-            console.error('Ошибка обновления счётчика друзей:', error);
-        }
-    }
-}
+        await refreshUserStats(userId);
+    }}

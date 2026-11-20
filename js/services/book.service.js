@@ -1,5 +1,6 @@
 import { auth, db } from '../config/firebase.js';
 import { isAuthenticatedOwner, isValidFirestoreDocumentId } from '../core/owner-access-policy.js';
+import { refreshUserStats } from './profile-stats.service.js';
 import { validateBookInput } from '../core/collection-input-policy.js';
 import { 
     collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc,
@@ -127,22 +128,5 @@ export class BookService {
 
     async updateUserStats(userId) {
         if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid)) return;
-        try {
-            // Never overwrite valid counters with zeros when the collection read failed.
-            const books = await this.getBooks(userId, {}, { throwOnError: true });
-            const reading = books.filter(b => b.status === 'reading').length;
-            const read = books.filter(b => b.status === 'read').length;
-            const wantToRead = books.filter(b => b.status === 'want_to_read').length;
-
-            const userRef = doc(this.db, 'users', userId);
-            await updateDoc(userRef, {
-                'stats.books': books.length,
-                'stats.booksRead': read,
-                'stats.booksReading': reading,
-                'stats.booksWantToRead': wantToRead
-            });
-        } catch (error) {
-            console.error('Ошибка обновления статистики:', error);
-        }
-    }
-}
+        await refreshUserStats(userId);
+    }}

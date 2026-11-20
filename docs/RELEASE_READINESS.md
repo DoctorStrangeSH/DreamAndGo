@@ -118,3 +118,13 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - Added regression coverage for nested budgets, ratings, statuses, genres, page progress, movie metadata, cuisine, dates, HTTPS photos, and partial updates.
 - Latest CI: 395 tests passed, 0 failed; syntax checks passed on `966bc3d9d75aa3f701abd4bb52feded4ff2ce5f7`.
 - Firestore Rules review remains a release blocker; client-side validation does not replace server-side authorization.
+
+
+### Trusted profile statistics — 2026-11-20
+
+- Added candidate `refreshUserStatsV2` callable; Firebase Auth UID is the sole source of ownership and App Check is required.
+- Server recomputes travel, restaurant, movie, book, dream and friend counters in one Firestore transaction. Legacy `_init` documents are excluded; unrelated stats are preserved.
+- Client services no longer write these collection counters directly to the private user profile.
+- CI on `42a0ad0e320d2f4ca7fa4678c54c132d86a5314c`: 401 tests passed, 0 failed; syntax checks passed.
+- Dedicated Firebase Emulator transaction workflow for this exact head is still pending at the time of this note; do not mark the server statistics pass fully verified until it completes.
+- Remaining security gap: XP and achievement writes are still client-authoritative and require a separate server-side design. Callable code has not been deployed; production Rules/App Check remain release blockers.

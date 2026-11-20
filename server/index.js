@@ -19,6 +19,7 @@ import { getRegistrationState } from './registration-state.js';
 import { refreshUserStatsTransaction } from './profile-stats.js';
 import { awardXpForVerifiedEvent } from './xp-rewards.js';
 import { isRewardableCollectionRecord, isDreamCompletionTransition } from '../js/core/xp-reward-policy.js';
+import { ensureDailyTasks, recordDailyTaskProgress, claimDailyTaskReward, claimDailyTaskBonus } from './daily-tasks.js';
 
 if (getApps().length === 0) initializeApp();
 
@@ -240,11 +241,18 @@ function createCollectionXpTrigger(collectionName, action) {
     }, async event => {
         const { userId, recordId } = event.params;
         if (!event.data || !isRewardableCollectionRecord(collectionName, event.data.data(), recordId)) return;
-        await awardXpForVerifiedEvent(getFirestore(), {
+        const db = getFirestore();
+        await awardXpForVerifiedEvent(db, {
             uid: userId,
             action,
             sourceId: recordId,
             eventKey: `created_${collectionName}_${recordId}`,
+            occurredAt: event.time
+        });
+        await recordDailyTaskProgress(db, {
+            uid: userId,
+            action: collectionName,
+            sourceId: recordId,
             occurredAt: event.time
         });
     });
@@ -273,4 +281,40 @@ export const awardDreamCompletionXpV2 = onDocumentUpdated({
         eventKey: `completed_dream_${recordId}`,
         occurredAt: event.time
     });
+});
+
+
+// Server-owned daily tasks. The client can request a snapshot and claim a
+// completed reward, but cannot assign tasks or submit progress counters.
+export const getDailyTasksV2 = onCall({ region: 'europe-west3', enforceAppCheck: true }, async request => {
+    const uid = request.auth?.uid;
+    if (!isValidUserId(uid)) throw new HttpsError('unauthenticated', 'Требуется вход в аккаунт');
+    const result = await ensureDailyTasks(getFirestore(), uid);
+    if (!result) throw new HttpsError('failed-precondition', 'Профиль пользователя не найден');
+    return result;
+});
+
+export const claimDailyTaskRewardV2 = onCall({ region: 'europe-west3', enforceAppCheck: true }, async request => {
+    const uid = request.auth?.uid;
+    if (!isValidUserId(uid)) throw new HttpsError('unauthenticated', 'Требуется вход в аккаунт');
+    const result = await claimDailyTaskReward(getFirestore(), uid, request.data?.taskId);
+    if (!result.claimed) {
+        const code = result.reason === 'daily-xp-limit' || result.reason === 'daily-claim-limit'
+            ? 'resource-exhausted'
+            : result.reason === 'invalid-task' ? 'invalid-argument' : 'failed-precondition';
+        throw new HttpsError(code, 'Награда пока недоступна');
+    }
+    return result;
+});
+
+export const claimDailyTaskBonusV2 = onCall({ region: 'europe-west3', enforceAppCheck: true }, async request => {
+    const uid = request.auth?.uid;
+    if (!isValidUserId(uid)) throw new HttpsError('unauthenticated', 'Требуется вход в аккаунт');
+    const result = await claimDailyTaskBonus(getFirestore(), uid);
+    if (!result.claimed) {
+        const code = result.reason === 'daily-xp-limit' || result.reason === 'daily-claim-limit'
+            ? 'resource-exhausted' : 'failed-precondition';
+        throw new HttpsError(code, 'Бонус пока недоступен');
+    }
+    return result;
 });

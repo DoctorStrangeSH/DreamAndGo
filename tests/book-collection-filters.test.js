@@ -9,7 +9,7 @@ assert.ok(start >= 0 && end > start, 'BookService.getBooks must exist');
 const method = source.slice(start, end);
 
 function bookService(rows, { fail = false } = {}) {
-    const Book = new Function('collection', 'query', 'orderBy', 'where', 'getDocs', 'console',
+    const Book = new Function('collection', 'query', 'orderBy', 'where', 'getDocs', 'console', 'isAuthenticatedOwner', 'auth',
         `return class Book {
             constructor() { this.db = {}; }
             ${method}
@@ -30,7 +30,9 @@ function bookService(rows, { fail = false } = {}) {
                 }
             };
         },
-        { error() {} }
+        { error() {} },
+        (requestedUid, activeUid) => requestedUid === activeUid,
+        { currentUser: { uid: 'alice' } }
     );
     return new Book();
 }

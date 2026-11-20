@@ -97,7 +97,7 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 - Fixed progress calculations for special achievements and missing counters; the collector target is explicitly five categories.
 - Data export now requires the active owner UID and rechecks it after asynchronous reads and immediately before download, preventing an account switch during export from completing a download.
 
-**Known product logic issue:** the achievement named `perfect_week` currently evaluates lifetime totals, not events within a seven-day window. It is not safe to claim this is a weekly achievement until event timestamps and a rolling-window policy are implemented. This is tracked as a product correctness item, not silently changed during this security pass.
+**Resolved 2026-11-20:** perfect_week now uses successful collection creation events from the rolling seven-day window. XP-capped events still count as real collection activity; friend additions and events older than seven days do not count.
 
 
 **CI verification — 2026-11-20:** GitHub Actions run for commit `bc4684240093da4fd434504b44c551be6b00762d` completed successfully. `npm test`: 390 passed, 0 failed. `npm run check`: passed. Earlier intermediate commits in this pass were red while extracted-service test harnesses were being updated; the latest head is green.
@@ -121,9 +121,9 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 - The server reads the caller's own travels, restaurants, movies, books, dreams and friends subcollections inside a Firestore transaction, recomputes status totals, ignores legacy `_init` placeholders, and updates only computed stats while preserving unrelated counters.
 - Five personal collection services and the friend service now delegate counter refresh to the callable instead of writing `users/{uid}.stats` directly from the browser.
 - Added pure policy tests, client delegation tests and a real Firestore Emulator transaction test.
-- Latest Checks run on `42a0ad0e320d2f4ca7fa4678c54c132d86a5314c`: 401/401 tests passed; `npm run check` passed. The dedicated Firebase Emulator workflow also passed on the implementation commit `42a0ad0e320d2f4ca7fa4678c54c132d86a5314c`: 5 isolated Firestore rules tests and 46 server/emulator transaction tests passed, 0 failed. The later `4c55d7f86c8a92c089374758a8f392ded29d5666` change only updated documentation; its own emulator workflow was still running at the time of this audit.
+- Latest Checks run on `42a0ad0e320d2f4ca7fa4678c54c132d86a5314c`: 401/401 tests passed; `npm run check` passed. The dedicated Firebase Emulator workflow passed on the implementation commit `42a0ad0e320d2f4ca7fa4678c54c132d86a5314c`: 5 isolated Firestore rules tests and 46 server/emulator transaction tests passed, 0 failed.
 
-**Limitations:** this callable is candidate code and has not been deployed. It does not yet move XP (`stats.xp`) or achievement awards out of client code. The current `LevelService.addXP()` still writes a client-selected UID and action directly, and achievement persistence still runs from the client. These are separate authorization/integrity blockers. Production Firestore Rules and App Check settings remain unverified.
+**Limitations:** this callable is candidate code and has not been deployed. Production Firestore Rules and App Check settings remain unverified. XP and achievement award paths have since been moved to server-authoritative candidate code; see SEC-XP-01 and SEC-ACH-01.
 
 
 ### SEC-XP-01 — client-authoritative experience rewards
@@ -151,4 +151,4 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 - Emulator test confirms awards are persisted and repeated refreshes do not issue duplicate levels.
 - Latest head 64301219df2298e6c44d52f5a5e5a4ec504775ba: Checks 409/409 passed; Firebase Emulator 5/5 rules tests and 51/51 server/emulator tests passed.
 
-**Known product issue retained:** perfect_week still uses lifetime collection totals instead of a rolling seven-day window. This must be corrected with event timestamps in a separate product-logic change. Server functions are not deployed; the client/server rollout must be coordinated before merge.
+**Resolved:** perfect_week now uses successful collection creation events in a rolling seven-day window, sourced from the server XP event ledger. Server functions are not deployed; the client/server rollout must be coordinated before merge.

@@ -128,7 +128,7 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 
 ### SEC-XP-01 — client-authoritative experience rewards
 
-**Status:** candidate server event pipeline implemented; emulator verification pending on latest head; not deployed.
+**Status:** candidate server event pipeline implemented and emulator-verified; not deployed.
 
 - Browser-side `LevelService.addXP()` no longer writes `stats.xp`. The app no longer submits arbitrary XP action names.
 - Cloud Functions v2 document triggers award XP only after persisted records are created in the user's travels, restaurants, movies, books, dreams, and friends collections. Required record fields and status enums are validated server-side. Dream completion is a separate transition trigger.
@@ -170,3 +170,6 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 - App Check browser bootstrap now initializes the configured reCAPTCHA Enterprise provider before protected callables are used.
 
 **Rollout:** all code remains candidate-only. Production Firestore Rules, App Check enforcement, Functions deployment and the live client rollout must be reviewed together. UTC midnight is the explicit task reset boundary.
+
+
+**Latest combined verification — 2026-11-20:** code implementation commit 88a128e8c3b635226cd6d0bb8d08d2e2307622a5 passed 415/415 repository tests, 6/6 candidate Firestore Rules tests, and 56/56 server/emulator tests. `npm run check` passed. Later commits 4ce66c254e38a8c739eb78afafb99f6d35c7dcbd and 248be52ee8970a7f732462c80fbf43661ebc8fc5 changed documentation only. No production Functions deployment, production Rules change, or user-data migration was performed.

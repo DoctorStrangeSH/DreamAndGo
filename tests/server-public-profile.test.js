@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { publicProfileFromPrivate, loadPublicProfile, findPublicProfileByUsername } from '../server/public-profile-service.js';
+import { publicProfileFromPrivate, loadPublicProfile, findPublicProfileByUsername, loadPublicProfiles } from '../server/public-profile-service.js';
 
 const privateUser = {
     publicProfileEnabled: true,
@@ -132,4 +132,35 @@ test('username search returns no projection for accounts without explicit opt-in
     assert.deepEqual(await findPublicProfileByUsername(db, 'bob', 'private_user'), {
         ok: true, profile: null
     });
+});
+
+
+test('batch profile lookup validates size and omits private or missing users', async () => {
+    const calls = [];
+    const records = new Map([
+        ['alice', { exists: true, id: 'alice', data: () => ({ ...privateUser, publicProfileEnabled: true }) }],
+        ['bob', { exists: true, id: 'bob', data: () => ({ username: 'bob', publicProfileEnabled: false }) }],
+        ['carol', { exists: false, id: 'carol' }]
+    ]);
+    const db = {
+        collection(name) {
+            assert.equal(name, 'users');
+            return { doc(uid) { calls.push(uid); return { uid }; } };
+        },
+        async getAll(...refs) {
+            return refs.map(ref => records.get(ref.uid));
+        }
+    };
+    assert.deepEqual(await loadPublicProfiles(db, null, ['alice']), {
+        ok: false, code: 'unauthenticated'
+    });
+    assert.deepEqual(await loadPublicProfiles(db, 'actor', Array(51).fill('alice')), {
+        ok: false, code: 'invalid-argument'
+    });
+    const result = await loadPublicProfiles(db, 'actor', ['alice', 'bob', 'carol', 'alice']);
+    assert.equal(result.ok, true);
+    assert.equal(result.profiles.length, 1);
+    assert.equal(result.profiles[0].uid, 'alice');
+    assert.equal('email' in result.profiles[0], false);
+    assert.deepEqual(calls, ['alice', 'bob', 'carol']);
 });

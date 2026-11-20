@@ -190,3 +190,16 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 - Added regression tests for notification listener replacement, cross-account queued callbacks, teardown and malformed snapshots.
 
 **Not complete:** every remaining HTML sink and modal/form template still requires a file-by-file review, especially less frequently used paths and dynamically assembled markup. This targeted review is not a claim that the entire XSS audit is closed.
+
+
+### SEC-LEVEL-01 — untrusted XP could stall or inject markup into the level widget
+
+**Status:** fixed in candidate branch; CI verification pending.
+
+- The previous XP-to-level calculation used an unbounded loop over a Firestore profile value. A non-finite value such as `Infinity` could keep the loop running indefinitely.
+- The level widget also rendered the raw XP value into an HTML template. A malformed string in the profile field could therefore become markup.
+- Extracted a pure bounded policy in `js/core/level-policy.js`: values are converted to finite, non-negative safe integers, and the level is calculated in constant time with a square-root formula.
+- `LevelService` now normalizes XP before returning it to the widget and uses the bounded policy for level/progress calculations.
+- Added regression coverage for malformed values, infinities, negative values, maximum numeric values and exact level thresholds. Added the policy to `npm run check`.
+
+**Verification required:** green repository tests and syntax checks on the exact candidate HEAD. No production rules, functions, user data or deployed configuration were changed.

@@ -114,7 +114,9 @@ export function validateBookInput(raw, { partial = false } = {}) {
     }
     if (!partial && (!out.title || !out.author || !out.status)) throw new TypeError('Заполни обязательные поля книги');
     const total = out.totalPages ?? 0, current = out.currentPage ?? 0;
-    if (current > total) throw new TypeError('Текущая страница не может превышать общее количество страниц');
+    if ((!partial || (Object.hasOwn(out, 'currentPage') && Object.hasOwn(out, 'totalPages'))) && current > total) {
+        throw new TypeError('Текущая страница не может превышать общее количество страниц');
+    }
     return out;
 }
 

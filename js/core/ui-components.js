@@ -1,3 +1,4 @@
+import { escapeHTML } from './security.js';
 // Переиспользуемые UI компоненты
 export class UIComponents {
     constructor() {
@@ -26,6 +27,7 @@ export class UIComponents {
 
     // Toast уведомления
     showToast(message, type = 'success') {
+        const safeType = ['success', 'error', 'warning', 'info'].includes(type) ? type : 'info';
         if (!this.toastContainer) {
             this.toastContainer = document.createElement('div');
             this.toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
@@ -48,11 +50,11 @@ export class UIComponents {
 
         const toastId = `toast-${Date.now()}`;
         const toastHTML = `
-            <div id="${toastId}" class="toast align-items-center text-bg-${colors[type]} border-0" role="alert">
+            <div id="${toastId}" class="toast align-items-center text-bg-${colors[safeType]} border-0" role="alert">
                 <div class="d-flex">
                     <div class="toast-body">
-                        <i class="bi ${icons[type]} me-2"></i>
-                        ${message}
+                        <i class="bi ${icons[safeType]} me-2"></i>
+                        ${escapeHTML(message)}
                     </div>
                     <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
                 </div>

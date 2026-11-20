@@ -43,3 +43,15 @@ test('ignores malformed stored entries and treats invalid counters as zero', () 
     assert.deepEqual(result.newAchievements, []);
     assert.deepEqual(result.updatedAchievements, []);
 });
+
+test('deduplicates legacy achievement entries and preserves the highest attained level', () => {
+    const stored = [
+        { id: 'reader', title: 'Старый уровень' },
+        { id: 'reader', level: 2, title: 'Знаток' },
+        { id: 'reader', level: 1, title: 'Начинающий' }
+    ];
+    const result = calculateAchievementAwards({ books: 10 }, stored, catalog);
+    assert.equal(result.updatedAchievements.filter(item => item.id === 'reader').length, 1);
+    assert.equal(result.updatedAchievements.find(item => item.id === 'reader').level, 2);
+    assert.equal(result.newAchievements.length, 0);
+});

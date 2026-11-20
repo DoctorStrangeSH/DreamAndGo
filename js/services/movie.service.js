@@ -1,5 +1,6 @@
 import { auth, db } from '../config/firebase.js';
 import { isAuthenticatedOwner, isValidFirestoreDocumentId } from '../core/owner-access-policy.js';
+import { refreshUserStats } from './profile-stats.service.js';
 import { validateMovieInput } from '../core/collection-input-policy.js';
 import { APP_CONFIG } from '../config/constants.js';
 import { 
@@ -290,23 +291,5 @@ export class MovieService {
 
     async updateUserStats(userId) {
         if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid)) return;
-        try {
-            const movies = await this.getUserMovies(userId, {}, { throwOnError: true });
-            const watched = movies.filter(m => m.status === 'watched').length;
-            const toWatch = movies.filter(m => m.status === 'to_watch').length;
-            
-            const userRef = doc(this.db, 'users', userId);
-            await updateDoc(userRef, {
-                'stats.movies': movies.length,
-                'stats.moviesWatched': watched,
-                'stats.moviesToWatch': toWatch
-            });
-        } catch (error) {
-            console.error('Ошибка обновления статистики:', error);
-        }
-    }
-
-    clearCache() {
-        this.cache.clear();
-    }
-}
+        await refreshUserStats(userId);
+    }}

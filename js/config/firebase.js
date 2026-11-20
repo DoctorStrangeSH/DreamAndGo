@@ -36,12 +36,13 @@ const firebaseConfig = {
 const appCheckSiteKey = '6LdTWiEuAAAAAGp17v14_t0ZlE67ha6sbDGM4KbS';
 
 // Инициализация Firebase с проверкой ошибок
-let app, auth, db, appCheck;
+let app, auth, db, appCheck, functions;
 
 try {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = getFirestore(app);
+    functions = getFunctions(app, 'europe-west3');
     
     // Подключаемся к эмулятору только для разработки (если нужно)
     // connectFirestoreEmulator(db, 'localhost', 8080);
@@ -54,7 +55,7 @@ try {
 }
 
 // Экспортируем для использования в других модулях
-export { app, auth, db, appCheck };
+export { app, auth, db, appCheck, functions };
 
 // Дополнительно: проверка подключения
 export async function checkFirebaseConnection() {

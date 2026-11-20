@@ -117,7 +117,7 @@ export const ACHIEVEMENTS = {
         title: 'Идеальная неделя',
         description: 'Добавить 7 любых элементов за неделю',
         category: 'special',
-        condition: (stats) => (stats.travels + stats.restaurants + stats.movies + stats.books + stats.dreams) >= 7,
+        condition: (stats) => stats.weeklyActivityCount >= 7,
         levels: [{ level: 1, title: 'Продуктивный', description: 'Всего добавлено 7+ элементов' }]
     }
 };

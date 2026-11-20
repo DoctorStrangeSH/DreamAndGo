@@ -61,3 +61,15 @@ These are targeted fixes, **not completion of the full XSS audit**. Remaining re
 - PR #1 remains open; mergeability is not confirmed.
 - GitHub combined status and PR-filtered workflow-run lookup returned no checks/runs for this exact SHA at review time. Do not interpret an empty result as a passing CI run.
 - Staging verification, real production rules review, two-account browser tests, backup and rollback ownership remain release blockers.
+
+
+## Account-isolation follow-up — 2026-11-20
+
+Additional asynchronous UI isolation fixes on the candidate branch:
+
+- Chat list subscriptions capture the UID that created the listener. Queued snapshots are ignored after an account switch, and retry actions are bound to the same UID.
+- Re-subscribing to the chat list explicitly tears down the previous listener first.
+- Profile loading uses a monotonically increasing request token and captured signed-in UID. A slower response cannot replace a newer profile route or repaint after the active account changes.
+- `npm run check` now includes syntax checks for the chat and profile modules.
+
+These changes reduce stale-response and cross-account UI leakage risks. They do not replace server-side Firestore authorization or a real two-account browser test. CI execution remains unconfirmed until GitHub reports checks for the current PR head.

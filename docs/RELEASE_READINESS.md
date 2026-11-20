@@ -137,7 +137,7 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - Limits: 5 rewards per action/day and 300 XP total per UTC day.
 - Browser XP writes are disabled. Daily-task XP/bonus claims are visibly pending and cannot grant XP until task progress is server-verified.
 - Candidate implementation is not deployed. Staging and production Rules/App Check verification remain mandatory.
-- CI and Emulator checks must be green on the latest head before closing SEC-XP-01.
+- Final verification on implementation head 8b7843d065e8d6d8b0caecf74479355d3337029c: 410/410 Checks tests; 5/5 Firestore Rules tests; 51/51 server/emulator tests. The latest commits after that head are documentation-only.
 
 
 ### Server-authoritative achievements — 2026-11-20
@@ -148,3 +148,11 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - Emulator verified repeated refreshes do not duplicate awards.
 - Latest verified implementation head 64301219df2298e6c44d52f5a5e5a4ec504775ba: 409/409 Checks tests; 5/5 Firestore rules tests; 51/51 server/emulator tests.
 - Not deployed. Production Firebase Functions/App Check/Rules rollout remains a hard release gate.
+
+
+### Verification snapshot — 2026-11-20
+
+- Checks on implementation commit 8b7843d065e8d6d8b0caecf74479355d3337029c: 410 passed, 0 failed; npm run check passed.
+- Firebase Emulator on the same implementation commit: 5 Firestore Rules tests and 51 server/emulator tests passed, 0 failed.
+- Later changes through 71433437d895fda1a20654095b8aed54e0da70f9 update documentation only. A final CI rerun for that documentation head was queued at the time of this update.
+- No production Functions deployment, Firestore Rules change, or live user-data migration was performed.

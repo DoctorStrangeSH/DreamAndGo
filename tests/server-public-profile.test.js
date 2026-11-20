@@ -55,6 +55,7 @@ test('authenticated lookup reads one document and returns only public fields', a
     assert.equal(result.ok, true);
     assert.equal(result.profile.username, 'Sherlock');
     assert.equal('email' in result.profile, false);
+    assert.equal('publicProfileEnabled' in result.profile, false);
     assert.deepEqual(ids, ['alice']);
 });
 
@@ -162,5 +163,6 @@ test('batch profile lookup validates size and omits private or missing users', a
     assert.equal(result.profiles.length, 1);
     assert.equal(result.profiles[0].uid, 'alice');
     assert.equal('email' in result.profiles[0], false);
+    assert.equal('publicProfileEnabled' in result.profiles[0], false);
     assert.deepEqual(calls, ['alice', 'bob', 'carol']);
 });

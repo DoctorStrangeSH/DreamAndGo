@@ -62,3 +62,10 @@
 Всё хранится **только в памяти страницы**: черновики и сообщения не записываются в `localStorage` или другой долговременный носитель. После перезагрузки вкладки неподтверждённые сообщения из этой очереди теряются — для production понадобится отдельный дизайн безопасного сохранения. `clear()` не может отменить отправку, уже принятую сервером.
 
 Клиентский UI по-прежнему использует legacy `ChatService`; текущий модуль является подготовкой и имеет изолированные тесты, но не считается внедрённым механизмом доставки.
+
+
+## Trusted profile statistics (candidate callable)
+
+`refreshUserStatsV2` is an authenticated, App-Check-protected callable in `europe-west3`. It accepts an empty payload: UID is derived exclusively from `request.auth.uid`. The server transaction reads the user's profile and their own `travels`, `restaurants`, `movies`, `books`, `dreams`, and `friends` subcollections, ignores legacy `_init` placeholders, recomputes counters, and preserves unrelated stats keys. Browser collection services call this endpoint rather than writing collection counters directly.
+
+The endpoint is not deployed or enabled in production by this branch. Emulator coverage validates the transaction and aggregation, not deployed Functions, App Check enforcement, or production Firestore Rules. XP awards and achievement writes remain separate client-authoritative flows and are not covered by this callable.

@@ -82,7 +82,7 @@ Cloud Functions v2 exports document triggers for newly created travel, restauran
 - Total cap: 300 XP per UTC day.
 - XP rewards: travel 50, restaurant 30, movie 20, book 25, dream 15, friend 40, dream completion 100.
 - Browser-side `LevelService.addXP()` is a no-op. The application no longer submits arbitrary XP action strings.
-- Daily task rewards are intentionally disabled while their progress is client-maintained. Re-enable only after task assignment, progress verification and reward claiming move to trusted server code.
+- Daily tasks now have candidate server-owned assignment, progress and claim callables. Only six persisted collection/friend creation events are eligible; ratings, reviews and chat messages are deliberately excluded until their own trusted event validation exists.
 
 The triggers are candidate code only. Do not deploy until production Firestore Rules, App Check, staging accounts and the full user-flow rollout are reviewed. This pipeline does not award XP for login, messages, reviews or daily tasks.
 
@@ -91,4 +91,18 @@ The triggers are candidate code only. Do not deploy until production Firestore R
 
 The shared achievement catalog lives in js/core/achievement-catalog.js. The refreshUserStatsV2 callable uses that catalog and calculateAchievementAwards() inside the same Firestore transaction that recomputes personal collection counters. Newly earned levels are persisted with the stats update and returned to the signed-in client only for display toasts. The browser achievement service is read-only.
 
-Do not deploy or merge the client switch independently of the Functions rollout. The known perfect_week lifetime-vs-seven-day condition remains a separate product-logic issue.
+Do not deploy or merge the client switch independently of the Functions rollout. The perfect_week condition uses the rolling seven-day server event count.
+
+
+## Server-owned daily tasks (candidate, not deployed)
+
+- `getDailyTasksV2` assigns three deterministic tasks for the current UTC day and requires an authenticated profile.
+- The pool contains only persisted, schema-validated creation events: travel, restaurant, movie, book, dream and friend.
+- The existing collection creation triggers update progress in a Firestore transaction. A stable event marker prevents duplicate trigger delivery from advancing progress twice.
+- `claimDailyTaskRewardV2` and `claimDailyTaskBonusV2` atomically verify completion, mark claims, update profile XP and share the 300 XP UTC-day ceiling with ordinary XP rewards.
+- Partial rewards are granted when only part of the daily XP allowance remains; the actual granted amount is persisted and shown to the user.
+- The browser only reads the callable snapshot and submits a task ID to claim. It cannot assign tasks, write progress, or choose XP amounts.
+- Ratings, reviews and messages are not in the task pool. Do not add them until their creation/update paths have trusted server-side event validation.
+- The UI resets at 00:00 UTC; this is intentionally explicit to avoid client-local clock manipulation.
+
+The daily task callables require App Check. The browser bootstrap initializes the configured reCAPTCHA Enterprise provider. This remains candidate code and has not been deployed or verified against the live Firebase App Check configuration.

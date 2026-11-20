@@ -9,7 +9,7 @@ const MILESTONES = {
     first_dream: [{ dreams: 1 }, { dreams: 5 }, { dreamsCompleted: 3 }],
     first_friend: [{ friends: 1 }, { friends: 5 }, { friends: 15 }],
     collector: [{ travels: 1, restaurants: 1, movies: 1, books: 1, dreams: 1 }],
-    perfect_week: [{ totalCollections: 7 }]
+    perfect_week: [{ weeklyActivityCount: 7 }]
 };
 
 export function getAchievementMilestone(achievement, earnedLevel, stats = {}) {

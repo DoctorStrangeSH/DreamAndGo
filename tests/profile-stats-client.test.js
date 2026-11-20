@@ -8,8 +8,7 @@ const paths = [
     '../js/services/movie.service.js',
     '../js/services/restaurant.service.js',
     '../js/services/dreams.service.js',
-    '../js/services/friends.service.js'
-];
+ ];
 
 test('all personal collection services delegate stats writes to the trusted callable', () => {
     for (const path of paths) {
@@ -29,4 +28,14 @@ test('stats callable client sends no caller-selected UID or counter values', () 
     assert.match(source, /httpsCallable\(functions, 'refreshUserStatsV2'\)/);
     assert.match(source, /await callable\(\{\}\)/);
     assert.doesNotMatch(source, /callable\(\{[^}]*uid/);
+});
+
+test('friend count refresh delegates to the trusted server callable', () => {
+    const source = readFileSync(new URL('../js/services/friends.service.js', import.meta.url), 'utf8');
+    const start = source.indexOf('    async updateFriendsCount(userId) {');
+    const end = source.indexOf('\n    }', start);
+    assert.ok(start >= 0 && end > start);
+    const method = source.slice(start, end);
+    assert.match(method, /await refreshUserStats\(userId\)/);
+    assert.doesNotMatch(method, /updateDoc\(/);
 });

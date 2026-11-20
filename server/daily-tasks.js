@@ -33,7 +33,7 @@ export async function ensureDailyTasks(db, uid, now = new Date()) {
         if (snapshot.exists && snapshot.get('dateKey') === dateKey) {
             return publicTaskSnapshot(snapshot.data());
         }
-        const tasks = createDailyTaskSet(uid, dateKey);
+        const tasks = createDailyTaskSet(String(uid), String(dateKey));
         const assignment = {
             dateKey,
             tasks,

@@ -57,7 +57,7 @@ These are targeted fixes, **not completion of the full XSS audit**. Remaining re
 
 ### Latest candidate commit
 
-- Head: `ac684d20481ed91c2e1ff4b4aa915e05dd04e2f0`
+- Always use the live PR head SHA when evaluating checks; this document intentionally avoids pinning a SHA that becomes stale after its own update.
 - PR #1 remains open; mergeability is not confirmed.
 - GitHub combined status and PR-filtered workflow-run lookup returned no checks/runs for this exact SHA at review time. Do not interpret an empty result as a passing CI run.
 - Staging verification, real production rules review, two-account browser tests, backup and rollback ownership remain release blockers.

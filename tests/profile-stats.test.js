@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { summarizeOwnedCollections, mergeOwnedStats } from '../server/profile-stats.js';
+import { summarizeOwnedCollections, mergeOwnedStats, countWeeklyCollectionEvents } from '../server/profile-stats.js';
 
 function snapshot(records) {
     return { docs: records.map((data, index) => ({
@@ -48,4 +48,19 @@ test('preserves unrelated server-managed counters and replaces only computed key
     );
     assert.deepEqual(merged, { friends: 7, custom: 'keep', books: 2, booksRead: 1 });
     assert.deepEqual(mergeOwnedStats(null, { dreams: 0 }), { dreams: 0 });
+});
+
+
+test('weekly achievement activity counts only successful collection events in the rolling seven-day window', () => {
+    const now = new Date('2026-11-20T12:00:00.000Z');
+    const snapshot = {
+        docs: [
+            { data: () => ({ action: 'travels', xpGained: 50, occurredAt: new Date('2026-11-20T11:00:00.000Z') }) },
+            { data: () => ({ action: 'books', xpGained: 25, occurredAt: new Date('2026-11-15T12:00:00.000Z') }) },
+            { data: () => ({ action: 'movies', xpGained: 0, occurredAt: new Date('2026-11-19T12:00:00.000Z') }) },
+            { data: () => ({ action: 'friends', xpGained: 40, occurredAt: new Date('2026-11-19T12:00:00.000Z') }) },
+            { data: () => ({ action: 'dreams', xpGained: 15, occurredAt: new Date('2026-11-12T11:59:59.000Z') }) }
+        ]
+    };
+    assert.equal(countWeeklyCollectionEvents(snapshot, now), 2);
 });

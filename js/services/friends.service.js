@@ -103,8 +103,7 @@ export class FriendsService {
                 transaction.delete(sentRef);
             });
 
-            await this.updateFriendsCount(userId);
-            await this.updateFriendsCount(friendId);
+            await this.updateFriendsCount(userId); // The client may update only its own profile stats.
             return { success: true };
         } catch (error) {
             console.error('Ошибка принятия заявки:', error);

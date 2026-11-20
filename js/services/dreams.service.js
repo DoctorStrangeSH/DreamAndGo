@@ -143,4 +143,5 @@ export class DreamsService {
     async updateUserStats(userId) {
         if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid)) return;
         await refreshUserStats(userId);
-    }}
+    }
+}

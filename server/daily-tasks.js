@@ -25,7 +25,7 @@ function publicTaskSnapshot(data) {
 export async function ensureDailyTasks(db, uid, now = new Date()) {
     if (!validSegment(uid)) throw new TypeError('Invalid user ID');
     const dateKey = utcDateKey(now);
-    const taskRef = db.collection('users').doc(uid).collection('dailyTasks').doc('current');
+    const taskRef = db.collection('serverDailyTasks').doc(uid);
     return db.runTransaction(async tx => {
         const userRef = db.collection('users').doc(uid);
         const [userSnapshot, snapshot] = await Promise.all([tx.get(userRef), tx.get(taskRef)]);
@@ -59,8 +59,8 @@ export async function recordDailyTaskProgress(db, {
     }
     const dateKey = utcDateKey(occurredAt);
     const userRef = db.collection('users').doc(uid);
-    const taskRef = userRef.collection('dailyTasks').doc('current');
-    const eventRef = userRef.collection('dailyTaskEvents').doc('created_' + action + '_' + sourceId);
+    const taskRef = db.collection('serverDailyTasks').doc(uid);
+    const eventRef = taskRef.collection('events').doc('created_' + action + '_' + sourceId);
 
     return db.runTransaction(async tx => {
         const [taskSnapshot, eventSnapshot] = await Promise.all([
@@ -102,9 +102,9 @@ async function claimReward(db, uid, claimId, rewardXp, now, mutateTask) {
     if (!Number.isFinite(date.getTime())) throw new TypeError('Invalid claim timestamp');
     const utcDay = date.toISOString().slice(0, 10);
     const userRef = db.collection('users').doc(uid);
-    const taskRef = userRef.collection('dailyTasks').doc('current');
-    const claimRef = userRef.collection('dailyTaskClaims').doc(claimId);
-    const dailyRef = userRef.collection('xpDaily').doc(utcDay);
+    const taskRef = db.collection('serverDailyTasks').doc(uid);
+    const claimRef = taskRef.collection('claims').doc(claimId);
+    const dailyRef = db.collection('serverXp').doc(uid).collection('daily').doc(utcDay);
 
     return db.runTransaction(async tx => {
         const [userSnapshot, taskSnapshot, claimSnapshot, dailySnapshot] = await Promise.all([

@@ -10,7 +10,9 @@ export async function refreshUserStats(requestedUid) {
         const callable = httpsCallable(functions, 'refreshUserStatsV2');
         const response = await callable({});
         if (auth?.currentUser?.uid !== uid) return null;
-        return Array.isArray(response.data?.newAchievements) ? response.data.newAchievements : [];
+        const data = response.data && typeof response.data === 'object' ? response.data : {};
+        const { newAchievements = [], ...stats } = data;
+        return { stats, newAchievements: Array.isArray(newAchievements) ? newAchievements : [] };
     } catch (error) {
         console.error('Не удалось обновить статистику профиля:', error);
         return null;

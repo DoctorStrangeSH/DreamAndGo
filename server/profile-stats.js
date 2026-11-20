@@ -66,7 +66,17 @@ export async function refreshUserStatsTransaction(db, uid) {
         );
         const calculated = summarizeOwnedCollections(collectionSnapshots);
         const merged = mergeOwnedStats(profile.get('stats'), calculated);
-        transaction.update(userRef, { stats: merged });
-        return calculated;
+        const achievementResult = calculateAchievementAwards(
+            calculated,
+            profile.get('achievements') || [],
+            ACHIEVEMENTS,
+            new Date().toISOString()
+        );
+        const update = { stats: merged };
+        if (achievementResult.newAchievements.length > 0) {
+            update.achievements = achievementResult.updatedAchievements;
+        }
+        transaction.update(userRef, update);
+        return { ...calculated, newAchievements: achievementResult.newAchievements };
     });
 }

@@ -129,7 +129,7 @@
 
 - [x] Added explicit rules-test coverage for client-side writes of the visibility flag.
 - [x] Added DTO allowlist assertions for both client and server public projections.
-- [ ] Emulator CI rerun required after these test changes.
+- [x] Emulator CI passed on tested HEAD `c4c50b130cb8a4b64ead9615fac7be039df17c4e`.
 
 
 ### CI and branch hygiene checkpoint
@@ -137,3 +137,12 @@
 - [x] Root unit/syntax CI passed on the latest tested code head before this documentation-only checkpoint.
 - [x] Firebase Emulator candidate Rules suite passed with the explicit public-visibility mutation-denial assertions.
 - [ ] Reconcile the feature branch with current `main` before PR merge; GitHub comparison reports 53 commits behind and divergent history.
+
+
+### Default test command audit
+
+- [x] `npm test` now includes server-side unit tests alongside browser/core tests.
+- [x] Added explicit coverage for profile lookup quota behavior.
+- [x] Corrected an existing server stats test that was previously excluded from CI.
+- [x] Root Checks and Firebase Emulator workflows both passed on `c4c50b130cb8a4b64ead9615fac7be039df17c4e`.
+- [ ] Resolve branch divergence with current `main` through a reviewed integration; no force update.

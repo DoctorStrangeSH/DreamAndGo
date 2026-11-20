@@ -52,6 +52,12 @@ test('owner-only read recovery: guest and other users cannot read PII or write',
             username: 'taken', displayName: 'Алиса', bio: '', location: ''
         }));
         await assertFails(updateDoc(doc(alice, 'users', 'alice'), { usernameNormalized: 'admin' }));
+        // Public visibility is server-owned consent; the browser cannot forge it.
+        await assertFails(updateDoc(doc(alice, 'users', 'alice'), { publicProfileEnabled: true }));
+        await assertFails(updateDoc(doc(alice, 'users', 'alice'), { publicProfileEnabled: false }));
+        await assertFails(setDoc(doc(alice, 'users', 'alice'), {
+            email: 'alice@example.test', username: 'alice', publicProfileEnabled: true
+        }));
         await assertFails(updateDoc(doc(alice, 'users', 'alice'), { stats: { level: 9000 } }));
         await assertFails(updateDoc(doc(alice, 'users', 'alice'), { achievements: ['all'] }));
         await assertFails(updateDoc(doc(alice, 'users', 'alice'), { permissions: ['admin'] }));

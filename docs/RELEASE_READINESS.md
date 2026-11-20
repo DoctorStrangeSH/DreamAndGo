@@ -217,3 +217,12 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [x] Extended owner-read Emulator coverage to deny owner writes to social, notification, chat and daily-task documents in recovery mode.
 - [x] Added direct-path deny checks for server-owned XP/tasks, username registry/reservations, chat pairs, public profiles and Chat V2 records.
 - [ ] CI must pass on the resulting HEAD. This remains a recovery prototype and does not close the production Rules blocker.
+
+
+### Firestore V1 data schema audit — 2026-11-20
+
+- [x] Added `docs/FIRESTORE_V1_DATA_SCHEMAS.md` from actual validators and write services for dreams, travels, books, movies and restaurants.
+- [x] Recorded exact input fields, limits, enums, nested values and service-added timestamps/defaults.
+- [x] Flagged inconsistent current `isPublic` defaults across collections; public flags do not grant access to private user documents.
+- [ ] Product decision required for public visibility before public projection or Rules implementation.
+- [ ] Emulator positive/negative tests for all four not-yet-modeled collection schemas remain open.

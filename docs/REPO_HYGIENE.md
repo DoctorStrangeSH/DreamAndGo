@@ -123,3 +123,10 @@
 - [x] Added an explicit settings switch, fail-closed default, optimistic rollback on errors, and account-switch guards.
 - [x] Added server policy tests and client wiring tests.
 - [ ] Emulator/staging end-to-end validation remains required before production rollout.
+
+
+### Consent flag regression cleanup
+
+- [x] Added explicit rules-test coverage for client-side writes of the visibility flag.
+- [x] Added DTO allowlist assertions for both client and server public projections.
+- [ ] Emulator CI rerun required after these test changes.

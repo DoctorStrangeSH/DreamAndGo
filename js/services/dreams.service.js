@@ -1,4 +1,5 @@
 import { auth, db } from '../config/firebase.js';
+import { isAuthenticatedOwner, isValidFirestoreDocumentId } from '../core/owner-access-policy.js';
 import { validateDreamInput } from '../core/dream-input-policy.js';
 import { 
     collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc,
@@ -11,7 +12,7 @@ export class DreamsService {
     }
 
     async getDreams(userId, filters = {}, { throwOnError = false } = {}) {
-        if (!this.isOwner(userId)) {
+        if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid)) {
             if (throwOnError) throw new Error('Недостаточно прав для доступа к мечтам.');
             return [];
         }
@@ -78,7 +79,7 @@ export class DreamsService {
     }
 
     async updateDream(userId, dreamId, updates) {
-        if (!this.isOwner(userId) || !this.isValidDocumentId(dreamId)) {
+        if (!this.isOwner(userId) || !isValidFirestoreDocumentId(dreamId)) {
             return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
         }
         try {
@@ -136,15 +137,6 @@ export class DreamsService {
             console.error('Ошибка загрузки мечты:', error);
             return null;
         }
-    }
-
-    isOwner(userId) {
-        return typeof userId === 'string' && !!userId && auth?.currentUser?.uid === userId;
-    }
-
-    isValidDocumentId(value) {
-        return typeof value === 'string' && value.length > 0 && value.length <= 1500 &&
-            value !== '.' && value !== '..' && !value.includes('/') && value.trim() === value;
     }
 
     async updateUserStats(userId) {

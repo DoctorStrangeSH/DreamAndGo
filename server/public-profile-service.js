@@ -37,7 +37,7 @@ export async function loadPublicProfile(db, actorUid, requestedUid) {
     const snapshot = await db.collection('users').doc(requestedUid).get();
     if (!snapshot.exists) return { ok: false, code: 'not-found' };
     const profile = publicProfileFromPrivate(requestedUid, snapshot.data());
-    if (!profile) return { ok: false, code: 'internal' };
+    if (!profile) return { ok: false, code: 'not-found' };
     return { ok: true, profile };
 }
 

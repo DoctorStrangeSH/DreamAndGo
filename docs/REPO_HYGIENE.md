@@ -82,3 +82,13 @@
 - [x] Firebase web config contains a client API key and reCAPTCHA Enterprise site key, which are browser-public identifiers, not server secrets. No secret value is copied into this audit. Restrict the Firebase API key to the intended APIs/domains in Google Cloud/Firebase Console and maintain Security Rules/App Check as the actual access controls.
 - [ ] Confirm CDN availability, CSP compatibility, API-key restrictions and App Check enforcement in staging.
 - [ ] Review commit history and current source content for actual secrets; this targeted config review is not a full secret scan.
+
+
+### Targeted secret and Firebase Rules review — 2026-11-20
+
+- [x] Scanned 20 high-risk current-branch files (Firebase client config, App Check bootstrap, server entrypoints, migration CLIs, Admin SDK helpers, package manifests, GitHub Actions and candidate rules) for common private-key, service-account-key, cloud access-key, GitHub/Slack/Stripe token and secret-assignment patterns. No matches were found in this targeted sample.
+- [ ] This is not a full repository or Git-history secret scan. Scan all tracked text files and historical commits before release. If a real credential is found, rotate/revoke it; removing it from the current tree is insufficient.
+- [x] Confirmed no root-level production `firestore.rules`, `storage.rules` or `firebase.json` is present in the branch tree. The rules under `tests/firebase-emulator/` are explicitly candidate/test-only.
+- [x] Reviewed `owner-read.rules`: broad catch-all denies all unspecified access; private collection writes and profile creation are intentionally disabled. This is a read-only recovery prototype, not a complete production ruleset.
+- [x] Reviewed `chat.rules`: it only models the proposed `chats/{chatId}/messages` membership model and denies unrelated collections. It is not a drop-in ruleset for the current application.
+- [ ] Build and test a complete production Rules set against the actual V1.0 data model and every client/server operation. Do not deploy either candidate rules file as-is.

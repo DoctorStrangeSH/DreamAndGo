@@ -1,4 +1,5 @@
 import { ACHIEVEMENTS } from '../core/achievement-catalog.js';
+export { ACHIEVEMENTS };
 import { auth, db } from '../config/firebase.js';
 import { isAuthenticatedOwner } from '../core/owner-access-policy.js';
 import {

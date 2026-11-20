@@ -84,7 +84,7 @@ export class ProfileModule {
                             <div class="profile-avatar">
                                 ${avatarURL 
                                     ? `<img src="${escapeHTML(avatarURL)}" alt="Аватар ${escapeHTML(userData.username || 'пользователя')}">`
-                                    : `<span class="profile-avatar-text">${initials}</span>`
+                                    : `<span class="profile-avatar-text">${escapeHTML(initials)}</span>`
                                 }
                             </div>
                         </div>
@@ -313,7 +313,7 @@ export class ProfileModule {
                                     <p class="text-muted small mb-0">${escapeHTML(a.description)}</p>
                                     <small class="text-muted">${this.formatDate(a.awardedAt)}</small>
                                 </div>
-                                <span class="badge bg-warning ms-auto">Ур. ${a.level || 1}</span>
+                                <span class="badge bg-warning ms-auto">Ур. ${safeCount(a.level, 1000) || 1}</span>
                             </div>
                         </div>
                     </div>

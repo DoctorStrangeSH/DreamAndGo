@@ -248,7 +248,7 @@ class DreamAndGo {
                 this.dataLoaded = true;
                 this.updateHomeStats();
                 this.eventBus.emit('userDataLoaded', this.userData);
-                this.checkAchievements();
+                await this.checkAchievements();
                 const currentRoute = this.router.getCurrentRoute();
                 if (currentRoute && this.router.routes[currentRoute]) {
                     await this.router.routes[currentRoute].component.render();
@@ -262,8 +262,13 @@ class DreamAndGo {
         const requestedUid = this.currentUser.uid;
         const version = this.authVersion;
         try {
-            const newAchievements = await refreshUserStats(requestedUid);
+            const result = await refreshUserStats(requestedUid);
             if (version !== this.authVersion || this.currentUser?.uid !== requestedUid) return;
+            if (result?.stats && this.userData) {
+                this.userData = { ...this.userData, stats: { ...this.userData.stats, ...result.stats } };
+                this.updateHomeStats();
+            }
+            const newAchievements = result?.newAchievements;
             if (Array.isArray(newAchievements) && newAchievements.length > 0) {
                 newAchievements.forEach(a => this.ui.showAchievementToast(a));
             }

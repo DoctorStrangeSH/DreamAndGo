@@ -22,7 +22,7 @@ export class LevelWidget {
                 <span class="level-number">${levelData.level}</span>
             </div>
             <div class="level-progress-wrapper">
-                <div class="level-title">${levelInfo.title}</div>
+                <div class="level-title">${escapeHTML(levelInfo.title)}</div>
                 <div class="level-bar">
                     <div class="level-bar-fill" style="width: ${progress}%; background: ${levelInfo.color};"></div>
                 </div>
@@ -35,7 +35,7 @@ export class LevelWidget {
     async showLevelUp(level) {
         const levelInfo = this.levelService.getLevelInfo(level);
         window.app.ui.showToast(
-            `🎉 Новый уровень! ${levelInfo.title} (${level})`,
+            `🎉 Новый уровень! ${escapeHTML(levelInfo.title)} (${level})`,
             'success'
         );
     }

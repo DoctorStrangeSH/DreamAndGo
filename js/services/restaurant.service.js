@@ -1,5 +1,6 @@
 import { auth, db } from '../config/firebase.js';
 import { isAuthenticatedOwner, isValidFirestoreDocumentId } from '../core/owner-access-policy.js';
+import { refreshUserStats } from './profile-stats.service.js';
 import { validateRestaurantInput } from '../core/collection-input-policy.js';
 import { 
     collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc,
@@ -124,19 +125,5 @@ export class RestaurantService {
 
     async updateUserStats(userId) {
         if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid)) return;
-        try {
-            const restaurants = await this.getRestaurants(userId, {}, { throwOnError: true });
-            const visited = restaurants.filter(r => r.status === 'visited').length;
-            const wantToVisit = restaurants.filter(r => r.status === 'want_to_visit').length;
-
-            const userRef = doc(this.db, 'users', userId);
-            await updateDoc(userRef, {
-                'stats.restaurants': restaurants.length,
-                'stats.restaurantsVisited': visited,
-                'stats.restaurantsWantToVisit': wantToVisit
-            });
-        } catch (error) {
-            console.error('Ошибка обновления статистики:', error);
-        }
-    }
-}
+        await refreshUserStats(userId);
+    }}

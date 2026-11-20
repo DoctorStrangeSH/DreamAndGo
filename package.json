@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test tests/*.test.js",
+    "test": "node --test tests/*.test.js server/*.test.js",
     "audit:legacy-chat": "node scripts/audit-legacy-chats.mjs",
     "plan:legacy-chat": "node scripts/plan-legacy-chats.mjs",
     "verify:chat-copy": "node scripts/verify-chat-copy.mjs",

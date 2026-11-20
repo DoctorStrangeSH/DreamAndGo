@@ -141,9 +141,15 @@ export class ChatModule {
     }
 
     subscribeToChats() {
+        const userId = window.app.currentUser?.uid;
+        if (!userId) return;
+
+        this.unsubscribeChats?.();
         this.unsubscribeChats = window.app.realtimeService.subscribeToChats(
-            window.app.currentUser.uid,
+            userId,
             (chats, error) => {
+                // A queued snapshot from a previous account must never repaint the current account's chat list.
+                if (window.app.currentUser?.uid !== userId) return;
                 const chatList = document.getElementById('chatList');
                 if (!chatList || !document.querySelector('.chat-page')) return;
 
@@ -154,6 +160,7 @@ export class ChatModule {
                             <button type="button" class="btn btn-outline-primary btn-sm" id="retryChatListBtn">Повторить</button>
                         </div>`;
                     chatList.querySelector('#retryChatListBtn')?.addEventListener('click', () => {
+                        if (window.app.currentUser?.uid !== userId) return;
                         chatList.innerHTML = '<p class="text-muted text-center py-5">Загружаем диалоги…</p>';
                         this.subscribeToChats();
                     });

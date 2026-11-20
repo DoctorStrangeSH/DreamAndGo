@@ -247,3 +247,13 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [ ] The owner-facing privacy setting and Firestore Rules for changing the opt-in flag are not implemented.
 - [ ] `FriendsService.getUserByUsername` still queries `users` directly from the browser; migrate it to the App-Check-protected callable before enforcing private-user read rules.
 - **Decision:** keep public profile endpoints and migration disabled until the UI, Rules and callable client cutover are tested together.
+
+
+### Public profile client cutover — 2026-11-20
+
+- [x] Friend search now uses the App-Check protected exact username callable.
+- [x] Friend, request and sent-request lists load public projections through a bounded batch callable (up to 50 UIDs per request).
+- [x] Other-user profile page reads use the server projection; direct private user document reads remain owner-only in the profile module.
+- [x] Unit tests cover batch filtering, private-profile omission and client cutover.
+- [ ] Run emulator/staging two-account journey and verify deployed App Check configuration before rollout.
+- [ ] Add the explicit owner privacy toggle and server-owned visibility update path.

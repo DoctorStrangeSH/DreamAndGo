@@ -43,10 +43,10 @@ test('dry-run is read-only and apply creates only missing reservations without o
     assert.equal(applied.created, 1);
     assert.equal(applied.postflightVerified, true);
     assert.equal(applied.registryActivated, false);
-    assert.equal((await db.doc('usernameReservations/backfill_bob').get()).get('uid'), 'backfill-user-b');
+    assert.equal((await db.collection(collections.reservationsCollection).doc('backfill_bob').get()).get('uid'), 'backfill-user-b');
     assert.equal((await control.get()).get('ready'), false);
 
-    const repeated = await runUsernameReservationBackfill(db, {
+    const repeated = await runBackfill({
         apply: true, registrationFrozen: true, serverTimestamp: timestamp
     });
     assert.equal(repeated.missingReservations, 0);
@@ -56,12 +56,12 @@ test('dry-run is read-only and apply creates only missing reservations without o
 });
 
 test('case-insensitive legacy collisions block every write and keep registry closed', async () => {
-    const control = db.doc('system/usernameRegistry');
+    const control = registry;
     await control.set({ ready: false, schemaVersion: 1, legacyBackfillComplete: false });
     await db.collection(collections.usersCollection).doc('backfill-collision-a').set({ username: 'Collision_Name' });
     await db.collection(collections.usersCollection).doc('backfill-collision-b').set({ username: 'collision_name' });
 
-    const result = await runUsernameReservationBackfill(db, {
+    const result = await runBackfill({
         apply: true, registrationFrozen: true, serverTimestamp: timestamp
     });
     assert.equal(result.safe, false);

@@ -125,3 +125,12 @@ Dream&Go — социальное пространство мечтаний, п�
 - [ ] Получить актуальные production Rules и реальный schema inventory без PII.
 - [ ] Реализовать полный deny-by-default Rules набор и покрыть все разрешённые/запрещённые операции Emulator тестами.
 - [ ] Провести staging rehearsal с двумя аккаунтами и согласовать ручной rollout/rollback.
+
+
+### Read-only recovery Rules — negative-test coverage
+
+- [x] Добавлены проверки, что владелец не может создавать/изменять/удалять социальные, notification, chat и daily-task документы в ограниченном recovery prototype.
+- [x] Добавлены deny assertions для server-owned XP, daily tasks, username registry/reservations, chat pairs, public profiles и Chat V2 документов.
+- [x] Обновлена инструкция Emulator: эти проверки подтверждают только deny-by-default recovery prototype, а не production Rules.
+- [ ] Выполнить CI на новом HEAD и сохранить результат.
+- [ ] После согласования схем и серверных cutover-протоколов реализовать отдельные разрешённые write-paths с тестами; не расширять recovery prototype до production наугад.

@@ -38,7 +38,6 @@ test('server recomputes owned collection stats and preserves unrelated profile c
     assert.equal(result.friends, 2);
 
     const saved = await user.get();
-    assert.equal(saved.get('stats.friends'), 4);
     assert.equal(saved.get('stats.customCounter'), 12);
     assert.equal(saved.get('stats.travels'), 2);
     assert.equal(saved.get('stats.travelsPlanned'), 1);

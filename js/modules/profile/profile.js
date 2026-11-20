@@ -2,7 +2,7 @@ import { db } from '../../config/firebase.js';
 import { escapeHTML } from '../../core/escape-html.js';
 import { safeAvatarURL } from '../../core/safe-avatar-url.js';
 import { getHomeSnapshot } from '../../core/home-snapshot.js';
-import { toPublicProfile } from '../../core/public-profile.js';
+import { getPublicProfilesByIds } from '../../services/public-profile-callable.service.js';
 import { getProfileGradient } from '../../core/profile-gradient.js';
 import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
@@ -655,10 +655,13 @@ export class ProfileModule {
     async loadUserProfile(userId) {
         try {
             if (!userId) return null;
-            const userDoc = await getDoc(doc(db, 'users', userId));
-            if (!userDoc.exists()) return null;
             const isOwnProfile = userId === window.app.currentUser?.uid;
-            return isOwnProfile ? userDoc.data() : toPublicProfile(userId, userDoc.data());
+            if (!isOwnProfile) {
+                const profiles = await getPublicProfilesByIds([userId]);
+                return profiles[0] || null;
+            }
+            const userDoc = await getDoc(doc(db, 'users', userId));
+            return userDoc.exists() ? userDoc.data() : null;
         } catch (error) {
             return null;
         }

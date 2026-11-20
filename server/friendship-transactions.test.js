@@ -127,7 +127,8 @@ test('remove deletes only a verified symmetric friendship', async () => {
 test('missing, malformed and asymmetric relationships fail closed', async () => {
     const cases = [
         ['accept', {}],
-        ['reject', { 'users/alice/friendRequests/bob': { ...request, from: 'mallory', to: 'bob' } }],
+        ['accept', { 'users/alice/friendRequests/bob': { ...request, from: 'alice', to: 'bob' } }],
+        ['reject', { 'users/alice/friendRequests/bob': { ...request, from: 'mallory', to: 'bob' }, 'users/alice/sentRequests/bob': request }],
         ['cancel', { [paths.outgoing]: { ...request, from: 'mallory', to: 'bob' } }],
         ['remove', { [paths.ownFriend]: { friendId: 'bob' } }],
         ['remove', {

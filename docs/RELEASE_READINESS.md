@@ -39,3 +39,25 @@ Last review: 2026-11-16. Branch: `refactor/security-foundation` → `main`.
 ## Notes
 
 The screenshot workflow uses an **offline preview**, not an authenticated production browser journey. Candidate emulator rules are not installed production security rules. This document is a gate, not a claim that staging or live smoke tests have already passed.
+
+
+## Security follow-up — 2026-11-20
+
+Reviewed and hardened the remaining notification and global-search renderers on `refactor/security-foundation`:
+
+- Notification title and message are HTML-escaped before rendering.
+- Notification IDs are escaped for attribute context; navigation targets are restricted to an explicit internal-route allowlist. Dynamic profile routes accept only constrained UID characters.
+- Notification icon and color classes/values are selected from fixed allowlists rather than persisted notification fields.
+- Global search titles, type labels and descriptions are escaped; route, icon and color values are allowlisted.
+- Search requests use a generation guard and current-user check so late responses cannot repaint a closed modal or a different account's UI.
+- Search cache is scoped to the authenticated UID to prevent cross-account reuse.
+- Added unit coverage for route allowlisting and HTML escaping; added syntax checks for the hardened modules.
+
+These are targeted fixes, **not completion of the full XSS audit**. Remaining renderers and all other user-controlled HTML sinks still require review.
+
+### Latest candidate commit
+
+- Head: `5203d9311f9cbc65f754bbfe7e29c74d4281b0d5`
+- PR #1 remains open; mergeability is not confirmed.
+- GitHub combined status and PR-filtered workflow-run lookup returned no checks/runs for this exact SHA at review time. Do not interpret an empty result as a passing CI run.
+- Staging verification, real production rules review, two-account browser tests, backup and rollback ownership remain release blockers.

@@ -98,3 +98,6 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 - Data export now requires the active owner UID and rechecks it after asynchronous reads and immediately before download, preventing an account switch during export from completing a download.
 
 **Known product logic issue:** the achievement named `perfect_week` currently evaluates lifetime totals, not events within a seven-day window. It is not safe to claim this is a weekly achievement until event timestamps and a rolling-window policy are implemented. This is tracked as a product correctness item, not silently changed during this security pass.
+
+
+**CI verification — 2026-11-20:** GitHub Actions run for commit `bc4684240093da4fd434504b44c551be6b00762d` completed successfully. `npm test`: 390 passed, 0 failed. `npm run check`: passed. Earlier intermediate commits in this pass were red while extracted-service test harnesses were being updated; the latest head is green.

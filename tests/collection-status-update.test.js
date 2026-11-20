@@ -32,7 +32,8 @@ for (const [name, singular] of [['travel', 'Travel'], ['movie', 'Movie']]) {
             validateTravelInput,
             validateMovieInput
         );
-        const result = await new Service()[`update${singular}`]('alice', 'record-1', { status: 'visited' });
+        const status = name === 'movie' ? 'watched' : 'visited';
+        const result = await new Service()[`update${singular}`]('alice', 'record-1', { status });
         assert.deepEqual(result, { success: true });
         const events = calls.map(([event]) => event);
         assert.ok(events.indexOf('stats') > events.indexOf('write'));

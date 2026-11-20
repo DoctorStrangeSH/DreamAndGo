@@ -195,7 +195,8 @@ export class AchievementsService {
         };
         const levels = Array.isArray(achievement?.levels) ? achievement.levels : [];
         const lastDescription = String(levels[levels.length - 1]?.description || achievement?.description || '');
-        const maxValue = Math.max(1, Number(lastDescription.match(/\d+/)?.[0]) || 1);
+        const maxValue = achievement?.id === 'collector' ? 5 :
+            Math.max(1, Number(lastDescription.match(/\d+/)?.[0]) || 1);
 
         let currentValue;
         if (achievement?.id === 'collector') {

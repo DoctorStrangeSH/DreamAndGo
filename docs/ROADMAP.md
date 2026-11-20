@@ -213,3 +213,17 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Root Checks passed on `c4c50b130cb8a4b64ead9615fac7be039df17c4e` ([run 44799092633](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44799092633)).
 - [x] Firebase Emulator suite passed on the same HEAD ([run 44799092635](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44799092635)).
 - [ ] PR #1 branch reconciliation remains blocked pending controlled integration with current `main`; do not force-push or merge the divergent history.
+
+
+### Friendship writes moved behind trusted server callable — 2026-11-20
+
+- [x] Added `mutateFriendshipV2` with Auth + App Check; actor UID is derived exclusively from Firebase Auth.
+- [x] Added transactional server operations for send, accept, reject, cancel and remove.
+- [x] Request resolution validates both the recipient-owned incoming record and sender-owned outgoing index before changing either side.
+- [x] Friendship removal verifies both reciprocal friend documents before deleting either.
+- [x] Removed direct cross-user Firestore writes from `FriendsService`; the browser now calls the server endpoint.
+- [x] Fixed outgoing-request cancellation so it is performed by the authenticated sender, not by impersonating the recipient.
+- [x] Added eight server transaction tests and client/callable contract checks.
+- [x] Root Checks passed on `fd0ccc2f219758744135e066eda457de27c94440` ([run 44800645445](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44800645445)).
+- [ ] Run a real staging journey with two accounts and verify deployed Functions + App Check before rollout.
+- [ ] Client-side notification creation remains a separate security blocker; `notifications.service.js` still accepts an arbitrary target UID and payload.

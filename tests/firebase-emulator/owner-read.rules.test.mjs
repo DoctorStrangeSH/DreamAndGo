@@ -143,6 +143,39 @@ test('private collection matrix: owners can read, other accounts and guests cann
         await assertFails(getDocs(collection(guest, 'users')));
         await assertFails(getDocs(collection(bob, 'users')));
         await assertFails(getDocs(collection(alice, 'users')));
+
+        // The recovery prototype is intentionally read-only outside the
+        // explicitly validated dreams/profile paths. Owner identity alone
+        // must not grant writes to social, notification, task or chat records.
+        for (const category of categories.filter(name => name !== 'dreams')) {
+            const ownedRecord = doc(alice, 'users', 'alice', category, 'private-1');
+            await assertFails(setDoc(doc(alice, 'users', 'alice', category, 'forged'), {
+                senderId: 'alice', text: 'forged', title: 'forged'
+            }));
+            await assertFails(updateDoc(ownedRecord, { title: 'Owner write is disabled in recovery mode' }));
+            await assertFails(deleteDoc(ownedRecord));
+        }
+
+        // Server-authoritative records and cross-user/public indexes remain
+        // inaccessible even when a client knows the exact document path.
+        const serverOwnedPaths = [
+            ['serverXp', 'alice'],
+            ['serverXp', 'alice', 'events', 'event-1'],
+            ['serverXp', 'alice', 'daily', '2026-11-20'],
+            ['serverDailyTasks', 'alice'],
+            ['serverDailyTasks', 'alice', 'claims', 'claim-1'],
+            ['system', 'usernameRegistry'],
+            ['usernameReservations', 'alice'],
+            ['chatPairs', 'alice_bob'],
+            ['publicProfiles', 'alice'],
+            ['chats', 'private-room']
+        ];
+        for (const path of serverOwnedPaths) {
+            const record = doc(alice, ...path);
+            await assertFails(getDoc(record));
+            await assertFails(setDoc(record, { ownerId: 'alice', xp: 999999, role: 'admin' }));
+            await assertFails(deleteDoc(record));
+        }
     } finally {
         await env.cleanup();
     }

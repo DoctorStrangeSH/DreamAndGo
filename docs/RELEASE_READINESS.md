@@ -257,3 +257,14 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [x] Unit tests cover batch filtering, private-profile omission and client cutover.
 - [ ] Run emulator/staging two-account journey and verify deployed App Check configuration before rollout.
 - [ ] Add the explicit owner privacy toggle and server-owned visibility update path.
+
+
+### Public profile consent UI and server gate — 2026-11-20
+
+- [x] Settings now expose an explicit public-profile switch; missing flag is rendered as private/off.
+- [x] Switch writes only through authenticated App Check callable `setPublicProfileVisibilityV2`; no direct browser update of the privacy flag.
+- [x] Opt-out is immediately available. Opt-in requires completed username registry backfill and a reservation owned by the caller.
+- [x] Server policy checks the caller's own profile, registry readiness, canonical username and reservation ownership.
+- [x] Unit tests cover valid opt-in, immediate opt-out, invalid input, missing profile, and UI/callable wiring.
+- [ ] Run Firebase Emulator and staging two-account tests for visibility transitions, search, direct lookup and private-field isolation.
+- [ ] Complete production registry backup/dry-run/backfill before enabling public profiles for any account.

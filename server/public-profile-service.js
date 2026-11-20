@@ -64,3 +64,27 @@ export async function findPublicProfileByUsername(db, actorUid, username) {
     if (!document) return { ok: true, profile: null };
     return { ok: true, profile: publicProfileFromPrivate(document.id, document.data()) };
 }
+
+
+// Bounded batch projection for friends and request lists. One callable/quota
+// unit per screen load; private or missing accounts are omitted.
+export async function loadPublicProfiles(db, actorUid, requestedUids) {
+    if (typeof actorUid !== 'string' || !actorUid) {
+        return { ok: false, code: 'unauthenticated' };
+    }
+    if (!Array.isArray(requestedUids) || requestedUids.length > 50 ||
+        requestedUids.some(uid => typeof uid !== 'string' || !uid || uid.length > 128 || uid.includes('/'))) {
+        return { ok: false, code: 'invalid-argument' };
+    }
+    const uniqueUids = [...new Set(requestedUids)];
+    if (uniqueUids.length === 0) return { ok: true, profiles: [] };
+    const refs = uniqueUids.map(uid => db.collection('users').doc(uid));
+    const snapshots = await db.getAll(...refs);
+    const profiles = [];
+    for (const snapshot of snapshots) {
+        if (!snapshot.exists) continue;
+        const profile = publicProfileFromPrivate(snapshot.id, snapshot.data());
+        if (profile) profiles.push(profile);
+    }
+    return { ok: true, profiles };
+}

@@ -124,3 +124,17 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 - Latest Checks run on `42a0ad0e320d2f4ca7fa4678c54c132d86a5314c`: 401/401 tests passed; `npm run check` passed. The dedicated Firebase Emulator workflow also passed on the implementation commit `42a0ad0e320d2f4ca7fa4678c54c132d86a5314c`: 5 isolated Firestore rules tests and 46 server/emulator transaction tests passed, 0 failed. The later `4c55d7f86c8a92c089374758a8f392ded29d5666` change only updated documentation; its own emulator workflow was still running at the time of this audit.
 
 **Limitations:** this callable is candidate code and has not been deployed. It does not yet move XP (`stats.xp`) or achievement awards out of client code. The current `LevelService.addXP()` still writes a client-selected UID and action directly, and achievement persistence still runs from the client. These are separate authorization/integrity blockers. Production Firestore Rules and App Check settings remain unverified.
+
+
+### SEC-XP-01 — client-authoritative experience rewards
+
+**Status:** candidate server event pipeline implemented; emulator verification pending on latest head; not deployed.
+
+- Browser-side `LevelService.addXP()` no longer writes `stats.xp`. The app no longer submits arbitrary XP action names.
+- Cloud Functions v2 document triggers award XP only after persisted records are created in the user's travels, restaurants, movies, books, dreams, and friends collections. Dream completion is a separate transition trigger.
+- Each reward uses a stable event ledger entry and Firestore transaction, so duplicate trigger delivery cannot double-award XP.
+- Added per-action daily limit (5 events) and total daily XP ceiling (300) to reduce farming with newly generated document IDs.
+- Daily task progress remains client-maintained; its XP and bonus claims are temporarily disabled and visibly marked as pending server verification. Do not re-enable until task progress and claims are server-owned.
+- Added unit and Firestore Emulator tests for idempotency, profile ownership, daily caps, missing profiles and dream status transitions.
+
+**Compatibility/rollout:** XP values currently retained for collection actions: travel 50, restaurant 30, movie 20, book 25, dream 15, friend 40, dream completion 100. Message, login and daily-task rewards are not awarded by this pipeline. Functions have not been deployed. Existing profile XP is preserved; no migration or production data changes were made.

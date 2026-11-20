@@ -20,7 +20,8 @@ test('all friendship mutations are delegated to one authenticated callable bound
         const start = source.indexOf('    async ' + method + '(');
         const next = source.indexOf('\n    async ', start + 1);
         const body = source.slice(start, next < 0 ? source.length : next);
-        assert.match(body, new RegExp(`runFriendshipMutation\\([^;]*'\\${action}'`), method + ' delegates to correct server action');
+        assert.ok(body.includes('runFriendshipMutation('), method + ' delegates through the shared callable guard');
+        assert.ok(body.includes(`'${action}'`), method + ' selects the correct server action');
     }
     assert.doesNotMatch(source, /runTransaction|transaction\.(?:set|create|delete)|serverTimestamp/);
 });

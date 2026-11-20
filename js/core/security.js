@@ -34,3 +34,9 @@ export function safeDocumentId(value) {
         ? value
         : '';
 }
+
+export function safeCount(value, max = 9999) {
+    const count = Number(value);
+    if (!Number.isFinite(count)) return 0;
+    return Math.min(max, Math.max(0, Math.floor(count)));
+}

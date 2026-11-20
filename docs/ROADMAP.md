@@ -134,3 +134,14 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Обновлена инструкция Emulator: эти проверки подтверждают только deny-by-default recovery prototype, а не production Rules.
 - [ ] Выполнить CI на новом HEAD и сохранить результат.
 - [ ] После согласования схем и серверных cutover-протоколов реализовать отдельные разрешённые write-paths с тестами; не расширять recovery prototype до production наугад.
+
+
+### Firestore V1 data schema audit — 2026-11-20
+
+- [x] Извлечены реальные create/update contracts из пяти collection validators и write services.
+- [x] Добавлен `docs/FIRESTORE_V1_DATA_SCHEMAS.md` с полями, типами, диапазонами, enum, nested structures, лимитами и server timestamps.
+- [x] Зафиксировано важное расхождение публичности: travels/books/restaurants создаются с `isPublic: true`, dreams — false, movies — без поля.
+- [x] Матрица доступа уточнена: флаг `isPublic` не открывает приватный документ под `users/{uid}`; до решения владельца доступ остаётся owner-only.
+- [ ] Утвердить публичную семантику каждой коллекции и сверить legacy документы без PII.
+- [ ] Добавить полный набор Emulator create/update positive/negative tests для travel, book, movie и restaurant.
+- [ ] Подготовить Rules candidate только после проверки схем и legacy compatibility.

@@ -3,10 +3,8 @@ import { normalizeUsername, isValidUsername } from '../core/username.js';
 import { findPublicProfileByUsername, getPublicProfilesByIds } from './public-profile-callable.service.js';
 import { refreshUserStats } from './profile-stats.service.js';
 import { isValidFriendPair, isCurrentFriendActor } from '../core/friend-action-policy.js';
-import { 
-    collection, doc, getDocs,
-    serverTimestamp, runTransaction
-} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { mutateFriendship } from './friendship-callable.service.js';
+import { collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 function isCurrentUser(userId) {
     return isCurrentFriendActor(userId, auth?.currentUser?.uid);
@@ -29,122 +27,44 @@ export class FriendsService {
         }
     }
 
-    async sendFriendRequest(fromUserId, toUserId) {
-        if (!isCurrentUser(fromUserId) || !isValidFriendPair(fromUserId, toUserId)) {
-            return { success: false, error: fromUserId === toUserId
-                ? 'Нельзя отправить заявку самому себе.'
-                : 'Некорректные данные для отправки заявки.' };
+    async runFriendshipMutation(userId, friendId, action, label) {
+        if (!isCurrentUser(userId) || !isValidFriendPair(userId, friendId)) {
+            return { success: false, error: 'Некорректные данные для операции с друзьями.' };
         }
         try {
-            const outgoingRef = doc(this.db, 'users', fromUserId, 'sentRequests', toUserId);
-            const incomingRef = doc(this.db, 'users', toUserId, 'friendRequests', fromUserId);
-            const reverseIncomingRef = doc(this.db, 'users', fromUserId, 'friendRequests', toUserId);
-            const reverseOutgoingRef = doc(this.db, 'users', toUserId, 'sentRequests', fromUserId);
-            const ownFriendRef = doc(this.db, 'users', fromUserId, 'friends', toUserId);
-            const peerFriendRef = doc(this.db, 'users', toUserId, 'friends', fromUserId);
-
-            await runTransaction(this.db, async transaction => {
-                const [outgoing, reverseIncoming, ownFriend, peerFriend] = await Promise.all([
-                    transaction.get(outgoingRef),
-                    transaction.get(reverseIncomingRef),
-                    transaction.get(ownFriendRef),
-                    transaction.get(peerFriendRef)
-                ]);
-                if (!isCurrentUser(fromUserId)) throw new Error('Сессия изменилась.');
-                if (ownFriend.exists() || peerFriend.exists()) throw new Error('Вы уже друзья.');
-                if (outgoing.exists()) throw new Error('Заявка уже отправлена.');
-                if (reverseIncoming.exists()) throw new Error('Этот пользователь уже отправил тебе заявку.');
-                const request = {
-                    from: fromUserId,
-                    to: toUserId,
-                    status: 'pending',
-                    createdAt: serverTimestamp()
-                };
-                transaction.set(incomingRef, request);
-                transaction.set(outgoingRef, request);
-            });
+            await mutateFriendship(action, friendId);
             return { success: true };
         } catch (error) {
-            console.error('Ошибка отправки заявки:', error);
-            return { success: false, error: error.message || 'Не удалось отправить заявку. Попробуй ещё раз.' };
+            console.error(`Ошибка операции с друзьями (${action}):`, error);
+            return {
+                success: false,
+                error: error?.message || label || 'Не удалось выполнить операцию. Попробуй ещё раз.'
+            };
         }
+    }
+
+    async sendFriendRequest(fromUserId, toUserId) {
+        return this.runFriendshipMutation(fromUserId, toUserId, 'send', 'Не удалось отправить заявку.');
     }
 
     async acceptFriendRequest(userId, friendId) {
-        if (!isCurrentUser(userId) || !isValidFriendPair(userId, friendId)) {
-            return { success: false, error: 'Некорректные данные для принятия заявки.' };
-        }
-        try {
-            const requestRef = doc(this.db, 'users', userId, 'friendRequests', friendId);
-            const sentRef = doc(this.db, 'users', friendId, 'sentRequests', userId);
-            const ownFriendRef = doc(this.db, 'users', userId, 'friends', friendId);
-            const peerFriendRef = doc(this.db, 'users', friendId, 'friends', userId);
-
-            await runTransaction(this.db, async transaction => {
-                const request = await transaction.get(requestRef);
-                if (!request.exists()) throw new Error('Заявка не найдена или уже обработана.');
-                const data = request.data();
-                if (data.from !== friendId || data.to !== userId || data.status !== 'pending') {
-                    throw new Error('Заявка не прошла проверку.');
-                }
-                transaction.set(ownFriendRef, { friendId, addedAt: serverTimestamp() });
-                transaction.set(peerFriendRef, { friendId: userId, addedAt: serverTimestamp() });
-                transaction.delete(requestRef);
-                transaction.delete(sentRef);
-            });
-
-            await this.updateFriendsCount(userId); // The client may update only its own profile stats.
-            return { success: true };
-        } catch (error) {
-            console.error('Ошибка принятия заявки:', error);
-            return { success: false, error: error.message || 'Не удалось принять заявку.' };
-        }
+        const result = await this.runFriendshipMutation(userId, friendId, 'accept', 'Не удалось принять заявку.');
+        if (result.success) await this.updateFriendsCount(userId);
+        return result;
     }
 
     async rejectFriendRequest(userId, friendId) {
-        if (!isCurrentUser(userId) || !isValidFriendPair(userId, friendId)) {
-            return { success: false, error: 'Некорректные данные для отклонения заявки.' };
-        }
-        try {
-            const requestRef = doc(this.db, 'users', userId, 'friendRequests', friendId);
-            const sentRef = doc(this.db, 'users', friendId, 'sentRequests', userId);
-            await runTransaction(this.db, async transaction => {
-                const request = await transaction.get(requestRef);
-                if (!request.exists()) throw new Error('Заявка не найдена или уже обработана.');
-                const data = request.data();
-                if (data.from !== friendId || data.to !== userId || data.status !== 'pending') {
-                    throw new Error('Заявка не прошла проверку.');
-                }
-                transaction.delete(requestRef);
-                transaction.delete(sentRef);
-            });
-            return { success: true };
-        } catch (error) {
-            console.error('Ошибка отклонения заявки:', error);
-            return { success: false, error: error.message || 'Не удалось отклонить заявку.' };
-        }
+        return this.runFriendshipMutation(userId, friendId, 'reject', 'Не удалось отклонить заявку.');
+    }
+
+    async cancelFriendRequest(userId, friendId) {
+        return this.runFriendshipMutation(userId, friendId, 'cancel', 'Не удалось отменить заявку.');
     }
 
     async removeFriend(userId, friendId) {
-        if (!isCurrentUser(userId) || !isValidFriendPair(userId, friendId)) {
-            return { success: false, error: 'Некорректные данные для удаления друга.' };
-        }
-        try {
-            const ownFriendRef = doc(this.db, 'users', userId, 'friends', friendId);
-            const peerFriendRef = doc(this.db, 'users', friendId, 'friends', userId);
-            await runTransaction(this.db, async transaction => {
-                const ownFriend = await transaction.get(ownFriendRef);
-                if (!ownFriend.exists()) throw new Error('Пользователь не находится в списке друзей.');
-                transaction.delete(ownFriendRef);
-                transaction.delete(peerFriendRef);
-            });
-            await this.updateFriendsCount(userId);
-            await this.updateFriendsCount(friendId);
-            return { success: true };
-        } catch (error) {
-            console.error('Ошибка удаления друга:', error);
-            return { success: false, error: error.message || 'Не удалось удалить друга.' };
-        }
+        const result = await this.runFriendshipMutation(userId, friendId, 'remove', 'Не удалось удалить друга.');
+        if (result.success) await this.updateFriendsCount(userId);
+        return result;
     }
 
     async getFriends(userId) {

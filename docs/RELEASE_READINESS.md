@@ -138,3 +138,13 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - Browser XP writes are disabled. Daily-task XP/bonus claims are visibly pending and cannot grant XP until task progress is server-verified.
 - Candidate implementation is not deployed. Staging and production Rules/App Check verification remain mandatory.
 - CI and Emulator checks must be green on the latest head before closing SEC-XP-01.
+
+
+### Server-authoritative achievements — 2026-11-20
+
+- Shared achievement catalog extracted for browser rendering and server evaluation.
+- Browser-side achievement persistence disabled; the server computes and persists awards atomically with profile statistics.
+- App notifications are driven by newly awarded records returned from the trusted callable and guarded against account switches.
+- Emulator verified repeated refreshes do not duplicate awards.
+- Latest verified implementation head 64301219df2298e6c44d52f5a5e5a4ec504775ba: 409/409 Checks tests; 5/5 Firestore rules tests; 51/51 server/emulator tests.
+- Not deployed. Production Firebase Functions/App Check/Rules rollout remains a hard release gate.

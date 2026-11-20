@@ -299,3 +299,15 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [x] Root Checks passed on `c4c50b130cb8a4b64ead9615fac7be039df17c4e` ([run 44799092633](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44799092633)).
 - [x] Firebase Emulator suite passed on the same HEAD ([run 44799092635](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44799092635)).
 - [ ] PR #1 integration with current `main` remains blocked by divergent history; production rollout remains blocked on staging and registry migration checks.
+
+
+### Friendship lifecycle server cutover — 2026-11-20
+
+- [x] Added App Check protected `mutateFriendshipV2`; actor identity is taken from Firebase Auth, never a client-selected UID.
+- [x] Moved send, accept, reject, cancel and remove to a trusted server transaction.
+- [x] Enforced reciprocal request-index integrity before accepting/rejecting; friendship removal verifies both sides.
+- [x] Removed browser writes to another user's friend/request documents from `FriendsService`.
+- [x] Fixed cancellation to use the authenticated sender's identity.
+- [x] Server transaction tests and client contract tests added; Root Checks passed on `fd0ccc2f219758744135e066eda457de27c94440` ([run 44800645445](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44800645445)).
+- [ ] Staging two-account test of all five actions and deployed App Check verification remain mandatory.
+- [ ] Notification creation is not yet migrated: current `notifications.service.js` still allows client-selected recipient and payload. Do not loosen notification Rules.

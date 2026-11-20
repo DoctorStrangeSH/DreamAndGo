@@ -38,8 +38,8 @@ export async function findPublicProfileByUsername(username) {
 }
 
 export async function getPublicProfilesByIds(userIds) {
-    if (!Array.isArray(userIds) || userIds.length > 50) {
-        throw new TypeError('Можно загрузить не более 50 профилей за раз');
+    if (!Array.isArray(userIds) || userIds.length > 500) {
+        throw new TypeError('Можно загрузить не более 500 профилей за раз');
     }
     if (userIds.length === 0) return [];
     const profiles = [];

@@ -280,7 +280,7 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 
 - [x] Added emulator assertions that direct browser updates/creates cannot set `publicProfileEnabled`, including attempts to set it true or false.
 - [x] Added client/server projection assertions that the consent flag itself is never exposed.
-- [ ] Firebase Emulator workflow must pass on the final updated HEAD before this area is marked verified.
+- [x] Firebase Emulator workflow passed on final tested HEAD `c4c50b130cb8a4b64ead9615fac7be039df17c4e` ([run 44799092635](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44799092635)).
 
 
 ### Privacy regression verification and integration blocker
@@ -290,3 +290,12 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [x] Browser-side attempts to set public visibility are denied by candidate Rules tests.
 - [ ] PR #1 currently diverges from `main` (feature branch is 53 commits behind); resolve branch history before release.
 - [ ] Staging two-account callable/App Check verification and production username-registry backup/backfill remain mandatory.
+
+
+### Default CI now includes server unit tests
+
+- [x] `npm test` includes `server/*.test.js`; server policy tests are no longer silently omitted.
+- [x] Added quota boundary, expiry, malformed-state, per-user isolation, and validation tests.
+- [x] Root Checks passed on `c4c50b130cb8a4b64ead9615fac7be039df17c4e` ([run 44799092633](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44799092633)).
+- [x] Firebase Emulator suite passed on the same HEAD ([run 44799092635](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44799092635)).
+- [ ] PR #1 integration with current `main` remains blocked by divergent history; production rollout remains blocked on staging and registry migration checks.

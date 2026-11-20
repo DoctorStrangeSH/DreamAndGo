@@ -224,7 +224,7 @@ export class DreamsModule {
                                     <div class="col-md-8">
                                         <label class="form-label fw-semibold small">Название мечты *</label>
                                         <input type="text" class="form-control" name="title"
-                                               value="${dream?.title || ''}" placeholder="О чём ты мечтаешь?" required>
+                                               value="${escapeHTML(dream?.title || '')}" placeholder="О чём ты мечтаешь?" required>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Категория</label>
@@ -247,20 +247,20 @@ export class DreamsModule {
                                         <label class="form-label fw-semibold small">Прогресс</label>
                                         <div class="d-flex align-items-center gap-2 pt-2">
                                             <input type="range" class="form-range" name="progress"
-                                                   min="0" max="100" value="${dream?.progress || 0}"
+                                                   min="0" max="100" value="${safeCount(dream?.progress, 100)}"
                                                    id="progressSlider" style="flex: 1;">
-                                            <span class="badge bg-primary" id="progressValue">${dream?.progress || 0}%</span>
+                                            <span class="badge bg-primary" id="progressValue">${safeCount(dream?.progress, 100)}%</span>
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-semibold small">Срок</label>
                                         <input type="date" class="form-control" name="deadline"
-                                               value="${dream?.deadline || ''}">
+                                               value="${escapeHTML(dream?.deadline || '')}">
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label fw-semibold small">Описание</label>
                                         <textarea class="form-control" name="description" rows="3"
-                                                  placeholder="Опиши свою мечту...">${dream?.description || ''}</textarea>
+                                                  placeholder="Опиши свою мечту...">${escapeHTML(dream?.description || '')}</textarea>
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label fw-semibold small">
@@ -273,7 +273,7 @@ export class DreamsModule {
                                                         <input type="checkbox" ${step.done ? 'checked' : ''} class="step-done">
                                                     </span>
                                                     <input type="text" class="form-control step-text"
-                                                           value="${step.text || ''}" placeholder="Шаг ${i + 1}">
+                                                           value="${escapeHTML(step.text || '')}" placeholder="Шаг ${i + 1}">
                                                     <button type="button" class="btn btn-outline-danger btn-sm remove-step">
                                                         <i class="bi bi-x"></i>
                                                     </button>

@@ -152,3 +152,6 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 - Latest head 64301219df2298e6c44d52f5a5e5a4ec504775ba: Checks 409/409 passed; Firebase Emulator 5/5 rules tests and 51/51 server/emulator tests passed.
 
 **Resolved:** perfect_week now uses successful collection creation events in a rolling seven-day window, sourced from the server XP event ledger. Server functions are not deployed; the client/server rollout must be coordinated before merge.
+
+
+**Final verification snapshot — 2026-11-20:** implementation commit 8b7843d065e8d6d8b0caecf74479355d3337029c passed 410/410 repository tests, 5/5 Firestore Rules tests, and 51/51 server/emulator tests. npm run check passed. Documentation-only commits followed. No production deployment or data mutation occurred.

@@ -20,7 +20,7 @@ if (!projectId || projectId.startsWith('--') || (apply && !args.includes('--conf
         initializeApp({ credential: applicationDefault(), projectId });
         const database = getFirestore();
         const users = await database.collection('users').get();
-        const { profiles: candidates, conflictCount, invalidCount } = planPublicProfileMigration(
+        const { profiles: candidates, conflictCount, invalidCount, disabledCount } = planPublicProfileMigration(
             users.docs.map(item => ({ id: item.id, data: item.data() }))
         );
 
@@ -28,7 +28,8 @@ if (!projectId || projectId.startsWith('--') || (apply && !args.includes('--conf
         console.log('Mode:', apply ? 'create missing only' : 'dry run');
         console.log('Profiles to inspect:', candidates.length);
         console.log('Username collision count:', conflictCount);
-        console.log('Invalid or missing username count:', invalidCount);
+        console.log('Invalid or missing opted-in username count:', invalidCount);
+        console.log('Private or not opted-in profiles skipped:', disabledCount);
         if (conflictCount || invalidCount) {
             console.error('Preflight failed: resolve collisions and invalid legacy usernames before migration.');
             process.exitCode = 1;
@@ -52,7 +53,7 @@ if (!projectId || projectId.startsWith('--') || (apply && !args.includes('--conf
                     }
                 }
             }
-            console.log(apply ? `Created: ${created}; existing left untouched: ${skipped}` : 'Dry run complete: no writes performed.');
+            console.log(apply ? `Created: ${created}; existing left untouched: ${skipped}; private profiles skipped: ${disabledCount}` : 'Dry run complete: no writes performed.');
         }
     } catch (error) {
         console.error('Migration failed:', error.message);

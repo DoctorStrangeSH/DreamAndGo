@@ -64,11 +64,8 @@ export class BookService {
                 ...safeData,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
-                userRating: data.userRating || 0,
-                review: data.review || '',
-                notes: data.notes || '',
-                quotes: data.quotes || [],
-                isPublic: data.isPublic !== false
+                notes: '',
+                isPublic: true
             };
 
             const docRef = await addDoc(booksRef, newBook);

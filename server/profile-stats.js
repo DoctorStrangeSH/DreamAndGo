@@ -32,7 +32,7 @@ export function countWeeklyCollectionEvents(snapshot, now = new Date()) {
     const docs = Array.isArray(snapshot?.docs) ? snapshot.docs : [];
     return docs.filter(document => {
         const data = document?.data?.() || {};
-        if (!WEEKLY_ACTIVITY_ACTIONS.has(data.action) || data.xpGained <= 0) return false;
+        if (!WEEKLY_ACTIVITY_ACTIONS.has(data.action)) return false;
         const occurredAt = data.occurredAt?.toDate?.() || data.occurredAt;
         const timestamp = occurredAt instanceof Date ? occurredAt.getTime() : Date.parse(occurredAt);
         return Number.isFinite(timestamp) && timestamp >= cutoff && timestamp <= now.getTime();

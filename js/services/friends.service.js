@@ -2,20 +2,14 @@ import { auth, db } from '../config/firebase.js';
 import { normalizeUsername, isValidUsername } from '../core/username.js';
 import { toPublicProfile } from '../core/public-profile.js';
 import { countFriendRecords } from '../core/friend-count.js';
+import { isValidFriendPair, isCurrentFriendActor } from '../core/friend-action-policy.js';
 import { 
     collection, doc, getDocs, getDoc, updateDoc,
     query, where, limit, serverTimestamp, runTransaction
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
-function isValidFriendPair(userId, friendId) {
-    const isValidUid = value => typeof value === 'string' && value.length > 0 &&
-        value.length <= 128 && value.trim() === value && !value.includes('/');
-    return isValidUid(userId) && isValidUid(friendId) && userId !== friendId;
-}
-
-
 function isCurrentUser(userId) {
-    return typeof userId === 'string' && auth?.currentUser?.uid === userId;
+    return isCurrentFriendActor(userId, auth?.currentUser?.uid);
 }
 
 export class FriendsService {

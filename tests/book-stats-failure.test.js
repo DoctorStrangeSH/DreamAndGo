@@ -9,7 +9,7 @@ assert.ok(start >= 0 && method.includes('async updateUserStats'));
 
 function harness(getBooks) {
     const writes = [];
-    const Book = new Function('doc', 'updateDoc', 'console', 'getBooks', `
+    const Book = new Function('doc', 'updateDoc', 'console', 'getBooks', 'isAuthenticatedOwner', 'auth', `
         return class Book {
             constructor() { this.db = {}; }
             getBooks(...args) { return getBooks(...args); }
@@ -19,7 +19,9 @@ function harness(getBooks) {
         (_db, ...parts) => parts.join('/'),
         async (...args) => writes.push(args),
         { error() {} },
-        getBooks
+        getBooks,
+        (requestedUid, activeUid) => requestedUid === activeUid,
+        { currentUser: { uid: 'alice' } }
     );
     return { book: new Book(), writes };
 }

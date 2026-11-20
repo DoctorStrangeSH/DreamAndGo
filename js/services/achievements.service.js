@@ -188,19 +188,33 @@ export class AchievementsService {
     }
 
     // Получить прогресс по достижению
-    getAchievementProgress(achievement, stats) {
-        const levels = achievement.levels;
-        const currentValue = stats[achievement.category] ||
-            (achievement.id === 'collector' ?
-                (stats.travels > 0 && stats.restaurants > 0 && stats.movies > 0 && stats.books > 0 && stats.dreams > 0 ? 1 : 0) :
-                (stats.travels + stats.restaurants + stats.movies + stats.books + stats.dreams));
+    getAchievementProgress(achievement, stats = {}) {
+        const safeCount = key => {
+            const value = Number(stats?.[key] ?? 0);
+            return Number.isFinite(value) && value > 0 ? value : 0;
+        };
+        const levels = Array.isArray(achievement?.levels) ? achievement.levels : [];
+        const lastDescription = String(levels[levels.length - 1]?.description || achievement?.description || '');
+        const maxValue = Math.max(1, Number(lastDescription.match(/\d+/)?.[0]) || 1);
 
-        const maxValue = levels[levels.length - 1]?.condition.toString().match(/\d+/)?.[0] || 1;
+        let currentValue;
+        if (achievement?.id === 'collector') {
+            currentValue = ['travels', 'restaurants', 'movies', 'books', 'dreams']
+                .filter(key => safeCount(key) > 0).length;
+        } else if (achievement?.id === 'perfect_week') {
+            currentValue = ['travels', 'restaurants', 'movies', 'books', 'dreams']
+                .reduce((total, key) => total + safeCount(key), 0);
+        } else if (achievement?.id === 'first_dream') {
+            currentValue = safeCount('dreamsCompleted');
+        } else {
+            currentValue = safeCount(achievement?.category);
+        }
 
+        const current = Math.min(currentValue, maxValue);
         return {
-            current: Math.min(currentValue, parseInt(maxValue)),
-            max: parseInt(maxValue),
-            percentage: Math.min(100, Math.round((currentValue / parseInt(maxValue)) * 100))
+            current,
+            max: maxValue,
+            percentage: Math.min(100, Math.round((current / maxValue) * 100))
         };
     }
 }

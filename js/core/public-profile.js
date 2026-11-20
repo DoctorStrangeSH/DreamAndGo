@@ -5,6 +5,8 @@ import { safeAvatarURL } from './safe-avatar-url.js';
 // This projection does not itself enforce database read permissions.
 export function toPublicProfile(uid, source = {}) {
     const data = source && typeof source === 'object' ? source : {};
+    // Privacy by default: only an explicit owner opt-in may enter public search/profile views.
+    if (data.publicProfileEnabled !== true) return null;
     const username = typeof data.username === 'string' ? data.username.trim().slice(0, 40) : '';
     const displayName = typeof data.displayName === 'string' && data.displayName.trim()
         ? data.displayName.trim().slice(0, 80)

@@ -265,7 +265,7 @@ class DreamAndGo {
             const newAchievements = await refreshUserStats(requestedUid);
             if (version !== this.authVersion || this.currentUser?.uid !== requestedUid) return;
             if (Array.isArray(newAchievements) && newAchievements.length > 0) {
-                newAchievements.forEach(achievement => this.ui.showAchievementToast(achievement));
+                newAchievements.forEach(a => this.ui.showAchievementToast(a));
             }
         } catch (error) {
             console.error('Ошибка проверки достижений:', error);

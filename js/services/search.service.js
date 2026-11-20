@@ -6,14 +6,22 @@ export class SearchService {
         this.db = db;
         this.cache = null;
         this.cacheTime = 0;
+        this.cacheUserId = null;
     }
 
     async searchAll(userId, query) {
         const searchTerm = query.toLowerCase().trim();
         if (!searchTerm) return [];
 
-        // Кеш на 30 секунд
-        if (this.cache && Date.now() - this.cacheTime < 30000) {
+        // Кеш изолирован по UID: результаты одного аккаунта нельзя показывать другому.
+        if (this.cacheUserId !== userId) {
+            this.cache = null;
+            this.cacheTime = 0;
+            this.cacheUserId = userId;
+        }
+
+        // Кеш на 30 секунд только для текущего аккаунта.
+        if (this.cache && this.cacheUserId === userId && Date.now() - this.cacheTime < 30000) {
             return this.filterCache(searchTerm);
         }
 
@@ -115,8 +123,10 @@ export class SearchService {
                 });
             });
 
-            this.cache = results;
-            this.cacheTime = Date.now();
+            if (this.cacheUserId === userId) {
+                this.cache = results;
+                this.cacheTime = Date.now();
+            }
 
             return this.filterCache(searchTerm);
         } catch (error) {

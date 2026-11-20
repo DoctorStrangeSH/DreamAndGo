@@ -100,7 +100,7 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - Added pure award policy with regression coverage for duplicate/legacy records, invalid counters, and repeated award checks.
 - Achievement progress no longer throws for special achievements or missing statistics.
 - JSON backup export is bound to the active owner and aborts if the account changes during collection reads.
-- Known product correctness follow-up: `perfect_week` currently counts lifetime collection totals and needs a timestamp-based rolling seven-day implementation before it can be described as weekly.
+- Resolved 2026-11-20: `perfect_week` now counts successful collection creation events within the rolling seven-day window.
 
 
 ### CI recovery — 2026-11-20
@@ -127,7 +127,7 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - Client services no longer write these collection counters directly to the private user profile.
 - CI on `42a0ad0e320d2f4ca7fa4678c54c132d86a5314c`: 401 tests passed, 0 failed; syntax checks passed.
 - Dedicated Firebase Emulator workflow passed on implementation commit `42a0ad0e320d2f4ca7fa4678c54c132d86a5314c`: 5 rules tests + 46 server/emulator tests passed, 0 failed. The latest `4c55d7f86c8a92c089374758a8f392ded29d5666` commit contains documentation-only changes; a rerun was in progress at the time of this note.
-- Remaining security gap: XP and achievement writes are still client-authoritative and require a separate server-side design. Callable code has not been deployed; production Rules/App Check remain release blockers.
+- XP and achievement award writes have candidate server-authoritative implementations. Cloud Functions have not been deployed; production Rules/App Check remain release blockers.
 
 
 ### Server-authoritative XP — 2026-11-20

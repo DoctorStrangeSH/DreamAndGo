@@ -50,11 +50,15 @@ export async function mutateFriendship(db, uid, targetUid, action, serverTimesta
         }
 
         if (action === 'accept' || action === 'reject') {
-            const names = ['incoming', 'outgoing', 'ownFriend', 'targetFriend'];
+            const names = ['incoming', 'reverseOutgoing', 'ownFriend', 'targetFriend'];
             const snapshots = await read(names);
-            if (!exists(snapshots, names, 'incoming')) return resultError('not-found');
+            if (!exists(snapshots, names, 'incoming') || !exists(snapshots, names, 'reverseOutgoing')) {
+                return resultError('not-found');
+            }
             const request = data(snapshots, names, 'incoming');
-            if (request.from !== targetUid || request.to !== uid || request.status !== 'pending') {
+            const sentIndex = data(snapshots, names, 'reverseOutgoing');
+            if (request.from !== targetUid || request.to !== uid || request.status !== 'pending' ||
+                sentIndex.from !== targetUid || sentIndex.to !== uid || sentIndex.status !== 'pending') {
                 return resultError('failed-precondition');
             }
             if (action === 'accept') {
@@ -66,7 +70,7 @@ export async function mutateFriendship(db, uid, targetUid, action, serverTimesta
                 tx.create(refs.targetFriend, { friendId: uid, addedAt });
             }
             tx.delete(refs.incoming);
-            if (exists(snapshots, names, 'outgoing')) tx.delete(refs.outgoing);
+            tx.delete(refs.reverseOutgoing);
             return { ok: true, action };
         }
 

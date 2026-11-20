@@ -1,4 +1,5 @@
-import { db } from '../config/firebase.js';
+import { auth, db } from '../config/firebase.js';
+import { isAuthenticatedOwner } from '../core/owner-access-policy.js';
 import { collection, getDocs, getDoc, doc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 export class ExportService {
@@ -7,6 +8,7 @@ export class ExportService {
     }
 
     async exportAllData(userId) {
+        if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid)) return null;
         const data = {
             exportedAt: new Date().toISOString(),
             user: null,
@@ -22,6 +24,7 @@ export class ExportService {
         try {
             // Профиль
             const userDoc = await getDoc(doc(this.db, 'users', userId));
+            if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid)) return null;
             if (userDoc.exists()) {
                 const userData = userDoc.data();
                 delete userData.achievements;
@@ -35,6 +38,7 @@ export class ExportService {
             
             for (const col of collections) {
                 const snap = await getDocs(collection(this.db, 'users', userId, col));
+                if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid)) return null;
                 snap.forEach(docSnap => {
                     if (docSnap.id !== '_init') {
                         const item = { id: docSnap.id, ...docSnap.data() };
@@ -47,7 +51,9 @@ export class ExportService {
             }
 
             // Достижения
-            const userData = (await getDoc(doc(this.db, 'users', userId))).data();
+            const finalUserDoc = await getDoc(doc(this.db, 'users', userId));
+            if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid)) return null;
+            const userData = finalUserDoc.data();
             if (userData?.achievements) {
                 data.achievements = userData.achievements;
             }
@@ -72,7 +78,9 @@ export class ExportService {
     }
 
     async exportAndDownload(userId) {
+        if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid)) return false;
         const data = await this.exportAllData(userId);
+        if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid)) return false;
         if (data) {
             const date = new Date().toISOString().split('T')[0];
             this.downloadJSON(data, `dreamandgo-backup-${date}.json`);

@@ -82,3 +82,13 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - SEC-RULES-01 remains a release blocker: no deployable root firestore.rules / firebase.json was found on the candidate branch, and active production rules have not been read directly. The previously reported emergency deny-all state is not treated as current verified evidence.
 - No production Firebase rules, App Check settings, Functions, or user data were changed.
 - The current PR head has no reported commit status or workflow runs available yet; CI is not claimed as passing.
+
+
+## Personal collection access pass — 2026-11-20
+
+- Added exact Firebase Auth UID checks to DreamsService, TravelService, BookService, MovieService, and RestaurantService for collection reads, writes, item reads, deletes, and client-side stats refreshes.
+- Added single-segment Firestore document ID validation for item-level operations.
+- DreamsService now validates create/update payloads with the existing dream input policy and restricts list filters to supported values.
+- Extracted shared policy to js/core/owner-access-policy.js and added tests/owner-access-policy.test.js.
+- npm run check now syntax-checks all five collection services and the shared policy.
+- Remaining release gates: dedicated schema validation for travel/book/movie/restaurant writes, Firestore Rules enforcement and export review, staging tests, and confirmed CI on the live PR head. Client-side checks are defense in depth only.

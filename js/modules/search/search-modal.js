@@ -1,3 +1,5 @@
+import { escapeHTML, safeInternalRoute, safeIconClass } from '../../core/security.js';
+
 import { SearchService } from '../../services/search.service.js';
 
 export class SearchModal {
@@ -89,30 +91,36 @@ export class SearchModal {
             primary: '#6C5CE7', success: '#00B894', warning: '#FDCB6E', danger: '#E17055', info: '#74b9ff'
         };
 
-        resultsContainer.innerHTML = results.map(r => `
-            <div class="search-result-item p-3 border-bottom" data-link="${r.link}" style="cursor: pointer;">
+        resultsContainer.innerHTML = results.map(r => {
+            const color = colors[r.color] || colors.primary;
+            const icon = safeIconClass(r.icon, 'bi-search');
+            const link = safeInternalRoute(r.link);
+            return `
+            <div class="search-result-item p-3 border-bottom" data-link="${escapeHTML(link)}" style="cursor: pointer;">
                 <div class="d-flex align-items-center gap-3">
-                    <div class="search-type-badge" style="background: ${colors[r.color]}20; color: ${colors[r.color]};">
-                        <i class="bi ${r.icon}"></i>
+                    <div class="search-type-badge" style="background: ${color}20; color: ${color};">
+                        <i class="bi ${icon}"></i>
                     </div>
                     <div class="flex-grow-1 min-width-0">
                         <div class="d-flex justify-content-between align-items-center">
-                            <h6 class="fw-bold mb-0 text-truncate">${r.title || 'Без названия'}</h6>
-                            <small class="badge bg-light text-dark">${r.typeName}</small>
+                            <h6 class="fw-bold mb-0 text-truncate">${escapeHTML(r.title || 'Без названия')}</h6>
+                            <small class="badge bg-light text-dark">${escapeHTML(r.typeName)}</small>
                         </div>
                         <p class="text-muted small mb-0 text-truncate">
-                            ${r.description || r.location || ''}
+                            ${escapeHTML(r.description || r.location || '')}
                         </p>
                     </div>
                 </div>
             </div>
-        `).join('');
+        `;
+        }).join('');
 
         resultsContainer.querySelectorAll('.search-result-item').forEach(item => {
             item.addEventListener('click', () => {
                 const link = item.dataset.link;
                 bootstrap.Modal.getInstance(document.getElementById('searchModal')).hide();
-                if (link) window.app.router.navigate(link.replace('#', ''));
+                const safeRoute = safeInternalRoute(link);
+                if (safeRoute) window.app.router.navigate(safeRoute.replace(/^#/, ''));
             });
         });
     }

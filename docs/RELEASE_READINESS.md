@@ -274,3 +274,10 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 
 - [x] Root CI `test` job passed on implementation HEAD `8a570eeee68fad84574ded2bd8bdf7297fd18ad1` ([run 44796782146](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44796782146)).
 - [ ] Emulator/staging two-account journey remains outstanding; production rollout remains blocked on username registry backup/dry-run/backfill and live Rules/App Check verification.
+
+
+### Public profile consent abuse regression tests
+
+- [x] Added emulator assertions that direct browser updates/creates cannot set `publicProfileEnabled`, including attempts to set it true or false.
+- [x] Added client/server projection assertions that the consent flag itself is never exposed.
+- [ ] Firebase Emulator workflow must pass on the final updated HEAD before this area is marked verified.

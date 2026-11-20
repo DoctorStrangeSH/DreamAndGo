@@ -132,3 +132,12 @@
 Фактические поля, типы, enum, размеры, nested maps/lists, timestamp-поведение и расхождения legacy данных описаны отдельно в `docs/FIRESTORE_V1_DATA_SCHEMAS.md`.
 
 Критичное наблюдение из текущих write services: `travels`, `books` и `restaurants` создаются с `isPublic: true`; `dreams` — с `isPublic: false`; `movies` не получают это поле при создании. До отдельного решения владельца эти флаги **не меняют** матрицу доступа: документы под `users/{uid}` остаются приватными для других пользователей. Публичный доступ возможен только через согласованную безопасную проекцию или callable API.
+
+
+## 9. Public profile consent gate
+
+- Public profile projection is disabled by default. The server and client projection helpers now require `users/{uid}.publicProfileEnabled === true`; missing or false values are treated as private.
+- `getPublicProfileV2` returns a generic not-found response for profiles without explicit opt-in. Exact username search returns no public profile for those accounts.
+- The public profile migration creates only opted-in profiles. Username collisions are still checked across all accounts (including private accounts) to prevent ambiguous handles.
+- The current profile/settings UI has not yet been verified to expose a clear opt-in control. Therefore **no account should be migrated or advertised as public until an owner-facing privacy setting, validation, and corresponding Firestore Rules are implemented and tested**.
+- This field is a security gate introduced in the candidate branch; it is not yet a production Rules permission or a completed UI setting.

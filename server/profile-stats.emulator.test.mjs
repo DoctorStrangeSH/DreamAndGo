@@ -22,7 +22,16 @@ test('server recomputes owned collection stats and preserves unrelated profile c
         db.doc('users/' + uid + '/restaurants/restaurant-1').set({ status: 'want_to_visit' }),
         db.doc('users/' + uid + '/dreams/dream-1').set({ status: 'completed' }),
         db.doc('users/' + uid + '/friends/bob').set({ friendId: 'bob' }),
-        db.doc('users/' + uid + '/friends/charlie').set({ friendId: 'charlie' })
+        db.doc('users/' + uid + '/friends/charlie').set({ friendId: 'charlie' }),
+        db.doc('users/' + uid + '/xpEvents/travel-week-1').set({ action: 'travels', xpGained: 50, occurredAt: new Date() }),
+        db.doc('users/' + uid + '/xpEvents/travel-week-2').set({ action: 'travels', xpGained: 50, occurredAt: new Date() }),
+        db.doc('users/' + uid + '/xpEvents/restaurant-week-1').set({ action: 'restaurants', xpGained: 30, occurredAt: new Date() }),
+        db.doc('users/' + uid + '/xpEvents/restaurant-week-2').set({ action: 'restaurants', xpGained: 30, occurredAt: new Date() }),
+        db.doc('users/' + uid + '/xpEvents/movie-week-1').set({ action: 'movies', xpGained: 20, occurredAt: new Date() }),
+        db.doc('users/' + uid + '/xpEvents/book-week-1').set({ action: 'books', xpGained: 25, occurredAt: new Date() }),
+        db.doc('users/' + uid + '/xpEvents/dream-week-1').set({ action: 'dreams', xpGained: 15, occurredAt: new Date() }),
+        db.doc('users/' + uid + '/xpEvents/friend-week-excluded').set({ action: 'friends', xpGained: 40, occurredAt: new Date() }),
+        db.doc('users/' + uid + '/xpEvents/old-week-excluded').set({ action: 'travels', xpGained: 50, occurredAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000) })
     ]);
 
     const result = await refreshUserStatsTransaction(db, uid);
@@ -36,6 +45,8 @@ test('server recomputes owned collection stats and preserves unrelated profile c
     assert.equal(result.restaurantsWantToVisit, 1);
     assert.equal(result.dreamsCompleted, 1);
     assert.equal(result.friends, 2);
+    assert.equal(result.weeklyActivityCount, 7);
+    assert.ok(result.newAchievements.some(item => item.id === 'perfect_week'));
 
     const saved = await user.get();
     assert.equal(saved.get('stats.customCounter'), 12);

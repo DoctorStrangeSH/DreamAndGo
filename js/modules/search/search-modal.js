@@ -1,11 +1,25 @@
 import { SearchService } from '../../services/search.service.js';
+import { escapeHTML } from '../../core/escape-html.js';
+import { safeInternalRoute } from '../../core/safe-internal-route.js';
+
+const SEARCH_ROUTES = ['#travels', '#food', '#movies', '#books', '#dreams'];
+const SEARCH_COLORS = Object.freeze({
+    primary: '#6C5CE7',
+    success: '#00B894',
+    warning: '#FDCB6E',
+    danger: '#E17055',
+    info: '#74b9ff'
+});
+const SEARCH_ICONS = new Set(['bi-airplane', 'bi-shop', 'bi-film', 'bi-book', 'bi-star']);
 
 export class SearchModal {
     constructor() {
         this.searchService = new SearchService();
+        this.searchRequestId = 0;
     }
 
     show() {
+        this.searchRequestId++;
         document.getElementById('searchModal')?.remove();
         document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
         document.body.classList.remove('modal-open');
@@ -23,9 +37,9 @@ export class SearchModal {
                                 <span class="input-group-text bg-transparent border-0">
                                     <i class="bi bi-search fs-5"></i>
                                 </span>
-                                <input type="text" class="form-control border-0 fs-5" id="searchModalInput" 
+                                <input type="text" class="form-control border-0 fs-5" id="searchModalInput"
                                        placeholder="Поиск по всему..." autofocus>
-                                <button class="btn btn-close" data-bs-dismiss="modal"></button>
+                                <button class="btn btn-close" data-bs-dismiss="modal" aria-label="Закрыть поиск"></button>
                             </div>
                         </div>
                         <div class="modal-body pt-0" id="searchModalResults">
@@ -44,22 +58,25 @@ export class SearchModal {
         modal.show();
 
         modalElement.addEventListener('hidden.bs.modal', () => {
+            this.searchRequestId++;
             container.remove();
             document.body.style.overflow = '';
         });
 
         let searchTimeout;
-        document.getElementById('searchModalInput').addEventListener('input', (e) => {
+        const input = document.getElementById('searchModalInput');
+        input.addEventListener('input', (event) => {
             clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => this.search(e.target.value), 300);
+            searchTimeout = setTimeout(() => this.search(event.target.value), 300);
         });
-
-        document.getElementById('searchModalInput').focus();
+        input.focus();
     }
 
     async search(query) {
         const resultsContainer = document.getElementById('searchModalResults');
-        if (!resultsContainer) return;
+        const userId = window.app.currentUser?.uid;
+        const requestId = ++this.searchRequestId;
+        if (!resultsContainer || !userId) return;
 
         if (!query.trim()) {
             resultsContainer.innerHTML = `
@@ -73,9 +90,21 @@ export class SearchModal {
 
         resultsContainer.innerHTML = '<div class="text-center py-3"><span class="spinner-border spinner-border-sm"></span></div>';
 
-        const results = await this.searchService.searchAll(window.app.currentUser.uid, query);
+        let results;
+        try {
+            results = await this.searchService.searchAll(userId, query);
+        } catch (error) {
+            console.error('Ошибка поиска по коллекциям:', error);
+            if (requestId === this.searchRequestId && window.app.currentUser?.uid === userId && resultsContainer.isConnected) {
+                resultsContainer.innerHTML = '<div class="alert alert-warning" role="status">Не удалось выполнить поиск. Попробуй ещё раз.</div>';
+            }
+            return;
+        }
 
-        if (results.length === 0) {
+        if (requestId !== this.searchRequestId || window.app.currentUser?.uid !== userId ||
+            !resultsContainer.isConnected || !document.getElementById('searchModal')) return;
+
+        if (!Array.isArray(results) || results.length === 0) {
             resultsContainer.innerHTML = `
                 <div class="text-center py-4 text-muted">
                     <i class="bi bi-emoji-frown fs-3"></i>
@@ -85,35 +114,41 @@ export class SearchModal {
             return;
         }
 
-        const colors = {
-            primary: '#6C5CE7', success: '#00B894', warning: '#FDCB6E', danger: '#E17055', info: '#74b9ff'
-        };
-
-        resultsContainer.innerHTML = results.map(r => `
-            <div class="search-result-item p-3 border-bottom" data-link="${r.link}" style="cursor: pointer;">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="search-type-badge" style="background: ${colors[r.color]}20; color: ${colors[r.color]};">
-                        <i class="bi ${r.icon}"></i>
-                    </div>
-                    <div class="flex-grow-1 min-width-0">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h6 class="fw-bold mb-0 text-truncate">${r.title || 'Без названия'}</h6>
-                            <small class="badge bg-light text-dark">${r.typeName}</small>
-                        </div>
-                        <p class="text-muted small mb-0 text-truncate">
-                            ${r.description || r.location || ''}
-                        </p>
-                    </div>
-                </div>
-            </div>
-        `).join('');
+        resultsContainer.innerHTML = results.map(result => this.createResultItem(result)).join('');
 
         resultsContainer.querySelectorAll('.search-result-item').forEach(item => {
             item.addEventListener('click', () => {
                 const link = item.dataset.link;
-                bootstrap.Modal.getInstance(document.getElementById('searchModal')).hide();
-                if (link) window.app.router.navigate(link.replace('#', ''));
+                const modalElement = document.getElementById('searchModal');
+                bootstrap.Modal.getInstance(modalElement)?.hide();
+                if (link) window.app.router.navigate(link.replace(/^#/, ''));
             });
         });
+    }
+
+    createResultItem(result) {
+        const r = result && typeof result === 'object' ? result : {};
+        const color = SEARCH_COLORS[r.color] || SEARCH_COLORS.primary;
+        const icon = SEARCH_ICONS.has(r.icon) ? r.icon : 'bi-search';
+        const link = safeInternalRoute(r.link, SEARCH_ROUTES);
+
+        return `
+            <div class="search-result-item p-3 border-bottom" data-link="${escapeHTML(link)}" style="cursor: pointer;">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="search-type-badge" style="background: ${color}20; color: ${color};">
+                        <i class="bi ${icon}"></i>
+                    </div>
+                    <div class="flex-grow-1 min-width-0">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="fw-bold mb-0 text-truncate">${escapeHTML(r.title || 'Без названия')}</h6>
+                            <small class="badge bg-light text-dark">${escapeHTML(r.typeName || '')}</small>
+                        </div>
+                        <p class="text-muted small mb-0 text-truncate">
+                            ${escapeHTML(r.description || r.location || '')}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 }

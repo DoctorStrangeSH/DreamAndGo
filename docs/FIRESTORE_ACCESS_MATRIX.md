@@ -141,3 +141,11 @@
 - The public profile migration creates only opted-in profiles. Username collisions are still checked across all accounts (including private accounts) to prevent ambiguous handles.
 - The current profile/settings UI has not yet been verified to expose a clear opt-in control. In addition, `FriendsService.getUserByUsername` still reads `users` directly from the browser instead of calling `findPublicProfileByUsernameV2`. Therefore **no account should be migrated or advertised as public until an owner-facing privacy setting, validation, Rules, and callable client cutover are implemented and tested**.
 - This field is a security gate introduced in the candidate branch; it is not yet a production Rules permission or a completed UI setting.
+
+
+## 10. Client profile-read cutover
+
+- Friend search calls `findPublicProfileByUsernameV2`; friend/request/sent-request lists call `getPublicProfilesV2` in batches of at most 50 UIDs.
+- The profile page may read `users/{uid}` directly only when `uid == request.auth.uid`. Other-account profile pages use the server-side allowlisted projection.
+- The callable endpoints require Auth, App Check and the per-account lookup quota. Do not enable the client cutover in production until App Check enforcement and deployed Functions are verified.
+- This code cutover does not itself enable public visibility. `publicProfileEnabled` remains explicit opt-in and missing/false means private.

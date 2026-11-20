@@ -15,6 +15,7 @@ import { loadPublicProfile, findPublicProfileByUsername } from './public-profile
 import { consumeProfileLookupQuota } from './profile-lookup-quota.js';
 import { registerProfileWithReservedUsername } from './username-reservation.js';
 import { getRegistrationState } from './registration-state.js';
+import { refreshUserStatsTransaction } from './profile-stats.js';
 
 if (getApps().length === 0) initializeApp();
 
@@ -205,4 +206,23 @@ export const getRegistrationStateV2 = onCall({ region: 'europe-west3', enforceAp
     const result = await getRegistrationState(getFirestore(), request.auth?.uid);
     if (!result.ok) throw new HttpsError(result.code, 'Требуется вход в аккаунт');
     return { status: result.status };
+});
+
+
+// Recompute personal collection counters from Firestore on the trusted server.
+// The caller cannot submit counts or another user's UID.
+export const refreshUserStatsV2 = onCall({ region: 'europe-west3', enforceAppCheck: true }, async request => {
+    const uid = request.auth?.uid;
+    if (!isValidUserId(uid)) throw new HttpsError('unauthenticated', 'Требуется вход в аккаунт');
+    try {
+        return await refreshUserStatsTransaction(getFirestore(), uid);
+    } catch (error) {
+        if (error?.code === 'not-found') {
+            throw new HttpsError('failed-precondition', 'Профиль пользователя не найден');
+        }
+        if (error?.code === 'invalid-argument') {
+            throw new HttpsError('invalid-argument', 'Некорректный идентификатор пользователя');
+        }
+        throw new HttpsError('internal', 'Не удалось обновить статистику профиля');
+    }
 });

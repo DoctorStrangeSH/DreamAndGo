@@ -25,7 +25,7 @@ function harness() {
             }
         }
     };
-    const Widget = new Function('window', `return class Widget {
+    const Widget = new Function('window', 'rendered', 'callbacks', `return class Widget {
         constructor() {
             this.unsubscribe = null;
             this.subscriptionGeneration = 0;
@@ -35,7 +35,7 @@ function harness() {
         updateBadge(items) { callbacks.push(items); }
         ${source.slice(initStart, initEnd)}
         ${source.slice(destroyStart, destroyEnd)}
-    }`)(window);
+    }`)(window, rendered, callbacks);
     return { widget: new Widget(), window, subscriptions, rendered, callbacks };
 }
 

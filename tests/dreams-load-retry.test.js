@@ -16,11 +16,13 @@ const renderMethod = extract(moduleSource, '    async render() {', '    getTempl
 const getDreamsMethod = extract(serviceSource, '    async getDreams(', '    async addDream(');
 
 test('dreams service exposes Firestore load errors when requested', async () => {
-    const Service = new Function('collection', 'query', 'orderBy', 'where', 'getDocs', 'console',
+    const Service = new Function('collection', 'query', 'orderBy', 'where', 'getDocs', 'console', 'isAuthenticatedOwner', 'auth',
         `return class Service { constructor() { this.db = {}; } ${getDreamsMethod} }`
     )(
         () => ({}), (...args) => args, () => ({}), () => ({}),
-        async () => { throw new Error('offline'); }, { error() {} }
+        async () => { throw new Error('offline'); }, { error() {} },
+        (requestedUid, activeUid) => requestedUid === activeUid,
+        { currentUser: { uid: 'alice' } }
     );
     const service = new Service();
     assert.deepEqual(await service.getDreams('alice'), []);

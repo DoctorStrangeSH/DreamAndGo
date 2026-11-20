@@ -4,46 +4,30 @@ import { readFileSync } from 'node:fs';
 
 const source = readFileSync(new URL('../js/services/book.service.js', import.meta.url), 'utf8');
 const start = source.indexOf('    async updateUserStats(userId) {');
-const method = source.slice(start, source.lastIndexOf('\n}'));
+const end = source.indexOf('\n    }', start);
+const method = source.slice(start, end + 6);
 assert.ok(start >= 0 && method.includes('async updateUserStats'));
 
-function harness(getBooks) {
-    const writes = [];
-    const Book = new Function('doc', 'updateDoc', 'console', 'getBooks', 'isAuthenticatedOwner', 'auth', `
-        return class Book {
-            constructor() { this.db = {}; }
-            getBooks(...args) { return getBooks(...args); }
-            ${method}
-        };
-    `)(
-        (_db, ...parts) => parts.join('/'),
-        async (...args) => writes.push(args),
+function harness(activeUid = 'alice') {
+    const refreshCalls = [];
+    const Book = new Function('console', 'isAuthenticatedOwner', 'auth', 'refreshUserStats',
+        'return class Book {' + method + '};')(
         { error() {} },
-        getBooks,
-        (requestedUid, activeUid) => requestedUid === activeUid,
-        { currentUser: { uid: 'alice' } }
+        (requestedUid, authenticatedUid) => requestedUid === authenticatedUid,
+        { currentUser: { uid: activeUid } },
+        async uid => { refreshCalls.push(uid); return true; }
     );
-    return { book: new Book(), writes };
+    return { book: new Book(), refreshCalls };
 }
 
-test('failed book fetch does not erase previously stored stats', async () => {
-    const { book, writes } = harness(async (_uid, _filters, options) => {
-        assert.equal(options.throwOnError, true);
-        throw new Error('offline');
-    });
+test('book stats refresh delegates to the trusted server callable', async () => {
+    const { book, refreshCalls } = harness();
     await book.updateUserStats('alice');
-    assert.equal(writes.length, 0);
+    assert.deepEqual(refreshCalls, ['alice']);
 });
 
-test('successful book fetch updates all counters', async () => {
-    const { book, writes } = harness(async () => [
-        { status: 'reading' }, { status: 'read' }, { status: 'want_to_read' }
-    ]);
-    await book.updateUserStats('alice');
-    assert.deepEqual(writes, [['users/alice', {
-        'stats.books': 3,
-        'stats.booksRead': 1,
-        'stats.booksReading': 1,
-        'stats.booksWantToRead': 1
-    }]]);
+test('book stats refresh refuses a different active account', async () => {
+    const { book, refreshCalls } = harness();
+    await book.updateUserStats('bob');
+    assert.deepEqual(refreshCalls, []);
 });

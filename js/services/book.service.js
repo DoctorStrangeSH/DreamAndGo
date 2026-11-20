@@ -53,7 +53,7 @@ export class BookService {
     }
 
     async addBook(userId, data) {
-        if (!this.isOwner(userId)) return { success: false, error: 'Недостаточно прав.' };
+        if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid)) return { success: false, error: 'Недостаточно прав.' };
         try {
             const booksRef = collection(this.db, 'users', userId, 'books');
             const newBook = {
@@ -78,7 +78,7 @@ export class BookService {
     }
 
     async updateBook(userId, bookId, updates) {
-        if (!this.isOwner(userId) || !isValidFirestoreDocumentId(bookId)) return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
+        if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid) || !isValidFirestoreDocumentId(bookId)) return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
         try {
             const bookRef = doc(this.db, 'users', userId, 'books', bookId);
             await updateDoc(bookRef, {
@@ -94,7 +94,7 @@ export class BookService {
     }
 
     async deleteBook(userId, bookId) {
-        if (!this.isOwner(userId) || !this.isValidDocumentId(bookId)) return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
+        if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid) || !isValidFirestoreDocumentId(bookId)) return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
         try {
             const bookRef = doc(this.db, 'users', userId, 'books', bookId);
             await deleteDoc(bookRef);
@@ -107,7 +107,7 @@ export class BookService {
     }
 
     async getBook(userId, bookId) {
-        if (!this.isOwner(userId) || !this.isValidDocumentId(bookId)) return null;
+        if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid) || !isValidFirestoreDocumentId(bookId)) return null;
         try {
             const bookRef = doc(this.db, 'users', userId, 'books', bookId);
             const bookDoc = await getDoc(bookRef);
@@ -122,7 +122,7 @@ export class BookService {
     }
 
     async updateUserStats(userId) {
-        if (!this.isOwner(userId)) return;
+        if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid)) return;
         try {
             // Never overwrite valid counters with zeros when the collection read failed.
             const books = await this.getBooks(userId, {}, { throwOnError: true });

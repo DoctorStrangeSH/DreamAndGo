@@ -1,3 +1,6 @@
+import { calculateAchievementAwards } from '../js/core/achievement-award-policy.js';
+import { ACHIEVEMENTS } from '../js/core/achievement-catalog.js';
+
 const COLLECTIONS = {
     travels: {
         total: 'travels',

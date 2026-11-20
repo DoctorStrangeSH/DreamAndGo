@@ -57,8 +57,7 @@ export class AchievementsService {
             currentValue = ['travels', 'restaurants', 'movies', 'books', 'dreams']
                 .filter(key => safeCount(key) > 0).length;
         } else if (achievement?.id === 'perfect_week') {
-            currentValue = ['travels', 'restaurants', 'movies', 'books', 'dreams']
-                .reduce((total, key) => total + safeCount(key), 0);
+            currentValue = safeCount('weeklyActivityCount');
         } else if (achievement?.id === 'first_dream') {
             currentValue = safeCount('dreamsCompleted');
         } else {

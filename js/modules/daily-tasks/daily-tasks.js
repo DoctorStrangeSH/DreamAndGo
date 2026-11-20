@@ -55,24 +55,7 @@ export class DailyTasksWidget {
     }
 
     attachListeners() {
-        document.querySelectorAll('.claim-task-btn').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                const taskId = btn.dataset.taskId;
-                const xp = await this.dailyTasksService.claimTaskReward(window.app.currentUser.uid, taskId);
-                if (xp) {
-                    window.app.ui.showToast(`+${xp} XP получено! ⭐`, 'success');
-                    window.app.awardXP('daily_login');
-                }
-            });
-        });
-
-        document.querySelector('.claim-bonus-btn')?.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            const xp = await this.dailyTasksService.claimBonusReward(window.app.currentUser.uid);
-            if (xp) {
-                window.app.ui.showToast(`🎁 Бонус +${xp} XP!`, 'success');
-            }
-        });
+        // XP reward buttons are intentionally absent until task progress is
+        // verified and claimed by the trusted server.
     }
 }

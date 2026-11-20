@@ -241,10 +241,7 @@ export class MovieService {
                 ...safeData,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
-                status: movieData.status || 'to_watch',
-                userRating: movieData.userRating || 0,
-                review: movieData.review || '',
-                notes: movieData.notes || ''
+                notes: ''
             };
             
             const docRef = await addDoc(moviesRef, newMovie);

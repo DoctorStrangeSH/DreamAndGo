@@ -61,12 +61,8 @@ export class RestaurantService {
                 ...safeData,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
-                photos: data.photos || [],
-                userRating: data.userRating || 0,
-                visitDate: data.visitDate || null,
-                notes: data.notes || '',
-                favoriteDishes: data.favoriteDishes || [],
-                isPublic: data.isPublic !== false
+                notes: '',
+                isPublic: true
             };
 
             const docRef = await addDoc(restaurantsRef, newRestaurant);

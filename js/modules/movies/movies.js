@@ -1,3 +1,4 @@
+import { escapeHTML, safeDocumentId, safeCount, safeHttpsURL } from '../../core/security.js';
 import { MovieService } from '../../services/movie.service.js';
 import { APP_CONFIG } from '../../config/constants.js';
 
@@ -217,14 +218,18 @@ export class MoviesModule {
                 ? '<span class="badge bg-info bg-opacity-10 text-info">☆ Буду смотреть</span>'
                 : '';
 
-        const year = movie.releaseDate ? new Date(movie.releaseDate).getFullYear() : '';
+        const year = typeof movie.releaseDate === 'string' ? new Date(movie.releaseDate).getFullYear() : '';
+        const posterURL = safeHttpsURL(movie.poster);
+        const movieId = safeDocumentId(String(movie.id ?? ''));
+        const voteRating = safeCount(movie.voteAverage ?? movie.rating, 10);
+        const personalRating = safeCount(movie.userRating, 5);
 
         return `
             <div class="col-6 col-md-4 col-lg-3 fade-in-up" style="animation-delay: ${index * 0.04}s">
                 <div class="card-premium h-100 movie-card">
                     <div class="movie-poster">
-                        ${movie.poster
-                ? `<img src="${movie.poster}" alt="${movie.title}" class="w-100 h-100" style="object-fit: cover;">`
+                        ${posterURL
+                ? `<img src="${escapeHTML(posterURL)}" alt="${escapeHTML(movie.title)}" class="w-100 h-100" style="object-fit: cover;">`
                 : `<div class="movie-poster-placeholder">
                                 <i class="bi bi-film display-4 text-white opacity-25"></i>
                             </div>`
@@ -232,7 +237,7 @@ export class MoviesModule {
                         <div class="movie-poster-overlay">
                             <div class="d-flex flex-column gap-1">
                                 ${showAddButton
-                ? `<button class="btn btn-success btn-sm add-movie-btn" data-movie-id="${movie.id}">
+                ? `<button class="btn btn-success btn-sm add-movie-btn" data-movie-id="${escapeHTML(movieId)}">
                                         <i class="bi bi-plus-lg"></i> Добавить
                                     </button>`
                 : `<button class="btn btn-light btn-sm edit-movie-btn" data-movie-id="${movie.id}">
@@ -250,19 +255,19 @@ export class MoviesModule {
                         ${statusBadge ? `<div class="movie-badge">${statusBadge}</div>` : ''}
                         <div class="movie-rating">
                             <i class="bi bi-star-fill text-warning"></i>
-                            <span>${movie.voteAverage || movie.rating || '?'}</span>
+                            <span>${voteRating || '?'}</span>
                         </div>
                     </div>
                     <div class="p-2">
-                        <h6 class="fw-bold mb-0 movie-title">${movie.title}</h6>
+                        <h6 class="fw-bold mb-0 movie-title">${escapeHTML(movie.title)}</h6>
                         <div class="d-flex justify-content-between align-items-center">
                             <small class="text-muted">${year}</small>
-                            <small class="text-muted">${genres.join(', ')}</small>
+                            <small class="text-muted">${escapeHTML(genres.join(', '))}</small>
                         </div>
                         ${movie.userRating
                 ? `<div class="mt-1">
                                 <span class="badge" style="background: var(--primary);">
-                                    <i class="bi bi-heart-fill me-1" style="font-size: 0.6rem;"></i>${movie.userRating * 2}/10
+                                    <i class="bi bi-heart-fill me-1" style="font-size: 0.6rem;"></i>${personalRating * 2}/10
                                 </span>
                             </div>`
                 : ''
@@ -456,7 +461,8 @@ export class MoviesModule {
         document.body.style.overflow = '';
 
         const isEdit = !!existingId;
-        const userRating10 = (movieData.userRating || 0) * 2;
+        const userRating10 = safeCount(Number(movieData.userRating) * 2, 10);
+        const posterURL = safeHttpsURL(movieData.poster);
 
         const container = document.createElement('div');
         container.id = 'movieModalContainer';
@@ -476,25 +482,25 @@ export class MoviesModule {
                         <div class="modal-body">
                             <div class="row">
                                 <div class="col-md-4 mb-3">
-                                    ${movieData.poster
-                ? `<img src="${movieData.poster}" alt="${movieData.title}" class="w-100 rounded">`
+                                    ${posterURL
+                ? `<img src="${escapeHTML(posterURL)}" alt="${escapeHTML(movieData.title)}" class="w-100 rounded">`
                 : `<div class="bg-secondary rounded w-100 d-flex align-items-center justify-content-center" style="height: 300px;">
                                             <i class="bi bi-film display-1 text-white opacity-25"></i>
                                         </div>`
             }
                                 </div>
                                 <div class="col-md-8">
-                                    <h4 class="fw-bold">${movieData.title}</h4>
-                                    ${movieData.originalTitle ? `<p class="text-muted">${movieData.originalTitle}</p>` : ''}
+                                    <h4 class="fw-bold">${escapeHTML(movieData.title)}</h4>
+                                    ${movieData.originalTitle ? `<p class="text-muted">${escapeHTML(movieData.originalTitle)}</p>` : ''}
                                     ${movieData.tagline ? `<p class="fst-italic text-muted">"${movieData.tagline}"</p>` : ''}
 
                                     <div class="mb-2">
                                         ${movieData.genres ? movieData.genres.map(g =>
-                `<span class="badge bg-primary me-1">${g.name || g}</span>`
+                `<span class="badge bg-primary me-1">${escapeHTML(g.name || g)}</span>`
             ).join('') : ''}
                                     </div>
 
-                                    ${movieData.overview ? `<p class="small text-muted">${movieData.overview.substring(0, 300)}...</p>` : ''}
+                                    ${movieData.overview ? `<p class="small text-muted">${escapeHTML(String(movieData.overview).substring(0, 300))}...</p>` : ''}
 
                                     <form id="movieForm" class="mt-3">
                                         <div class="mb-2">
@@ -516,7 +522,7 @@ export class MoviesModule {
                                         <div class="mb-2">
                                             <label class="form-label fw-semibold small">Рецензия</label>
                                             <textarea class="form-control form-control-sm" name="review" rows="3"
-                                                      placeholder="Твои мысли о фильме...">${movieData.review || ''}</textarea>
+                                                      placeholder="Твои мысли о фильме...">${escapeHTML(movieData.review || '')}</textarea>
                                         </div>
                                     </form>
                                 </div>
@@ -612,6 +618,7 @@ export class MoviesModule {
         document.body.classList.remove('modal-open');
         document.body.style.overflow = '';
 
+        const posterURL = safeHttpsURL(details.poster);
         const container = document.createElement('div');
         container.id = 'movieModalContainer';
         document.body.appendChild(container);
@@ -621,29 +628,29 @@ export class MoviesModule {
                 <div class="modal-dialog modal-lg modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title fw-bold">${details.title || 'Без названия'}</h5>
+                            <h5 class="modal-title fw-bold">${escapeHTML(details.title || 'Без названия')}</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
                             <div class="row">
                                 <div class="col-md-4 mb-3">
-                                    ${details.poster
-                ? `<img src="${details.poster}" class="w-100 rounded">`
+                                    ${posterURL
+                ? `<img src="${escapeHTML(posterURL)}" class="w-100 rounded">`
                 : '<div class="bg-secondary rounded w-100" style="height: 300px;"></div>'
             }
                                 </div>
                                 <div class="col-md-8">
-                                    <p><strong>Оригинальное название:</strong> ${details.originalTitle || details.title || '—'}</p>
-                                    <p><strong>Год:</strong> ${details.releaseDate ? details.releaseDate.split('-')[0] : '—'}</p>
-                                    <p><strong>Рейтинг TMDB:</strong> ⭐ ${details.voteAverage || details.rating || '—'} / 10 (${details.voteCount || '0'} голосов)</p>
-                                    <p><strong>Длительность:</strong> ${details.runtime || '—'} мин.</p>
-                                    <p><strong>Жанры:</strong> ${details.genres?.map(g => g.name).join(', ') || '—'}</p>
-                                    <p><strong>Слоган:</strong> ${details.tagline || '—'}</p>
-                                    <p><strong>Страны:</strong> ${details.productionCountries?.map(c => c.name).join(', ') || '—'}</p>
-                                    ${details.userRating ? `<p><strong>Моя оценка:</strong> ❤️ ${details.userRating * 2} / 10</p>` : ''}
-                                    ${details.review ? `<p><strong>Рецензия:</strong></p><p class="fst-italic">"${details.review}"</p>` : ''}
+                                    <p><strong>Оригинальное название:</strong> ${escapeHTML(details.originalTitle || details.title || '—')}</p>
+                                    <p><strong>Год:</strong> ${escapeHTML(typeof details.releaseDate === 'string' ? details.releaseDate.split('-')[0] : '—')}</p>
+                                    <p><strong>Рейтинг TMDB:</strong> ⭐ ${safeCount(details.voteAverage ?? details.rating, 10) || '—'} / 10 (${safeCount(details.voteCount, 100000000)} голосов)</p>
+                                    <p><strong>Длительность:</strong> ${safeCount(details.runtime, 1000) || '—'} мин.</p>
+                                    <p><strong>Жанры:</strong> ${escapeHTML(details.genres?.map(g => g.name).join(', ') || '—')}</p>
+                                    <p><strong>Слоган:</strong> ${escapeHTML(details.tagline || '—')}</p>
+                                    <p><strong>Страны:</strong> ${escapeHTML(details.productionCountries?.map(c => c.name).join(', ') || '—')}</p>
+                                    ${details.userRating ? `<p><strong>Моя оценка:</strong> ❤️ ${safeCount(Number(details.userRating) * 2, 10)} / 10</p>` : ''}
+                                    ${details.review ? `<p><strong>Рецензия:</strong></p><p class="fst-italic">"${escapeHTML(details.review)}"</p>` : ''}
                                     <hr>
-                                    <p>${details.overview || ''}</p>
+                                    <p>${escapeHTML(details.overview || '')}</p>
                                 </div>
                             </div>
                         </div>

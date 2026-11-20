@@ -182,3 +182,12 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - Emulator confirms dry-run is read-only, apply is idempotent and creates only missing reservations, collisions block writes, and the helper never activates the registry.
 - Latest implementation head `def09284616fedcea822b3a28eeda9cf59b5f30a`: 415/415 repository tests, 6/6 Rules tests, 59/59 server/Auth/Firestore emulator tests; `npm run check` passed.
 - Production backup, real-data dry-run, independent audit, registration freeze, staging browser QA and manual readiness activation remain outstanding.
+
+
+### Notification lifecycle and XSS follow-up — 2026-11-20
+
+- Notification subscriptions are now torn down on logout/account switch and re-init; generation/UID guards reject queued stale snapshots.
+- Added notification lifecycle regression tests for teardown, account isolation and malformed snapshots.
+- Targeted review covered notifications, global search, chat bubbles, friend cards, achievements and the primary personal collection/profile renderers. User text is escaped and dynamic enums/routes/icons/colors are allowlisted in reviewed paths.
+- Shared modal content and empty-state action parameters remain trusted-markup APIs and must not receive raw user input.
+- Full XSS audit remains open until every HTML sink and modal/form template has been reviewed.

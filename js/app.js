@@ -286,8 +286,6 @@ class DreamAndGo {
     async onUserAction(action) {
         const uid = this.currentUser?.uid;
         if (!uid) return;
-        try { await this.dailyTasksService?.updateTaskProgress(uid, action); } catch (e) { }
-
         // Firestore reward triggers run asynchronously. Refresh the level
         // widget after they have had time to commit, without crossing accounts.
         const rewardActions = new Set([

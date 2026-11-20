@@ -15,6 +15,12 @@ export class DreamsService {
             if (throwOnError) throw new Error('Недостаточно прав для доступа к мечтам.');
             return [];
         }
+        const validStatuses = new Set(['all', 'dreaming', 'in_progress', 'completed']);
+        const validCategories = new Set(['all', '', 'Путешествия', 'Карьера', 'Творчество', 'Спорт', 'Отношения', 'Знания', 'Материальное', 'Другое']);
+        if (!validStatuses.has(filters.status || 'all') || !validCategories.has(filters.category || 'all')) {
+            if (throwOnError) throw new Error('Некорректные фильтры мечт.');
+            return [];
+        }
         try {
             const dreamsRef = collection(this.db, 'users', userId, 'dreams');
             let q = query(dreamsRef, orderBy('createdAt', 'desc'));
@@ -58,9 +64,6 @@ export class DreamsService {
                 ...safeData,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
-                status: data.status || 'dreaming',
-                progress: data.progress || 0,
-                steps: data.steps || [],
                 isPublic: false
             };
 

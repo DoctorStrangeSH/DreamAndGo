@@ -182,3 +182,9 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Добавлены unit-тесты server policy и UI/callable wiring.
 - [ ] Прогнать Firebase Emulator и staging с двумя аккаунтами; проверить включение/отключение, поиск, прямой lookup и отсутствие утечки приватных полей.
 - [ ] Завершить production username registry backup/dry-run/backfill; до этого публичность нельзя включить.
+
+
+### Verification note — public profile privacy control
+
+- [x] Root CI `test` job passed on implementation HEAD `8a570eeee68fad84574ded2bd8bdf7297fd18ad1` ([run 44796782146](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44796782146)).
+- [ ] Emulator/staging two-account journey remains outstanding; production rollout remains blocked on username registry backup/dry-run/backfill and live Rules/App Check verification.

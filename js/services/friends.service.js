@@ -253,4 +253,5 @@ export class FriendsService {
     async updateFriendsCount(userId) {
         if (!isCurrentUser(userId)) return;
         await refreshUserStats(userId);
-    }}
+    }
+}

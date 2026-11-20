@@ -5,7 +5,7 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { runUsernameReservationBackfill } from './username-backfill.js';
 
 assert.ok(process.env.FIRESTORE_EMULATOR_HOST, 'Must run against Firestore emulator only');
-const app = initializeApp({ projectId: 'demo-dreamandgo-chat-rules' }, 'username-backfill-tests');
+const app = initializeApp({ projectId: 'demo-dreamandgo-username-backfill' }, 'username-backfill-tests');
 const db = getFirestore(app);
 const timestamp = () => FieldValue.serverTimestamp();
 

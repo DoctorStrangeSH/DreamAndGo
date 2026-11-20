@@ -1,3 +1,4 @@
+import { escapeHTML, safeCount } from '../../core/security.js';
 import { AchievementsService, ACHIEVEMENTS } from '../../services/achievements.service.js';
 
 export class AchievementsModule {
@@ -31,13 +32,13 @@ export class AchievementsModule {
             <div id="achievementsGrid" class="row g-3">
                 ${all.map(a => {
                     const e = earned.find(x=>x.id===a.id);
-                    return `<div class="col-12 col-md-6 achievement-item" data-category="${a.category}">
+                    return `<div class="col-12 col-md-6 achievement-item" data-category="${escapeHTML(a.category)}">
                         <div class="card-premium p-3 h-100 ${e?'achievement-earned':'achievement-locked'}">
                             <div class="d-flex align-items-center gap-3">
-                                <div class="achievement-icon ${e?'earned':''}"><span>${a.emoji}</span></div>
+                                <div class="achievement-icon ${e?'earned':''}"><span>${escapeHTML(a.emoji)}</span></div>
                                 <div class="flex-grow-1">
-                                    <div class="d-flex justify-content-between"><div><h6 class="fw-bold mb-0">${e?e.title:a.title}</h6><p class="text-muted small mb-1">${e?e.description:a.description}</p></div>${e?'<span class="badge bg-success fs-6"><i class="bi bi-check-lg"></i></span>':''}</div>
-                                    ${a.levels.length>1?`<div class="achievement-levels mt-1">${a.levels.map((l,i)=>`<span class="achievement-level-dot ${e&&e.level>i?'earned':''} ${e&&e.level===l.level?'current':''}">${e&&e.level>i?'⭐':'○'}</span>`).join('')}<small class="text-muted ms-1">Ур.${e?e.level:0}/${a.levels.length}</small></div>`:''}
+                                    <div class="d-flex justify-content-between"><div><h6 class="fw-bold mb-0">${escapeHTML(e?.title || a.title)}</h6><p class="text-muted small mb-1">${escapeHTML(e?.description || a.description)}</p></div>${e?'<span class="badge bg-success fs-6"><i class="bi bi-check-lg"></i></span>':''}</div>
+                                    ${a.levels.length>1?`<div class="achievement-levels mt-1">${a.levels.map((l,i)=>`<span class="achievement-level-dot ${e&&e.level>i?'earned':''} ${e&&e.level===l.level?'current':''}">${e&&e.level>i?'⭐':'○'}</span>`).join('')}<small class="text-muted ms-1">Ур.${safeCount(e?.level, a.levels.length)}/${a.levels.length}</small></div>`:''}
                                     ${e?`<small class="text-muted"><i class="bi bi-calendar me-1"></i>${this.fdate(e.awardedAt)}</small>`:''}
                                 </div>
                             </div>

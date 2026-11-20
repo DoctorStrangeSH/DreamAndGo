@@ -92,3 +92,12 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - Extracted shared policy to js/core/owner-access-policy.js and added tests/owner-access-policy.test.js.
 - npm run check now syntax-checks all five collection services and the shared policy.
 - Remaining release gates: dedicated schema validation for travel/book/movie/restaurant writes, Firestore Rules enforcement and export review, staging tests, and confirmed CI on the live PR head. Client-side checks are defense in depth only.
+
+
+### Additional integrity work — 2026-11-20
+
+- Achievement awards are now transactionally persisted and guarded by the active Firebase Auth UID.
+- Added pure award policy with regression coverage for duplicate/legacy records, invalid counters, and repeated award checks.
+- Achievement progress no longer throws for special achievements or missing statistics.
+- JSON backup export is bound to the active owner and aborts if the account changes during collection reads.
+- Known product correctness follow-up: `perfect_week` currently counts lifetime collection totals and needs a timestamp-based rolling seven-day implementation before it can be described as weekly.

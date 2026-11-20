@@ -69,3 +69,18 @@
 `refreshUserStatsV2` is an authenticated, App-Check-protected callable in `europe-west3`. It accepts an empty payload: UID is derived exclusively from `request.auth.uid`. The server transaction reads the user's profile and their own `travels`, `restaurants`, `movies`, `books`, `dreams`, and `friends` subcollections, ignores legacy `_init` placeholders, recomputes counters, and preserves unrelated stats keys. Browser collection services call this endpoint rather than writing collection counters directly.
 
 The endpoint is not deployed or enabled in production by this branch. Emulator coverage validates the transaction and aggregation, not deployed Functions, App Check enforcement, or production Firestore Rules. XP awards and achievement writes remain separate client-authoritative flows and are not covered by this callable.
+
+
+## Server-authoritative XP rewards (candidate, not deployed)
+
+Cloud Functions v2 exports document triggers for newly created travel, restaurant, movie, book, dream and friendship records, plus a transition trigger when a dream first becomes `completed`. Triggers call `awardXpForVerifiedEvent()`, which writes a stable per-event ledger record and updates `users/{uid}.stats.xp` in one Firestore transaction.
+
+- The event key is derived from the collection path and record ID, not supplied by the browser.
+- Duplicate Cloud Functions delivery is idempotent.
+- Per-action cap: 5 events per UTC day.
+- Total cap: 300 XP per UTC day.
+- XP rewards: travel 50, restaurant 30, movie 20, book 25, dream 15, friend 40, dream completion 100.
+- Browser-side `LevelService.addXP()` is a no-op. The application no longer submits arbitrary XP action strings.
+- Daily task rewards are intentionally disabled while their progress is client-maintained. Re-enable only after task assignment, progress verification and reward claiming move to trusted server code.
+
+The triggers are candidate code only. Do not deploy until production Firestore Rules, App Check, staging accounts and the full user-flow rollout are reviewed. This pipeline does not award XP for login, messages, reviews or daily tasks.

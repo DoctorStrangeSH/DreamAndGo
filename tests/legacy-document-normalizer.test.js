@@ -39,6 +39,7 @@ test('normalizes a legacy book document with rename, drop, defaults and status m
         author: 'J. R. R. Tolkien',
         status: 'finished',
         legacyPrivateFlag: true,
+        notes: 'legacy note replaced by approved default',
         createdAt: ts,
         updatedAt: ts
     };

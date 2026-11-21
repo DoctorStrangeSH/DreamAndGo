@@ -207,7 +207,7 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 
 ### SEC-NOTIFY-01 — arbitrary client notification creation — 2026-11-21
 
-**Status:** arbitrary client-selected recipient/payload creation removed from candidate browser service; trusted event generation and server authorization remain open.
+**Status:** client-selected notification creation removed; trusted friend, achievement and private-message event sources plus isolated Rules coverage are implemented and CI/Emulator-verified. Production Rules and staging authorization remain open.
 
 - The former `NotificationsService.addNotification(userId, data)` wrote directly to `users/{userId}/notifications` and accepted both recipient UID and payload from the browser.
 - Removed `addNotification` and the unused client helper methods for friend requests, friend acceptance, messages, achievements and level-up notices. Repository search found no external call sites for those helper methods.
@@ -215,12 +215,14 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 - Added `tests/notifications-service-security.test.js` to guard against reintroducing client creation helpers and cross-account access paths.
 - This is defense in depth, not an authorization boundary. Production Firestore Rules are still absent from the repository and have not been read from Firebase Console.
 
-**Remaining:** message notifications are not implemented; define owner-only read/update Rules; test allowed and denied operations in Emulator and staging with two accounts. Friendship and achievement event writes are covered by later findings SEC-NOTIFY-02 and SEC-NOTIFY-04. Do not deploy or loosen Rules based on these client/server candidate changes alone.
+**Verification:** friend, achievement and private-message event sources are covered by candidate transaction tests; isolated notification Rules passed 7/7 tests and server/Auth/Firestore Emulator tests passed 59/59. Root Checks passed 461/461 tests with syntax checks for 254 files. See SEC-NOTIFY-02, SEC-NOTIFY-04 and SEC-NOTIFY-05.
+
+**Remaining:** obtain/review the active production Rules, integrate the access contract into the complete production Rules configuration, and validate with two staging accounts and App Check. Do not deploy or loosen Rules based on isolated candidate fixtures.
 
 
 ### SEC-NOTIFY-02 — trusted friendship event notifications — 2026-11-21
 
-**Status:** implemented in candidate code; CI, Firestore Rules and staging verification remain open.
+**Status:** implemented in candidate code; transaction and isolated Rules Emulator coverage passed. Production Rules integration and staging verification remain open.
 
 - `mutateFriendshipV2` already requires Firebase Auth, App Check and derives the actor exclusively from `request.auth.uid`.
 - The friendship transaction now creates a fixed-schema `friend_request` notification for the target user in the same transaction as the paired request records.
@@ -229,26 +231,28 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 - Deterministic per-actor notification document IDs make retries idempotent for each event slot and prevent duplicate documents from repeated delivery.
 - Regression tests assert exact recipient paths and allowlisted payload values.
 
-**Remaining:** add Rules tests proving owner-only reads and read-state updates; run the complete notification flow with two staging accounts. Trusted achievement and private-message event sources are now documented in SEC-NOTIFY-04 and SEC-NOTIFY-05. Do not treat candidate code as permission to deploy Functions or loosen production Rules.
+**Verification:** Root Checks passed 461/461; isolated notification Rules passed 7/7 and server/Auth/Firestore Emulator tests passed 59/59. Trusted achievement and private-message event sources are documented in SEC-NOTIFY-04 and SEC-NOTIFY-05.
+
+**Remaining:** integrate the tested access contract into the complete production Rules configuration and run the complete notification flow with two staging accounts and App Check. Do not treat candidate code as permission to deploy Functions or loosen production Rules.
 
 
 ### SEC-NOTIFY-03 — stale friendship request notices — 2026-11-21
 
-**Status:** candidate transaction and regression tests updated; CI not yet confirmed.
+**Status:** candidate transaction and regression tests updated; Root Checks and Firebase Emulator workflows passed.
 
 - Sender cancellation deletes the corresponding recipient-side request notification in the same transaction as request-index deletion.
 - Recipient acceptance/rejection deletes the incoming request notification in the same transaction as request resolution.
 - Acceptance additionally creates a separate fixed-schema notice for the original requester.
 - This avoids leaving an actionable-looking notification after the request no longer exists. The server remains the only notification creator.
 
-**Verification:** root Checks passed with 461/461 tests and syntax validation of 253 JavaScript files; Firebase Emulator passed 6/6 existing Firestore Rules tests and 59/59 server/Auth/Firestore emulator tests on implementation HEAD `d311e26065e01d5044e73f049c4629988dd5cf9b`. These existing Rules tests are not notification-specific.
+**Verification:** latest Root Checks passed with 461/461 tests and syntax validation of 254 JavaScript files; Firebase Emulator passed 7/7 isolated Rules tests and 59/59 server/Auth/Firestore Emulator tests (runs 44894173436 and 44893915020).
 
-**Remaining:** add explicit notification read/update authorization cases and validate the notification flow in staging with two accounts. The notification UI still relies on owner-only Rules, which have not been confirmed against production.
+**Remaining:** obtain/review active production Rules and validate notification delivery/read-state in staging with two accounts and App Check. The isolated fixture does not confirm deployed production authorization.
 
 
 ### SEC-NOTIFY-04 — trusted achievement notifications — 2026-11-21
 
-**Status:** implemented in candidate server transaction and Emulator test; CI/staging and Rules authorization remain open.
+**Status:** implemented in candidate server transaction; transaction/Emulator coverage and isolated notification Rules have passed. Production Rules integration and staging remain open.
 
 - `refreshUserStatsV2` derives the target UID from Firebase Auth and calls `refreshUserStatsTransaction`.
 - When the trusted achievement policy returns newly awarded achievement levels, the same Firestore transaction updates the user's achievement state and writes a fixed-schema notification under that user's own `notifications` collection.
@@ -256,12 +260,14 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 - Deterministic IDs include achievement ID and level, making a retried refresh idempotent and allowing a later level-up to produce its own notification.
 - The Emulator test checks the exact notification fields and confirms a repeated refresh does not remove or duplicate the awarded notice.
 
-**Remaining:** run the updated Emulator and root CI workflows; prove owner-only notification read and read-state update rules; validate with two staging accounts. No production Rules or Functions were changed.
+**Verification:** Root Checks passed 461/461; isolated notification Rules passed 7/7 and server/Auth/Firestore Emulator tests passed 59/59. Achievement payload and repeat-refresh idempotency are covered.
+
+**Remaining:** integrate the access contract into production Rules and validate with two staging accounts and App Check. No production Rules or Functions were changed.
 
 
 ### SEC-NOTIFY-05 — trusted private-message notifications — 2026-11-21
 
-**Status:** implemented in candidate message transaction with Emulator regression coverage; CI/Rules/staging acceptance pending.
+**Status:** implemented in candidate message transaction; retry idempotency, isolated Rules, Root Checks and Emulator suites have passed. Production Rules integration and staging acceptance remain pending.
 
 - `sendPrivateMessageV2` authenticates the sender and delegates to `sendPrivateMessageTransaction`; the transaction validates the chat participant pair and both block directions before writing.
 - A new message creates a fixed-schema notification under the other participant's own `users/{recipientUid}/notifications` collection in the same transaction as the message, sequence, previews and unread counter.
@@ -271,4 +277,6 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 
 **Verification:** an isolated notification Rules fixture now tests owner-only reads, guest/cross-user denial, server-only create/delete and one-way owner read-state updates with immutable event metadata. The fixture is intentionally not production Rules.
 
-**Remaining:** verify candidate CI and integrate the tested notification contract into the complete production Rules candidate; validate with two staging accounts. The message/chat v2 backend remains candidate-only and must not be deployed or connected to the legacy chat UI as part of this change.
+**Verification:** Root Checks passed 461/461; isolated notification Rules passed 7/7 and server/Auth/Firestore Emulator tests passed 59/59. The fixture is not production Rules.
+
+**Remaining:** obtain/review the active production Rules, integrate the tested notification contract into the complete production Rules configuration, and validate with two staging accounts and App Check. The message/chat v2 backend remains candidate-only and must not be deployed or connected to the legacy chat UI as part of this change.

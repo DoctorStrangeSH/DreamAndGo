@@ -192,7 +192,7 @@ export function validateMovieInput(raw, { partial = false } = {}) {
             case 'tagline': out.tagline = string(input.tagline, key, 300); break;
             case 'budget': out.budget = integer(input.budget, key, 0, 100000000000); break;
             case 'productionCountries': {
-                if (!Array.isArray(input.productionCountries) || input.productionCountries.length > 30) throw new TypeError('Некорректный список стран');
+                if (!Array.isArray(input.productionCountries) || input.productionCountries.length > 10) throw new TypeError('Некорректный список стран');
                 out.productionCountries = input.productionCountries.map(country => {
                     record(country, new Set(['iso_3166_1', 'name']), 'страна производства');
                     return {

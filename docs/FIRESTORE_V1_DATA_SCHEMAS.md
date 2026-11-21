@@ -168,3 +168,11 @@ The current `tests/firebase-emulator/owner-read.rules` is a deliberately limited
 - Movie metadata fields remain bounded by the client allowlist: TMDB identifier, title/text lengths, HTTPS poster/backdrop URLs, rating ranges, integer counters, release date, known genre IDs, runtime, budget, country map keys, status, user rating and review.
 - Regression coverage explicitly rejects impossible calendar dates and duplicate genre IDs. The authoritative Firestore Rules candidate must enforce corresponding types/ranges and nested country-map key constraints.
 - Statistics refresh is derived work after the primary movie write. Its failure must not cause the client to retry a movie create/update that Firestore already committed.
+
+
+### Restaurant collection validation follow-up — 2026-11-21
+
+- Restaurant input validation covers name, cuisine/status allowlists, bounded address, nullable visit date, bill range, user rating range, bounded favorite dishes, review length and HTTPS photo URLs/list bounds.
+- Regression coverage rejects unknown cuisine/status values, impossible visit dates, out-of-range ratings, excessive favorite-dish and photo counts, while preserving explicit `visitDate: null` for partial updates.
+- The authoritative Firestore Rules candidate must enforce equivalent types, ranges, list limits and nested field restrictions; client validators remain defense in depth.
+- Derived statistics refresh is secondary work after the primary restaurant write. Its failure must not cause a retry of a restaurant create/update already committed by Firestore.

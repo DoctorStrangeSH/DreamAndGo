@@ -83,6 +83,9 @@ test('restaurant V1 rules enforce owner CRUD, schema allowlist and timestamps', 
         await assertFails(setDoc(doc(alice, 'users/alice/restaurants/invalid-rating'), {
             ...validRestaurant(), userRating: 11
         }));
+        await assertFails(setDoc(doc(alice, 'users/alice/restaurants/duplicate-dishes'), {
+            ...validRestaurant(), favoriteDishes: ['Борщ', 'Борщ']
+        }));
         await assertFails(setDoc(doc(alice, 'users/alice/restaurants/too-many-dishes'), {
             ...validRestaurant(), favoriteDishes: Array(21).fill('Блюдо')
         }));

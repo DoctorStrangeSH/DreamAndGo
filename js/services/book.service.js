@@ -1,7 +1,7 @@
 import { auth, db } from '../config/firebase.js';
 import { isAuthenticatedOwner, isValidFirestoreDocumentId } from '../core/owner-access-policy.js';
 import { refreshUserStats } from './profile-stats.service.js';
-import { validateBookInput } from '../core/collection-input-policy.js';
+import { validateBookUpdateInput } from '../core/collection-input-policy.js';
 import { 
     collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc,
     query, orderBy, serverTimestamp, where
@@ -80,11 +80,12 @@ export class BookService {
 
     async updateBook(userId, bookId, updates) {
         if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid) || !isValidFirestoreDocumentId(bookId)) return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
-        let safeUpdates;
-        try { safeUpdates = validateBookInput(updates, { partial: true }); }
-        catch (error) { return { success: false, error: error.message }; }
         try {
             const bookRef = doc(this.db, 'users', userId, 'books', bookId);
+            const existingSnapshot = await getDoc(bookRef);
+            if (!existingSnapshot.exists()) return { success: false, error: 'Книга не найдена.' };
+
+            const safeUpdates = validateBookUpdateInput(existingSnapshot.data(), updates);
             await updateDoc(bookRef, {
                 ...safeUpdates,
                 updatedAt: serverTimestamp()

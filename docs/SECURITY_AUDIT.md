@@ -671,3 +671,10 @@ The test documents three behaviors:
 - Strict V1 update matchers reject the incomplete legacy documents. This is safer than weakening field validation, but means the records require a planned migration or explicit compatibility adapter before release.
 
 No legacy records were accessed or modified in production. The fixtures are synthetic. The test is not yet executed in Emulator/CI. Required follow-up: define a dry-run inventory, versioned normalization rules, backup/rollback, and list-service behavior for missing timestamps. Do not deploy strict V1 Rules until this gap is resolved.
+
+
+### SEC-LEGACY-COLLECTIONS-02 — privacy-safe offline inventory tool — 2026-11-21
+
+Added an offline metadata auditor for the five personal collections. It reports aggregate counts for missing timestamps, missing required fields, unknown fields, invalid status values and malformed records. The report deliberately excludes document IDs and field values. The CLI reads a local minimized JSON snapshot and has no Firebase connection or write capability.
+
+This does not establish the actual production legacy schema: the earlier Emulator fixtures are synthetic. Real legacy mappings must not be guessed from those fixtures. The next evidence required is a minimized owner-controlled export containing only collection name, optional local identifier, field names, coarse types and timestamp presence/shape. Do not upload personal titles, notes, reviews, photos, URLs, emails or other content. Once real field/status names are known, prepare a separate versioned dry-run migration planner with explicit mapping, idempotency, backup and rollback. No migration or production access has occurred.

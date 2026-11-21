@@ -305,3 +305,8 @@ This check is limited to the supplied in-memory files. It does not establish Fir
 
 
 The standalone integrity auditor also validates the complete approved Migration Manifest before comparing input/output JSON. Incomplete or unapproved manifests are rejected before any integrity result is produced.
+
+
+### Firestore Rules date parity — 2026-11-21
+
+The isolated Emulator candidate now validates actual Gregorian dates (including leap years) for `dreams.deadline`, `movies.releaseDate` and `restaurants.visitDate`, rather than checking only the string shape. Empty optional date strings remain accepted where the client contract permits them; restaurant visit date also permits `null`. Emulator tests reject impossible dates such as February 30 and accept a valid leap day. This remains a test-only candidate; the production rules baseline has not changed.

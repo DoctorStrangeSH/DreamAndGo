@@ -763,3 +763,8 @@ Emulator regression cases now reject impossible dates and accept a valid leap da
 **Status:** corrected in the isolated Emulator candidate; execution evidence pending.
 
 The client validators and V1 normalizer require unique book genres, book quotes, movie genre IDs and restaurant favorite dishes. The Rules candidate previously checked allowed values and list bounds but did not independently enforce uniqueness. Added set-cardinality checks to the relevant list validators and negative Emulator cases for duplicate values. This remains test-only candidate Rules and has not been deployed.
+
+
+### SEC-RULES-COMPLEXITY-01 — Firestore Rules expression budget — 2026-11-21
+
+The movie V1 Rules candidate exceeded Firestore's per-evaluation expression budget because the country array validator expanded checks across up to 30 map entries. Reduced the V1 `productionCountries` cap to 10, kept strict validation of each entry, and aligned the browser input policy, legacy normalizer and Emulator tests. The movie genre allowlist was also consolidated with `hasOnly` plus set-cardinality uniqueness. This is a deliberate V1 input-bound change to keep writes enforceable by Rules; future expansion requires a separately reviewed server-side normalization path.

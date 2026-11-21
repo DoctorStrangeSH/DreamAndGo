@@ -42,7 +42,7 @@ node scripts/backfill-username-reservations.mjs --project dream-and-go
 Только в подтверждённом окне обслуживания, когда старый путь регистрации точно отключён:
 
 ```bash
-node scripts/backfill-username-reservations.mjs --project dream-and-go --apply --confirm-registration-frozen
+node scripts/backfill-username-reservations.mjs --project dream-and-go --apply --confirm-registration-frozen --confirm-backup-verified
 ```
 
 `--apply` создаёт **только отсутствующие** `usernameReservations` и после этого повторно сверяет пользователей и реестр; не изменяет старые профили и никогда не устанавливает флаг `ready`. Если обнаруживается конфликт, скрипт прекращает работу, оставляя уже созданные корректные резервы на месте для безопасного повторного запуска. Удалять их автоматически нельзя. Для реальной эксплуатации отдельно требуется проверка Firestore Emulator, freeze регистрации, postflight-аудит и явное административное решение по флагу готовности.
@@ -121,3 +121,10 @@ The CLI now delegates to `server/username-backfill.js`, a separately testable op
 - the registry readiness flag is never activated by the migration helper.
 
 These tests use only the isolated Firestore Emulator. They do not constitute a production backup, maintenance freeze, or approval to run the CLI against the live project.
+
+
+## Additional apply gate — verified backup acknowledgement (2026-11-21)
+
+The migration helper now refuses apply mode unless BOTH `registrationFrozen: true` and `backupVerified: true` are supplied, in addition to the server timestamp provider. The CLI requires both explicit flags: `--confirm-registration-frozen` and `--confirm-backup-verified`. Emulator tests cover missing freeze confirmation, missing backup confirmation, successful create-only apply, idempotent repeat, collisions and an already-active registry.
+
+**Important:** `--confirm-backup-verified` is an operator acknowledgement, not an automatic proof that a backup exists or is restorable. The operator must independently verify the backup and restore procedure before supplying it. The tool remains read-only by default, never activates the registry, and is not approved for production execution by this code change.

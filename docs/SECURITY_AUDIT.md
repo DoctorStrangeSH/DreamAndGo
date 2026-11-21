@@ -269,4 +269,6 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 - Stable `message_{serverMessageId}` IDs and the existing deterministic message retry check ensure one notification per accepted message, not one per callable attempt.
 - Emulator test asserts the exact payload and verifies that repeated sends do not create duplicate notices or increment unread twice.
 
-**Remaining:** verify candidate CI and Emulator runs; implement and test owner-only notification read plus read-state-only updates in a dedicated Rules candidate; validate with two staging accounts. The message/chat v2 backend remains candidate-only and must not be deployed or connected to the legacy chat UI as part of this change.
+**Verification:** an isolated notification Rules fixture now tests owner-only reads, guest/cross-user denial, server-only create/delete and one-way owner read-state updates with immutable event metadata. The fixture is intentionally not production Rules.
+
+**Remaining:** verify candidate CI and integrate the tested notification contract into the complete production Rules candidate; validate with two staging accounts. The message/chat v2 backend remains candidate-only and must not be deployed or connected to the legacy chat UI as part of this change.

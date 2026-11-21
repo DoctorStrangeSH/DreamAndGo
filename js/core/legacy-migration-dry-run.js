@@ -39,10 +39,12 @@ export function planLegacyMigrationDryRun({ manifest, inventory }) {
     }
 
     const summary = inventory.summary;
+    // Unknown fields and legacy statuses may be resolved by explicit manifest
+    // mappings. Other structural gaps cannot be safely inferred from aggregate
+    // metadata and remain hard blockers.
     const inventoryProblems = [
         'invalidRecords', 'missingCreatedAt', 'missingUpdatedAt',
-        'missingRequiredFields', 'unknownFieldDocuments',
-        'invalidStatus', 'invalidTimestampDocuments', 'fieldTypeMismatches'
+        'missingRequiredFields', 'invalidTimestampDocuments', 'fieldTypeMismatches'
     ].filter(key => Number(summary[key] ?? 0) > 0);
     blockers.push(...inventoryProblems.map(key => `inventory:${key}`));
 
@@ -64,7 +66,7 @@ export function planLegacyMigrationDryRun({ manifest, inventory }) {
             }
             const target = mapping.action === 'keep' ? source :
                 mapping.action === 'rename' ? mapping.target :
-                mapping.action === 'default' ? source : null;
+                mapping.action === 'default' ? (mapping.target ?? source) : null;
             if (target && !TARGET_FIELDS[config.name].has(target)) {
                 blockers.push(`unknown_target_field:${config.name}:${target}`);
             }
@@ -81,7 +83,7 @@ export function planLegacyMigrationDryRun({ manifest, inventory }) {
         }
         for (const mapping of config.fields) {
             if (mapping.action === 'default') {
-                fieldOperations.push({ source: null, action: 'default', target: mapping.source, documents: Number(observed.documents ?? 0) });
+                fieldOperations.push({ source: null, action: 'default', target: mapping.target ?? mapping.source, documents: Number(observed.documents ?? 0) });
             }
         }
 

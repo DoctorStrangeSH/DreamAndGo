@@ -644,3 +644,5 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [ ] Run against a minimized owner-exported metadata snapshot and review results.
 - [ ] Approve explicit legacy field/status mappings before writing any migration planner.
 - **No production data was read or changed; migration remains unimplemented.**
+
+- [x] Legacy inventory accepts metadata-only input and rejects document IDs/raw document data; sanitized example committed.

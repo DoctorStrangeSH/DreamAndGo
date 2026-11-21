@@ -570,3 +570,12 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [ ] Exact-HEAD Emulator run is pending.
 - [ ] Rules coverage for books, movies and restaurants remains open; dreams need expanded CRUD coverage.
 - **Release remains HOLD; no production Rules change or deploy.**
+
+
+### Firestore Rules — books candidate slice — 2026-11-21
+
+- [x] Authored isolated books Rules candidate and Emulator tests.
+- [x] Included books test in the Emulator package script.
+- [ ] Exact-HEAD Emulator suite execution pending.
+- [ ] Movies, restaurants and expanded dreams Rules coverage remain open.
+- **Release remains HOLD; no production Rules change or deploy.**

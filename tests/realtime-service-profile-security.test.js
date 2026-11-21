@@ -13,7 +13,7 @@ test('realtime social and chat subscriptions never read raw private user documen
         ['subscribeToChats', 'subscribeToFriends'],
         ['subscribeToFriends', 'subscribeToFriendRequests'],
         ['subscribeToFriendRequests', 'subscribeToSentRequests'],
-        ['subscribeToSentRequests', 'getUserProfiles']
+        ['subscribeToSentRequests', 'async getUserProfiles']
     ];
     for (const [method, nextMethod] of pairs) {
         const start = source.indexOf('    ' + method + '(');

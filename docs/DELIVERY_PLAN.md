@@ -307,3 +307,11 @@
 - [x] Preserved existing user documents; no migration or production data mutation performed.
 - [x] Updated `FIRESTORE_ACCESS_MATRIX.md` and `FIRESTORE_V1_DATA_SCHEMAS.md` to distinguish historical fields from new V1.0 writes.
 - [ ] Run candidate CI and review complete legacy schema before designing production Rules.
+
+
+### Dream Emulator schema alignment — 2026-11-21
+
+- [x] Reconciled `owner-read.rules` dream contract with `dream-input-policy.js`: no `isPublic` field is part of new writes.
+- [x] Updated valid create/update fixtures and negative tests for both boolean values of legacy `isPublic`.
+- [ ] Confirm Firebase Emulator workflow passes after the change.
+- [ ] Add equivalent collection-specific Emulator contracts for travels, books, movies and restaurants.

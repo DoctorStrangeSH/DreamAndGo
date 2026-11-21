@@ -66,7 +66,6 @@ export class DreamsService {
                 ...safeData,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
-                isPublic: false
             };
 
             const docRef = await addDoc(dreamsRef, newDream);

@@ -292,3 +292,17 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 - Static source audit confirms all 17 exported V2 callable declarations currently require App Check.
 
 **Remaining:** confirm the regression test and full CI on the exact candidate HEAD; verify App Check enforcement and token acceptance on the deployed Firebase project; deploy Functions only after the complete production Rules, staging, migration and rollback gates are approved. No Functions were deployed by this change.
+
+
+
+### SEC-COLLECTIONS-01 — personal collection CRUD access contract — 2026-11-21
+
+**Status:** source inventory and access matrix expanded; client-input regression tests added. Production Rules are still unavailable and must not be inferred from the isolated emulator fixtures.
+
+- Audited the current direct browser CRUD paths for dreams, travels, books, movies and restaurants, plus the existing legacy chat writes.
+- Added the concrete field allowlists, nested structures, enum/range/size constraints and server-generated metadata to section 13 of docs/FIRESTORE_ACCESS_MATRIX.md.
+- Identified inconsistent legacy visibility metadata: dreams are created with isPublic=false; travels, books and restaurants with isPublic=true; movies have no isPublic field. This metadata must not grant access to private user subcollections. Firestore Rules cannot redact individual fields from a document.
+- Identified notes contract differences: travel notes are validator-accepted and editable; book/movie/restaurant notes are initialized as empty strings but are not in their update validators; dreams do not define notes.
+- Added regression tests rejecting client-supplied isPublic, createdAt and updatedAt fields across all five collection input validators.
+
+**Verification required:** root CI for the new tests; then add the full five-collection owner/guest/cross-user Rules cases only after the real production Rules and indexes are exported and reviewed. No production Rules or Functions were changed.

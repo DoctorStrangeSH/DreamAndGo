@@ -92,3 +92,5 @@ Each test file that creates a Firebase test environment uses its own project ID.
 ## Client-to-Rules contract
 
 `client-rules-contract.test.mjs` imports the real client validators for all five private collections and attempts to create documents under the isolated V1 Rules fixture. It includes the server timestamp fields and service-generated `notes` metadata used by create services. Keep this test aligned with actual service create payloads whenever a client schema or service changes.
+
+The contract suite also verifies representative partial updates, rejects attempts to rewrite the original `createdAt`, and confirms that the authenticated owner can delete each document. These checks are scoped to the staged V1 fixture; they do not authorize deploying it to production.

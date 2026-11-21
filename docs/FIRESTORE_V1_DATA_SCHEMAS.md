@@ -221,3 +221,6 @@ The report contains aggregate counts plus field-name frequency/coarse-type count
 
 
 The metadata-only contract is demonstrated in `docs/examples/legacy-collection-metadata.example.json`. Each record represents one document's field-name/type inventory plus an optional categorical status label; no actual field contents or document IDs should be exported.
+
+
+The metadata-only legacy auditor also compares each observed coarse field type with the V1 contract and reports `fieldTypeMismatches`. A mismatch is a migration-review blocker; the auditor does not coerce or rewrite values. The CLI exits with code 1 when any mismatch is detected.

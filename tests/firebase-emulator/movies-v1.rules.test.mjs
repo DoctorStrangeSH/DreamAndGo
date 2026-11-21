@@ -74,6 +74,9 @@ test('movie V1 rules enforce owner CRUD, TMDB schema and timestamps', async () =
         await assertFails(setDoc(doc(alice, 'users/alice/movies/invalid-genre'), {
             ...validMovie(), genreIds: [999999]
         }));
+        await assertFails(setDoc(doc(alice, 'users/alice/movies/duplicate-genres'), {
+            ...validMovie(), genreIds: [18, 18]
+        }));
         await assertFails(setDoc(doc(alice, 'users/alice/movies/too-many-genres'), {
             ...validMovie(), genreIds: Array(21).fill(18)
         }));

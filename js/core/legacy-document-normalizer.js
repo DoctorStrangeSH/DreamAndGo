@@ -157,7 +157,7 @@ export function normalizeLegacyDocument({ collection, document, manifest }) {
             errors.push(`unmapped_source_field:${source}`);
             continue;
         }
-        if (mapping.action === 'drop') continue;
+        if (mapping.action === 'drop' || mapping.action === 'default') continue;
         if (mapping.action === 'manual_review') {
             errors.push(`manual_review_required:${source}`);
             continue;

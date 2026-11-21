@@ -205,3 +205,34 @@ The candidate `sendPrivateMessageV2` server transaction writes a fixed-schema `m
 - [x] Confirmed `tests/firebase-emulator/firebase.json` points the emulator to `tests/firebase-emulator/chat.rules`; this is a test harness only. `notifications.rules`, `owner-read.rules` and `chat.rules` are isolated fixtures, each with a deny-by-default fallback and intentionally incomplete collection coverage.
 - [ ] Obtain the actual active Firestore Rules and Firebase project configuration from the authorized Firebase Console / CLI read-only export. GitHub repository access cannot establish what is currently deployed.
 - [ ] Compare the exported active Rules and indexes with this access matrix before drafting any production Rules candidate.
+
+## 13. Подробная схема личных коллекций — проверено по сервисам и валидаторам
+
+Все пять коллекций находятся под users/{uid}/... . Текущие сервисы выполняют прямые browser SDK операции. Проверки isAuthenticatedOwner() и validate*Input() — полезная клиентская защита от ошибок, но обходятся прямым запросом к Firestore. Авторизация, allowlist полей, типы и ограничения должны дублироваться в Rules.
+
+| Path | Поля данных, которые принимает клиентский валидатор | Дополнительные поля на create | Ограничения, которые следует отразить в Rules |
+|---|---|---|---|
+| users/{uid}/dreams/{id} | title, category, status, description, progress, deadline, steps | createdAt, updatedAt, isPublic: false | title 1–120; description ≤4000; category/status enum; progress 0–100; deadline ISO date/null; steps ≤20, каждый {text, done}, text 1–200 |
+| users/{uid}/travels/{id} | title, type, status, location, description, budget, rating, notes, photos | createdAt, updatedAt, isPublic: true | title 1–120; location ≤200; description/notes ≤4000; budget {planned, spent, currency} с целыми неотрицательными суммами и валютой RUB/USD/EUR; rating 0–10; photos ≤10 HTTPS URL |
+| users/{uid}/books/{id} | title, author, status, genres, year, totalPages, currentPage, userRating, review, quotes | createdAt, updatedAt, notes: '', isPublic: true | title ≤200; author ≤120; status enum; genres ≤10; year 1000–2099/null; pages 0–100000 и currentPage ≤ totalPages; rating 0–10; review ≤4000; quotes ≤30, каждый ≤500 |
+| users/{uid}/movies/{id} | movieId, title, originalTitle, overview, poster, backdrop, voteAverage, voteCount, rating, releaseDate, genreIds, runtime, tagline, budget, productionCountries, status, userRating, review | createdAt, updatedAt, notes: '' | movieId positive; title ≤200; overview ≤5000; poster/backdrop HTTPS; numeric ratings 0–10; genreIds ≤20 из allowlist; countries ≤30 с iso_3166_1 и name; status enum; userRating 0–5; review ≤4000 |
+| users/{uid}/restaurants/{id} | name, cuisine, status, address, visitDate, avgBill, userRating, favoriteDishes, review, photos | createdAt, updatedAt, notes: '', isPublic: true | name ≤160; cuisine/status enum; address ≤300; visitDate ISO date/null; avgBill 0–10000000; rating 0–10; favoriteDishes ≤20, каждый ≤80; review ≤4000; photos ≤10 HTTPS URL |
+
+### Обнаруженные несовпадения и требования к Rules
+
+1. **isPublic неоднороден.** Новые мечты создаются с isPublic: false; путешествия, книги и рестораны — с isPublic: true; фильмы не получают это поле. При этом isPublic не входит в allowlist клиентских валидаторов для update. Нельзя трактовать его как разрешение на публичное чтение родительских документов: Firestore Rules не умеют скрывать поля, а эти документы лежат в приватных подколлекциях пользователя.
+2. **notes тоже неоднороден.** Оно является валидируемым пользовательским полем путешествия, но для книги/фильма/ресторана создаётся как пустая строка вне валидатора и не входит в update allowlist. Для мечты отдельного notes нет.
+3. createdAt должен устанавливаться только при создании и оставаться неизменным. updatedAt должен обновляться только серверным timestamp при разрешённом update. Не принимать клиентские значения времени.
+4. Вложенные структуры (budget, steps, productionCountries) требуют проверки точного набора ключей и типов; одного hasOnly() на верхнем уровне недостаточно.
+5. Списки, строки, диапазоны, enum и HTTPS URL из таблицы нужно проверять в Rules независимо от браузерного валидатора.
+6. Не разрешать isPublic как переключатель доступа. Если публичное отображение личной записи действительно входит в V1.0, оно должно использовать отдельную серверную allowlist-проекцию после явного согласия владельца. До появления такого контракта все пять подколлекций остаются Owner-only.
+7. refreshUserStats() вызывается после CRUD. Это отдельная доверенная операция: прямой клиентский CRUD не должен позволять менять stats, XP или достижения.
+
+### Проверки, которые нужно добавить в полный Rules Emulator suite
+
+- [ ] Owner A может CRUD только документы в собственных пяти подколлекциях; B и гость не могут читать/писать их даже по известному ID.
+- [ ] Неизвестное поле, поддельный createdAt, изменение createdAt, произвольный updatedAt, неверный enum, неверный тип и превышение лимитов отклоняются.
+- [ ] isPublic нельзя добавить/изменить через прямой браузерный запрос; старое значение само по себе не открывает чтение.
+- [ ] notes принимается только в тех коллекциях и операциях, где оно действительно предусмотрено контрактом.
+- [ ] Вложенные объекты не принимают дополнительные ключи; все списки ограничены по длине и содержимому.
+- [ ] Запросы, использующие orderBy(createdAt) и фильтры по status/category/cuisine, проходят с Owner-only Rules без попытки использовать Rules как фильтр результатов.

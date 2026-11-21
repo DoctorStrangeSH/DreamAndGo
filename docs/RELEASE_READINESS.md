@@ -670,3 +670,5 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [ ] Build and test a separate dry-run planner after mappings are approved.
 - [ ] Complete independent staging rehearsal and backup/rollback verification.
 - **No migration runner, Firebase access, or production data changes.**
+
+- [x] Migration manifest requires an identified source schema (unknown placeholders rejected) and validates mapped statuses against each collection's V1 enum.

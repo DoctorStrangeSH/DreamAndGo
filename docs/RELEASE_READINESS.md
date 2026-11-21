@@ -360,3 +360,13 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [ ] Export and review active production Firestore Rules and indexes; do not deploy the isolated test fixtures or a guessed replacement.
 - [ ] Add the full owner/guest/cross-user Emulator Rules suite for all five personal collections against the reviewed complete Rules configuration.
 - [ ] Verify legacy isPublic data semantics and confirm that no personal subcollection is made public by this metadata. Until a reviewed public projection exists, all five collections remain owner-only.
+
+
+
+### Chat private profile read cutover — 2026-11-21
+
+- [x] Removed raw browser reads of another user's users/{uid} document from ChatService.
+- [x] Chat list now batches unique partner UIDs through the existing Auth + App Check protected getPublicProfilesV2 callable and uses only the server allowlisted projection.
+- [x] Added a contract regression test to prevent reintroducing raw private profile reads.
+- [ ] Verify private-profile fallback and public-profile chat display with two staging accounts and App Check.
+- [ ] Keep legacy chat message/index migration and production Rules review as independent HOLD gates.

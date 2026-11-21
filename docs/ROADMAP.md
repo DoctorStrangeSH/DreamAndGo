@@ -431,3 +431,5 @@ Dream&Go — социальное пространство мечтаний, п�
 
 - [x] Added dedicated GitHub Actions workflow `.github/workflows/firestore-rules-emulator.yml` to execute the isolated Firestore Rules Emulator suite on pushes to the security branch and relevant pull-request changes.
 - [ ] Confirm the first CI run completes successfully; workflow creation is not a test pass.
+
+- [x] Isolated each Firestore Emulator test suite under its own Firebase project ID to prevent parallel Node test files from overwriting each other's Rules or data.

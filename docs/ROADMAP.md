@@ -350,3 +350,12 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Added `tests/movie-service-write-result.test.js` to guard both primary-write result paths.
 - [x] Expanded movie input regression coverage for impossible calendar dates and duplicate genre IDs.
 - [ ] Run root tests and Firebase Emulator workflows on the exact resulting HEAD; no CI pass is claimed yet.
+
+
+### Restaurant write-result consistency — 2026-11-21
+
+- [x] Fixed `RestaurantService.addRestaurant`: after Firestore confirms `addDoc`, a failed derived-statistics refresh is logged but does not report the committed create as failed.
+- [x] Applied the same behavior to `updateRestaurant` after a committed `updateDoc`.
+- [x] Added `tests/restaurant-service-write-result.test.js` to guard both committed-write result paths.
+- [x] Expanded restaurant validator coverage for invalid status, impossible visit dates, rating bounds, favorite-dish list limits, photo list limits and nullable visit dates.
+- [ ] Run root tests and Firebase Emulator workflows on the exact resulting HEAD; no CI pass is claimed yet.

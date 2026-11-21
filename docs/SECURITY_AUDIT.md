@@ -241,7 +241,9 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 - Acceptance additionally creates a separate fixed-schema notice for the original requester.
 - This avoids leaving an actionable-looking notification after the request no longer exists. The server remains the only notification creator.
 
-**Remaining:** verify tests on exact HEAD and validate Firestore Rules/staging behavior. The notification UI still relies on owner-only Rules, which have not been confirmed against production.
+**Verification:** root Checks passed with 461/461 tests and syntax validation of 253 JavaScript files; Firebase Emulator passed 6/6 existing Firestore Rules tests and 59/59 server/Auth/Firestore emulator tests on implementation HEAD `d311e26065e01d5044e73f049c4629988dd5cf9b`. These existing Rules tests are not notification-specific.
+
+**Remaining:** add explicit notification read/update authorization cases and validate the notification flow in staging with two accounts. The notification UI still relies on owner-only Rules, which have not been confirmed against production.
 
 
 ### SEC-NOTIFY-04 — trusted achievement notifications — 2026-11-21

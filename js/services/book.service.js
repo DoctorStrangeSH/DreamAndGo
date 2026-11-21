@@ -69,7 +69,7 @@ export class BookService {
             };
 
             const docRef = await addDoc(booksRef, newBook);
-            await this.updateUserStats(userId);
+            await this.updateUserStatsBestEffort(userId);
 
             return { success: true, id: docRef.id };
         } catch (error) {
@@ -94,7 +94,7 @@ export class BookService {
                     updatedAt: serverTimestamp()
                 });
             });
-            await this.updateUserStats(userId);
+            await this.updateUserStatsBestEffort(userId);
             return { success: true };
         } catch (error) {
             console.error('Ошибка обновления книги:', error);
@@ -107,7 +107,7 @@ export class BookService {
         try {
             const bookRef = doc(this.db, 'users', userId, 'books', bookId);
             await deleteDoc(bookRef);
-            await this.updateUserStats(userId);
+            await this.updateUserStatsBestEffort(userId);
             return { success: true };
         } catch (error) {
             console.error('Ошибка удаления книги:', error);
@@ -127,6 +127,14 @@ export class BookService {
         } catch (error) {
             console.error('Ошибка загрузки книги:', error);
             return null;
+        }
+    }
+
+    async updateUserStatsBestEffort(userId) {
+        try {
+            await this.updateUserStats(userId);
+        } catch (statsError) {
+            console.warn('Основная операция сохранена, но статистика не обновилась:', statsError);
         }
     }
 

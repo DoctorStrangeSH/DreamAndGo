@@ -141,6 +141,15 @@ The current `tests/firebase-emulator/owner-read.rules` is a deliberately limited
 
 - It checks owner-only reads for all five private collections and denies guest/cross-account reads.
 - It permits validated create/update/delete only for `dreams`; the other four collections are deliberately write-denied in this fixture.
-- The fixture contains an assumed dream schema with a legacy `isPublic: false` field. This does not match the current new-write service contract (which omits `isPublic`), so it must not be reused as the production dream Rules contract without reconciliation.
+- The dream fixture has now been reconciled with the current new-write service contract: `isPublic` is not required and both `isPublic: true` and `isPublic: false` are rejected as unknown fields.
 - Emulator coverage for valid CRUD and field-level negative cases in travels, books, movies and restaurants remains outstanding.
 - Do not call this fixture full V1.0 Rules coverage and do not deploy it.
+
+
+## 11. Dream Emulator fixture alignment — 2026-11-21
+
+- [x] Removed the legacy `isPublic` requirement from the candidate dream Rules fixture.
+- [x] Valid dream create/update fixtures now match `validateDreamInput` output plus server timestamps.
+- [x] Added negative Emulator cases rejecting both `isPublic: true` and `isPublic: false` on create and update.
+- [ ] Run Firebase Emulator CI and retain passing evidence.
+- [ ] Implement equivalent validated Emulator CRUD coverage for travels, books, movies and restaurants.

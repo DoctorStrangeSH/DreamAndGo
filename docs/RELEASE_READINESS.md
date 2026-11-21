@@ -420,3 +420,9 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [x] Added own-key validation for dream status labels in profile cards; unknown values fall back to the fixed default.
 - [x] Added a regression test for prototype-key values.
 - [x] Root Checks passed on final candidate HEAD `bfa96394231e0c52c720cc3d7ba2f01cb1235600`: 470/470 tests, 0 failures; syntax validation passed for all 258 JavaScript files ([run 44897710078](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44897710078)).
+
+### Achievement milestone lookup hardening — 2026-11-21
+
+- [x] Own-key validation added for achievement milestone lookups.
+- [x] Regression tests cover inherited keys and malformed input.
+- [ ] Verify Root Checks on the exact candidate HEAD.

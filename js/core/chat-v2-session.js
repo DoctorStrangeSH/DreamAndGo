@@ -204,6 +204,13 @@ export class ChatV2Session {
         return tracker;
     }
 
+    stopWatchingIncoming(tracker) {
+        if (!tracker || !this.trackers.has(tracker)) return false;
+        tracker.stop();
+        this.trackers.delete(tracker);
+        return true;
+    }
+
     dispose() {
         if (this.disposed) return;
         this.disposed = true;

@@ -561,3 +561,12 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [ ] Run exact-HEAD root test suite and syntax checks.
 - [ ] Complete Firestore Emulator positive/negative CRUD coverage and owner/cross-account checks.
 - **Release remains HOLD.**
+
+
+### Firestore Rules — travel candidate slice — 2026-11-21
+
+- [x] Authored isolated schema-specific travel Rules candidate and Emulator test.
+- [x] Added the test to the Emulator package script.
+- [ ] Exact-HEAD Emulator run is pending.
+- [ ] Rules coverage for books, movies and restaurants remains open; dreams need expanded CRUD coverage.
+- **Release remains HOLD; no production Rules change or deploy.**

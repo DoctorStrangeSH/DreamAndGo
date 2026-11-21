@@ -284,3 +284,13 @@ Owner confirmed the recursive deny-all Rules are published. Therefore, if the we
 5. Personal collection services call `refreshUserStats`; profile stats and achievements remain server-owned and must not become writable through general profile Rules.
 
 No production rules or user data were changed. This inventory is source-derived and still needs full validator/schema review plus Emulator tests.
+
+### Firebase project identity — owner supplied — 2026-11-21
+
+- Firebase Project ID: `dream-and-go`
+- Project number: `185825350373`
+- Web app nickname: `Dream&Go Web`
+- Web App ID: `1:185825350373:web:749c60926a0c6294f7fa0c`
+- Source: owner-provided Firebase Console screenshot.
+- The project identity is recorded for local Emulator configuration and future reviewed deployment instructions only. This does **not** verify the active Firestore database ID, export a timestamped copy of the published Rules, or authorize any production deployment.
+- The screenshot does not establish whether the app is connected to the default Firestore database or a named database. Confirm that separately before any Rules candidate is applied.

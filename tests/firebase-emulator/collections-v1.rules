@@ -5,8 +5,8 @@ service cloud.firestore {
     // Assumed Data Model (READ-ONLY recovery prototype)
     // users/{uid}: private profile incl. email:string, username:string,
     //   stats:map, privacy:map, preferences:map, timestamps (legacy optional).
-    // users/{uid}/{category}/{id}: owner-created collections; existing
-    //   documents may have legacy/dynamic shapes. No client writes permitted.
+    // users/{uid}/{category}/{id}: core V1 collections have validated owner
+    //   CRUD; legacy categories remain owner-read-only.
     // Categories: travels, restaurants, movies, books, dreams, dailyTasks,
     //   notifications, friends, friendRequests, sentRequests, chats, messages.
     // publicProfiles, usernames, chats: deliberately inaccessible to clients.
@@ -419,6 +419,7 @@ service cloud.firestore {
 
 
       match /dreams/{dreamId} {
+        allow get, list: if isOwner(uid);
         allow create: if isOwner(uid) &&
           exists(/databases/$(database)/documents/users/$(uid)) &&
           isValidDream(request.resource.data) &&
@@ -438,6 +439,7 @@ service cloud.firestore {
 
 
       match /travels/{travelId} {
+        allow get, list: if isOwner(uid);
         allow create: if isOwner(uid) &&
           exists(/databases/$(database)/documents/users/$(uid)) &&
           isValidTravel(request.resource.data) &&
@@ -452,6 +454,7 @@ service cloud.firestore {
 
 
       match /books/{bookId} {
+        allow get, list: if isOwner(uid);
         allow create: if isOwner(uid) &&
           exists(/databases/$(database)/documents/users/$(uid)) &&
           isValidBook(request.resource.data) &&
@@ -465,6 +468,7 @@ service cloud.firestore {
       }
 
       match /movies/{movieId} {
+        allow get, list: if isOwner(uid);
         allow create: if isOwner(uid) && exists(/databases/$(database)/documents/users/$(uid)) &&
           isValidMovie(request.resource.data) && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time;
         allow update: if isOwner(uid) && isValidMovie(request.resource.data) &&
@@ -472,6 +476,7 @@ service cloud.firestore {
         allow delete: if isOwner(uid);
       }
       match /restaurants/{restaurantId} {
+        allow get, list: if isOwner(uid);
         allow create: if isOwner(uid) && exists(/databases/$(database)/documents/users/$(uid)) &&
           isValidRestaurant(request.resource.data) && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time;
         allow update: if isOwner(uid) && isValidRestaurant(request.resource.data) &&
@@ -481,7 +486,6 @@ service cloud.firestore {
       match /{category}/{id} {
         allow get, list: if isOwner(uid) &&
           category in [
-            'travels', 'restaurants', 'movies', 'books', 'dreams',
             'dailyTasks', 'notifications', 'friends',
             'friendRequests', 'sentRequests', 'chats', 'messages'
           ] &&

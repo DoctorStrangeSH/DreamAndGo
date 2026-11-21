@@ -257,3 +257,20 @@ The planner outputs aggregate-only per-collection field actions, status mappings
 The planner may report an unknown legacy field as resolved only when its field mapping explicitly classifies it (including a separately approved drop). It may report an old status as resolved only when an explicit valid status mapping is present. Missing timestamps, missing required fields, malformed inventory records and field-type mismatches remain blockers.
 
 The output is always `executable: false` and `migrationApplied: false`. This is not a per-document simulation and cannot be used to write Firestore.
+
+
+## 16. Synthetic document normalizer — 2026-11-21
+
+The pure in-memory normalizer is implemented in `js/core/legacy-document-normalizer.js`. It accepts one document object, a collection name and a fully approved Migration Manifest. It applies only explicit field decisions and then checks the resulting document against this document's V1 collection contract.
+
+Important controls:
+
+- The manifest must pass validation, including explicit source schema, all collection coverage, target allowlists, backup reference and verified rollback.
+- `manual_review` is never executable. Replace it with a concrete reviewed action before a manifest can pass.
+- Every source field must have a mapping. Unknown target fields and collisions are rejected.
+- Defaults require an explicit target field and value.
+- Status maps must resolve to the target collection's exact V1 enum.
+- Output is validated for required fields, types, enums, bounds, nested structures, URLs, dates and timestamps.
+- The function is pure and in-memory. It does not read/write Firestore, assign document IDs or generate server timestamps.
+
+Tests use synthetic fixtures for all five collections only. This module is not a batch migration runner and is not connected to production.

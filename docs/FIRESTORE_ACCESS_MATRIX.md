@@ -183,3 +183,8 @@ The server transaction creates fixed-schema friend-request and friend-accepted n
 ### Trusted achievement notification event
 
 The candidate `refreshUserStatsV2` server flow writes a fixed-schema achievement notification to the authenticated owner's own notification collection only when a new achievement level is awarded by the server policy. Achievement state and its notification are written atomically. Stable IDs are keyed by achievement and level. The browser cannot select the recipient or payload. Owner-only read and read-state Rules still require Emulator and staging verification.
+
+
+### Trusted private-message notification event
+
+The candidate `sendPrivateMessageV2` server transaction writes a fixed-schema `message` notification to the other validated chat participant's own notification subcollection in the same transaction as the message and unread counter. The preview is bounded to 120 characters. Stable IDs are keyed by the server message document ID, so retries do not duplicate notices. Client notification creation remains prohibited. Dedicated owner-read/read-state Rules tests and staging validation are still required; the separate recovery Rules prototype remains read-only and is not the production Rules contract.

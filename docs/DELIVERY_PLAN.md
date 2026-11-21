@@ -200,6 +200,7 @@
 - [x] Create achievement notifications only from the trusted server-side achievement award transaction.
 - [x] Keep achievement persistence and notification creation atomic.
 - [x] Use stable achievement/level document IDs and a fixed payload; add Emulator regression coverage for payload and repeat refresh.
-- [ ] Verify the updated Emulator and root CI workflows on the exact candidate HEAD.
-- [ ] Verify notification read authorization and two-account staging behavior.
+- [x] Root Checks passed: 461/461 tests and syntax validation for 253 JavaScript files on implementation HEAD `d311e26065e01d5044e73f049c4629988dd5cf9b` (run 44893286852); latest docs-only HEAD also passed Checks (run 44893346213).
+- [x] Firebase Emulator passed 6/6 Firestore Rules tests and 59/59 server/Auth/Firestore emulator tests on the same implementation HEAD (run 44893286823). Existing Rules coverage is not notification-specific.
+- [ ] Add notification-specific Rules read/update tests and verify two-account staging behavior.
 - **Exit condition not met:** achievement notification writes are implemented, but full notification Rules and end-to-end staging acceptance remain release gates.

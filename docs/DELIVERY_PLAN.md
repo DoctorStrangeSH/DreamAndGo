@@ -294,11 +294,11 @@
 - [ ] Pass guest/A/B/C Emulator tests and two-account staging before changing production deny-all Rules.
 
 
-### Firebase Web App config verification — 2026-11-21
+### Firebase Web App ID confirmation — 2026-11-21
 
-- [ ] Confirm exact Web App ID from Firebase Console; screenshot and repository differ by one character. Do not edit configuration until verified.
-- [x] Confirmed both main and candidate currently contain the same repository App ID.
-
+- [x] Owner confirmed exact Web App ID `1:185825350373:web:749e60926a0c6294f7fa0c`; candidate config matches exactly.
+- [x] Closed the previously reported one-character discrepancy; no config edit required.
+- [ ] Verify App Check enforcement on deployed callable endpoints in staging.
 
 ### Private collection visibility flag removal — 2026-11-21
 

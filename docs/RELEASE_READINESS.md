@@ -436,3 +436,13 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [ ] Complete full Rules Emulator and two-account staging authorization tests.
 - [ ] Verify App Check is enforced on deployed endpoints and rehearse backup/rollback.
 - **Release decision: HOLD** until the external Firebase configuration and staging gates are complete.
+
+
+### Owner-provided Firebase configuration — 2026-11-21
+
+- [x] Received current Firestore Rules text from the owner. It is deny-all for every path and operation (`allow read, write: if false`).
+- [ ] Independently confirm that the supplied ruleset is the one currently published to the intended Firebase project/database; retain a timestamped rollback copy.
+- [x] Confirmed Firebase Storage is not configured and will not be upgraded for V1.0. Storage uploads and attachments are out of scope.
+- [ ] Reconcile collection schemas and actual client query patterns before authoring least-privilege Firestore Rules.
+- [ ] Pass complete Emulator Rules suite and two-account staging before any production rules change.
+- **Release decision: HOLD.** The deny-all rules are a safe lock-down, not a functioning application authorization policy.

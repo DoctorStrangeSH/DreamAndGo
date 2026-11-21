@@ -740,3 +740,14 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [x] Auth + Firestore candidate emulator: 14/14 rule tests and 59/59 server emulator tests.
 - [ ] PR integration: branch diverged from main by 53 commits; resolve intentionally before merge.
 - [ ] Production rules audit and deployment approval remain outstanding.
+
+
+### Production Firestore readiness audit — 2026-11-21
+
+- [x] Audited client Firestore access paths and server callable/trigger inventory.
+- [x] Recorded release blockers and explicit production release gates in `docs/PRODUCTION_FIRESTORE_READINESS_AUDIT.md`.
+- [ ] Legacy registration direct `users` query/write removed and V2 flow verified.
+- [ ] Legacy browser chat writes removed; Chat V2 and history migration verified.
+- [ ] Complete A/B/guest Rules + callable QA and real browser App Check staging.
+- [ ] Export current production Rules and confirm project/database; complete manual review and rollback rehearsal.
+- **NOT READY FOR PRODUCTION. Do not deploy candidate Rules or Functions.**

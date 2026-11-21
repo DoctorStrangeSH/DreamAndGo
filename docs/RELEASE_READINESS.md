@@ -694,3 +694,13 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [ ] Confirm full unit tests and syntax checks pass in CI on the exact latest HEAD.
 - [ ] Complete a synthetic rollback/reversibility rehearsal before any staging integration.
 - **No Firebase access or production migration is implemented.**
+
+
+### Synthetic migration rehearsal — 2026-11-21
+
+- [x] Added an all-or-nothing synthetic rehearsal runner.
+- [x] Added a restore preview based on an immutable input snapshot.
+- [x] Added a CLI command and regression tests.
+- [ ] Confirm full test and syntax CI on exact latest HEAD.
+- [ ] Separately rehearse staging backup/restore under an approved operational plan.
+- **Synthetic rollback evidence is not production backup/restore evidence.**

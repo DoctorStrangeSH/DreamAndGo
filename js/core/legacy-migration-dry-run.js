@@ -26,7 +26,16 @@ function safeInventory(inventory) {
 export function planLegacyMigrationDryRun({ manifest, inventory }) {
     const blockers = [];
     const validation = validateLegacyMigrationManifest(manifest);
-    if (!validation.valid || !validation.ready) blockers.push(...validation.errors);
+    if (!validation.valid || !validation.ready) {
+        return {
+            mode: 'offline-aggregate-dry-run',
+            migrationApplied: false,
+            executable: false,
+            status: 'blocked',
+            blockers: validation.errors,
+            collections: {}
+        };
+    }
     if (!safeInventory(inventory)) {
         return {
             mode: 'offline-aggregate-dry-run',

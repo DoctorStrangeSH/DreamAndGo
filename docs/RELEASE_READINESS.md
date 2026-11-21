@@ -348,3 +348,15 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [x] Verified `tests/firebase-emulator/firebase.json` references only the isolated `chat.rules` fixture. The notification and owner-read fixtures are separate test-only rule sets, not complete application Rules.
 - [ ] Export the active Firestore Rules and Firebase configuration from the authorized Firebase project in read-only mode. Repository inspection alone cannot reveal the live deployed Rules or App Check enforcement state.
 - **Safety:** do not create or deploy a guessed root Rules file. First reconcile the live export with `docs/FIRESTORE_ACCESS_MATRIX.md` and the actual deployed indexes/Functions.
+
+
+
+### Personal collection access contract audit — 2026-11-21
+
+- [x] Audited direct browser CRUD operations for dreams, travels, books, movies and restaurants.
+- [x] Added per-collection field allowlists, nested schema constraints and metadata ownership to docs/FIRESTORE_ACCESS_MATRIX.md.
+- [x] Added validator regressions rejecting client-supplied isPublic, createdAt and updatedAt for all five personal collection types.
+- [ ] Confirm Root Checks on the latest candidate HEAD.
+- [ ] Export and review active production Firestore Rules and indexes; do not deploy the isolated test fixtures or a guessed replacement.
+- [ ] Add the full owner/guest/cross-user Emulator Rules suite for all five personal collections against the reviewed complete Rules configuration.
+- [ ] Verify legacy isPublic data semantics and confirm that no personal subcollection is made public by this metadata. Until a reviewed public projection exists, all five collections remain owner-only.

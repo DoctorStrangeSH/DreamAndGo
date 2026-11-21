@@ -1,7 +1,7 @@
 # Firestore V1.0 — фактические схемы пользовательских коллекций
 
 **Статус:** контракт, извлечённый из текущих client validators и write services. Это основа для Emulator/Rules, но не готовый production Rules файл.  
-**Проверено:** 2026-11-20.  
+**Проверено:** 2026-11-21.  
 **Источники кода:** `js/core/dream-input-policy.js`, `js/core/collection-input-policy.js`, `js/services/{dreams,travel,book,movie,restaurant}.service.js`.
 
 ## Общие правила
@@ -102,7 +102,6 @@
 | `photos` | array max 10 HTTPS URL, каждый max 2048 | Нет |
 | `notes` | string; сейчас сервис устанавливает пустую строку | Да, добавляет сервис |
 | `createdAt`, `updatedAt` | Firestore timestamp | Да, добавляет сервис |
-| `isPublic` | boolean; сейчас create устанавливает true | Да, добавляет сервис |
 
 ## 6. Важные расхождения и решения до production Rules
 
@@ -134,3 +133,14 @@ This is a candidate security contract: the settings UI and production Firestore 
 - Added `tests/private-collection-visibility.test.js` to assert that none of the five private collection services writes an `isPublic` field.
 - Existing legacy documents are not modified. Historical `isPublic` values are not authorization and must not be used to expose private subcollection documents.
 - Public sharing remains a separate explicit-consent projection and is outside these private collection documents.
+
+
+## 10. Emulator recovery fixture scope — 2026-11-21
+
+The current `tests/firebase-emulator/owner-read.rules` is a deliberately limited **read-only recovery prototype**, not the production CRUD contract:
+
+- It checks owner-only reads for all five private collections and denies guest/cross-account reads.
+- It permits validated create/update/delete only for `dreams`; the other four collections are deliberately write-denied in this fixture.
+- The fixture contains an assumed dream schema with a legacy `isPublic: false` field. This does not match the current new-write service contract (which omits `isPublic`), so it must not be reused as the production dream Rules contract without reconciliation.
+- Emulator coverage for valid CRUD and field-level negative cases in travels, books, movies and restaurants remains outstanding.
+- Do not call this fixture full V1.0 Rules coverage and do not deploy it.

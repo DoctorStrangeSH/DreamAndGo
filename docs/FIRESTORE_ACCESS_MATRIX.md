@@ -173,3 +173,8 @@
 - `mutateFriendshipV2` is an Auth + App Check protected server callable. Its Admin SDK transaction creates only the fixed-schema friend-request and friend-accepted notification records at paths derived from authenticated actor and validated target UIDs.
 - Client read-state changes remain owner-scoped in the candidate service; actual authorization still depends on the not-yet-verified production Rules.
 - Message and achievement notification event sources are not yet implemented. Do not enable a generic notification creation endpoint.
+
+
+### Friendship notification lifecycle
+
+The server transaction creates fixed-schema friend-request and friend-accepted notifications. It also removes the pending request notification when the request is cancelled, accepted or rejected. These writes are atomic with the corresponding friendship/request state changes. No browser API can choose a notification recipient or payload. Rules must still allow only the owner to read their notification collection and update only the approved read-state field; this candidate behavior is not a substitute for Emulator and staging tests.

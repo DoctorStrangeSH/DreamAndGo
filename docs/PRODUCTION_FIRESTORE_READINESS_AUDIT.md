@@ -165,3 +165,10 @@ Admin SDK обходит Firestore Rules. Поэтому тесты Security Rul
 The earlier wording that implied App Check was not initialized in the browser was too broad. The repository already initializes App Check in `js/config/firebase.js` through `initializeWebAppCheck`, using `ReCaptchaEnterpriseProvider` and token auto-refresh. The public site key is present in the client config, and inspected callable endpoints declare `enforceAppCheck: true`.
 
 What remains unverified is the external/runtime configuration: Firebase Console app registration and enforcement settings, allowed production/staging domains, actual token issuance in a browser, successful callable with a valid token, rejection without a token, and quota behavior. The corrected status is **client bootstrap implemented; staging/Console verification pending**, not “App Check absent”. See `docs/APP_CHECK_ROLLOUT.md`.
+
+
+## 11. Chat V2 read receipt UI wiring — 2026-11-21
+
+The isolated Chat V2 pilot now connects incoming unread message DOM nodes to the existing IntersectionObserver receipt tracker. The view exposes only validated unread incoming message elements; the conversation rebinds observers after each history render, and closes the tracker on dispose. ChatV2Session now removes stopped trackers from its active tracker set. Focused tests cover the integration and lifecycle cleanup.
+
+This is **candidate pilot-only**. `js/modules/chat/chat.js` remains legacy and still uses ChatService/RealtimeService. Do not enable the pilot in the main app until backend deployment, dynamic allowlist configuration, real browser App Check, two-account staging, migration and rollback checks are complete. Sender-side read-status refresh and real browser IntersectionObserver verification remain open.

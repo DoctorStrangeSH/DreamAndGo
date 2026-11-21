@@ -238,3 +238,15 @@ Dream&Go — социальное пространство мечтаний, п�
 - [ ] Add and verify the complete production Firestore Rules for notification reads and owner-only read-state updates.
 - [ ] Run the notification flow in staging with two independent accounts and App Check.
 - **Status:** the arbitrary client notification-write path is removed from the candidate client. The V1.0 notification feature is not complete until trusted event generation and Rules/staging acceptance are verified.
+
+
+### Trusted friendship notifications — 2026-11-21
+
+- [x] `mutateFriendshipV2` now creates a fixed-schema `friend_request` notification in the recipient's own notification subcollection in the same Admin SDK transaction as the paired request records.
+- [x] Accepting a valid incoming request creates a fixed-schema `friend_accepted` notification for the original sender in the same transaction as the symmetric friendship records and request deletion.
+- [x] Recipient, actor, message text, icon, color, route, read state and timestamp are derived by server code; no client notification payload is accepted.
+- [x] Notification IDs are deterministic per actor/event type, so callable retries cannot create an unbounded series of duplicate notification documents.
+- [x] Extended friendship transaction tests to assert exact notification recipient, schema and transaction write.
+- [ ] Add trusted notification generation for V1.0 message and achievement events after their event contracts are verified.
+- [ ] Complete notification Rules Emulator tests and two-account staging validation.
+- **Status:** friend-request and friend-accepted notification writes are implemented in the candidate server transaction; CI and staging are not yet verified.

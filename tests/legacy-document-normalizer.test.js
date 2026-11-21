@@ -28,6 +28,8 @@ test('normalizes a legacy book document with rename, drop, defaults and status m
         { source: 'bookTitle', action: 'rename', target: 'title' },
         { source: 'author', action: 'keep' },
         { source: 'status', action: 'keep' },
+        { source: 'createdAt', action: 'keep' },
+        { source: 'updatedAt', action: 'keep' },
         { source: 'legacyPrivateFlag', action: 'drop', dataLossApproval: true },
         { source: 'notes', action: 'default', target: 'notes', value: '' }
     ]);

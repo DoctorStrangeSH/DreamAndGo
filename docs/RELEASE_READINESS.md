@@ -635,3 +635,12 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [ ] Implement a dry-run migration/normalization plan with backup and rollback.
 - [ ] Update list services to surface records missing sort timestamps safely.
 - **Release remains HOLD; no production migration or Rules deployment.**
+
+
+### Legacy data inventory tooling — 2026-11-21
+
+- [x] Added offline read-only metadata auditor and root npm command.
+- [x] Added tests asserting aggregate-only output does not expose record IDs or field values.
+- [ ] Run against a minimized owner-exported metadata snapshot and review results.
+- [ ] Approve explicit legacy field/status mappings before writing any migration planner.
+- **No production data was read or changed; migration remains unimplemented.**

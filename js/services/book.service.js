@@ -66,7 +66,6 @@ export class BookService {
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
                 notes: '',
-                isPublic: true
             };
 
             const docRef = await addDoc(booksRef, newBook);

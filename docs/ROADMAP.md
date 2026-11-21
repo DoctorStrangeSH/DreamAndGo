@@ -455,3 +455,12 @@ Dream&Go — социальное пространство мечтаний, п�
 - [ ] Design and implement a reviewed, dry-run-first migration/normalization path for legacy documents before strict V1 Rules can be deployed.
 - [ ] Decide how list services should surface legacy documents missing `createdAt` without silently dropping them.
 - **Release remains HOLD; no production Rules or data migration performed.**
+
+
+### Offline legacy inventory tooling — 2026-11-21
+
+- [x] Added `js/core/legacy-collection-audit.js` for privacy-safe schema inventory across all five private collections.
+- [x] Added `scripts/audit-legacy-collections.mjs` and `npm run audit:legacy-collections`; reads only a local minimized JSON snapshot and emits aggregate counts without IDs or values.
+- [x] Added `tests/legacy-collection-audit.test.js` for missing timestamps, unknown fields, invalid statuses, malformed records and output redaction.
+- [ ] Run the tool against an owner-exported, minimized metadata snapshot (not raw production data in chat) and review aggregate results.
+- [ ] Only after reviewing real field names/statuses, define an explicit versioned migration mapping and dry-run planner. No migration is implemented.

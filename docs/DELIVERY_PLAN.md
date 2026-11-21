@@ -249,3 +249,17 @@
 - [ ] Obtain read-only export of the active Firebase project's Rules/config and compare it with `FIRESTORE_ACCESS_MATRIX.md`.
 - [ ] Run two-account authorization tests against the complete candidate Rules and verify App Check on deployed endpoints.
 - [ ] Approve backup, rollback and manual production deployment only after staging acceptance.
+
+
+### Recovery from confirmed published deny-all — 2026-11-21
+
+- [x] Owner confirmed the recursive deny-all Rules are published in Firebase Console.
+- [x] Inventory direct Firestore client operations that are blocked: Auth profile/username/bootstrap, five personal collections, notifications, friend lists, and legacy chat indexes/messages.
+- [x] Identify unsafe cross-owner legacy chat writes and direct global username query/bootstrap as migration blockers.
+- [x] Identify default `isPublic: true` writes that conflict with the Owner-only private collection contract.
+- [ ] Reconcile each personal collection validator with exact Firestore create/update schema and immutable timestamp behavior.
+- [ ] Define a secure registration/username callable cutover; remove direct client global `users` query and placeholder writes.
+- [ ] Complete server-side chat cutover and define per-user chat index authorization; no client writes to another user's index.
+- [ ] Decide whether V1.0 supports public records; if yes, use explicit-consent public projections, never public access to private collection documents.
+- [ ] Build complete production candidate Rules and Emulator tests for guest/A/B/C, including query constraints and field allowlists.
+- [ ] Run two-account staging, backup/rollback rehearsal, and manual approval before production Rules deployment.

@@ -158,3 +158,10 @@ Admin SDK обходит Firestore Rules. Поэтому тесты Security Rul
 - `Firestore Rules Emulator`: success — root 528/528, Rules Emulator 13/13.
 
 Ранее проверенный Auth+Firestore candidate workflow также завершился успешно: 14/14 Rules/Auth journey cases и 59/59 server emulator tests. CI подтверждает кандидатный код и тестовые fixtures, но не production deploy.
+
+
+### App Check code audit clarification — 2026-11-21
+
+The earlier wording that implied App Check was not initialized in the browser was too broad. The repository already initializes App Check in `js/config/firebase.js` through `initializeWebAppCheck`, using `ReCaptchaEnterpriseProvider` and token auto-refresh. The public site key is present in the client config, and inspected callable endpoints declare `enforceAppCheck: true`.
+
+What remains unverified is the external/runtime configuration: Firebase Console app registration and enforcement settings, allowed production/staging domains, actual token issuance in a browser, successful callable with a valid token, rejection without a token, and quota behavior. The corrected status is **client bootstrap implemented; staging/Console verification pending**, not “App Check absent”. See `docs/APP_CHECK_ROLLOUT.md`.

@@ -730,3 +730,13 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 
 - [x] Movie production-country limit aligned to 10 across client, normalizer and Rules candidate to control Firestore Rules expression complexity.
 - [ ] Re-run full Firestore Emulator suite after expression-budget optimization.
+
+
+### Candidate CI verification — 2026-11-21
+
+- [x] Root unit suite: 528/528.
+- [x] Repository syntax checks.
+- [x] Firestore Rules Emulator: 13/13.
+- [x] Auth + Firestore candidate emulator: 14/14 rule tests and 59/59 server emulator tests.
+- [ ] PR integration: branch diverged from main by 53 commits; resolve intentionally before merge.
+- [ ] Production rules audit and deployment approval remain outstanding.

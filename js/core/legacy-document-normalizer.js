@@ -90,6 +90,7 @@ function validateDocument(collection, document) {
             case 'books.quotes': valid = uniqueStrings(value, 30, 500); break;
             case 'movies.movieId': valid = rangeInt(value, 1, 1e9); break;
             case 'movies.title': case 'movies.originalTitle': valid = boundedString(value, 200, key === 'title' ? 1 : 0); break;
+            case 'movies.status': valid = STATUSES.movies.includes(value); break;
             case 'movies.overview': valid = boundedString(value, 5000); break;
             case 'movies.poster': case 'movies.backdrop': valid = value === '' || (isString(value) && value.length <= 2048 && (() => { try { return new URL(value).protocol === 'https:'; } catch { return false; } })()); break;
             case 'movies.voteAverage': case 'movies.rating': valid = rangeNumber(value, 0, 10); break;

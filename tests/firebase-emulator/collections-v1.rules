@@ -245,6 +245,271 @@ service cloud.firestore {
         data.createdAt is timestamp && data.updatedAt is timestamp;
     }
 
+
+    function isValidMovieGenre(id) {
+      return id in [28, 12, 16, 35, 80, 99, 18, 10751, 14, 36, 27, 10402,
+        9648, 10749, 878, 10770, 53, 10752, 37];
+    }
+    function isValidMovieGenres(genres) {
+      return genres is list && genres.size() <= 20 &&
+        (genres.size() <= 0 || (genres[0] is int && isValidMovieGenre(genres[0]))) &&
+        (genres.size() <= 1 || (genres[1] is int && isValidMovieGenre(genres[1]) && genres[1] != genres[0])) &&
+        (genres.size() <= 2 || (genres[2] is int && isValidMovieGenre(genres[2]) && !(genres[2] in genres[0..1]))) &&
+        (genres.size() <= 3 || (genres[3] is int && isValidMovieGenre(genres[3]) && !(genres[3] in genres[0..2]))) &&
+        (genres.size() <= 4 || (genres[4] is int && isValidMovieGenre(genres[4]) && !(genres[4] in genres[0..3]))) &&
+        (genres.size() <= 5 || (genres[5] is int && isValidMovieGenre(genres[5]) && !(genres[5] in genres[0..4]))) &&
+        (genres.size() <= 6 || (genres[6] is int && isValidMovieGenre(genres[6]) && !(genres[6] in genres[0..5]))) &&
+        (genres.size() <= 7 || (genres[7] is int && isValidMovieGenre(genres[7]) && !(genres[7] in genres[0..6]))) &&
+        (genres.size() <= 8 || (genres[8] is int && isValidMovieGenre(genres[8]) && !(genres[8] in genres[0..7]))) &&
+        (genres.size() <= 9 || (genres[9] is int && isValidMovieGenre(genres[9]) && !(genres[9] in genres[0..8]))) &&
+        (genres.size() <= 10 || (genres[10] is int && isValidMovieGenre(genres[10]) && !(genres[10] in genres[0..9]))) &&
+        (genres.size() <= 11 || (genres[11] is int && isValidMovieGenre(genres[11]) && !(genres[11] in genres[0..10]))) &&
+        (genres.size() <= 12 || (genres[12] is int && isValidMovieGenre(genres[12]) && !(genres[12] in genres[0..11]))) &&
+        (genres.size() <= 13 || (genres[13] is int && isValidMovieGenre(genres[13]) && !(genres[13] in genres[0..12]))) &&
+        (genres.size() <= 14 || (genres[14] is int && isValidMovieGenre(genres[14]) && !(genres[14] in genres[0..13]))) &&
+        (genres.size() <= 15 || (genres[15] is int && isValidMovieGenre(genres[15]) && !(genres[15] in genres[0..14]))) &&
+        (genres.size() <= 16 || (genres[16] is int && isValidMovieGenre(genres[16]) && !(genres[16] in genres[0..15]))) &&
+        (genres.size() <= 17 || (genres[17] is int && isValidMovieGenre(genres[17]) && !(genres[17] in genres[0..16]))) &&
+        (genres.size() <= 18 || (genres[18] is int && isValidMovieGenre(genres[18]) && !(genres[18] in genres[0..17]))) &&
+        (genres.size() <= 19 || (genres[19] is int && isValidMovieGenre(genres[19]) && !(genres[19] in genres[0..18])));
+    }
+    function isValidMovieCountry(country) {
+      return country is map &&
+        country.keys().hasAll(['iso_3166_1', 'name']) &&
+        country.keys().hasOnly(['iso_3166_1', 'name']) &&
+        country.iso_3166_1 is string && country.iso_3166_1.matches('^[A-Z]{2}
+      allow get: if isOwner(uid);
+      allow list: if false;
+      allow create: if false && isOwner(uid) && uidUnchanged(uid) &&
+        isValidUser(request.resource.data);
+      allow update: if isOwner(uid) && uidNotModified() &&
+        isValidUser(request.resource.data) &&
+        isValidProfileEdit(request.resource.data);
+      allow delete: if false;
+
+
+      match /dreams/{dreamId} {
+        allow create: if isOwner(uid) &&
+          exists(/databases/$(database)/documents/users/$(uid)) &&
+          isValidDream(request.resource.data) &&
+          request.resource.data.createdAt == request.time &&
+          request.resource.data.updatedAt == request.time;
+        allow update: if isOwner(uid) &&
+          isValidDream(request.resource.data) &&
+          request.resource.data.createdAt == resource.data.createdAt &&
+          request.resource.data.updatedAt == request.time;
+        allow delete: if isOwner(uid);
+      }
+
+
+      match /travels/{travelId} {
+        allow create: if isOwner(uid) &&
+          exists(/databases/$(database)/documents/users/$(uid)) &&
+          isValidTravel(request.resource.data) &&
+          request.resource.data.createdAt == request.time &&
+          request.resource.data.updatedAt == request.time;
+        allow update: if isOwner(uid) &&
+          isValidTravel(request.resource.data) &&
+          request.resource.data.createdAt == resource.data.createdAt &&
+          request.resource.data.updatedAt == request.time;
+        allow delete: if isOwner(uid);
+      }
+
+
+      match /books/{bookId} {
+        allow create: if isOwner(uid) &&
+          exists(/databases/$(database)/documents/users/$(uid)) &&
+          isValidBook(request.resource.data) &&
+          request.resource.data.createdAt == request.time &&
+          request.resource.data.updatedAt == request.time;
+        allow update: if isOwner(uid) &&
+          isValidBook(request.resource.data) &&
+          request.resource.data.createdAt == resource.data.createdAt &&
+          request.resource.data.updatedAt == request.time;
+        allow delete: if isOwner(uid);
+      }
+
+
+      match /movies/{movieId} {
+        allow create: if isOwner(uid) &&
+          exists(/databases/$(database)/documents/users/$(uid)) &&
+          isValidMovie(request.resource.data) &&
+          request.resource.data.createdAt == request.time &&
+          request.resource.data.updatedAt == request.time;
+        allow update: if isOwner(uid) &&
+          isValidMovie(request.resource.data) &&
+          request.resource.data.createdAt == resource.data.createdAt &&
+          request.resource.data.updatedAt == request.time;
+        allow delete: if isOwner(uid);
+      }
+
+      match /{category}/{id} {
+        allow get, list: if isOwner(uid) &&
+          category in [
+            'travels', 'restaurants', 'movies', 'books', 'dreams',
+            'dailyTasks', 'notifications', 'friends',
+            'friendRequests', 'sentRequests', 'chats', 'messages'
+          ] &&
+          exists(/databases/$(database)/documents/users/$(uid));
+        allow create: if false && isOwner(uid) &&
+          isValidOwnedDocument(request.resource.data);
+        allow update: if false && isOwner(uid) &&
+          isValidOwnedDocument(request.resource.data);
+        allow delete: if false;
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+) &&
+        country.name is string && country.name.size() > 0 && country.name.size() <= 80;
+    }
+    function isValidMovieCountries(countries) {
+      return countries is list && countries.size() <= 30 &&
+        (countries.size() <= 0 || isValidMovieCountry(countries[0])) &&
+        (countries.size() <= 1 || isValidMovieCountry(countries[1])) &&
+        (countries.size() <= 2 || isValidMovieCountry(countries[2])) &&
+        (countries.size() <= 3 || isValidMovieCountry(countries[3])) &&
+        (countries.size() <= 4 || isValidMovieCountry(countries[4])) &&
+        (countries.size() <= 5 || isValidMovieCountry(countries[5])) &&
+        (countries.size() <= 6 || isValidMovieCountry(countries[6])) &&
+        (countries.size() <= 7 || isValidMovieCountry(countries[7])) &&
+        (countries.size() <= 8 || isValidMovieCountry(countries[8])) &&
+        (countries.size() <= 9 || isValidMovieCountry(countries[9])) &&
+        (countries.size() <= 10 || isValidMovieCountry(countries[10])) &&
+        (countries.size() <= 11 || isValidMovieCountry(countries[11])) &&
+        (countries.size() <= 12 || isValidMovieCountry(countries[12])) &&
+        (countries.size() <= 13 || isValidMovieCountry(countries[13])) &&
+        (countries.size() <= 14 || isValidMovieCountry(countries[14])) &&
+        (countries.size() <= 15 || isValidMovieCountry(countries[15])) &&
+        (countries.size() <= 16 || isValidMovieCountry(countries[16])) &&
+        (countries.size() <= 17 || isValidMovieCountry(countries[17])) &&
+        (countries.size() <= 18 || isValidMovieCountry(countries[18])) &&
+        (countries.size() <= 19 || isValidMovieCountry(countries[19])) &&
+        (countries.size() <= 20 || isValidMovieCountry(countries[20])) &&
+        (countries.size() <= 21 || isValidMovieCountry(countries[21])) &&
+        (countries.size() <= 22 || isValidMovieCountry(countries[22])) &&
+        (countries.size() <= 23 || isValidMovieCountry(countries[23])) &&
+        (countries.size() <= 24 || isValidMovieCountry(countries[24])) &&
+        (countries.size() <= 25 || isValidMovieCountry(countries[25])) &&
+        (countries.size() <= 26 || isValidMovieCountry(countries[26])) &&
+        (countries.size() <= 27 || isValidMovieCountry(countries[27])) &&
+        (countries.size() <= 28 || isValidMovieCountry(countries[28])) &&
+        (countries.size() <= 29 || isValidMovieCountry(countries[29]));
+    }
+    function isValidMovieDate(value) {
+      return value == '' || (value is string &&
+        value.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}
+      allow get: if isOwner(uid);
+      allow list: if false;
+      allow create: if false && isOwner(uid) && uidUnchanged(uid) &&
+        isValidUser(request.resource.data);
+      allow update: if isOwner(uid) && uidNotModified() &&
+        isValidUser(request.resource.data) &&
+        isValidProfileEdit(request.resource.data);
+      allow delete: if false;
+
+
+      match /dreams/{dreamId} {
+        allow create: if isOwner(uid) &&
+          exists(/databases/$(database)/documents/users/$(uid)) &&
+          isValidDream(request.resource.data) &&
+          request.resource.data.createdAt == request.time &&
+          request.resource.data.updatedAt == request.time;
+        allow update: if isOwner(uid) &&
+          isValidDream(request.resource.data) &&
+          request.resource.data.createdAt == resource.data.createdAt &&
+          request.resource.data.updatedAt == request.time;
+        allow delete: if isOwner(uid);
+      }
+
+
+      match /travels/{travelId} {
+        allow create: if isOwner(uid) &&
+          exists(/databases/$(database)/documents/users/$(uid)) &&
+          isValidTravel(request.resource.data) &&
+          request.resource.data.createdAt == request.time &&
+          request.resource.data.updatedAt == request.time;
+        allow update: if isOwner(uid) &&
+          isValidTravel(request.resource.data) &&
+          request.resource.data.createdAt == resource.data.createdAt &&
+          request.resource.data.updatedAt == request.time;
+        allow delete: if isOwner(uid);
+      }
+
+
+      match /books/{bookId} {
+        allow create: if isOwner(uid) &&
+          exists(/databases/$(database)/documents/users/$(uid)) &&
+          isValidBook(request.resource.data) &&
+          request.resource.data.createdAt == request.time &&
+          request.resource.data.updatedAt == request.time;
+        allow update: if isOwner(uid) &&
+          isValidBook(request.resource.data) &&
+          request.resource.data.createdAt == resource.data.createdAt &&
+          request.resource.data.updatedAt == request.time;
+        allow delete: if isOwner(uid);
+      }
+
+      match /{category}/{id} {
+        allow get, list: if isOwner(uid) &&
+          category in [
+            'travels', 'restaurants', 'movies', 'books', 'dreams',
+            'dailyTasks', 'notifications', 'friends',
+            'friendRequests', 'sentRequests', 'chats', 'messages'
+          ] &&
+          exists(/databases/$(database)/documents/users/$(uid));
+        allow create: if false && isOwner(uid) &&
+          isValidOwnedDocument(request.resource.data);
+        allow update: if false && isOwner(uid) &&
+          isValidOwnedDocument(request.resource.data);
+        allow delete: if false;
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+) &&
+        value[5..7] >= '01' && value[5..7] <= '12' &&
+        value[8..10] >= '01' && value[8..10] <= '31');
+    }
+    function isValidMovie(data) {
+      return data is map &&
+        data.keys().hasAll(['movieId', 'title', 'status', 'notes', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly([
+          'movieId', 'title', 'originalTitle', 'overview', 'poster', 'backdrop',
+          'voteAverage', 'voteCount', 'rating', 'releaseDate', 'genreIds',
+          'runtime', 'tagline', 'budget', 'productionCountries', 'status',
+          'userRating', 'review', 'notes', 'createdAt', 'updatedAt'
+        ]) &&
+        data.movieId is int && data.movieId >= 1 && data.movieId <= 1000000000 &&
+        data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+        data.status in ['to_watch', 'watched'] &&
+        data.notes is string && data.notes.size() <= 4000 &&
+        (!('originalTitle' in data) || (data.originalTitle is string && data.originalTitle.size() <= 200)) &&
+        (!('overview' in data) || (data.overview is string && data.overview.size() <= 5000)) &&
+        (!('poster' in data) || data.poster == null || (data.poster is string && data.poster.size() <= 2048 && data.poster.matches('^https://.*'))) &&
+        (!('backdrop' in data) || data.backdrop == null || (data.backdrop is string && data.backdrop.size() <= 2048 && data.backdrop.matches('^https://.*'))) &&
+        (!('voteAverage' in data) || (data.voteAverage is number && data.voteAverage >= 0 && data.voteAverage <= 10)) &&
+        (!('voteCount' in data) || (data.voteCount is int && data.voteCount >= 0 && data.voteCount <= 1000000000)) &&
+        (!('rating' in data) || (data.rating is number && data.rating >= 0 && data.rating <= 10)) &&
+        (!('releaseDate' in data) || isValidMovieDate(data.releaseDate)) &&
+        (!('genreIds' in data) || isValidMovieGenres(data.genreIds)) &&
+        (!('runtime' in data) || (data.runtime is int && data.runtime >= 0 && data.runtime <= 1000)) &&
+        (!('tagline' in data) || (data.tagline is string && data.tagline.size() <= 300)) &&
+        (!('budget' in data) || (data.budget is int && data.budget >= 0 && data.budget <= 100000000000)) &&
+        (!('productionCountries' in data) || isValidMovieCountries(data.productionCountries)) &&
+        (!('userRating' in data) || (data.userRating is int && data.userRating >= 0 && data.userRating <= 5)) &&
+        (!('review' in data) || (data.review is string && data.review.size() <= 4000)) &&
+        data.createdAt is timestamp && data.updatedAt is timestamp;
+    }
+
     match /users/{uid} {
       allow get: if isOwner(uid);
       allow list: if false;

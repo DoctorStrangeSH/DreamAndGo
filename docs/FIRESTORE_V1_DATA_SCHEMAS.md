@@ -153,3 +153,11 @@ The current `tests/firebase-emulator/owner-read.rules` is a deliberately limited
 - [x] Added negative Emulator cases rejecting both `isPublic: true` and `isPublic: false` on create and update.
 - [ ] Run Firebase Emulator CI and retain passing evidence.
 - [ ] Implement equivalent validated Emulator CRUD coverage for travels, books, movies and restaurants.
+
+
+### Travel partial-update contract — 2026-11-21
+
+- A partial update may contain only selected top-level travel fields.
+- If `budget` is supplied, it is an atomic nested-map replacement and must contain exactly `planned`, `spent`, and `currency` with the same type/range/enum constraints as create. Partial nested budget fragments are rejected to avoid silently dropping sibling values.
+- Unknown nested budget keys are rejected by the client validator. The final Firestore Rules candidate must enforce the same exact key set and value constraints.
+- The service treats statistics refresh as derived/best-effort work after the primary write; a secondary refresh failure must not cause a retry of a committed travel write.

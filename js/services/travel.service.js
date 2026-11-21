@@ -97,7 +97,7 @@ export class TravelService {
             // Statistics are derived data. A failed refresh must not report
             // a committed travel write as failed or invite a duplicate retry.
             try {
-                await this.updateUserStats(userId);
+                await this.updateUserStatsBestEffort(userId);
             } catch (statsError) {
                 console.warn('Путешествие сохранено, но статистика не обновилась:', statsError);
             }
@@ -145,7 +145,7 @@ export class TravelService {
             // The primary document update is committed. Stats are secondary and
             // must not make the caller retry an already successful write.
             try {
-                await this.updateUserStats(userId);
+                await this.updateUserStatsBestEffort(userId);
             } catch (statsError) {
                 console.warn('Путешествие обновлено, но статистика не обновилась:', statsError);
             }
@@ -164,7 +164,7 @@ export class TravelService {
             await deleteDoc(travelRef);
             
             this.clearCache(userId);
-            await this.updateUserStats(userId);
+            await this.updateUserStatsBestEffort(userId);
             
             return { success: true };
         } catch (error) {
@@ -192,6 +192,14 @@ export class TravelService {
         } catch (error) {
             console.error('Ошибка загрузки путешествия:', error);
             return null;
+        }
+    }
+
+    async updateUserStatsBestEffort(userId) {
+        try {
+            await this.updateUserStats(userId);
+        } catch (statsError) {
+            console.warn('Основная операция сохранена, но статистика не обновилась:', statsError);
         }
     }
 

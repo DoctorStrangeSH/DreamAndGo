@@ -82,3 +82,8 @@ npx firebase-tools emulators:exec --project demo-dreamandgo-chat-rules --only fi
 - Legacy documents that already contain `isPublic: true` remain editable without changing their visibility value. This avoids breaking existing records while preventing clients from changing visibility.
 - `dreams-v1.rules.test.mjs` covers owner CRUD, guest/second-account isolation, invalid schema values, nested steps, server timestamps, private creation and immutable legacy visibility.
 - Included in the Emulator package script. The fixture remains test-only, not production Rules.
+
+
+## Parallel suite isolation
+
+Each test file that creates a Firebase test environment uses its own project ID. This is intentional: Node's test runner may execute files concurrently, and sharing a project ID can cause rules/data from one suite to interfere with another. Keep project IDs unique when adding new test files.

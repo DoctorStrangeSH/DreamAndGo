@@ -517,3 +517,12 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [x] Restored the create validator import required by `BookService.addBook`.
 - [x] Added a focused test that verifies both create and update validators are wired into the service.
 - [ ] Exact-HEAD root CI remains required before this code is considered verified.
+
+
+### Atomic book page-bound update — 2026-11-21
+
+- [x] Book page-bound partial updates now validate and write inside a Firestore transaction.
+- [x] Added source-level regression assertions for transactional read/validate/write wiring.
+- [ ] Run root CI and Emulator tests on the exact latest HEAD.
+- [ ] Add authoritative Firestore Rules checks for page bounds and immutable metadata.
+- **Release remains HOLD.**

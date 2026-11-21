@@ -103,7 +103,7 @@ service cloud.firestore {
       return data is map &&
         data.keys().hasAll([
           'title', 'category', 'status', 'description', 'progress',
-          'deadline', 'steps', 'isPublic', 'createdAt', 'updatedAt'
+          'deadline', 'steps', 'createdAt', 'updatedAt'
         ]) &&
         data.keys().hasOnly([
           'title', 'category', 'status', 'description', 'progress',
@@ -121,7 +121,6 @@ service cloud.firestore {
           (data.deadline is string &&
            data.deadline.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$'))) &&
         areValidDreamSteps(data.steps) &&
-        data.isPublic is bool &&
         data.createdAt is timestamp &&
         data.updatedAt is timestamp;
     }
@@ -141,13 +140,11 @@ service cloud.firestore {
         allow create: if isOwner(uid) &&
           exists(/databases/$(database)/documents/users/$(uid)) &&
           isValidDream(request.resource.data) &&
-          request.resource.data.isPublic == false &&
           request.resource.data.createdAt == request.time &&
           request.resource.data.updatedAt == request.time;
         allow update: if isOwner(uid) &&
           isValidDream(request.resource.data) &&
           request.resource.data.createdAt == resource.data.createdAt &&
-          request.resource.data.isPublic == resource.data.isPublic &&
           request.resource.data.updatedAt == request.time;
         allow delete: if isOwner(uid);
       }

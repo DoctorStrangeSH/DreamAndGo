@@ -647,3 +647,8 @@ A second static review found that the first immutability condition could allow a
 ### SEC-CI-EMULATOR-02 — isolate parallel emulator suites — 2026-11-21
 
 Static review found that the five collection suites reused one Firebase Emulator project ID while Node's test runner can execute files concurrently. Assigned a unique project ID to each collection suite and separated the existing Auth signup journey from the chat Rules suite. This prevents test fixtures/rules and seeded documents from colliding across concurrent test files. The change is static-reviewed only; CI execution remains unconfirmed.
+
+
+### SEC-RULES-CLIENT-CONTRACT-01 — client payload and Rules compatibility test — 2026-11-21
+
+Added `client-rules-contract.test.mjs`. It imports the actual five client validators, builds create payloads matching service behavior (including server timestamps and service-generated `notes` on books/movies/restaurants), and attempts to write each document against the isolated V1 Rules fixture. This tests a previously uncovered integration boundary between client validation and Firestore Rules rather than testing each schema independently. The suite is wired into npm test. Execution remains pending; this is not a test pass or production Rules approval.

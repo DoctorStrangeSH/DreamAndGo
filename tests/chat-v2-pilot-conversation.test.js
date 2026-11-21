@@ -158,3 +158,31 @@ test('pilot wires only visible unread incoming messages to one managed receipt t
     assert.equal(stopped, 1);
     assert.equal(observed.size, 0);
 });
+
+
+test('pilot history remains usable when browser visibility observation is unavailable', async () => {
+    const snapshots = [];
+    const page = { chatId: 'chat-a', messages: [message(2), message(1)], hasMore: false, nextBeforeSequence: null };
+    const view = {
+        mount() {},
+        setHistoryState(state) { snapshots.push(state); },
+        getMessageListElement() { return {}; },
+        getIncomingMessageElements() { return []; },
+        destroy() {}
+    };
+    const session = {
+        userId: 'alice',
+        getUserId: () => 'alice',
+        watchIncoming() { throw new Error('IntersectionObserver unavailable'); }
+    };
+    const conversation = new ChatV2PilotConversation({
+        root: {}, session, chatId: 'chat-a', lookup: async () => page,
+        viewFactory: () => view
+    });
+    const result = await conversation.mount();
+    assert.equal(result.status, 'ready');
+    assert.equal(snapshots.length, 1);
+    assert.equal(snapshots[0].messages.length, 2);
+    assert.equal(conversation.readTrackingUnavailable, true);
+    conversation.dispose();
+});

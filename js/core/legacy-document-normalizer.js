@@ -1,3 +1,5 @@
+import { validateLegacyMigrationManifest } from './legacy-migration-manifest.js';
+
 const STATUSES = {
     dreams: ['dreaming', 'in_progress', 'completed'],
     travels: ['planned', 'visited'],
@@ -136,7 +138,15 @@ export function normalizeLegacyDocument({ collection, document, manifest }) {
     if (!document || typeof document !== 'object' || Array.isArray(document)) {
         return { valid: false, normalized: null, errors: ['document_must_be_object'] };
     }
-    const config = manifest?.collections?.find(item => item.name === collection);
+    const manifestValidation = validateLegacyMigrationManifest(manifest);
+    if (!manifestValidation.valid || !manifestValidation.ready) {
+        return {
+            valid: false,
+            normalized: null,
+            errors: ['migration_manifest_not_approved', ...manifestValidation.errors]
+        };
+    }
+    const config = manifest.collections.find(item => item.name === collection);
     if (!config) return { valid: false, normalized: null, errors: ['collection_mapping_missing'] };
     const errors = [];
     const output = {};

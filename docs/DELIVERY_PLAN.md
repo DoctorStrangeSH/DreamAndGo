@@ -106,7 +106,7 @@
 | Личные сообщения | Legacy чат подключён в main; PR #1 содержит большую кандидатную инфраструктуру Chat v2 | Legacy требует E2E; Chat v2 — candidate, не production |
 | Достижения | Модуль и сервис есть в main; PR #1 добавляет milestone/race tests | Частично; проверить реальные условия и сохранение |
 | Настройки | Модуль есть в main; PR #1 добавляет request-safety и policy tests | Частично; staging и приватность не подтверждены |
-| Уведомления | Сервис и виджет есть в main | Частично; проверить события и права |
+| Уведомления | Сервис и виджет в main; friend/achievement/message events реализованы в candidate server transactions; isolated Rules Emulator suite 7/7 PASS | Частично; production Rules отсутствуют в репозитории/не сверены с Firebase, нужен staging A/B + App Check |
 | Адаптивность / UX | Bootstrap и единый CSS в main; PR #1 содержит Atlas CSS/preview и screenshot workflow | Частично; screenshots — offline preview, не browser E2E |
 | Security Rules | 15.11 владелец сообщил, что после обнаружения permissive `allow read, write: if true` опубликовал emergency deny-all `allow read, write: if false`; текущая live-версия после этого не проверялась напрямую | Критический блокер; не заменять на permissive rules без аудита и staging |
 | Cloud Functions / Chat v2 | Серверный код находится в PR #1 и явно описан как candidate | Не включено в production |

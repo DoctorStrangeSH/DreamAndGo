@@ -464,3 +464,12 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [ ] Confirm whether the app uses the default Firestore database or a named database.
 - [ ] Obtain timestamped export of the published deny-all Rules for rollback.
 - [ ] Keep all production Rules changes blocked until Emulator and two-account staging pass.
+
+
+### Firestore database target confirmed — 2026-11-21
+
+- [x] Owner confirmed Firestore database ID is `(default)` in Firebase project `dream-and-go`.
+- [x] Local Emulator/candidate Rules target is recorded as project `dream-and-go`, database `(default)`.
+- [ ] Capture timestamped export of the published deny-all Rules for rollback before any production change.
+- [ ] Complete full Emulator and two-account staging authorization suite.
+- **No production Rules changes are authorized by this confirmation.**

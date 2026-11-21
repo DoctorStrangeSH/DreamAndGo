@@ -100,6 +100,21 @@ export async function refreshUserStatsTransaction(db, uid) {
         const update = { stats: merged };
         if (achievementResult.newAchievements.length > 0) {
             update.achievements = achievementResult.updatedAchievements;
+            for (const achievement of achievementResult.newAchievements) {
+                const notificationId = `achievement_${achievement.id}_level_${achievement.level}`;
+                transaction.set(userRef.collection('notifications').doc(notificationId), {
+                    type: 'achievement',
+                    title: 'Новое достижение!',
+                    message: `${achievement.emoji || ''} ${achievement.title} — ${achievement.description}`.trim(),
+                    icon: 'bi-trophy',
+                    color: 'warning',
+                    link: '#achievements',
+                    read: false,
+                    achievementId: achievement.id,
+                    achievementLevel: achievement.level,
+                    createdAt: new Date(achievement.awardedAt)
+                });
+            }
         }
         transaction.update(userRef, update);
         return { ...calculated, newAchievements: achievementResult.newAchievements };

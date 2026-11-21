@@ -413,3 +413,10 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [x] Added a regression test for both service contracts.
 - [x] Root Checks passed on candidate HEAD `8a5f59829ff932d2d03ab11a523d656dd386b4bc`: 469/469 tests, 0 failures; syntax validation passed for all 257 JavaScript files ([run 44897158331](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44897158331)).
 - [ ] Verify owner-only behavior against the complete production Firestore Rules export.
+
+
+### Profile status rendering hardening — 2026-11-21
+
+- [x] Added own-key validation for dream status labels in profile cards; unknown values fall back to the fixed default.
+- [x] Added a regression test for prototype-key values.
+- [ ] Verify Root Checks on the exact candidate head.

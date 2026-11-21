@@ -1,4 +1,11 @@
-const COLLECTIONS = new Set(['dreams', 'travels', 'books', 'movies', 'restaurants']);
+const COLLECTION_STATUSES = Object.freeze({
+    dreams: new Set(['dreaming', 'in_progress', 'completed']),
+    travels: new Set(['planned', 'visited']),
+    books: new Set(['want_to_read', 'reading', 'read']),
+    movies: new Set(['to_watch', 'watched']),
+    restaurants: new Set(['want_to_visit', 'visited'])
+});
+const COLLECTIONS = new Set(Object.keys(COLLECTION_STATUSES));
 const FIELD_ACTIONS = new Set(['keep', 'rename', 'drop', 'default', 'manual_review']);
 const MANIFEST_VERSION = 1;
 
@@ -13,7 +20,11 @@ export function validateLegacyMigrationManifest(manifest) {
     }
     if (manifest.version !== MANIFEST_VERSION) errors.push('unsupported_manifest_version');
     if (manifest.approved !== true) errors.push('manifest_not_approved');
-    if (manifest.sourceSchema !== 'legacy-unknown') errors.push('source_schema_must_be_explicitly_identified');
+    if (typeof manifest.sourceSchema !== 'string' ||
+        !/^[a-z0-9][a-z0-9._-]{2,63}$/i.test(manifest.sourceSchema) ||
+        ['legacy-unknown', 'unconfirmed', 'unknown'].includes(manifest.sourceSchema.toLowerCase())) {
+        errors.push('source_schema_must_be_explicitly_identified');
+    }
     if (manifest.targetSchema !== 'firestore-v1') errors.push('invalid_target_schema');
     if (!manifest.backup?.required || typeof manifest.backup?.reference !== 'string' ||
         manifest.backup.reference.trim().length < 3) errors.push('backup_reference_required');
@@ -64,7 +75,8 @@ export function validateLegacyMigrationManifest(manifest) {
                 errors.push(`invalid_status_map:${collection.name}`);
             } else {
                 for (const [source, target] of Object.entries(collection.statusMap)) {
-                    if (typeof source !== 'string' || typeof target !== 'string' || target.length > 64) {
+                    if (typeof source !== 'string' || source.length < 1 || source.length > 64 ||
+                        typeof target !== 'string' || !COLLECTION_STATUSES[collection.name].has(target)) {
                         errors.push(`invalid_status_mapping:${collection.name}`);
                     }
                 }

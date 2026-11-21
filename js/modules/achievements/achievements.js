@@ -13,7 +13,8 @@ const MILESTONES = {
 };
 
 export function getAchievementMilestone(achievement, earnedLevel, stats = {}) {
-    const requirements = MILESTONES[achievement.id] || [];
+    const achievementId = achievement && typeof achievement.id === 'string' ? achievement.id : '';
+    const requirements = Object.hasOwn(MILESTONES, achievementId) ? MILESTONES[achievementId] : [];
     const next = requirements[Math.max(0, earnedLevel)];
     if (!next) return null;
     const values = { ...stats, totalCollections: ['travels', 'restaurants', 'movies', 'books', 'dreams']

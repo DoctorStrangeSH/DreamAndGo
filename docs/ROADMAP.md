@@ -332,3 +332,12 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Extended the BookService wiring regression test to require transactional read/validate/write call sites.
 - [ ] Execute root test suite and Emulator workflows on the exact latest HEAD; no CI result is assumed until GitHub reports it.
 - [ ] Mirror the same invariant in authoritative Firestore Rules; client transaction validation remains defense in depth, not authorization.
+
+
+### Travel write-result consistency — 2026-11-21
+
+- [x] Fixed `TravelService.addTravel`: after Firestore confirms `addDoc`, a derived-statistics refresh failure is logged but cannot turn the committed create into a reported failure.
+- [x] Applied the same rule to `updateTravel`: a committed document update remains successful if the secondary statistics refresh fails.
+- [x] Added `tests/travel-service-write-result.test.js` to guard both committed-write result paths.
+- [x] Added validator coverage for complete nested budget-map replacement and rejection of incomplete, malformed or out-of-range budget maps during partial updates.
+- [ ] Run the root test suite and Firebase Emulator workflows on the exact resulting HEAD; no CI pass is claimed yet.

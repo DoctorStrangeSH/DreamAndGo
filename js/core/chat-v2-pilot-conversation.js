@@ -50,7 +50,8 @@ export class ChatV2PilotConversation {
     }
 
     _syncReadObservers() {
-        if (this.disposed || typeof this.session?.watchIncoming !== 'function' ||
+        if (this.disposed || this.readTrackingUnavailable ||
+            typeof this.session?.watchIncoming !== 'function' ||
             typeof this.view?.getMessageListElement !== 'function' ||
             typeof this.view?.getIncomingMessageElements !== 'function') return;
         const list = this.view.getMessageListElement();
@@ -64,7 +65,15 @@ export class ChatV2PilotConversation {
             };
             if (this.documentRef) options.documentRef = this.documentRef;
             if (this.observerFactory) options.observerFactory = this.observerFactory;
-            this.readTracker = this.session.watchIncoming(options);
+            try {
+                this.readTracker = this.session.watchIncoming(options);
+            } catch {
+                // Visibility receipts are best-effort UI enhancement. A browser
+                // without IntersectionObserver must still be able to read/send.
+                this.readTracker = null;
+                this.readTrackingUnavailable = true;
+                return;
+            }
         }
         if (!this.readTracker) return;
         for (const element of this.observedIncomingElements) {

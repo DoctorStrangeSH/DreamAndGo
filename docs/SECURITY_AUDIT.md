@@ -380,7 +380,7 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 
 ### SEC-ACH-01 — own-key validation for achievement milestone maps — 2026-11-21
 
-**Status:** implemented; regression tests added; CI pending.
+**Status:** implemented and verified. Root Checks passed on the implementation commits: 470/470 tests, 0 failures; syntax validation passed for all 258 JavaScript files. See [implementation check](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44897935694) and [milestone-map check](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44897933324).
 
 - The milestone map is a plain object, so direct bracket lookup could resolve inherited keys such as `constructor` or `__proto__` for malformed achievement IDs.
 - Lookup now accepts only string IDs that are own keys of the fixed milestone map; unknown and malformed IDs return no milestone.

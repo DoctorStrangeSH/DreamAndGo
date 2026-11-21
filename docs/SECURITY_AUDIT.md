@@ -345,3 +345,15 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 - registerProfileV2 and the server-owned username reservation flow exist, but rollout remains intentionally disabled until the registry is backed up, legacy usernames are audited/backfilled, complete Rules are reviewed, and staging acceptance passes.
 
 **Decision:** do not loosen users Rules to preserve the legacy browser signup and do not enable Signup V2 based only on emulator tests. First complete read-only production inventory, registry backup/dry-run/backfill plan, and two-account staging. Keep the release on HOLD until this migration gate is satisfied.
+
+
+### SEC-USERNAME-BACKFILL-01 — require explicit backup acknowledgement before apply — 2026-11-21
+
+**Status:** implemented; emulator verification pending.
+
+- The username reservation backfill previously required an explicit registration freeze for apply mode but did not separately require backup confirmation.
+- Added a second fail-closed input, `backupVerified: true`, to the migration helper. Apply now requires a verified-backup acknowledgement, frozen registration window and server timestamp provider.
+- The administrative CLI now requires both `--confirm-registration-frozen` and `--confirm-backup-verified` before it can enter apply mode.
+- Added emulator assertions that missing either acknowledgement is rejected, while a fully acknowledged apply remains create-only, idempotent, postflight-verified and leaves the registry closed.
+
+**Limit:** the backup flag is an operator acknowledgement, not machine-verifiable evidence. Production backup creation, restore validation, maintenance freeze and migration approval remain independent release gates. No production data was accessed or modified.

@@ -30,12 +30,38 @@ test('simultaneous retries create one message and increment unread once', async 
     assert.equal((await db.doc(`chats/${chatId}`).get()).get('nextSequence'), 1);
     const recipient = await db.doc('users/bob/chats/alice').get();
     assert.equal(recipient.get('unread'), 1);
+    const message = messages.docs[0];
+    const notice = await db.doc(`users/bob/notifications/message_${message.id}`).get();
+    assert.equal(notice.exists, true);
+    assert.deepEqual({
+        type: notice.get('type'),
+        title: notice.get('title'),
+        message: notice.get('message'),
+        icon: notice.get('icon'),
+        color: notice.get('color'),
+        link: notice.get('link'),
+        fromUserId: notice.get('fromUserId'),
+        chatId: notice.get('chatId'),
+        read: notice.get('read')
+    }, {
+        type: 'message',
+        title: 'Новое сообщение',
+        message: 'Привет',
+        icon: 'bi-chat-dots',
+        color: 'primary',
+        link: '#chat',
+        fromUserId: 'alice',
+        chatId,
+        read: false
+    });
     const cooldownBefore = await db.doc('users/alice/privateChatLimits/send').get();
     await send(chatId, 'Привет', 1);
     const cooldownAfter = await db.doc('users/alice/privateChatLimits/send').get();
     assert.deepEqual(cooldownAfter.get('lastSentAt'), cooldownBefore.get('lastSentAt'));
     const afterRetry = await db.doc('users/bob/chats/alice').get();
     assert.equal(afterRetry.get('unread'), 1);
+    const notices = await db.collection('users/bob/notifications').get();
+    assert.equal(notices.size, 1);
     assert.equal((await db.doc(`chats/${chatId}`).get()).get('nextSequence'), 1);
     await assert.rejects(send(chatId, 'Другой текст', 1), { code: 'already-exists' });
 });

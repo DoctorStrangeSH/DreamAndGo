@@ -70,7 +70,7 @@ export class RestaurantService {
             // Statistics are derived data. A refresh failure must not report
             // an already committed restaurant create as failed.
             try {
-                await this.updateUserStats(userId);
+                await this.updateUserStatsBestEffort(userId);
             } catch (statsError) {
                 console.warn('Ресторан сохранён, но статистика не обновилась:', statsError);
             }
@@ -97,7 +97,7 @@ export class RestaurantService {
             // Preserve the committed restaurant update result if the
             // secondary statistics refresh fails.
             try {
-                await this.updateUserStats(userId);
+                await this.updateUserStatsBestEffort(userId);
             } catch (statsError) {
                 console.warn('Ресторан обновлён, но статистика не обновилась:', statsError);
             }
@@ -114,7 +114,7 @@ export class RestaurantService {
         try {
             const restaurantRef = doc(this.db, 'users', userId, 'restaurants', restaurantId);
             await deleteDoc(restaurantRef);
-            await this.updateUserStats(userId);
+            await this.updateUserStatsBestEffort(userId);
             return { success: true };
         } catch (error) {
             console.error('Ошибка удаления ресторана:', error);
@@ -134,6 +134,14 @@ export class RestaurantService {
         } catch (error) {
             console.error('Ошибка загрузки ресторана:', error);
             return null;
+        }
+    }
+
+    async updateUserStatsBestEffort(userId) {
+        try {
+            await this.updateUserStats(userId);
+        } catch (statsError) {
+            console.warn('Основная операция сохранена, но статистика не обновилась:', statsError);
         }
     }
 

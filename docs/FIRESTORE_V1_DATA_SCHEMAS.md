@@ -78,7 +78,7 @@
 | `runtime` | integer 0–1000 | Нет |
 | `tagline` | string max 300 | Нет |
 | `budget` | integer 0–100,000,000,000 | Нет |
-| `productionCountries` | array max 30; item ровно `{iso_3166_1:string(1..2), name:string(1..80)}` | Нет |
+| `productionCountries` | array max 10; item ровно `{iso_3166_1:string(1..2), name:string(1..80)}` | Нет |
 | `userRating` | integer 0–5 | Нет |
 | `review` | string max 4000 | Нет |
 | `notes` | string; сейчас сервис устанавливает пустую строку | Да, добавляет сервис |

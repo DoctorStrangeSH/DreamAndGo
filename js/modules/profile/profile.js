@@ -449,7 +449,7 @@ export class ProfileModule {
                         <div class="col-12 col-md-6 col-lg-4">
                             <article class="card-premium profile-collection-card p-3 h-100">
                                 <span class="profile-collection-kicker">
-                                    ${statusLabels[dream.status] || statusLabels.dreaming}
+                                    ${Object.hasOwn(statusLabels, dream.status) ? statusLabels[dream.status] : statusLabels.dreaming}
                                 </span>
                                 <h3 class="h6 mt-2 mb-2">${escapeHTML(String(dream.title || 'Без названия'))}</h3>
                                 <p class="text-muted small mb-0">${escapeHTML(String(dream.category || 'Личная мечта'))}</p>

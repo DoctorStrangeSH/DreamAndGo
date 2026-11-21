@@ -26,22 +26,7 @@ const SCHEMAS = Object.freeze({
     }
 });
 
-const FIRESTORE_TIMESTAMP_MIN_SECONDS = -62_135_596_800;
-const FIRESTORE_TIMESTAMP_MAX_SECONDS = 253_402_300_799;
-
 const FIELD_TYPES = new Set(['string', 'boolean', 'integer', 'number', 'null', 'array', 'map', 'timestamp', 'unknown']);
-const FIRESTORE_TIMESTAMP_MIN_SECONDS = -62_135_596_800;
-const FIRESTORE_TIMESTAMP_MAX_SECONDS = 253_402_300_799;
-
-function validTimestampMetadata(value) {
-    return value && typeof value === 'object' &&
-        Number.isInteger(value.seconds) &&
-        Number.isInteger(value.nanoseconds) &&
-        value.seconds >= FIRESTORE_TIMESTAMP_MIN_SECONDS &&
-        value.seconds <= FIRESTORE_TIMESTAMP_MAX_SECONDS &&
-        value.nanoseconds >= 0 &&
-        value.nanoseconds < 1_000_000_000;
-}
 
 /**
  * Offline, read-only inventory. Input contains metadata only:

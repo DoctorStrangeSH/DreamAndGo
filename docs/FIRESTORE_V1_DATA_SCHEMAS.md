@@ -242,3 +242,18 @@ A valid manifest is not permission to migrate production. The readiness assessor
 
 
 The source schema identifier must name a reviewed/identified legacy schema version; placeholders such as `legacy-unknown` are rejected. Every status-map target is validated against the V1 enum for its collection. The committed template intentionally fails until a real source schema and reviewed mappings are supplied.
+
+
+## 15. Aggregate legacy migration dry-run planner — 2026-11-21
+
+Run locally with:
+
+```bash
+npm run plan:legacy-migration -- path/to/reviewed-manifest.json path/to/sanitized-inventory.json
+```
+
+The planner outputs aggregate-only per-collection field actions, status mappings and blocker codes. Every observed source field must have an explicit manifest decision. Renames must target an allowlisted V1 field; duplicate target assignments are blocked. Every observed legacy status must either already be valid for its target collection or have an explicit status-map entry to a valid V1 status.
+
+The planner may report an unknown legacy field as resolved only when its field mapping explicitly classifies it (including a separately approved drop). It may report an old status as resolved only when an explicit valid status mapping is present. Missing timestamps, missing required fields, malformed inventory records and field-type mismatches remain blockers.
+
+The output is always `executable: false` and `migrationApplied: false`. This is not a per-document simulation and cannot be used to write Firestore.

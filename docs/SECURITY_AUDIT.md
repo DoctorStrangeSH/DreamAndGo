@@ -324,7 +324,7 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 
 ### SEC-REALTIME-PRIVACY-01 — realtime social subscriptions read raw private profiles — 2026-11-21
 
-**Status:** candidate client cutover implemented; regression test added. The first test attempts exposed a test-boundary bug and are being corrected; final CI is pending. No production Rules or Functions were changed.
+**Status:** candidate client cutover implemented and regression suite passed. Root Checks passed on implementation/test HEAD `174e0d06174369fb48290850e3db14c74f3e93ab`: 467/467 tests, 0 failures; syntax validation passed for all 256 JavaScript files ([run 44896463096](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44896463096)). No production Rules or Functions were changed.
 
 - The realtime chat/friends/incoming-request/sent-request subscriptions previously called getUserProfile() once per row; that helper fetched the raw users/{uid} document and only then projected public fields in browser code.
 - Replaced per-row raw document reads with one deduplicated getPublicProfilesByIds() request per snapshot (the client helper splits batches into groups of 50). The server callable returns only the explicit public profile projection and enforces Auth, App Check, quota and public-profile opt-in.

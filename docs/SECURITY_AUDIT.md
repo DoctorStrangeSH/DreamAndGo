@@ -642,3 +642,8 @@ A second static review found that the first immutability condition could allow a
 - It runs the complete `tests/firebase-emulator` suite and is scoped to pushes on `refactor/security-foundation` plus relevant pull-request file changes.
 - Workflow committed; first execution/result is pending. No test pass is claimed until GitHub reports a successful run.
 - Workflow is test-only and does not deploy or modify Firebase production Rules.
+
+
+### SEC-CI-EMULATOR-02 — isolate parallel emulator suites — 2026-11-21
+
+Static review found that the five collection suites reused one Firebase Emulator project ID while Node's test runner can execute files concurrently. Assigned a unique project ID to each collection suite and separated the existing Auth signup journey from the chat Rules suite. This prevents test fixtures/rules and seeded documents from colliding across concurrent test files. The change is static-reviewed only; CI execution remains unconfirmed.

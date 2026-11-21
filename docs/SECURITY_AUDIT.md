@@ -563,3 +563,15 @@ No production rules or user data were changed. This inventory is source-derived 
 - Added `tests/restaurant-service-write-result.test.js` for both paths.
 - Expanded validator regression coverage for cuisine/status allowlists, impossible visit dates, nullable visit dates, rating bounds, favorite dish count and photo count. HTTPS-only photo validation remains enforced by the shared URL-list validator.
 - Client validation is not authorization. The final Firestore Rules candidate must independently enforce field allowlists, enum values, types, ranges, list bounds, timestamps and owner-only access.
+
+
+### SEC-COLLECTION-CRUD-01 — consistent derived-statistics failure handling — 2026-11-21
+
+**Status: client-side reliability hardening implemented; execution evidence pending.**
+
+- Audit found that dreams and books, plus delete operations across the collection services, could return `success: false` after the primary Firestore write/delete had already committed if the subsequent statistics refresh failed.
+- Added `updateUserStatsBestEffort(userId)` to all five collection services (dreams, travels, books, movies, restaurants). It catches and logs secondary statistics errors.
+- Routed each create/update/delete operation through this wrapper. Primary Firestore failures still return failure; only the derived statistics refresh is best-effort.
+- Added a regression test that checks all 15 CRUD paths use the wrapper and do not directly await the throwing statistics method.
+- This does not establish atomic consistency of derived statistics. A future server-side trigger or transactional aggregate design may be considered only if already included in the V1 scope; do not expand scope here.
+- No Firestore Rules, production configuration or user data were changed.

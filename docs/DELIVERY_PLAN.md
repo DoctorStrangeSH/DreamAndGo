@@ -180,10 +180,10 @@
 - [x] Friend request notification is written only by the authenticated/App-Check protected friendship callable's Admin SDK transaction.
 - [x] Friend acceptance notification is written to the original sender's own notification collection in the same transaction as relationship acceptance.
 - [x] Fixed payload schema and deterministic event document IDs are covered by transaction tests.
-- [ ] Add message and achievement event notifications using trusted persisted server events, not client-supplied payloads.
+- [x] Add trusted achievement notifications in the server stats transaction and trusted message notifications in the private-message transaction; no client-selected notification payload is accepted.
 - [ ] Add notification Rules Emulator tests for guest, cross-user and owner read-state cases.
-- [ ] Validate friend request/accept notifications in staging with two accounts and App Check.
-- **Exit condition not met:** only friendship notifications are implemented; end-to-end notifications and authorization remain a release gate.
+- [ ] Validate friend, achievement and message notifications in staging with two accounts and App Check.
+- **Exit condition not met:** all three event sources are implemented in candidate code; authorization and staging remain release gates.
 
 
 ### Friendship notification consistency — 2026-11-21

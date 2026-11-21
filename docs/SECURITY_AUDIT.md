@@ -331,7 +331,7 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 - Kept the snapshot generation gate so stale asynchronous profile batches cannot repaint a newer snapshot.
 - Added tests to forbid getDoc/toPublicProfile in RealtimeService and require the callable batch path for all four social/chat subscriptions.
 
-**Remaining:** green CI on final test revision and two-account staging for public/private profile behavior with App Check. Production users/{uid} Rules must remain owner-only. No raw private profile document should be exposed to another account.
+**Remaining:** two-account staging for public/private profile behavior with App Check. Production users/{uid} Rules must remain owner-only. No raw private profile document should be exposed to another account.
 
 
 

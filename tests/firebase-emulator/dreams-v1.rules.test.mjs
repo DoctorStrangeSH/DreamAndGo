@@ -97,6 +97,9 @@ test('dream V1 rules enforce owner CRUD, private visibility, nested steps and ti
         await assertSucceeds(setDoc(doc(alice, 'users/alice/dreams/leap-day'), {
             ...validDream(), deadline: '2028-02-29'
         }));
+        await assertSucceeds(setDoc(doc(alice, 'users/alice/dreams/no-deadline'), {
+            ...validDream(), deadline: ''
+        }));
         await assertFails(setDoc(doc(alice, 'users/alice/dreams/too-many-steps'), {
             ...validDream(), steps: Array(21).fill({ text: 'Шаг', done: false })
         }));

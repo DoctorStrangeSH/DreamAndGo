@@ -341,3 +341,12 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Added `tests/travel-service-write-result.test.js` to guard both committed-write result paths.
 - [x] Added validator coverage for complete nested budget-map replacement and rejection of incomplete, malformed or out-of-range budget maps during partial updates.
 - [ ] Run the root test suite and Firebase Emulator workflows on the exact resulting HEAD; no CI pass is claimed yet.
+
+
+### Movie write-result consistency — 2026-11-21
+
+- [x] Fixed `MovieService.addMovie`: after Firestore confirms `addDoc`, failure to refresh derived user statistics is logged but does not report the committed movie create as failed.
+- [x] Applied the same behavior to `updateMovie` after a committed `updateDoc`.
+- [x] Added `tests/movie-service-write-result.test.js` to guard both primary-write result paths.
+- [x] Expanded movie input regression coverage for impossible calendar dates and duplicate genre IDs.
+- [ ] Run root tests and Firebase Emulator workflows on the exact resulting HEAD; no CI pass is claimed yet.

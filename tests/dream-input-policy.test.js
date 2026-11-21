@@ -38,3 +38,10 @@ test('dream input rejects field injection, invalid transitions and oversized con
         assert.throws(() => validateDreamInput(value), TypeError);
     }
 });
+
+
+test('dream visibility and server timestamps are not client-controlled fields', () => {
+    assert.throws(() => validateDreamInput({ ...valid(), isPublic: true }), TypeError);
+    assert.throws(() => validateDreamInput({ ...valid(), createdAt: 'client-controlled' }), TypeError);
+    assert.throws(() => validateDreamInput({ ...valid(), updatedAt: 'client-controlled' }), TypeError);
+});

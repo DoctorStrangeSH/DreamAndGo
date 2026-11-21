@@ -204,3 +204,14 @@
 - [x] Firebase Emulator passed 6/6 Firestore Rules tests and 59/59 server/Auth/Firestore emulator tests on the same implementation HEAD (run 44893286823). Existing Rules coverage is not notification-specific.
 - [ ] Add notification-specific Rules read/update tests and verify two-account staging behavior.
 - **Exit condition not met:** achievement notification writes are implemented, but full notification Rules and end-to-end staging acceptance remain release gates.
+
+
+### Trusted message notification delivery — 2026-11-21
+
+- [x] Create a message notification only from the trusted server-side private-message transaction.
+- [x] Derive recipient from the validated two-person chat and create the notice atomically with the message/unread write.
+- [x] Use a stable server-message-based ID and bounded preview; cover exact schema and retry idempotency in Emulator tests.
+- [ ] Verify root Checks and Firebase Emulator workflow on exact candidate HEAD.
+- [ ] Add notification Rules tests: owner can read, another user/guest cannot, owner can update only `read`, clients cannot create or alter server-owned fields.
+- [ ] Validate notification delivery and read-state in staging with two accounts and App Check.
+- **Exit condition not met:** message event generation is implemented in candidate code, but Rules and staging acceptance remain release gates.

@@ -372,7 +372,7 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 
 ### SEC-PROFILE-STATUS-01 — guard prototype-key lookups in profile status labels — 2026-11-21
 
-**Status:** implemented; regression test added; CI pending.
+**Status:** implemented and verified. Root Checks passed on final candidate HEAD `bfa96394231e0c52c720cc3d7ba2f01cb1235600`: 470/470 tests, 0 failures; syntax validation passed for all 258 JavaScript files ([run 44897710078](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44897710078)).
 
 - Profile dream status labels are now selected only when the status is an own key of the fixed label map. Unknown values, including inherited object keys such as `constructor` and `__proto__`, fall back to the safe `dreaming` label.
 - Added a source-contract regression test to prevent reintroducing prototype-chain lookup.

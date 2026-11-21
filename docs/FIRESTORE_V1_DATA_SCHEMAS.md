@@ -287,3 +287,18 @@ npm run rehearse:legacy-migration -- manifest.json synthetic-documents.json
 The input document array uses `{ "collection": "dreams", "document": { ... } }` entries. The runner validates every item using the approved-manifest-gated normalizer. If one item fails, the whole batch is marked blocked and no normalized documents are returned. The caller's input is never mutated.
 
 The report includes an immutable input snapshot restore preview. This verifies in-memory preservation only; it is not a backup of Firestore and does not prove a production restore. The runner is deliberately disconnected from Firebase and must remain so until the separate staging rehearsal is designed, reviewed and explicitly approved.
+
+
+## 18. Migration integrity audit — 2026-11-21
+
+Run the independent offline audit:
+
+```bash
+npm run audit:legacy-migration-integrity -- manifest.json source-documents.json normalized-documents.json
+```
+
+The auditor checks document-count parity and collection/order identity, then verifies every explicitly retained or renamed value, each declared default, approved drops and status transformations. It compares nested objects, arrays, Date instances and timestamp-shaped objects without mutating the inputs.
+
+The synthetic rehearsal includes this audit as a required success gate. A rehearsal cannot report `passed` if the independent integrity report fails.
+
+This check is limited to the supplied in-memory files. It does not establish Firestore persistence, unique database document IDs, atomic server writes or production backup/restore capability.

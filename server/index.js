@@ -27,7 +27,7 @@ if (getApps().length === 0) initializeApp();
 
 // Candidate v2 endpoint. Do not deploy until legacy data migration,
 // complete Firestore rules, block policy and client rollout are ready.
-export const createPrivateChatV2 = onCall({ region: 'europe-west3' }, async request => {
+export const createPrivateChatV2 = onCall({ region: 'europe-west3', enforceAppCheck: true }, async request => {
     const uid = request.auth?.uid;
     if (!uid) throw new HttpsError('unauthenticated', 'Требуется вход в аккаунт');
 
@@ -101,7 +101,7 @@ export const createPrivateChatV2 = onCall({ region: 'europe-west3' }, async requ
  
 // Candidate v2 sending protocol: one transaction checks membership/state and
 // writes both the message and participants' previews. Not yet wired to the UI.
-export const sendPrivateMessageV2 = onCall({ region: 'europe-west3' }, async request => {
+export const sendPrivateMessageV2 = onCall({ region: 'europe-west3', enforceAppCheck: true }, async request => {
     const uid = request.auth?.uid;
     if (!isValidUserId(uid)) throw new HttpsError('unauthenticated', 'Требуется вход в аккаунт');
 
@@ -116,26 +116,26 @@ export const sendPrivateMessageV2 = onCall({ region: 'europe-west3' }, async req
 });
 
 // Candidate read-only v2 status check; intentionally not deployed or wired to legacy UI.
-export const getPrivateMessageStatusV2 = onCall({ region: 'europe-west3' }, async request => {
+export const getPrivateMessageStatusV2 = onCall({ region: 'europe-west3', enforceAppCheck: true }, async request => {
     return getPrivateMessageStatus(
         getFirestore(), request.auth?.uid, request.data?.chatId, request.data?.clientMessageId
     );
 });
 
 // Candidate v2 only. No client-selected sender or timestamp is trusted.
-export const markPrivateMessageReadV2 = onCall({ region: 'europe-west3' }, async request => {
+export const markPrivateMessageReadV2 = onCall({ region: 'europe-west3', enforceAppCheck: true }, async request => {
     return markPrivateMessageReadTransaction(
         getFirestore(), request.auth?.uid, request.data?.chatId, request.data?.messageId
     );
 });
 
 // Candidate v2 only: read-only recovery after reconnect or reinstall.
-export const getPrivateChatUnreadV2 = onCall({ region: 'europe-west3' }, async request => {
+export const getPrivateChatUnreadV2 = onCall({ region: 'europe-west3', enforceAppCheck: true }, async request => {
     return getPrivateChatUnreadCount(getFirestore(), request.auth?.uid, request.data?.chatId);
 });
 
 // Candidate v2 only: authenticated, read-only cursor-based history.
-export const getPrivateChatHistoryV2 = onCall({ region: 'europe-west3' }, async request => {
+export const getPrivateChatHistoryV2 = onCall({ region: 'europe-west3', enforceAppCheck: true }, async request => {
     try {
         const result = await loadPrivateChatHistory(
             request.auth?.uid, request.data, createFirestoreHistoryAdapter(getFirestore())

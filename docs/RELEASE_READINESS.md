@@ -381,3 +381,16 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [x] Preserved snapshot generation gating after asynchronous profile batch resolution.
 - [x] Root Checks passed on implementation/test HEAD `174e0d06174369fb48290850e3db14c74f3e93ab`: 467/467 tests, 0 failures; syntax validation passed for all 256 JavaScript files ([run 44896463096](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44896463096)).
 - [ ] Verify public/private profile display across two staging accounts with App Check.
+
+
+
+### Legacy signup and username registry migration — confirmed HOLD — 2026-11-21
+
+- [x] Confirmed Signup V2 is deliberately disabled in js/app.js: enabled=false, backendReady=false, legacyMigrationVerified=false.
+- [x] Confirmed legacy registration still performs browser-side username queries against users, creates users/{uid} and initialization documents directly, and can write client-selected profile fields.
+- [x] Confirmed the username preflight cannot safely query private users documents: Firestore returns full matching documents, not a redacted username-only result.
+- [ ] Export active production Rules and username registry read-only; obtain a backup before any migration.
+- [ ] Audit and dry-run the legacy username reservation backfill; resolve collisions without changing live data.
+- [ ] Complete two-account Signup V2/recovery staging with App Check and the full Rules suite.
+- [ ] Only then consider enabling Signup V2 and retiring legacy profile creation/query/lastLogin writes.
+- **Release decision: HOLD.** Do not grant broad users collection reads or client writes to protected profile fields to keep the legacy signup path alive.

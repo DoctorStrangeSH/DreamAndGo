@@ -652,3 +652,8 @@ Static review found that the five collection suites reused one Firebase Emulator
 ### SEC-RULES-CLIENT-CONTRACT-01 — client payload and Rules compatibility test — 2026-11-21
 
 Added `client-rules-contract.test.mjs`. It imports the actual five client validators, builds create payloads matching service behavior (including server timestamps and service-generated `notes` on books/movies/restaurants), and attempts to write each document against the isolated V1 Rules fixture. This tests a previously uncovered integration boundary between client validation and Firestore Rules rather than testing each schema independently. The suite is wired into npm test. Execution remains pending; this is not a test pass or production Rules approval.
+
+
+### SEC-RULES-CLIENT-CONTRACT-02 — update/delete lifecycle coverage — 2026-11-21
+
+Extended the client-to-Rules integration suite beyond create. For each of dreams, travels, books, movies and restaurants, the test now performs a representative partial update with a server `updatedAt`, verifies that rewriting `createdAt` is denied, and verifies owner deletion. The test remains pending execution; no runtime pass is claimed.

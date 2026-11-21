@@ -30,7 +30,7 @@
 | `users/{uid}/friendRequests/{fromUid}` | Получатель-владелец | Server | Server (accept/decline) | Server | Отправитель не может создавать запрос от чужого имени; согласованность с sentRequests |
 | `users/{uid}/sentRequests/{toUid}` | Отправитель-владелец | Server | Server | Server | Парная запись к входящему запросу |
 | `users/{uid}/blockedUsers/{blockedUid}` | Owner / Server | Server (пока нет безопасного клиентского протокола) | Server | Server | Блокировка проверяется сервером при создании диалога |
-| `users/{uid}/notifications/{id}` | Owner | Server event transaction only | Owner — только `read` и допустимый read-state; Server — создание | Owner — только если UX поддерживает удаление | Friend request/accept создаются в `mutateFriendshipV2` с фиксированным payload; message/achievement events ещё не реализованы |
+| `users/{uid}/notifications/{id}` | Owner | Server event transaction only | Owner — только `read` и допустимый read-state; Server — создание | Owner — только если UX поддерживает удаление | Friend request/accept, achievement и private-message events создаются доверенными server transactions с фиксированным payload; Rules/staging проверки открыты |
 | `users/{uid}/chats/{partnerUid}` (legacy index) | Owner | Server / временно только после миграции | Server | Server | Нельзя доверять клиенту запись unread, preview или metadata в чужой индекс |
 | `chats/{chatId}/messages/{messageId}` (legacy chat) | Participant | Server | Server; авторское редактирование/удаление — только через проверенный серверный протокол | Server | Текущий legacy client пишет сообщения и обе стороны индекса; прямой доступ не открывать без отдельной модели и правил |
 | `chats/{chatId}` (Chat V2) | Participant через callable; прямой клиентский доступ — Deny | Server | Server | Server | `createPrivateChatV2` создаёт чат и pair в транзакции |
@@ -110,7 +110,7 @@
 
 - [ ] Получить актуальные production Rules и подтвердить, что аварийный deny-all действительно опубликован.
 - [ ] Утвердить, сохраняется ли публичная мечта в V1.0 и через какую проекцию она доступна.
-- [x] Зафиксировать серверное создание friend-request/friend-accepted notifications с фиксированным payload в транзакции дружбы. Message/achievement notifications и Rules/staging проверки остаются открытыми.
+- [x] Зафиксировать серверное создание friend-request/friend-accepted, achievement и private-message notifications с фиксированным payload в доверенных серверных транзакциях. Notification Rules/staging проверки остаются открытыми.
 - [x] Перевести friendship writes на `mutateFriendshipV2`: Auth UID, App Check, проверка получателя и атомарная транзакция для обеих сторон; браузерные записи удалены из `FriendsService`.
 - [ ] Провести staging two-account проверку всех пяти операций и подтвердить App Check на реально развернутой callable.
 - [ ] Определить момент и совместимость миграции legacy chat → Chat V2.
@@ -172,7 +172,7 @@
 - Candidate client service no longer exposes any notification creation method.
 - `mutateFriendshipV2` is an Auth + App Check protected server callable. Its Admin SDK transaction creates only the fixed-schema friend-request and friend-accepted notification records at paths derived from authenticated actor and validated target UIDs.
 - Client read-state changes remain owner-scoped in the candidate service; actual authorization still depends on the not-yet-verified production Rules.
-- Message and achievement notification event sources are not yet implemented. Do not enable a generic notification creation endpoint.
+- Friend, achievement and private-message notification event sources are implemented in candidate server transactions. Do not enable a generic notification creation endpoint; dedicated Rules and staging verification remain open.
 
 
 ### Friendship notification lifecycle

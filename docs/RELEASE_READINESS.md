@@ -655,3 +655,6 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [x] Added field-type mismatch counts and non-zero CLI exit behavior.
 - [x] Added regression test for field-type mismatch detection.
 - [ ] Run root tests and syntax checks on the exact latest PR head.
+
+- [x] Dedicated GitHub Actions workflow now includes root unit tests and syntax checks before Firestore Emulator tests.
+- [ ] Require successful root tests, syntax checks and Emulator suite on the exact release head.

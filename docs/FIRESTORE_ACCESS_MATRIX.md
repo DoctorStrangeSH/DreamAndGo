@@ -294,3 +294,12 @@ No production rules or user data were changed. This inventory is source-derived 
 - Source: owner-provided Firebase Console screenshot.
 - The project identity is recorded for local Emulator configuration and future reviewed deployment instructions only. This does **not** verify the active Firestore database ID, export a timestamped copy of the published Rules, or authorize any production deployment.
 - The screenshot does not establish whether the app is connected to the default Firestore database or a named database. Confirm that separately before any Rules candidate is applied.
+
+
+### Firestore database target confirmed — 2026-11-21
+
+- Firebase Project ID: `dream-and-go`
+- Firestore database ID: `(default)` (owner-confirmed in Firebase Console)
+- The local Emulator / candidate Rules work must target the default Firestore database in project `dream-and-go`.
+- This confirms the target identity for planning only. It does not authorize deployment or change the published recursive deny-all Rules.
+- Before any production change, retain a timestamped export of the currently published deny-all Rules and verify the project/database selector in the Firebase Console one final time.

@@ -1,0 +1,22 @@
+[
+  {
+    "collection": "dreams",
+    "fields": {
+      "title": "string",
+      "status": "string",
+      "createdAt": "timestamp",
+      "updatedAt": "timestamp"
+    },
+    "status": "in_progress"
+  },
+  {
+    "collection": "books",
+    "fields": {
+      "title": "string",
+      "author": "string",
+      "status": "string",
+      "pages": "integer"
+    },
+    "status": "finished"
+  }
+]

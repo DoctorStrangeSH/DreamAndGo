@@ -272,3 +272,14 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Extended the Firestore Emulator profile-stats journey to verify the exact notification schema and idempotent repeat refresh.
 - [ ] Verify root tests, syntax checks and Emulator workflow on the exact updated candidate HEAD.
 - [ ] Complete owner-only notification Rules tests and two-account staging validation.
+
+
+### Trusted private-message notifications — 2026-11-21
+
+- [x] The candidate `sendPrivateMessageV2` transaction now creates the recipient's fixed-schema `message` notification alongside the message, chat sequence, previews and unread increment.
+- [x] Notification recipient is derived from the validated chat participant pair; sender, chat ID and a bounded 120-character preview come from the trusted transaction inputs.
+- [x] Deterministic `message_{serverMessageId}` document IDs make retries idempotent: a repeated message request returns through the existing-message branch and cannot increment unread or create another notice.
+- [x] Emulator regression coverage checks the exact payload and verifies that retries leave exactly one notification.
+- [ ] Verify the new Emulator workflow and final candidate Checks on the exact HEAD.
+- [ ] Add notification-specific Firestore Rules for owner reads and owner-only `read` updates; server-created notices must remain client-uncreatable.
+- [ ] Validate friend, achievement and message notices with two staging accounts and App Check.

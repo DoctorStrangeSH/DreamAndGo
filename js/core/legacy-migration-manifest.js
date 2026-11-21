@@ -7,6 +7,13 @@ const COLLECTION_STATUSES = Object.freeze({
 });
 const COLLECTIONS = new Set(Object.keys(COLLECTION_STATUSES));
 const FIELD_ACTIONS = new Set(['keep', 'rename', 'drop', 'default', 'manual_review']);
+const TARGET_FIELDS = Object.freeze({
+    dreams: new Set(['title','category','status','description','progress','deadline','steps','createdAt','updatedAt']),
+    travels: new Set(['title','type','status','location','description','budget','rating','notes','photos','createdAt','updatedAt']),
+    books: new Set(['title','author','status','genres','year','totalPages','currentPage','userRating','review','quotes','notes','createdAt','updatedAt']),
+    movies: new Set(['movieId','title','originalTitle','overview','poster','backdrop','voteAverage','voteCount','rating','releaseDate','genreIds','runtime','tagline','budget','productionCountries','status','userRating','review','notes','createdAt','updatedAt']),
+    restaurants: new Set(['name','cuisine','status','address','visitDate','avgBill','userRating','favoriteDishes','review','photos','notes','createdAt','updatedAt'])
+});
 const MANIFEST_VERSION = 1;
 
 /**
@@ -56,15 +63,26 @@ export function validateLegacyMigrationManifest(manifest) {
             }
             if (seenSources.has(field.source)) errors.push(`duplicate_source_field:${collection.name}:${field.source}`);
             seenSources.add(field.source);
+            if (field.action === 'keep' && !TARGET_FIELDS[collection.name].has(field.source)) {
+                errors.push(`unknown_keep_target:${collection.name}:${field.source}`);
+            }
             if (field.action === 'rename' &&
                 (typeof field.target !== 'string' || field.target.length < 1 || field.target.length > 64)) {
                 errors.push(`rename_target_required:${collection.name}:${field.source}`);
             }
+            if (field.action === 'rename' && typeof field.target === 'string' &&
+                !TARGET_FIELDS[collection.name].has(field.target)) {
+                errors.push(`unknown_rename_target:${collection.name}:${field.source}`);
+            }
             if (field.action === 'default' && !Object.hasOwn(field, 'value')) {
                 errors.push(`default_value_required:${collection.name}:${field.source}`);
             }
-            if (field.action === 'manual_review' && field.resolution !== 'documented') {
-                errors.push(`manual_review_unresolved:${collection.name}:${field.source}`);
+            if (field.action === 'default' &&
+                (typeof field.target !== 'string' || !TARGET_FIELDS[collection.name].has(field.target))) {
+                errors.push(`default_target_required:${collection.name}:${field.source}`);
+            }
+            if (field.action === 'manual_review') {
+                errors.push(`manual_review_requires_concrete_action:${collection.name}:${field.source}`);
             }
             if (field.action === 'drop' && field.dataLossApproval !== true) {
                 errors.push(`drop_requires_data_loss_approval:${collection.name}:${field.source}`);

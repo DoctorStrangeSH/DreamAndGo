@@ -87,7 +87,7 @@ test('movie V1 rules enforce owner CRUD, TMDB schema and timestamps', async () =
             ...validMovie(), productionCountries: [{ iso_3166_1: 'US', name: 'United States', admin: true }]
         }));
         await assertFails(setDoc(doc(alice, 'users/alice/movies/too-many-countries'), {
-            ...validMovie(), productionCountries: Array(31).fill({ iso_3166_1: 'US', name: 'United States' })
+            ...validMovie(), productionCountries: Array(11).fill({ iso_3166_1: 'US', name: 'United States' })
         }));
         await assertFails(setDoc(doc(alice, 'users/alice/movies/http-poster'), {
             ...validMovie(), poster: 'http://example.test/poster.jpg'

@@ -521,3 +521,15 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Added regression coverage for all five collections, atomic failure, input immutability, malformed entries and unsupported collections.
 - [ ] Run complete unit tests and syntax checks in CI on the exact current PR head.
 - [ ] Perform a separate staging backup/restore rehearsal only after security review and explicit approval. The synthetic snapshot is not a production backup.
+
+
+### Migration integrity audit — 2026-11-21
+
+- [x] Added an independent integrity auditor for source/normalized document count parity.
+- [x] Verifies every keep/rename value, explicit default, approved drop count and status mapping.
+- [x] Detects document order/collection identity mismatches and missing/changed values.
+- [x] Integrated the audit as a mandatory success gate in the synthetic rehearsal.
+- [x] Added standalone CLI `npm run audit:legacy-migration-integrity -- manifest.json source.json normalized.json`.
+- [x] Added tests for count mismatch, changed values, defaults, status maps, nested data and timestamps.
+- [ ] Confirm full tests and syntax checks in CI on the exact latest PR head.
+- [ ] Database-level uniqueness and persistence checks remain reserved for a separately approved staging plan.

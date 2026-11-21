@@ -8,11 +8,18 @@ test('realtime social and chat subscriptions never read raw private user documen
     assert.match(source, /getPublicProfilesByIds/);
     assert.doesNotMatch(source, /getDoc\(/);
     assert.doesNotMatch(source, /toPublicProfile\(/);
-    for (const method of ['subscribeToChats', 'subscribeToFriends', 'subscribeToFriendRequests', 'subscribeToSentRequests']) {
+
+    const pairs = [
+        ['subscribeToChats', 'subscribeToFriends'],
+        ['subscribeToFriends', 'subscribeToFriendRequests'],
+        ['subscribeToFriendRequests', 'subscribeToSentRequests'],
+        ['subscribeToSentRequests', 'getUserProfiles']
+    ];
+    for (const [method, nextMethod] of pairs) {
         const start = source.indexOf('    ' + method + '(');
-        const next = source.indexOf('\n    ', start + 5);
-        const body = source.slice(start, next < 0 ? source.length : next);
-        assert.match(body, /getUserProfiles\(/, method + ' must use the batched public profile projection');
+        const end = source.indexOf('\n    ' + nextMethod + '(', start + 1);
+        assert.ok(start >= 0 && end > start, method + ' method boundary must exist');
+        assert.match(source.slice(start, end), /getUserProfiles\(/, method + ' must use batched public profile projection');
     }
 });
 

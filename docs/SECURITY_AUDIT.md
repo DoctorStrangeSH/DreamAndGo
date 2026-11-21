@@ -683,3 +683,8 @@ This does not establish the actual production legacy schema: the earlier Emulato
 ### SEC-LEGACY-COLLECTIONS-03 — metadata-only inventory input — 2026-11-21
 
 Tightened the offline auditor so it no longer accepts raw document `data` or document IDs. Each record must contain only collection name, a map of field names to coarse types, and an optional categorical status label. The tool rejects extra keys, including `id` and `data`. Reports include field-name/type frequencies and status frequencies, but never personal field values or document IDs. Added a sanitized example at `docs/examples/legacy-collection-metadata.example.json` and updated tests for rejection of raw values and identifiers. This reduces the chance of accidentally exporting personal content into an audit input. No production data was accessed.
+
+
+### SEC-LEGACY-COLLECTIONS-04 — auditor syntax and field type integrity — 2026-11-21
+
+A static re-review found a duplicate timestamp constant declaration introduced during the metadata-only refactor. Removed the duplicate block. Added expected coarse field types to each V1 collection schema and a `fieldTypeMismatches` counter. The CLI now returns a review-required exit code when field types differ from the V1 contract. Added regression coverage for mismatched book title and dream progress types. The tests and syntax checks have not yet been executed; no pass is claimed.

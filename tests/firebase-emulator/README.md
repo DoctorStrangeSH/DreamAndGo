@@ -65,3 +65,11 @@ npx firebase-tools emulators:exec --project demo-dreamandgo-chat-rules --only fi
 - The schema checks the TMDB movie ID, title/status/notes, optional metadata lengths, HTTPS poster/backdrop URLs (or null when artwork is absent), rating/count/runtime/budget bounds, allowed genre IDs, bounded production-country maps and timestamp integrity.
 - `movies-v1.rules.test.mjs` covers owner CRUD, guest/second-account isolation, unknown fields, invalid IDs/status/genres/countries, list bounds, non-HTTPS artwork, invalid date shape, rating/budget bounds and forged timestamps.
 - The movie Rules test is included in the Emulator package script. This is still a test-only candidate, not production Rules.
+
+
+## Isolated V1 restaurants Rules candidate
+
+- `collections-v1.rules` includes owner-only CRUD for `users/{uid}/restaurants/{restaurantId}`.
+- The schema enforces the restaurant field allowlist, required name/cuisine/status/notes/timestamps, cuisine and status enums, bounded address, nullable/formatted visit date, bill and rating ranges, bounded favorite-dish list, review length and HTTPS photo list limits.
+- `restaurants-v1.rules.test.mjs` covers owner CRUD, guest/second-account isolation, unknown fields, invalid cuisine/status/date, numeric bounds, excessive dishes/photos, non-HTTPS photos and timestamp forgery.
+- The test is included in the Emulator package script. This remains a test-only candidate, not production Rules.

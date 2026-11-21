@@ -303,3 +303,17 @@ No production rules or user data were changed. This inventory is source-derived 
 - The local Emulator / candidate Rules work must target the default Firestore database in project `dream-and-go`.
 - This confirms the target identity for planning only. It does not authorize deployment or change the published recursive deny-all Rules.
 - Before any production change, retain a timestamped export of the currently published deny-all Rules and verify the project/database selector in the Firebase Console one final time.
+
+
+### SEC-CLIENT-CUTOVER-01 — server-backed signup and Chat V2 are not yet active in the application — 2026-11-21
+
+**Status:** confirmed static integration gap; rollout intentionally disabled; no production change made.
+
+- `js/app.js` constructs `AuthService` with `enabled: false`, `backendReady: false`, and `legacyMigrationVerified: false`. Therefore `canUseSignupV2()` is false, and the browser remains on the legacy signup path.
+- The legacy `AuthService.signUpWithEmail()` still queries the global `users` collection for username uniqueness, then creates `users/{uid}` and `_init` documents directly from the browser. Those operations are denied by the owner-confirmed published deny-all Rules. Do not enable broad profile create/list rules to make this legacy path work.
+- `registerProfileV2` and `getRegistrationStateV2` callable endpoints exist and require Auth plus App Check, but V2 signup is deliberately not wired on by default. The server registration function also remains closed by `system/usernameRegistry` until backfill readiness is proven.
+- `js/app.js` registers the existing `ChatModule`; `js/modules/chat/chat.js` imports legacy `ChatService`. `js/services/chat-v2-callable.service.js` explicitly says it is candidate-only and is not imported by legacy chat. Chat V2 callable backend and UI/session primitives therefore do not constitute an integrated user-facing Chat V2 release.
+- Legacy `ChatService` directly writes message documents and both participants' chat indexes. This is incompatible with a secure owner-only authorization model and must not be enabled by broad client write rules.
+- The existing candidate signup flow and Chat V2 components remain rollout-gated. Keep both disabled until schema migration, username registry backfill, callable deployment, App Check verification, chat-history migration, client integration, and two-account staging are complete.
+
+**Recovery consequence:** do not publish a partial allowlist that restores only profile reads or generic authenticated writes. First complete the end-to-end client/server cutover; then test the exact candidate Rules against all MUST flows. The deny-all rules remain the safe production baseline in the meantime.

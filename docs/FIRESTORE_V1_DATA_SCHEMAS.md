@@ -161,3 +161,10 @@ The current `tests/firebase-emulator/owner-read.rules` is a deliberately limited
 - If `budget` is supplied, it is an atomic nested-map replacement and must contain exactly `planned`, `spent`, and `currency` with the same type/range/enum constraints as create. Partial nested budget fragments are rejected to avoid silently dropping sibling values.
 - Unknown nested budget keys are rejected by the client validator. The final Firestore Rules candidate must enforce the same exact key set and value constraints.
 - The service treats statistics refresh as derived/best-effort work after the primary write; a secondary refresh failure must not cause a retry of a committed travel write.
+
+
+### Movie collection validation follow-up — 2026-11-21
+
+- Movie metadata fields remain bounded by the client allowlist: TMDB identifier, title/text lengths, HTTPS poster/backdrop URLs, rating ranges, integer counters, release date, known genre IDs, runtime, budget, country map keys, status, user rating and review.
+- Regression coverage explicitly rejects impossible calendar dates and duplicate genre IDs. The authoritative Firestore Rules candidate must enforce corresponding types/ranges and nested country-map key constraints.
+- Statistics refresh is derived work after the primary movie write. Its failure must not cause the client to retry a movie create/update that Firestore already committed.

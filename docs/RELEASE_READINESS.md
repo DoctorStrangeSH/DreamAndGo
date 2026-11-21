@@ -491,3 +491,13 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [x] Owner explicitly confirmed Web App ID `1:185825350373:web:749e60926a0c6294f7fa0c`; it exactly matches `js/config/firebase.js` on the candidate branch.
 - [x] No Firebase config change required.
 - [ ] Verify App Check enforcement on deployed callable endpoints in staging; a matching App ID alone does not prove enforcement.
+
+
+### Live PR checkpoint — 2026-11-21
+
+- Current PR #1 head reviewed: `2b938f4513400fc11fb2be3ec61690056c626f00` on `refactor/security-foundation`, targeting `main`.
+- GitHub reports PR #1 open, not merged, and `mergeable: false` at this review. The PR currently reports 297 changed files, 29,766 additions and 7,464 deletions; review the live diff again before any integration attempt.
+- GitHub returned no combined status checks and no workflow runs for this exact HEAD. Do not carry forward the 471/471 or earlier Emulator results as if they tested this commit.
+- Trusted notification generation is implemented in candidate server transactions. Isolated notification Rules coverage and earlier Emulator runs are recorded in the roadmap, but exact-HEAD verification and two-account staging remain open.
+- The limited `owner-read.rules` fixture remains a recovery prototype: owner reads are covered, dreams have a narrow validated write path, and travels/books/movies/restaurants remain write-denied. It is not a complete V1.0 Rules candidate.
+- **Decision remains HOLD.** No merge, production Rules change, Functions deployment, username migration or live data mutation is authorized by this checkpoint.

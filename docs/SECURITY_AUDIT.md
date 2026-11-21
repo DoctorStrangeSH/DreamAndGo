@@ -688,3 +688,8 @@ Tightened the offline auditor so it no longer accepts raw document `data` or doc
 ### SEC-LEGACY-COLLECTIONS-04 — auditor syntax and field type integrity — 2026-11-21
 
 A static re-review found a duplicate timestamp constant declaration introduced during the metadata-only refactor. Removed the duplicate block. Added expected coarse field types to each V1 collection schema and a `fieldTypeMismatches` counter. The CLI now returns a review-required exit code when field types differ from the V1 contract. Added regression coverage for mismatched book title and dream progress types. The tests and syntax checks have not yet been executed; no pass is claimed.
+
+
+### SEC-CI-EMULATOR-03 — root quality gates included in CI — 2026-11-21
+
+The dedicated workflow now runs `npm test` and `npm run check` before installing/running the Firestore Emulator suite. Pull-request path filters now include repository tests, core policies and scripts, in addition to Emulator files. This ensures changes to the legacy inventory tool trigger the checks rather than relying solely on pushes to the feature branch. Execution on the latest head remains unconfirmed.

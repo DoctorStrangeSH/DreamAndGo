@@ -57,3 +57,11 @@ npx firebase-tools emulators:exec --project demo-dreamandgo-chat-rules --only fi
 - The candidate enforces the book field allowlist, required title/author/status/notes/timestamps, status and genre allowlists, year/page/rating bounds, `currentPage <= totalPages`, review/quote limits and immutable/server timestamps.
 - `books-v1.rules.test.mjs` covers owner CRUD, guest and second-account isolation, unknown fields, invalid enums/genres, page overflow, numeric bounds, quote bounds and timestamp forgery.
 - The test is included in the Emulator package script. This remains a test-only staged candidate, not production Rules.
+
+
+## Isolated V1 movies Rules candidate
+
+- `collections-v1.rules` now includes an explicit owner-only CRUD matcher for `users/{uid}/movies/{movieId}`.
+- The schema checks the TMDB movie ID, title/status/notes, optional metadata lengths, HTTPS poster/backdrop URLs (or null when artwork is absent), rating/count/runtime/budget bounds, allowed genre IDs, bounded production-country maps and timestamp integrity.
+- `movies-v1.rules.test.mjs` covers owner CRUD, guest/second-account isolation, unknown fields, invalid IDs/status/genres/countries, list bounds, non-HTTPS artwork, invalid date shape, rating/budget bounds and forged timestamps.
+- The movie Rules test is included in the Emulator package script. This is still a test-only candidate, not production Rules.

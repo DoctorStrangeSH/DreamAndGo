@@ -101,7 +101,7 @@ function validateDocument(collection, document) {
             case 'movies.runtime': valid = rangeInt(value, 0, 1000); break;
             case 'movies.tagline': valid = boundedString(value, 300); break;
             case 'movies.budget': valid = rangeInt(value, 0, 1e11); break;
-            case 'movies.productionCountries': valid = Array.isArray(value) && value.length <= 30 && value.every(item =>
+            case 'movies.productionCountries': valid = Array.isArray(value) && value.length <= 10 && value.every(item =>
                 item && typeof item === 'object' && !Array.isArray(item) &&
                 Object.keys(item).length === 2 && boundedString(item.iso_3166_1, 2, 1) &&
                 boundedString(item.name, 80, 1)); break;

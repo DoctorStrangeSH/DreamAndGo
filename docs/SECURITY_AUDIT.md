@@ -723,3 +723,10 @@ Added `js/core/legacy-document-normalizer.js`, a pure in-memory transformation f
 Validation includes required fields, enums, string limits, numeric ranges, dates, HTTPS URLs, nested maps/lists, unique values, timestamp metadata and cross-field book page constraints. Manual-review actions are deliberately non-executable and must be replaced by a concrete reviewed action. The function does not connect to Firestore or write data. Synthetic tests only; no user documents or production data were accessed.
 
 The normalizer returns the normalized document values to its caller, so it must only be used in a trusted local/staging process with appropriately handled input/output. Its metadata explicitly reports that normalized values are returned and document IDs are not included.
+
+
+### SEC-LEGACY-MIGRATION-04 — synthetic all-or-nothing rehearsal — 2026-11-21
+
+Added `js/core/legacy-migration-rehearsal.js` and a CLI entrypoint. The rehearsal accepts only an in-memory array of synthetic `{collection, document}` records and an approved manifest. Every document is passed through the V1 normalizer. If any entry fails, the entire batch is blocked and the returned normalized batch is empty; no partial success can be mistaken for a completed migration.
+
+The function captures an immutable copy of the input and returns a restore preview. This only demonstrates in-memory source preservation and a deterministic rollback preview. It is not a Firestore backup, transaction, production restore test or authorization to migrate real users. The module has no Firebase SDK, network or write path.

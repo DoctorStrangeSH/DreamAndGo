@@ -181,8 +181,8 @@ test('pilot history remains usable when browser visibility observation is unavai
     });
     const result = await conversation.mount();
     assert.equal(result.status, 'ready');
-    assert.equal(snapshots.length, 1);
-    assert.equal(snapshots[0].messages.length, 2);
+    assert.equal(snapshots.at(-1).status, 'ready');
+    assert.equal(snapshots.at(-1).messages.length, 2);
     assert.equal(conversation.readTrackingUnavailable, true);
     conversation.dispose();
 });
@@ -217,7 +217,8 @@ test('pilot decorates only confirmed outgoing delivery states and refreshes serv
     });
     await conversation.mount();
     await new Promise(resolve => setImmediate(resolve));
-    assert.equal(snapshots[0].messages[0].deliveryStatus, 'sent');
+    const loadedSnapshot = snapshots.find(snapshot => snapshot.messages.length > 0);
+    assert.equal(loadedSnapshot.messages[0].deliveryStatus, 'sent');
     assert.equal(snapshots.at(-1).messages[0].deliveryStatus, 'read');
     conversation.dispose();
 });

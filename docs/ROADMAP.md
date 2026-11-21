@@ -380,3 +380,13 @@ Dream&Go — социальное пространство мечтаний, п�
 - [ ] Run the Emulator suite against the exact candidate HEAD and fix any Rules compiler/runtime failures.
 - [ ] Add equivalent isolated Rules + Emulator coverage for books, movies and restaurants. Dreams retain their existing isolated schema rule but need broader CRUD/timestamp tests.
 - **Safety:** this is not the production Rules file. Existing production deny-all remains untouched; no deploy performed.
+
+
+### Firestore Rules candidate — books slice — 2026-11-21
+
+- [x] Added an explicit schema-specific owner CRUD matcher for `users/{uid}/books/{bookId}` to the isolated V1 fixture.
+- [x] Enforced exact field allowlist, required title/author/status/notes/timestamps, status/genre allowlists, year/page/rating bounds, page cross-field invariant, review/quote bounds and immutable/server timestamps.
+- [x] Added `books-v1.rules.test.mjs` covering owner CRUD, guest/other-user denial and invalid book payloads.
+- [x] Included the book test in the Emulator package script.
+- [ ] Execute the complete Emulator suite on the exact current HEAD; no test pass is claimed.
+- [ ] Continue with movies, restaurants and broader dreams CRUD coverage.

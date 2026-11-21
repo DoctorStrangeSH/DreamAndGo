@@ -248,9 +248,9 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Recipient, actor, message text, icon, color, route, read state and timestamp are derived by server code; no client notification payload is accepted.
 - [x] Notification IDs are deterministic per actor/event type, so callable retries cannot create an unbounded series of duplicate notification documents.
 - [x] Extended friendship transaction tests to assert exact notification recipient, schema and transaction write.
-- [ ] Add trusted notification generation for V1.0 message and achievement events after their event contracts are verified.
-- [ ] Complete notification Rules Emulator tests and two-account staging validation.
-- **Status:** friend-request and friend-accepted notification writes are implemented in the candidate server transaction; CI and staging are not yet verified.
+- [x] Add trusted server-side notification generation for friend, achievement and private-message events; achievement and message event writes are covered by dedicated transaction/Emulator tests.
+- [ ] Complete notification-specific Rules Emulator tests and two-account staging validation.
+- **Status:** all three notification event sources are implemented in candidate code; they are not production-ready until Rules and staging acceptance.
 
 
 ### Friendship notification lifecycle cleanup — 2026-11-21

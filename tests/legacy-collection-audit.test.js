@@ -95,3 +95,12 @@ test('detects field type mismatches against the V1 collection contract', () => {
     ]);
     assert.equal(report.summary.fieldTypeMismatches, 2);
 });
+
+
+test('requires categorical status metadata whenever a status field exists', () => {
+    const report = auditLegacyCollectionSnapshot([
+        { collection: 'books', fields: { title: 'string', author: 'string', status: 'string' } },
+        { collection: 'dreams', fields: { title: 'string', 'unexpected field': 'string' }, status: 'dreaming' }
+    ]);
+    assert.equal(report.summary.invalidRecords, 2);
+});

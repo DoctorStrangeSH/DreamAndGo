@@ -226,3 +226,11 @@
 - [ ] Obtain/review the active production Firestore Rules and integrate the approved notification contract into the complete production Rules configuration. The candidate branch has no root `firestore.rules` or `firebase.json`; isolated fixtures are test-only.
 - [ ] Validate friend, achievement and message notifications across two staging accounts with App Check.
 - **Exit condition:** candidate event generation and isolated Rules coverage are tested; production authorization and staging acceptance are still open.
+
+
+### Residual profile rendering hardening — 2026-11-21
+
+- [x] Audited profile own-collection cards and summary counts; user-authored text is escaped and counters use the bounded `getHomeSnapshot` projection.
+- [x] Audited dream status label rendering; switched to own-key lookup so inherited object properties cannot be rendered as labels.
+- [x] Added a regression test for unknown/prototype-key dream statuses.
+- [ ] Verify Root Checks on the exact candidate head.

@@ -120,6 +120,35 @@ export function validateBookInput(raw, { partial = false } = {}) {
     return out;
 }
 
+
+// Validate cross-field invariants for partial book updates against the
+// persisted document. A partial payload alone cannot prove page consistency.
+export function validateBookUpdateInput(existing, rawUpdates) {
+    const updates = validateBookInput(rawUpdates, { partial: true });
+    const changesPageBounds =
+        Object.hasOwn(updates, 'currentPage') ||
+        Object.hasOwn(updates, 'totalPages');
+
+    if (changesPageBounds) {
+        const totalPages = Object.hasOwn(updates, 'totalPages')
+            ? updates.totalPages
+            : existing?.totalPages ?? 0;
+        const currentPage = Object.hasOwn(updates, 'currentPage')
+            ? updates.currentPage
+            : existing?.currentPage ?? 0;
+
+        if (!Number.isSafeInteger(totalPages) || totalPages < 0 || totalPages > 100000 ||
+            !Number.isSafeInteger(currentPage) || currentPage < 0 || currentPage > 100000) {
+            throw new TypeError('Сначала исправь общее количество и текущую страницу книги');
+        }
+        if (currentPage > totalPages) {
+            throw new TypeError('Текущая страница не может превышать общее количество страниц');
+        }
+    }
+
+    return updates;
+}
+
 export function validateMovieInput(raw, { partial = false } = {}) {
     const input = record(raw, KEYS.movie, 'фильм');
     const out = {};

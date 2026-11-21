@@ -368,5 +368,6 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [x] Removed raw browser reads of another user's users/{uid} document from ChatService.
 - [x] Chat list now batches unique partner UIDs through the existing Auth + App Check protected getPublicProfilesV2 callable and uses only the server allowlisted projection.
 - [x] Added a contract regression test to prevent reintroducing raw private profile reads.
+- [x] Root Checks passed on implementation/test HEAD `0642afbffeee2a510e281c28a97541f2fd262bc6`: 465/465 tests, 0 failures; syntax validation passed for all 255 JavaScript files ([run 44896246436](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44896246436)).
 - [ ] Verify private-profile fallback and public-profile chat display with two staging accounts and App Check.
 - [ ] Keep legacy chat message/index migration and production Rules review as independent HOLD gates.

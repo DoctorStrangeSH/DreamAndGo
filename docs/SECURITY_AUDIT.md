@@ -306,3 +306,16 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 - Added regression tests rejecting client-supplied isPublic, createdAt and updatedAt fields across all five collection input validators.
 
 **Verification required:** root CI for the new tests; then add the full five-collection owner/guest/cross-user Rules cases only after the real production Rules and indexes are exported and reviewed. No production Rules or Functions were changed.
+
+
+
+### SEC-CHAT-PRIVACY-01 — chat list read raw private user profiles — 2026-11-21
+
+**Status:** fixed in candidate client code; regression test added. CI verification pending for this exact change.
+
+- The legacy chat service fetched users/{partnerUid} directly from the browser, then removed private fields in JavaScript with toPublicProfile(). Client-side projection is not an authorization boundary: the full Firestore document had already been delivered to the browser.
+- Chat list loading now gathers unique partner UIDs and requests their profiles through the existing App Check protected getPublicProfilesV2 callable in bounded batches, reusing the allowlisted server projection and privacy opt-in check.
+- The single-profile helper now uses the same callable; direct reads of another user's private users/{uid} document were removed from ChatService.
+- Added a service-contract regression test that rejects raw users/{uid} reads and requires the callable batch path.
+
+**Remaining:** verify the client cutover with two staging accounts and App Check; verify private profiles intentionally fall back to the generic chat label; keep production Rules owner-only for users/{uid}. Legacy chat message/index migration and cutover remain separate release gates. No production Rules or Functions were changed.

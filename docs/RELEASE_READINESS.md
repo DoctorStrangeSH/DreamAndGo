@@ -473,3 +473,14 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [ ] Capture timestamped export of the published deny-all Rules for rollback before any production change.
 - [ ] Complete full Emulator and two-account staging authorization suite.
 - **No production Rules changes are authorized by this confirmation.**
+
+
+### Client/server cutover release gates — 2026-11-21
+
+- [x] Signup V2 rollout is confirmed disabled; legacy registration remains the active browser path.
+- [x] Chat V2 backend primitives exist but are not integrated into the app; legacy ChatModule/ChatService remains active.
+- [x] Legacy signup and chat perform direct Firestore operations that are incompatible with the published deny-all baseline and must not be re-enabled by broad rules.
+- [ ] Complete username registry migration and activate signup V2 only after staging acceptance.
+- [ ] Complete Chat V2 client/server cutover, history migration and two-account staging.
+- [ ] Complete final Rules Emulator suite before production rules change.
+- **Release decision: HOLD.** Do not relax deny-all to accommodate legacy client writes.

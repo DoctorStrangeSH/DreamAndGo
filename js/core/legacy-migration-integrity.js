@@ -86,8 +86,11 @@ export function auditLegacyMigrationIntegrity({ sourceDocuments, normalizedDocum
             }
             const target = mapping.action === 'rename' ? mapping.target : field;
             expectedTargets.add(target);
+            const expectedValue = field === 'status'
+                ? (config.statusMap?.[value] ?? value)
+                : value;
             if (!Object.hasOwn(outputEntry.document, target) ||
-                !sameValue(value, outputEntry.document[target])) {
+                !sameValue(expectedValue, outputEntry.document[target])) {
                 report.failures.push(`preserved_value_mismatch:${index}:${field}`);
                 continue;
             }
@@ -105,6 +108,12 @@ export function auditLegacyMigrationIntegrity({ sourceDocuments, normalizedDocum
                 } else {
                     report.defaultedFields++;
                 }
+            }
+        }
+
+        for (const target of Object.keys(outputEntry.document)) {
+            if (!expectedTargets.has(target)) {
+                report.failures.push(`unexpected_target_field:${index}:${target}`);
             }
         }
 

@@ -15,5 +15,5 @@ test('every exported V2 callable enforces Firebase App Check', () => {
         .filter(([, , options]) => !/\benforceAppCheck\s*:\s*true\b/.test(options))
         .map(([, name]) => name);
 
-    assert.deepEqual(missing, [], \`Callables missing enforceAppCheck: true: \${missing.join(', ')}\`);
+    assert.deepEqual(missing, [], 'Callables missing enforceAppCheck: true: ' + missing.join(', '));
 });

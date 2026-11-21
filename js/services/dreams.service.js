@@ -69,7 +69,7 @@ export class DreamsService {
             };
 
             const docRef = await addDoc(dreamsRef, newDream);
-            await this.updateUserStats(userId);
+            await this.updateUserStatsBestEffort(userId);
 
             return { success: true, id: docRef.id };
         } catch (error) {
@@ -101,7 +101,7 @@ export class DreamsService {
                 ...safeData,
                 updatedAt: serverTimestamp()
             });
-            await this.updateUserStats(userId);
+            await this.updateUserStatsBestEffort(userId);
             return { success: true };
         } catch (error) {
             console.error('Ошибка обновления мечты:', error);
@@ -116,7 +116,7 @@ export class DreamsService {
         try {
             const dreamRef = doc(this.db, 'users', userId, 'dreams', dreamId);
             await deleteDoc(dreamRef);
-            await this.updateUserStats(userId);
+            await this.updateUserStatsBestEffort(userId);
             return { success: true };
         } catch (error) {
             console.error('Ошибка удаления мечты:', error);
@@ -136,6 +136,14 @@ export class DreamsService {
         } catch (error) {
             console.error('Ошибка загрузки мечты:', error);
             return null;
+        }
+    }
+
+    async updateUserStatsBestEffort(userId) {
+        try {
+            await this.updateUserStats(userId);
+        } catch (statsError) {
+            console.warn('Основная операция сохранена, но статистика не обновилась:', statsError);
         }
     }
 

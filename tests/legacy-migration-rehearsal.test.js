@@ -36,8 +36,10 @@ test('rehearses all five synthetic collections atomically', () => {
     assert.equal(result.sourceDocuments, 5);
     assert.equal(result.normalizedCount, 5);
     assert.deepEqual(result.normalizedDocuments.map(item => item.collection), collections);
-    assert.equal(result.rollback.verified, true);
-    assert.deepEqual(result.rollback.restoredDocuments, documents);
+    assert.equal(result.rollbackPreview.snapshotCaptured, true);
+    assert.equal(result.rollbackPreview.inputMutated, false);
+    assert.equal(result.rollbackPreview.productionRestoreVerified, false);
+    assert.deepEqual(result.rollbackPreview.restoredDocuments, documents);
 });
 
 test('blocks the whole batch when one document fails validation', () => {
@@ -86,4 +88,11 @@ test('rejects non-array input without attempting any transformation', () => {
     assert.equal(result.status, 'blocked');
     assert.equal(result.migrationApplied, false);
     assert.deepEqual(result.blockers, ['documents_must_be_array']);
+});
+
+
+test('rejects empty batches rather than reporting a vacuous rehearsal pass', () => {
+    const result = runLegacyMigrationRehearsal({ documents: [], manifest: manifest() });
+    assert.equal(result.status, 'blocked');
+    assert.deepEqual(result.blockers, ['documents_must_not_be_empty']);
 });

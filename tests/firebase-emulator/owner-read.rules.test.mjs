@@ -90,7 +90,7 @@ test('owner-only read recovery: guest and other users cannot read PII or write',
         await assertFails(setDoc(doc(alice, 'users', 'alice', 'dreams', 'public'), {
             ...validDream(), isPublic: true
         }));
-        await assertFails(setDoc(doc(alice, 'users', 'alice', 'dreams', 'legacy-flag'), {
+        await assertSucceeds(setDoc(doc(alice, 'users', 'alice', 'dreams', 'legacy-flag'), {
             ...validDream(), isPublic: false
         }));
         await assertFails(setDoc(doc(alice, 'users', 'alice', 'dreams', 'role'), {

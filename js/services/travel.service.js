@@ -94,9 +94,14 @@ export class TravelService {
             // Очищаем кеш
             this.clearCache(userId);
             
-            // Обновляем статистику
-            await this.updateUserStats(userId);
-            
+            // Statistics are derived data. A failed refresh must not report
+            // a committed travel write as failed or invite a duplicate retry.
+            try {
+                await this.updateUserStats(userId);
+            } catch (statsError) {
+                console.warn('Путешествие сохранено, но статистика не обновилась:', statsError);
+            }
+
             // A confirmed write stays successful even when optional read-back fails.
             // Reporting failure after addDoc would invite a duplicate on retry.
             let storedData = newTravel;
@@ -137,7 +142,13 @@ export class TravelService {
             });
             
             this.clearCache(userId);
-            await this.updateUserStats(userId);
+            // The primary document update is committed. Stats are secondary and
+            // must not make the caller retry an already successful write.
+            try {
+                await this.updateUserStats(userId);
+            } catch (statsError) {
+                console.warn('Путешествие обновлено, но статистика не обновилась:', statsError);
+            }
 
             return { success: true };
         } catch (error) {

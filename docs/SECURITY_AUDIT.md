@@ -474,16 +474,9 @@ No production rules or user data were changed. This inventory is source-derived 
 **Recovery consequence:** do not publish a partial allowlist that restores only profile reads or generic authenticated writes. First complete the end-to-end client/server cutover; then test the exact candidate Rules against all MUST flows. The deny-all rules remain the safe production baseline in the meantime.
 
 
-### SEC-FIREBASE-APPID-01 — Console screenshot and repository Web App ID discrepancy — 2026-11-21
+### SEC-FIREBASE-APPID-01 — Console and repository Web App ID confirmed — 2026-11-21
 
-**Status:** owner confirmation required; no configuration changed.
-
-- Owner-provided Firebase Console screenshot visually shows Web App ID `1:185825350373:web:749c60926a0c6294f7fa0c`.
-- Both `main` and `refactor/security-foundation` currently configure `1:185825350373:web:749e60926a0c6294f7fa0c` in `js/config/firebase.js`.
-- The project ID and sender/project number match. The app ID differs at one character (`c` in the screenshot vs `e` in repository config).
-- This must be resolved from the Firebase Console's Web App configuration (or the app's Firebase SDK config snippet) before changing config or relying on App Check verification. Do not infer which value is correct from the screenshot transcription.
-- No Firebase config, App Check key, Auth settings, or production deployment was changed as part of this audit.
-
+**Status: resolved by owner confirmation.** The owner explicitly supplied `1:185825350373:web:749e60926a0c6294f7fa0c`, which exactly matches `js/config/firebase.js` on `refactor/security-foundation`. Project ID and project number also match. No Firebase config change is needed. This confirms the configured Web App ID only; it does not prove that App Check is enforced in production or that deployed callable endpoints have been verified. Those staging gates remain open.
 
 ### SEC-PRIVATE-VISIBILITY-01 — remove ambiguous public flags from new private records — 2026-11-21
 

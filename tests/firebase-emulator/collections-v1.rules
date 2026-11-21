@@ -77,7 +77,7 @@ service cloud.firestore {
 
     // Dream schema: title:string(1..120), category:enum, status:enum,
     // description:string(0..4000), progress:int(0..100),
-    // deadline:null|YYYY-MM-DD (format only), steps:list<=20 of
+    // deadline:null|empty|real YYYY-MM-DD calendar date, steps:list<=20 of
     // {text:string(1..200), done:bool}, isPublic:false on create,
     // createdAt/updatedAt:timestamp. Legacy documents may require migration.
     function isValidDreamStep(step) {
@@ -133,7 +133,7 @@ service cloud.firestore {
         data.progress is int && data.progress >= 0 &&
         data.progress <= 100 &&
         (data.deadline == null ||
-          (data.deadline is string && isValidCalendarDate(data.deadline))) &&
+          (data.deadline is string && (data.deadline == '' || isValidCalendarDate(data.deadline)))) &&
         areValidDreamSteps(data.steps) &&
         data.createdAt is timestamp &&
         data.updatedAt is timestamp;

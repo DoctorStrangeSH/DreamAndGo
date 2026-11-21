@@ -178,3 +178,8 @@
 ### Friendship notification lifecycle
 
 The server transaction creates fixed-schema friend-request and friend-accepted notifications. It also removes the pending request notification when the request is cancelled, accepted or rejected. These writes are atomic with the corresponding friendship/request state changes. No browser API can choose a notification recipient or payload. Rules must still allow only the owner to read their notification collection and update only the approved read-state field; this candidate behavior is not a substitute for Emulator and staging tests.
+
+
+### Trusted achievement notification event
+
+The candidate `refreshUserStatsV2` server flow writes a fixed-schema achievement notification to the authenticated owner's own notification collection only when a new achievement level is awarded by the server policy. Achievement state and its notification are written atomically. Stable IDs are keyed by achievement and level. The browser cannot select the recipient or payload. Owner-only read and read-state Rules still require Emulator and staging verification.

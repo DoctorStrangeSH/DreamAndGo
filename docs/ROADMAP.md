@@ -466,3 +466,7 @@ Dream&Go — социальное пространство мечтаний, п�
 - [ ] Only after reviewing real field names/statuses, define an explicit versioned migration mapping and dry-run planner. No migration is implemented.
 
 - [x] Hardened the legacy inventory input contract: it now accepts metadata-only records (field names, coarse types and categorical status), rejects document IDs/raw data fields, and includes a sanitized example JSON.
+
+- [x] Fixed a duplicate timestamp-constant declaration in the offline auditor before further work.
+- [x] Extended legacy inventory to detect field-type mismatches against the V1 contract for all five collections; CLI now exits non-zero when a type mismatch is found.
+- [ ] Execute root test suite and syntax checks on the exact latest commit; no runtime pass is claimed.

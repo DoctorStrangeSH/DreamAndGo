@@ -349,7 +349,7 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 
 ### SEC-USERNAME-BACKFILL-01 — require explicit backup acknowledgement before apply — 2026-11-21
 
-**Status:** implemented; emulator verification pending.
+**Status:** implemented and verified. Firebase Emulator workflow passed on implementation/test HEAD `e5f6aef2323c8e1a0175eaee323d3975de06aca7`: 7/7 Rules tests and 59/59 server/Auth/Firestore Emulator tests, 0 failures ([run 44896946136](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44896946136)). Root Checks passed on later candidate HEAD `8a5f59829ff932d2d03ab11a523d656dd386b4bc`: 469/469 tests, 0 failures; syntax validation passed for all 257 JavaScript files ([run 44897158331](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44897158331)).
 
 - The username reservation backfill previously required an explicit registration freeze for apply mode but did not separately require backup confirmation.
 - Added a second fail-closed input, `backupVerified: true`, to the migration helper. Apply now requires a verified-backup acknowledgement, frozen registration window and server timestamp provider.
@@ -361,7 +361,7 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 
 ### SEC-PERSONAL-READS-01 — owner guards for search and level reads — 2026-11-21
 
-**Status:** candidate fix and regression test added; CI pending.
+**Status:** candidate fix and regression test passed. Root Checks passed on candidate HEAD `8a5f59829ff932d2d03ab11a523d656dd386b4bc`: 469/469 tests, 0 failures; syntax validation passed for all 257 JavaScript files ([run 44897158331](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44897158331)).
 
 - SearchService previously accepted any supplied UID and queried that user's travels, restaurants, movies, books and dreams. Added an authenticated-owner check before starting, before/after each asynchronous collection read, before caching, and before returning results.
 - LevelService previously fetched users/{uid} without checking the active Firebase Auth UID. Added owner checks before the read and after the asynchronous read, discarding results if the active account changes.

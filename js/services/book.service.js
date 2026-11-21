@@ -1,7 +1,7 @@
 import { auth, db } from '../config/firebase.js';
 import { isAuthenticatedOwner, isValidFirestoreDocumentId } from '../core/owner-access-policy.js';
 import { refreshUserStats } from './profile-stats.service.js';
-import { validateBookUpdateInput } from '../core/collection-input-policy.js';
+import { validateBookInput, validateBookUpdateInput } from '../core/collection-input-policy.js';
 import { 
     collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc,
     query, orderBy, serverTimestamp, where

@@ -63,7 +63,6 @@ export class RestaurantService {
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
                 notes: '',
-                isPublic: true
             };
 
             const docRef = await addDoc(restaurantsRef, newRestaurant);

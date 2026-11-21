@@ -727,3 +727,6 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 
 - [x] Firestore Rules candidate enforces uniqueness for book genres/quotes, movie genre IDs and restaurant favorite dishes; negative Emulator cases added.
 - [ ] Confirm Rules compiler/runtime and full Emulator suite pass on exact latest HEAD.
+
+- [x] Movie production-country limit aligned to 10 across client, normalizer and Rules candidate to control Firestore Rules expression complexity.
+- [ ] Re-run full Firestore Emulator suite after expression-budget optimization.

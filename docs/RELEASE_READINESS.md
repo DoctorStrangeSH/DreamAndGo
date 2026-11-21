@@ -403,3 +403,12 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [x] Added Firestore Emulator tests rejecting apply when backup acknowledgement or registration freeze is missing.
 - [ ] Verify Root Checks and Firebase Emulator workflow on the final candidate commit.
 - [ ] Independently verify production backup and restore before any real backfill; the CLI flag is an operator acknowledgement, not proof.
+
+
+### Personal search and level read owner checks — 2026-11-21
+
+- [x] Added authenticated-owner checks to SearchService before and after each personal collection query and before cache/return.
+- [x] Added authenticated-owner checks to LevelService before and after reading users/{uid}.
+- [x] Added a regression test for both service contracts.
+- [ ] Verify Root Checks on the final candidate code commit.
+- [ ] Verify owner-only behavior against the complete production Firestore Rules export.

@@ -535,3 +535,12 @@ Dream&Go — социальное пространство мечтаний, п�
 - [ ] Database-level uniqueness and persistence checks remain reserved for a separately approved staging plan.
 
 - [x] Integrity auditor now validates and requires a complete approved Migration Manifest before comparing source and output files.
+
+
+### Firestore V1 calendar validation — 2026-11-21
+
+- [x] Added a shared Gregorian calendar-date predicate to the isolated V1 Rules candidate.
+- [x] Dream deadlines, movie release dates and restaurant visit dates now reject impossible dates (for example, February 30 and non-leap February 29).
+- [x] Added Emulator cases for impossible dates, leap-day acceptance and empty optional dream deadlines.
+- [ ] Run the Firestore Rules Emulator workflow on the exact updated branch head and review its compiler/runtime output.
+- [ ] Keep this fixture isolated; production Rules remain the confirmed deny-all baseline until the owner provides the active project/rules export and the complete path inventory is approved.

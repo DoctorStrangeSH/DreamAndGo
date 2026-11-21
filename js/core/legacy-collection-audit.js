@@ -2,27 +2,58 @@ const SCHEMAS = Object.freeze({
     dreams: {
         allowed: new Set(['title', 'category', 'status', 'description', 'progress', 'deadline', 'steps', 'createdAt', 'updatedAt']),
         required: ['title'],
-        statuses: new Set(['dreaming', 'in_progress', 'completed'])
+        statuses: new Set(['dreaming', 'in_progress', 'completed']),
+        expectedTypes: {
+            title: ['string'], category: ['string'], status: ['string'],
+            description: ['string'], progress: ['integer'], deadline: ['string', 'null'],
+            steps: ['array'], createdAt: ['timestamp'], updatedAt: ['timestamp']
+        }
     },
     travels: {
         allowed: new Set(['title', 'type', 'status', 'location', 'description', 'budget', 'rating', 'notes', 'photos', 'createdAt', 'updatedAt']),
         required: ['title', 'type', 'status'],
-        statuses: new Set(['planned', 'visited'])
+        statuses: new Set(['planned', 'visited']),
+        expectedTypes: {
+            title: ['string'], type: ['string'], status: ['string'], location: ['string'],
+            description: ['string'], budget: ['map'], rating: ['integer'], notes: ['string'],
+            photos: ['array'], createdAt: ['timestamp'], updatedAt: ['timestamp']
+        }
     },
     books: {
         allowed: new Set(['title', 'author', 'status', 'genres', 'year', 'totalPages', 'currentPage', 'userRating', 'review', 'quotes', 'notes', 'createdAt', 'updatedAt']),
         required: ['title', 'author', 'status'],
-        statuses: new Set(['want_to_read', 'reading', 'read'])
+        statuses: new Set(['want_to_read', 'reading', 'read']),
+        expectedTypes: {
+            title: ['string'], author: ['string'], status: ['string'], genres: ['array'],
+            year: ['integer', 'null'], totalPages: ['integer'], currentPage: ['integer'],
+            userRating: ['integer'], review: ['string'], quotes: ['array'], notes: ['string'],
+            createdAt: ['timestamp'], updatedAt: ['timestamp']
+        }
     },
     movies: {
         allowed: new Set(['movieId', 'title', 'originalTitle', 'overview', 'poster', 'backdrop', 'voteAverage', 'voteCount', 'rating', 'releaseDate', 'genreIds', 'runtime', 'tagline', 'budget', 'productionCountries', 'status', 'userRating', 'review', 'notes', 'createdAt', 'updatedAt']),
         required: ['movieId', 'title', 'status'],
-        statuses: new Set(['to_watch', 'watched'])
+        statuses: new Set(['to_watch', 'watched']),
+        expectedTypes: {
+            movieId: ['integer'], title: ['string'], originalTitle: ['string'],
+            overview: ['string'], poster: ['string', 'null'], backdrop: ['string', 'null'],
+            voteAverage: ['number', 'integer'], voteCount: ['integer'], rating: ['number', 'integer'],
+            releaseDate: ['string'], genreIds: ['array'], runtime: ['integer'],
+            tagline: ['string'], budget: ['integer'], productionCountries: ['array'],
+            status: ['string'], userRating: ['integer'], review: ['string'], notes: ['string'],
+            createdAt: ['timestamp'], updatedAt: ['timestamp']
+        }
     },
     restaurants: {
         allowed: new Set(['name', 'cuisine', 'status', 'address', 'visitDate', 'avgBill', 'userRating', 'favoriteDishes', 'review', 'photos', 'notes', 'createdAt', 'updatedAt']),
         required: ['name', 'cuisine', 'status'],
-        statuses: new Set(['want_to_visit', 'visited'])
+        statuses: new Set(['want_to_visit', 'visited']),
+        expectedTypes: {
+            name: ['string'], cuisine: ['string'], status: ['string'], address: ['string'],
+            visitDate: ['string', 'null'], avgBill: ['integer'], userRating: ['integer'],
+            favoriteDishes: ['array'], review: ['string'], photos: ['array'], notes: ['string'],
+            createdAt: ['timestamp'], updatedAt: ['timestamp']
+        }
     }
 });
 
@@ -44,6 +75,7 @@ export function auditLegacyCollectionSnapshot(records) {
         unknownFieldDocuments: 0,
         invalidStatus: 0,
         invalidTimestampDocuments: 0,
+        fieldTypeMismatches: 0,
         fields: {},
         observedStatuses: {}
     }]));
@@ -71,6 +103,8 @@ export function auditLegacyCollectionSnapshot(records) {
             const entry = summary.fields[field] ??= { count: 0, types: {} };
             entry.count++;
             entry.types[type] = (entry.types[type] ?? 0) + 1;
+            const expected = schema.expectedTypes[field];
+            if (expected && !expected.includes(type)) summary.fieldTypeMismatches++;
         }
 
         if (!Object.hasOwn(fields, 'createdAt')) summary.missingCreatedAt++;
@@ -101,7 +135,8 @@ export function auditLegacyCollectionSnapshot(records) {
         missingRequiredFields: 0,
         unknownFieldDocuments: 0,
         invalidStatus: 0,
-        invalidTimestampDocuments: 0
+        invalidTimestampDocuments: 0,
+        fieldTypeMismatches: 0
     });
 
     for (const summary of Object.values(collections)) {

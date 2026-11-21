@@ -229,7 +229,7 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 - Deterministic per-actor notification document IDs make retries idempotent for each event slot and prevent duplicate documents from repeated delivery.
 - Regression tests assert exact recipient paths and allowlisted payload values.
 
-**Remaining:** implement trusted message/achievement notifications only after confirming the authoritative event sources; add Rules tests proving owner-only reads and read-state updates; run the complete flow with two staging accounts. Do not treat this candidate change as permission to deploy Functions or loosen production Rules.
+**Remaining:** add Rules tests proving owner-only reads and read-state updates; run the complete notification flow with two staging accounts. Trusted achievement and private-message event sources are now documented in SEC-NOTIFY-04 and SEC-NOTIFY-05. Do not treat candidate code as permission to deploy Functions or loosen production Rules.
 
 
 ### SEC-NOTIFY-03 — stale friendship request notices — 2026-11-21

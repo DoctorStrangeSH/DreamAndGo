@@ -75,6 +75,22 @@ export async function sendPrivateMessageTransaction(db, uid, chatId, text, clien
         tx.set(db.collection('users').doc(partnerId).collection('chats').doc(uid), {
             partnerId: uid, chatId, ...preview, unread: FieldValue.increment(1)
         }, { merge: true });
+        // A message notification is part of the same trusted transaction as
+        // message creation. Its stable ID makes delivery idempotent on retries.
+        tx.create(db.collection('users').doc(partnerId).collection('notifications').doc(
+            `message_${messageId}`
+        ), {
+            type: 'message',
+            title: 'Новое сообщение',
+            message: text.slice(0, 120),
+            icon: 'bi-chat-dots',
+            color: 'primary',
+            link: '#chat',
+            fromUserId: uid,
+            chatId,
+            read: false,
+            createdAt
+        });
     });
 
     return { messageId, chatId };

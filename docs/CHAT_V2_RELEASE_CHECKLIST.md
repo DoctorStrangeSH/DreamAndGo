@@ -52,3 +52,14 @@ npx firebase-tools@latest firestore:databases:get "(default)" --project dream-an
 - [ ] Подтвердить блокировки, удаление/архивацию и сверку unread counters на staging.
 
 **Важно:** это завершает только внутренний UI-контракт квитанций в candidate pilot. Это не означает, что Chat V2 уже доступен пользователям или что production чат переключён.
+
+
+### Sender-side delivery status in pilot history — 2026-11-21
+
+- [x] The pilot conversation now decorates server history rows with delivery states only when a matching locally tracked server message ID exists.
+- [x] The sender checks the authenticated status endpoint for its own sent messages and renders `read` only after the server confirms the exact message ID.
+- [x] History refresh can update `sent → read`; an unconfirmed or failed request never fabricates a receipt.
+- [x] Added focused test for the authoritative sender receipt rendering path.
+- [ ] Verify repeated status refreshes and network recovery in a real browser staging session.
+
+The UI still uses candidate-only pilot components; legacy ChatModule remains untouched.

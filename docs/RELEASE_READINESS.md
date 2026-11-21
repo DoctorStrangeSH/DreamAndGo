@@ -371,3 +371,13 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [x] Root Checks passed on implementation/test HEAD `0642afbffeee2a510e281c28a97541f2fd262bc6`: 465/465 tests, 0 failures; syntax validation passed for all 255 JavaScript files ([run 44896246436](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44896246436)).
 - [ ] Verify private-profile fallback and public-profile chat display with two staging accounts and App Check.
 - [ ] Keep legacy chat message/index migration and production Rules review as independent HOLD gates.
+
+
+
+### Realtime social profile privacy cutover — 2026-11-21
+
+- [x] Removed raw users/{uid} reads from RealtimeService profile lookups.
+- [x] Chat, friends, incoming requests and sent requests now resolve profiles through the App Check protected getPublicProfilesV2 callable with deduplicated, bounded batches.
+- [x] Preserved snapshot generation gating after asynchronous profile batch resolution.
+- [ ] Confirm the new realtime service regression suite passes on the final candidate HEAD.
+- [ ] Verify public/private profile display across two staging accounts with App Check.

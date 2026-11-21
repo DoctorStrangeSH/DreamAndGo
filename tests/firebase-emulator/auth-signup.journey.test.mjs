@@ -14,7 +14,7 @@ import { getRegistrationState } from '../../server/registration-state.js';
 assert.ok(process.env.FIREBASE_AUTH_EMULATOR_HOST, 'Auth emulator required');
 assert.ok(process.env.FIRESTORE_EMULATOR_HOST, 'Firestore emulator required');
 
-const projectId = 'demo-dreamandgo-chat-rules';
+const projectId = 'demo-dreamandgo-auth-signup';
 const client = initializeClientApp({
     apiKey: 'fake-emulator-key', projectId, authDomain: projectId + '.firebaseapp.com'
 }, 'candidate-signup-journey');

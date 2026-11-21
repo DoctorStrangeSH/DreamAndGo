@@ -161,3 +161,16 @@ test('detects unexpected target fields that are not authorized by the manifest',
     assert.equal(report.status, 'blocked');
     assert.ok(report.blockers.some(item => item.includes('unexpected_target_field:0:unreviewedField')));
 });
+
+
+test('blocks integrity audit when the manifest is not approved', () => {
+    const unapproved = structuredClone(manifest);
+    unapproved.approved = false;
+    const report = auditLegacyMigrationIntegrity({
+        sourceDocuments: source,
+        normalizedDocuments: normalized,
+        manifest: unapproved
+    });
+    assert.equal(report.status, 'blocked');
+    assert.ok(report.blockers.includes('manifest_not_approved'));
+});

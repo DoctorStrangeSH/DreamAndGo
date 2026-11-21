@@ -87,8 +87,10 @@ export function auditLegacyCollectionSnapshot(records) {
             !Object.hasOwn(SCHEMAS, record.collection) ||
             !record.fields || typeof record.fields !== 'object' || Array.isArray(record.fields) ||
             Object.keys(record).some(key => !['collection', 'fields', 'status'].includes(key)) ||
-            Object.values(record.fields).some(type => !FIELD_TYPES.has(type)) ||
-            (Object.hasOwn(record, 'status') && (typeof record.status !== 'string' || record.status.length > 64))) {
+            Object.entries(record.fields).some(([field, type]) =>
+                !/^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(field) || !FIELD_TYPES.has(type)) ||
+            (Object.hasOwn(record, 'status') && (typeof record.status !== 'string' || record.status.length > 64)) ||
+            (Object.hasOwn(record.fields, 'status') !== Object.hasOwn(record, 'status'))) {
             invalidRecords++;
             issues.push({ code: 'invalid_record_shape' });
             continue;

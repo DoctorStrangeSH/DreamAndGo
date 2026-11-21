@@ -340,3 +340,36 @@ test('concurrent session sends share one in-flight send and logout clears only i
     assert.deepEqual(records.get('alice'), []);
     assert.equal(session.disposed, true);
 });
+
+
+test('session removes a stopped visibility tracker instead of retaining dead observers', () => {
+    const session = new ChatV2Session({
+        invoke: async () => ({ data: {} }),
+        getUserId: () => 'alice'
+    });
+    const listeners = new Map();
+    const documentRef = {
+        addEventListener: (name, callback) => listeners.set(name, callback),
+        removeEventListener: name => listeners.delete(name),
+        visibilityState: 'visible'
+    };
+    let disconnects = 0;
+    const tracker = session.watchIncoming({
+        chatId: 'chat-a',
+        root: { contains: () => true },
+        isActive: () => true,
+        documentRef,
+        observerFactory: () => ({
+            observe() {},
+            unobserve() {},
+            disconnect() { disconnects++; }
+        })
+    });
+    assert.equal(session.trackers.size, 1);
+    assert.equal(session.stopWatchingIncoming(tracker), true);
+    assert.equal(session.trackers.size, 0);
+    assert.equal(disconnects, 1);
+    assert.equal(listeners.has('visibilitychange'), false);
+    assert.equal(session.stopWatchingIncoming(tracker), false);
+    session.dispose();
+});

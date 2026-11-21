@@ -71,3 +71,17 @@ test('partial updates accept only explicitly supplied allowlisted fields', () =>
     assert.deepEqual(validateRestaurantInput({ userRating: 10 }, { partial: true }), { userRating: 10 });
     assert.throws(() => validateBookInput({ role: 'admin' }, { partial: true }), TypeError);
 });
+
+
+test('public visibility and server metadata are not accepted as client collection input', () => {
+    for (const [validator, input] of [
+        [validateTravelInput, travel()],
+        [validateBookInput, book()],
+        [validateMovieInput, movie()],
+        [validateRestaurantInput, restaurant()]
+    ]) {
+        assert.throws(() => validator({ ...input, isPublic: true }), TypeError);
+        assert.throws(() => validator({ ...input, createdAt: 'client-controlled' }), TypeError);
+        assert.throws(() => validator({ ...input, updatedAt: 'client-controlled' }), TypeError);
+    }
+});

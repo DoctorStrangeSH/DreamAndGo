@@ -227,3 +227,14 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Root Checks passed on `fd0ccc2f219758744135e066eda457de27c94440` ([run 44800645445](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44800645445)).
 - [ ] Run a real staging journey with two accounts and verify deployed Functions + App Check before rollout.
 - [ ] Client-side notification creation remains a separate security blocker; `notifications.service.js` still accepts an arbitrary target UID and payload.
+
+
+### Notification client-write removal — 2026-11-21
+
+- [x] Removed the generic browser-side notification creation API that accepted an arbitrary recipient UID and arbitrary payload.
+- [x] Bound notification subscription and read-state mutations to the active Firebase Auth UID; stale snapshots are ignored after account changes.
+- [x] Added notification document-ID validation and regression tests in `tests/notifications-service-security.test.js`.
+- [ ] Implement trusted server-generated notifications for verified friendship, message and achievement events; do not restore a generic client-selected recipient API.
+- [ ] Add and verify the complete production Firestore Rules for notification reads and owner-only read-state updates.
+- [ ] Run the notification flow in staging with two independent accounts and App Check.
+- **Status:** the arbitrary client notification-write path is removed from the candidate client. The V1.0 notification feature is not complete until trusted event generation and Rules/staging acceptance are verified.

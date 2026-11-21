@@ -311,7 +311,7 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 
 ### SEC-CHAT-PRIVACY-01 — chat list read raw private user profiles — 2026-11-21
 
-**Status:** fixed in candidate client code; regression test added. CI verification pending for this exact change.
+**Status:** fixed in candidate client code; regression test passed. Root Checks passed on implementation/test HEAD `0642afbffeee2a510e281c28a97541f2fd262bc6`: 465/465 tests, 0 failures; syntax validation passed for all 255 JavaScript files ([run 44896246436](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44896246436)).
 
 - The legacy chat service fetched users/{partnerUid} directly from the browser, then removed private fields in JavaScript with toPublicProfile(). Client-side projection is not an authorization boundary: the full Firestore document had already been delivered to the browser.
 - Chat list loading now gathers unique partner UIDs and requests their profiles through the existing App Check protected getPublicProfilesV2 callable in bounded batches, reusing the allowlisted server projection and privacy opt-in check.

@@ -657,3 +657,17 @@ Added `client-rules-contract.test.mjs`. It imports the actual five client valida
 ### SEC-RULES-CLIENT-CONTRACT-02 — update/delete lifecycle coverage — 2026-11-21
 
 Extended the client-to-Rules integration suite beyond create. For each of dreams, travels, books, movies and restaurants, the test now performs a representative partial update with a server `updatedAt`, verifies that rewriting `createdAt` is denied, and verifies owner deletion. The test remains pending execution; no runtime pass is claimed.
+
+
+### SEC-LEGACY-COLLECTIONS-01 — historical document compatibility — 2026-11-21
+
+**Status: gap reproduced in isolated Emulator; migration not implemented.**
+
+Static service review found no explicit legacy normalization path in the five collection list/update services. A new Emulator test seeds historical-shape records in dreams, travels, books, movies and restaurants, each missing `createdAt`/`updatedAt` and containing old field/status names.
+
+The test documents three behaviors:
+- Owner direct reads and deletes remain allowed under the staged fixture.
+- Existing list queries use `orderBy('createdAt', 'desc')`; Firestore excludes documents that do not contain that field, so these records do not appear in the normal list.
+- Strict V1 update matchers reject the incomplete legacy documents. This is safer than weakening field validation, but means the records require a planned migration or explicit compatibility adapter before release.
+
+No legacy records were accessed or modified in production. The fixtures are synthetic. The test is not yet executed in Emulator/CI. Required follow-up: define a dry-run inventory, versioned normalization rules, backup/rollback, and list-service behavior for missing timestamps. Do not deploy strict V1 Rules until this gap is resolved.

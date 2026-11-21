@@ -172,3 +172,8 @@ What remains unverified is the external/runtime configuration: Firebase Console 
 The isolated Chat V2 pilot now connects incoming unread message DOM nodes to the existing IntersectionObserver receipt tracker. The view exposes only validated unread incoming message elements; the conversation rebinds observers after each history render, and closes the tracker on dispose. ChatV2Session now removes stopped trackers from its active tracker set. Focused tests cover the integration and lifecycle cleanup.
 
 This is **candidate pilot-only**. `js/modules/chat/chat.js` remains legacy and still uses ChatService/RealtimeService. Do not enable the pilot in the main app until backend deployment, dynamic allowlist configuration, real browser App Check, two-account staging, migration and rollback checks are complete. Sender-side read-status refresh and real browser IntersectionObserver verification remain open.
+
+
+### Sender delivery/read receipt rendering — 2026-11-21
+
+The candidate pilot conversation now correlates local ChatDeliveryController records to server history using the exact server message ID. It decorates only matching outgoing rows, then polls the authenticated sender-only status endpoint for those tracked outgoing messages. A `read` indicator is rendered only after a response confirms the same message ID and `read === true`; unknown/offline results do not change the indicator. Focused tests cover the path. This remains pilot-only and does not modify the legacy ChatModule.

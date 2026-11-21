@@ -234,3 +234,9 @@
 - [x] Audited dream status label rendering; switched to own-key lookup so inherited object properties cannot be rendered as labels.
 - [x] Added a regression test for unknown/prototype-key dream statuses.
 - [x] Root Checks passed on final candidate HEAD `bfa96394231e0c52c720cc3d7ba2f01cb1235600`: 470/470 tests, 0 failures; syntax validation passed for all 258 JavaScript files ([run 44897710078](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44897710078)).
+
+### Achievement milestone lookup hardening — 2026-11-21
+
+- [x] Guard the milestone map against inherited object keys and malformed achievement IDs.
+- [x] Add regression tests for `constructor`, `__proto__`, and null input.
+- [ ] Verify Root Checks on the exact candidate HEAD.

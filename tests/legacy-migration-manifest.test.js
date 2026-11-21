@@ -68,7 +68,7 @@ test('requires explicit approval before destructive or unresolved field actions'
     ];
     const result = validateLegacyMigrationManifest(manifest);
     assert.ok(result.errors.includes('drop_requires_data_loss_approval:dreams:legacyField'));
-    assert.ok(result.errors.includes('manual_review_unresolved:dreams:otherField'));
+    assert.ok(result.errors.includes('manual_review_requires_concrete_action:dreams:otherField'));
 });
 
 test('requires rename targets and explicit defaults', () => {

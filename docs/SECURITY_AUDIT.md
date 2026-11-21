@@ -525,3 +525,14 @@ No production rules or user data were changed. This inventory is source-derived 
 - Restored both named imports and added `tests/book-service-validator-wiring.test.js` to guard imports and both call sites.
 - This is a source-level regression guard; it does not replace running the full test suite.
 - No production Rules or user data were changed.
+
+
+### SEC-COLLECTION-BOOK-03 — close page-count read/write race — 2026-11-21
+
+**Status: client-side race mitigation implemented; Firestore Rules enforcement open.**
+
+- The previous BookService implementation read a document and then issued a separate update. Two concurrent clients could both validate against stale page bounds.
+- Replaced the separate read/write pair with Firestore `runTransaction`: read the current document, validate the merged page bounds, then update within the same transaction. Firestore retries conflicting transactions, preventing the client-side check from silently relying on a stale read.
+- The wiring regression test now asserts transactional read, validation and update call sites.
+- This does not replace server authorization. Firestore Rules must independently validate resulting document fields and immutable timestamps.
+- No production Rules, Firebase settings or user data were changed.

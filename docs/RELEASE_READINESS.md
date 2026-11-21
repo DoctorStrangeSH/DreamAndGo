@@ -534,3 +534,12 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [x] Added regression tests for create/update result handling and nested budget-map validation.
 - [ ] Exact-HEAD root CI and Emulator results are still required.
 - **Release remains HOLD.**
+
+
+### Movie collection write consistency — 2026-11-21
+
+- [x] Confirmed movie create/update results are not downgraded to failures solely by a derived-statistics refresh error.
+- [x] Added regression tests for committed-write result handling.
+- [x] Added validator regression cases for impossible release dates and duplicate genres.
+- [ ] Exact-HEAD root CI and Emulator results remain required.
+- **Release remains HOLD.**

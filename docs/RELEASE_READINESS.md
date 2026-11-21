@@ -552,3 +552,12 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [x] Expanded restaurant validator cases for invalid status, dates, ratings, dishes, photos and nullable visit date.
 - [ ] Exact-HEAD root CI and Emulator results remain required.
 - **Release remains HOLD.**
+
+
+### Cross-collection CRUD consistency — 2026-11-21
+
+- [x] All 15 create/update/delete paths across dreams, travels, books, movies and restaurants now treat derived statistics refresh as best-effort after the primary Firestore operation.
+- [x] Added `tests/collection-crud-stats-best-effort.test.js` for regression coverage.
+- [ ] Run exact-HEAD root test suite and syntax checks.
+- [ ] Complete Firestore Emulator positive/negative CRUD coverage and owner/cross-account checks.
+- **Release remains HOLD.**

@@ -634,3 +634,11 @@ No production rules or user data were changed. This inventory is source-derived 
 ### SEC-RULES-DREAM-02 — preserve absence of legacy visibility field — 2026-11-21
 
 A second static review found that the first immutability condition could allow a client to add `isPublic` to a legacy document where the field was absent. Corrected the update predicate: the field must remain absent when absent before, or remain exactly equal when it already existed. The Emulator test's existing private-document mutation case exercises this regression. Emulator execution is still pending.
+
+
+### SEC-CI-EMULATOR-01 — repeatable Rules test execution — 2026-11-21
+
+- Added a dedicated GitHub Actions workflow using Node.js 22, Java 21 and Firebase CLI Emulator execution.
+- It runs the complete `tests/firebase-emulator` suite and is scoped to pushes on `refactor/security-foundation` plus relevant pull-request file changes.
+- Workflow committed; first execution/result is pending. No test pass is claimed until GitHub reports a successful run.
+- Workflow is test-only and does not deploy or modify Firebase production Rules.

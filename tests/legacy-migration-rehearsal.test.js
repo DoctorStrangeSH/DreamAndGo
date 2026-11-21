@@ -35,6 +35,8 @@ test('rehearses all five synthetic collections atomically', () => {
     assert.equal(result.executable, false);
     assert.equal(result.sourceDocuments, 5);
     assert.equal(result.normalizedCount, 5);
+    assert.equal(result.integrity.passed, true);
+    assert.equal(result.integrity.counts.difference, 0);
     assert.deepEqual(result.normalizedDocuments.map(item => item.collection), collections);
     assert.equal(result.rollbackPreview.snapshotCaptured, true);
     assert.equal(result.rollbackPreview.inputMutated, false);
@@ -52,6 +54,7 @@ test('blocks the whole batch when one document fails validation', () => {
     const result = runLegacyMigrationRehearsal({ documents, manifest: manifest() });
     assert.equal(result.status, 'blocked');
     assert.equal(result.normalizedCount, 0);
+    assert.equal(result.integrity, null);
     assert.deepEqual(result.normalizedDocuments, []);
     assert.equal(result.failures.length, 1);
     assert.equal(result.failures[0].index, 2);

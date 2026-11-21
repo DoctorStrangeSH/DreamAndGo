@@ -310,3 +310,8 @@ The standalone integrity auditor also validates the complete approved Migration 
 ### Firestore Rules date parity — 2026-11-21
 
 The isolated Emulator candidate now validates actual Gregorian dates (including leap years) for `dreams.deadline`, `movies.releaseDate` and `restaurants.visitDate`, rather than checking only the string shape. Empty optional date strings remain accepted where the client contract permits them; restaurant visit date also permits `null`. Emulator tests reject impossible dates such as February 30 and accept a valid leap day. This remains a test-only candidate; the production rules baseline has not changed.
+
+
+### Firestore Rules list uniqueness parity — 2026-11-21
+
+The isolated Rules candidate now enforces unique values for `books.genres`, `books.quotes`, `movies.genreIds` and `restaurants.favoriteDishes`, matching the client and normalizer contracts. Emulator tests include duplicate-value rejection. No production Rules were changed.

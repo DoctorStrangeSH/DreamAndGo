@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { initializeTestEnvironment, assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
 import { doc, getDoc, getDocs, collection, setDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 
-const projectId = 'demo-dreamandgo-collections-v1';
+const projectId = 'demo-dreamandgo-movies-v1';
 const rules = readFileSync(new URL('./collections-v1.rules', import.meta.url), 'utf8');
 
 const validMovie = () => ({

@@ -357,3 +357,14 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 - Added emulator assertions that missing either acknowledgement is rejected, while a fully acknowledged apply remains create-only, idempotent, postflight-verified and leaves the registry closed.
 
 **Limit:** the backup flag is an operator acknowledgement, not machine-verifiable evidence. Production backup creation, restore validation, maintenance freeze and migration approval remain independent release gates. No production data was accessed or modified.
+
+
+### SEC-PERSONAL-READS-01 — owner guards for search and level reads — 2026-11-21
+
+**Status:** candidate fix and regression test added; CI pending.
+
+- SearchService previously accepted any supplied UID and queried that user's travels, restaurants, movies, books and dreams. Added an authenticated-owner check before starting, before/after each asynchronous collection read, before caching, and before returning results.
+- LevelService previously fetched users/{uid} without checking the active Firebase Auth UID. Added owner checks before the read and after the asynchronous read, discarding results if the active account changes.
+- Added a regression test requiring owner checks and preserving the user-scoped collection paths.
+
+**Limit:** these client guards are defense in depth only. Firestore Rules must still enforce owner-only reads on the server. No Rules or production data were changed.

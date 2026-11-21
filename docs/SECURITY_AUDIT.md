@@ -596,3 +596,15 @@ No production rules or user data were changed. This inventory is source-derived 
 - The candidate validates exact top-level fields, required title/author/status/notes/timestamps, status and genre allowlists, year/page/rating bounds, current-page versus total-pages invariant, review/quote bounds, immutable `createdAt`, and `updatedAt == request.time`.
 - Added positive and negative Emulator test coverage for owner CRUD, guest/second-account isolation, invalid enum/genre, page overflow, excessive lists, unknown fields and timestamp forgery.
 - This candidate does not modify root production rules, Firebase Console or live data. Emulator execution has not yet been performed.
+
+
+### SEC-RULES-MOVIE-01 — schema-specific movies Rules candidate — 2026-11-21
+
+**Status: candidate authored; Emulator execution pending.**
+
+- Added owner-only create/read/list/update/delete for the private movies subcollection in the isolated candidate.
+- Rules validate exact top-level fields; required TMDB ID/title/status/notes/timestamps; bounded metadata; HTTPS poster/backdrop URLs or null for missing TMDB artwork; rating/count/runtime/budget ranges; known genre IDs; production-country maps with exact keys and uppercase ISO alpha-2 codes; and timestamp immutability.
+- Added positive/negative Emulator coverage for owner CRUD, guest/second-account isolation, unknown fields, malformed IDs/status/genres/countries, list bounds, non-HTTPS artwork, invalid date shape, numeric bounds and timestamp forgery.
+- Client validator now accepts null artwork and rejects malformed country codes, with regression coverage.
+- The Rules candidate does not modify production Firestore Rules or live data. Emulator execution has not yet been performed.
+- Date Rules validate format and broad month/day ranges; strict calendar validation remains in the client validator because Rules cannot conveniently reproduce full calendar semantics.

@@ -487,3 +487,15 @@ Dream&Go — социальное пространство мечтаний, п�
 - [ ] Perform staging rehearsal and verify backup/rollback independently. No migration execution is implemented.
 
 - [x] Migration manifest rejects placeholder/unknown source schema IDs and validates every mapped status against the target V1 enum for its collection.
+
+
+### Aggregate legacy migration dry-run planner — 2026-11-21
+
+- [x] Added an offline planner that consumes only the sanitized aggregate inventory and a validated manifest.
+- [x] Reports per-collection field actions, document counts and status mappings without reading record values or IDs.
+- [x] Detects unmapped source fields, unsupported target fields, target collisions and invalid/unmapped target statuses.
+- [x] Explicit manifest mappings can resolve unknown legacy fields/statuses; unresolved structural/timestamp/type gaps remain blockers.
+- [x] Added CLI `npm run plan:legacy-migration -- manifest.json inventory.json`.
+- [x] Added tests for clean plans, unmapped fields, collisions, status remapping, inventory blockers and sanitized-input enforcement.
+- [ ] Execute root tests and syntax checks in CI on the exact current head.
+- [ ] Build document-level normalization only after actual legacy metadata and mapping approvals. Planner is report-only and never executable.

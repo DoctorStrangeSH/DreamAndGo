@@ -11,7 +11,7 @@ const validBook = () => ({
     title: 'Книга о путешествиях',
     author: 'Автор',
     status: 'reading',
-    genres: ['Путешествия' === 'Детектив' ? 'Детектив' : 'Детектив'],
+    genres: ['Детектив'],
     year: 2024,
     totalPages: 320,
     currentPage: 42,

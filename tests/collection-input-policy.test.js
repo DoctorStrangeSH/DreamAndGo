@@ -57,6 +57,9 @@ test('movie schema accepts API metadata and rejects arbitrary IDs, URLs and stat
     assert.throws(() => validateMovieInput({ ...movie(), genreIds: [878, 878] }), TypeError);
     assert.throws(() => validateMovieInput({ ...movie(), productionCountries: [{ iso_3166_1: 'US', name: 'US', admin: true }] }), TypeError);
     assert.throws(() => validateMovieInput({ ...movie(), productionCountries: [{ iso_3166_1: 'USA', name: 'United States' }] }), TypeError);
+    assert.throws(() => validateMovieInput({
+        ...movie(), productionCountries: Array(11).fill({ iso_3166_1: 'US', name: 'United States' })
+    }), TypeError);
     assert.equal(validateMovieInput({ ...movie(), poster: null }).poster, null);
     assert.equal(validateMovieInput({ ...movie(), backdrop: null }).backdrop, null);
 });

@@ -192,3 +192,13 @@
 - [x] Add regression assertions for request-notice cleanup on all three resolution paths.
 - [ ] Verify root test/check workflows on exact candidate HEAD; no successful CI result is recorded yet.
 - [ ] Verify owner-only notification Rules and two-account staging behavior.
+
+
+### Achievement notification delivery — 2026-11-21
+
+- [x] Create achievement notifications only from the trusted server-side achievement award transaction.
+- [x] Keep achievement persistence and notification creation atomic.
+- [x] Use stable achievement/level document IDs and a fixed payload; add Emulator regression coverage for payload and repeat refresh.
+- [ ] Verify the updated Emulator and root CI workflows on the exact candidate HEAD.
+- [ ] Verify notification read authorization and two-account staging behavior.
+- **Exit condition not met:** achievement notification writes are implemented, but full notification Rules and end-to-end staging acceptance remain release gates.

@@ -608,3 +608,13 @@ No production rules or user data were changed. This inventory is source-derived 
 - Client validator now accepts null artwork and rejects malformed country codes, with regression coverage.
 - The Rules candidate does not modify production Firestore Rules or live data. Emulator execution has not yet been performed.
 - Date Rules validate format and broad month/day ranges; strict calendar validation remains in the client validator because Rules cannot conveniently reproduce full calendar semantics.
+
+
+### SEC-RULES-RESTAURANT-01 — schema-specific restaurants Rules candidate — 2026-11-21
+
+**Status: candidate authored; Emulator execution pending.**
+
+- Added owner-only create/read/list/update/delete for the private restaurants subcollection.
+- Rules validate exact top-level fields, required name/cuisine/status/notes/timestamps, cuisine/status allowlists, optional address and visit date, bill/rating bounds, bounded favorite-dish list, review length, HTTPS photo list and immutable/server timestamps.
+- Added positive/negative Emulator coverage for owner CRUD, guest/second-account isolation, unknown fields, invalid enum/date values, numeric bounds, list bounds, non-HTTPS photos and timestamp forgery.
+- The fixture remains test-only. Root production Rules, Firebase Console and live data were not modified. Emulator execution has not yet been performed.

@@ -546,3 +546,5 @@ Dream&Go — социальное пространство мечтаний, п�
 - [ ] Keep this fixture isolated; production Rules remain the confirmed deny-all baseline until the owner provides the active project/rules export and the complete path inventory is approved.
 
 - [x] Firestore V1 Rules candidate now rejects duplicate book genres/quotes, movie genre IDs and restaurant favorite dishes, matching the client/normalizer uniqueness contracts.
+
+- [x] Reduced movie production-country list limit from 30 to 10 across client validation, migration normalizer and Firestore Rules to keep the Rules evaluator within its expression budget; added regression tests.

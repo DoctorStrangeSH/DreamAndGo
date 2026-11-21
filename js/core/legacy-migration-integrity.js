@@ -1,3 +1,5 @@
+import { validateLegacyMigrationManifest } from './legacy-migration-manifest.js';
+
 const COLLECTIONS = ['dreams', 'travels', 'books', 'movies', 'restaurants'];
 
 function sameValue(left, right) {
@@ -21,14 +23,18 @@ function sameValue(left, right) {
  */
 export function auditLegacyMigrationIntegrity({ sourceDocuments, normalizedDocuments, manifest }) {
     const blockers = [];
+    const manifestValidation = validateLegacyMigrationManifest(manifest);
     if (!Array.isArray(sourceDocuments) || sourceDocuments.length === 0 ||
-        !Array.isArray(normalizedDocuments) || !manifest ||
-        !Array.isArray(manifest.collections)) {
+        !Array.isArray(normalizedDocuments) || !manifestValidation.valid || !manifestValidation.ready) {
         return {
             status: 'blocked',
             passed: false,
-            blockers: ['valid_non_empty_source_output_and_manifest_required'],
-            counts: { source: 0, normalized: 0 },
+            blockers: [
+                'valid_non_empty_source_output_and_approved_manifest_required',
+                ...manifestValidation.errors
+            ],
+            counts: { source: Array.isArray(sourceDocuments) ? sourceDocuments.length : 0,
+                normalized: Array.isArray(normalizedDocuments) ? normalizedDocuments.length : 0 },
             collections: {}
         };
     }

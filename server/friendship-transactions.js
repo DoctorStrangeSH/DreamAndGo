@@ -22,6 +22,7 @@ export async function mutateFriendship(db, uid, targetUid, action, serverTimesta
         ownFriend: own.collection('friends').doc(targetUid),
         targetFriend: target.collection('friends').doc(uid),
         requestNotification: target.collection('notifications').doc(`friend_request_${uid}`),
+        incomingRequestNotification: own.collection('notifications').doc(`friend_request_${targetUid}`),
         acceptedNotification: target.collection('notifications').doc(`friend_accepted_${uid}`)
     };
 
@@ -93,6 +94,9 @@ export async function mutateFriendship(db, uid, targetUid, action, serverTimesta
                     read: false,
                     createdAt: serverTimestamp()
                 });
+                tx.delete(refs.incomingRequestNotification);
+            } else {
+                tx.delete(refs.incomingRequestNotification);
             }
             tx.delete(refs.incoming);
             tx.delete(refs.reverseOutgoing);
@@ -115,6 +119,7 @@ export async function mutateFriendship(db, uid, targetUid, action, serverTimesta
                 tx.delete(refs.incoming);
             }
             tx.delete(refs.outgoing);
+            tx.delete(refs.requestNotification);
             return { ok: true, action };
         }
 

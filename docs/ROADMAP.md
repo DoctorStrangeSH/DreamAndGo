@@ -544,3 +544,5 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Added Emulator cases for impossible dates, leap-day acceptance and empty optional dream deadlines.
 - [ ] Run the Firestore Rules Emulator workflow on the exact updated branch head and review its compiler/runtime output.
 - [ ] Keep this fixture isolated; production Rules remain the confirmed deny-all baseline until the owner provides the active project/rules export and the complete path inventory is approved.
+
+- [x] Firestore V1 Rules candidate now rejects duplicate book genres/quotes, movie genre IDs and restaurant favorite dishes, matching the client/normalizer uniqueness contracts.

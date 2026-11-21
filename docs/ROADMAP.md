@@ -261,7 +261,8 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Regression tests cover pending-notification cleanup for cancel/reject/accept paths.
 - [x] Root Checks passed: 461/461 tests and syntax checks for 253 JavaScript files on candidate implementation HEAD `d311e26065e01d5044e73f049c4629988dd5cf9b` ([run 44893286852](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44893286852)); current docs-only HEAD Checks also passed ([run 44893346213](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44893346213)).
 - [x] Firebase Emulator workflow passed: 6/6 Firestore rules tests and 59/59 server/Auth/Firestore emulator tests on implementation HEAD `d311e26065e01d5044e73f049c4629988dd5cf9b` ([run 44893286823](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44893286823)). The existing rules suite is not a notification-specific access test.
-- [ ] Add notification-specific Rules Emulator cases and complete staging two-account verification.
+- [x] Add an isolated notification Rules Emulator fixture: owner-only reads, guest/cross-user denial, no client create/delete, and one-way owner `read: false → true` updates; the fixture is explicitly not production Rules.
+- [ ] Integrate the approved notification contract into the eventual complete production Rules and complete staging two-account verification.
 
 
 ### Trusted achievement notifications — 2026-11-21

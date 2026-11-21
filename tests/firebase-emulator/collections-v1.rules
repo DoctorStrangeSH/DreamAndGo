@@ -245,37 +245,34 @@ service cloud.firestore {
         data.createdAt is timestamp && data.updatedAt is timestamp;
     }
 
-
     function isValidMovieGenre(id) {
-      return id in [28, 12, 16, 35, 80, 99, 18, 10751, 14, 36, 27, 10402,
-        9648, 10749, 878, 10770, 53, 10752, 37];
+      return id in [28, 12, 16, 35, 80, 99, 18, 10751, 14, 36, 27, 10402, 9648, 10749, 878, 10770, 53, 10752, 37];
     }
     function isValidMovieGenres(genres) {
       return genres is list && genres.size() <= 20 &&
         (genres.size() <= 0 || (genres[0] is int && isValidMovieGenre(genres[0]))) &&
-        (genres.size() <= 1 || (genres[1] is int && isValidMovieGenre(genres[1]) && genres[1] != genres[0])) &&
-        (genres.size() <= 2 || (genres[2] is int && isValidMovieGenre(genres[2]) && !(genres[2] in genres[0..1]))) &&
-        (genres.size() <= 3 || (genres[3] is int && isValidMovieGenre(genres[3]) && !(genres[3] in genres[0..2]))) &&
-        (genres.size() <= 4 || (genres[4] is int && isValidMovieGenre(genres[4]) && !(genres[4] in genres[0..3]))) &&
-        (genres.size() <= 5 || (genres[5] is int && isValidMovieGenre(genres[5]) && !(genres[5] in genres[0..4]))) &&
-        (genres.size() <= 6 || (genres[6] is int && isValidMovieGenre(genres[6]) && !(genres[6] in genres[0..5]))) &&
-        (genres.size() <= 7 || (genres[7] is int && isValidMovieGenre(genres[7]) && !(genres[7] in genres[0..6]))) &&
-        (genres.size() <= 8 || (genres[8] is int && isValidMovieGenre(genres[8]) && !(genres[8] in genres[0..7]))) &&
-        (genres.size() <= 9 || (genres[9] is int && isValidMovieGenre(genres[9]) && !(genres[9] in genres[0..8]))) &&
-        (genres.size() <= 10 || (genres[10] is int && isValidMovieGenre(genres[10]) && !(genres[10] in genres[0..9]))) &&
-        (genres.size() <= 11 || (genres[11] is int && isValidMovieGenre(genres[11]) && !(genres[11] in genres[0..10]))) &&
-        (genres.size() <= 12 || (genres[12] is int && isValidMovieGenre(genres[12]) && !(genres[12] in genres[0..11]))) &&
-        (genres.size() <= 13 || (genres[13] is int && isValidMovieGenre(genres[13]) && !(genres[13] in genres[0..12]))) &&
-        (genres.size() <= 14 || (genres[14] is int && isValidMovieGenre(genres[14]) && !(genres[14] in genres[0..13]))) &&
-        (genres.size() <= 15 || (genres[15] is int && isValidMovieGenre(genres[15]) && !(genres[15] in genres[0..14]))) &&
-        (genres.size() <= 16 || (genres[16] is int && isValidMovieGenre(genres[16]) && !(genres[16] in genres[0..15]))) &&
-        (genres.size() <= 17 || (genres[17] is int && isValidMovieGenre(genres[17]) && !(genres[17] in genres[0..16]))) &&
-        (genres.size() <= 18 || (genres[18] is int && isValidMovieGenre(genres[18]) && !(genres[18] in genres[0..17]))) &&
-        (genres.size() <= 19 || (genres[19] is int && isValidMovieGenre(genres[19]) && !(genres[19] in genres[0..18])));
+        (genres.size() <= 1 || (genres[1] is int && isValidMovieGenre(genres[1]))) &&
+        (genres.size() <= 2 || (genres[2] is int && isValidMovieGenre(genres[2]))) &&
+        (genres.size() <= 3 || (genres[3] is int && isValidMovieGenre(genres[3]))) &&
+        (genres.size() <= 4 || (genres[4] is int && isValidMovieGenre(genres[4]))) &&
+        (genres.size() <= 5 || (genres[5] is int && isValidMovieGenre(genres[5]))) &&
+        (genres.size() <= 6 || (genres[6] is int && isValidMovieGenre(genres[6]))) &&
+        (genres.size() <= 7 || (genres[7] is int && isValidMovieGenre(genres[7]))) &&
+        (genres.size() <= 8 || (genres[8] is int && isValidMovieGenre(genres[8]))) &&
+        (genres.size() <= 9 || (genres[9] is int && isValidMovieGenre(genres[9]))) &&
+        (genres.size() <= 10 || (genres[10] is int && isValidMovieGenre(genres[10]))) &&
+        (genres.size() <= 11 || (genres[11] is int && isValidMovieGenre(genres[11]))) &&
+        (genres.size() <= 12 || (genres[12] is int && isValidMovieGenre(genres[12]))) &&
+        (genres.size() <= 13 || (genres[13] is int && isValidMovieGenre(genres[13]))) &&
+        (genres.size() <= 14 || (genres[14] is int && isValidMovieGenre(genres[14]))) &&
+        (genres.size() <= 15 || (genres[15] is int && isValidMovieGenre(genres[15]))) &&
+        (genres.size() <= 16 || (genres[16] is int && isValidMovieGenre(genres[16]))) &&
+        (genres.size() <= 17 || (genres[17] is int && isValidMovieGenre(genres[17]))) &&
+        (genres.size() <= 18 || (genres[18] is int && isValidMovieGenre(genres[18]))) &&
+        (genres.size() <= 19 || (genres[19] is int && isValidMovieGenre(genres[19])));
     }
     function isValidMovieCountry(country) {
-      return country is map &&
-        country.keys().hasAll(['iso_3166_1', 'name']) &&
+      return country is map && country.keys().hasAll(['iso_3166_1', 'name']) &&
         country.keys().hasOnly(['iso_3166_1', 'name']) &&
         country.iso_3166_1 is string && country.iso_3166_1.matches('^[A-Z]{2}
       allow get: if isOwner(uid);
@@ -329,20 +326,13 @@ service cloud.firestore {
         allow delete: if isOwner(uid);
       }
 
-
       match /movies/{movieId} {
-        allow create: if isOwner(uid) &&
-          exists(/databases/$(database)/documents/users/$(uid)) &&
-          isValidMovie(request.resource.data) &&
-          request.resource.data.createdAt == request.time &&
-          request.resource.data.updatedAt == request.time;
-        allow update: if isOwner(uid) &&
-          isValidMovie(request.resource.data) &&
-          request.resource.data.createdAt == resource.data.createdAt &&
-          request.resource.data.updatedAt == request.time;
+        allow create: if isOwner(uid) && exists(/databases/$(database)/documents/users/$(uid)) &&
+          isValidMovie(request.resource.data) && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time;
+        allow update: if isOwner(uid) && isValidMovie(request.resource.data) &&
+          request.resource.data.createdAt == resource.data.createdAt && request.resource.data.updatedAt == request.time;
         allow delete: if isOwner(uid);
       }
-
       match /{category}/{id} {
         allow get, list: if isOwner(uid) &&
           category in [
@@ -401,8 +391,7 @@ service cloud.firestore {
         (countries.size() <= 29 || isValidMovieCountry(countries[29]));
     }
     function isValidMovieDate(value) {
-      return value == '' || (value is string &&
-        value.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}
+      return value == '' || (value is string && value.matches('^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])
       allow get: if isOwner(uid);
       allow list: if false;
       allow create: if false && isOwner(uid) && uidUnchanged(uid) &&
@@ -475,23 +464,15 @@ service cloud.firestore {
     }
   }
 }
-) &&
-        value[5..7] >= '01' && value[5..7] <= '12' &&
-        value[8..10] >= '01' && value[8..10] <= '31');
+));
     }
     function isValidMovie(data) {
       return data is map &&
         data.keys().hasAll(['movieId', 'title', 'status', 'notes', 'createdAt', 'updatedAt']) &&
-        data.keys().hasOnly([
-          'movieId', 'title', 'originalTitle', 'overview', 'poster', 'backdrop',
-          'voteAverage', 'voteCount', 'rating', 'releaseDate', 'genreIds',
-          'runtime', 'tagline', 'budget', 'productionCountries', 'status',
-          'userRating', 'review', 'notes', 'createdAt', 'updatedAt'
-        ]) &&
+        data.keys().hasOnly(['movieId', 'title', 'originalTitle', 'overview', 'poster', 'backdrop', 'voteAverage', 'voteCount', 'rating', 'releaseDate', 'genreIds', 'runtime', 'tagline', 'budget', 'productionCountries', 'status', 'userRating', 'review', 'notes', 'createdAt', 'updatedAt']) &&
         data.movieId is int && data.movieId >= 1 && data.movieId <= 1000000000 &&
         data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
-        data.status in ['to_watch', 'watched'] &&
-        data.notes is string && data.notes.size() <= 4000 &&
+        data.status in ['to_watch', 'watched'] && data.notes is string && data.notes.size() <= 4000 &&
         (!('originalTitle' in data) || (data.originalTitle is string && data.originalTitle.size() <= 200)) &&
         (!('overview' in data) || (data.overview is string && data.overview.size() <= 5000)) &&
         (!('poster' in data) || data.poster == null || (data.poster is string && data.poster.size() <= 2048 && data.poster.matches('^https://.*'))) &&
@@ -509,7 +490,6 @@ service cloud.firestore {
         (!('review' in data) || (data.review is string && data.review.size() <= 4000)) &&
         data.createdAt is timestamp && data.updatedAt is timestamp;
     }
-
     match /users/{uid} {
       allow get: if isOwner(uid);
       allow list: if false;

@@ -191,3 +191,19 @@ The current `tests/firebase-emulator/owner-read.rules` is a deliberately limited
 - New client-created dream documents omit `isPublic` (preferred) or may explicitly set it to `false`; client creation with `true` is denied.
 - If a legacy document already contains `isPublic`, it must be boolean. Client updates cannot change the value.
 - This preserves the visibility of older records while keeping the field outside the client-editable dream input schema. Any future visibility feature requires a separately specified trusted workflow; it is not part of V1 client CRUD.
+
+
+## 12. Legacy document compatibility findings — 2026-11-21
+
+Synthetic historical-shape fixtures are now defined for all five private collections. They intentionally omit `createdAt` and `updatedAt` and use historical field/status names. Under the isolated candidate fixture, the owner can read a legacy document directly by ID and delete it, but strict V1 update validation rejects it. The current list services order by `createdAt`; Firestore does not return documents missing that field in that query, so some legacy records can be invisible in collection lists.
+
+This is a confirmed compatibility risk in the candidate contract, not a reason to weaken Rules. Before V1 release:
+1. Inventory legacy document shapes without exposing personal content.
+2. Define deterministic field/status normalization and preserve unknown historical data in a backup or quarantine field/record.
+3. Run a dry-run migration report and review counts/examples with redacted values.
+4. Back up affected data and define rollback.
+5. Migrate in bounded batches with idempotency and per-document error reporting.
+6. Update list services to handle missing timestamps during the transition.
+7. Re-run Emulator tests against both pre-migration and normalized fixtures.
+
+No production data migration has been run. Synthetic tests only.

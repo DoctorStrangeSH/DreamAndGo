@@ -184,3 +184,10 @@ The current `tests/firebase-emulator/owner-read.rules` is a deliberately limited
 - User statistics are derived data and are refreshed best-effort after the primary operation. A statistics refresh error is logged but must not report a committed primary write as failed.
 - This client contract prevents duplicate retries caused by false failure responses. It does not guarantee that derived statistics are current; Emulator and integration tests must cover this distinction.
 - Firestore Rules remain authoritative for owner access, field allowlists, immutable timestamps, type/range checks and cross-account isolation.
+
+
+### Dreams visibility compatibility contract — 2026-11-21
+
+- New client-created dream documents omit `isPublic` (preferred) or may explicitly set it to `false`; client creation with `true` is denied.
+- If a legacy document already contains `isPublic`, it must be boolean. Client updates cannot change the value.
+- This preserves the visibility of older records while keeping the field outside the client-editable dream input schema. Any future visibility feature requires a separately specified trusted workflow; it is not part of V1 client CRUD.

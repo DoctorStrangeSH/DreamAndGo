@@ -526,3 +526,11 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [ ] Run root CI and Emulator tests on the exact latest HEAD.
 - [ ] Add authoritative Firestore Rules checks for page bounds and immutable metadata.
 - **Release remains HOLD.**
+
+
+### Travel write consistency hardening — 2026-11-21
+
+- [x] A committed travel create/update no longer reports failure solely because derived statistics could not refresh.
+- [x] Added regression tests for create/update result handling and nested budget-map validation.
+- [ ] Exact-HEAD root CI and Emulator results are still required.
+- **Release remains HOLD.**

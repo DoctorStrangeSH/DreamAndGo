@@ -11,6 +11,7 @@
     "audit:legacy-collections": "node scripts/audit-legacy-collections.mjs",
     "validate:legacy-migration": "node scripts/validate-legacy-migration-manifest.mjs",
     "plan:legacy-migration": "node scripts/plan-legacy-migration-dry-run.mjs",
-    "rehearse:legacy-migration": "node scripts/run-legacy-migration-rehearsal.mjs"
+    "rehearse:legacy-migration": "node scripts/run-legacy-migration-rehearsal.mjs",
+    "audit:legacy-migration-integrity": "node scripts/audit-legacy-migration-integrity.mjs"
   }
 }

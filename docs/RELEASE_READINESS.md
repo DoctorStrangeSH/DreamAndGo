@@ -440,8 +440,8 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 
 ### Owner-provided Firebase configuration — 2026-11-21
 
-- [x] Received current Firestore Rules text from the owner. It is deny-all for every path and operation (`allow read, write: if false`).
-- [ ] Independently confirm that the supplied ruleset is the one currently published to the intended Firebase project/database; retain a timestamped rollback copy.
+- [x] Owner explicitly confirmed the supplied Firestore Rules are published: deny-all for every path and operation (`allow read, write: if false`).
+- [ ] Record the Firebase project ID/database ID and retain a timestamped export as the rollback copy before any candidate change.
 - [x] Confirmed Firebase Storage is not configured and will not be upgraded for V1.0. Storage uploads and attachments are out of scope.
 - [ ] Reconcile collection schemas and actual client query patterns before authoring least-privilege Firestore Rules.
 - [ ] Pass complete Emulator Rules suite and two-account staging before any production rules change.

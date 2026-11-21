@@ -724,3 +724,6 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [x] Added negative tests for impossible dates and positive leap-day/empty optional values.
 - [ ] Confirm Firestore Emulator workflow passes on the exact latest branch HEAD.
 - **No production Rules deployment or user-data change.**
+
+- [x] Firestore Rules candidate enforces uniqueness for book genres/quotes, movie genre IDs and restaurant favorite dishes; negative Emulator cases added.
+- [ ] Confirm Rules compiler/runtime and full Emulator suite pass on exact latest HEAD.

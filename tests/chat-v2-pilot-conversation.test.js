@@ -221,3 +221,28 @@ test('pilot decorates only confirmed outgoing delivery states and refreshes serv
     assert.equal(snapshots.at(-1).messages[0].deliveryStatus, 'read');
     conversation.dispose();
 });
+
+
+test('revoked session during sender receipt refresh is contained without changing confirmed UI state', async () => {
+    const outgoing = message(1);
+    const states = new Map([['550e8400-e29b-41d4-a716-446655440000', {
+        messageId: outgoing.id, deliveryStatus: 'sent'
+    }]]);
+    const snapshots = [];
+    const view = { mount() {}, setHistoryState(state) { snapshots.push(state); }, destroy() {} };
+    const session = {
+        userId: 'alice',
+        delivery: { messages: states },
+        async refreshRead() { throw new Error('Сессия изменилась'); }
+    };
+    const conversation = new ChatV2PilotConversation({
+        root: {}, session, chatId: 'chat-a',
+        lookup: async () => ({ chatId: 'chat-a', messages: [outgoing], hasMore: false, nextBeforeSequence: null }),
+        viewFactory: () => view
+    });
+    await conversation.mount();
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(snapshots.at(-1).messages[0].deliveryStatus, 'sent');
+    assert.equal(states.values().next().value.deliveryStatus, 'sent');
+    conversation.dispose();
+});

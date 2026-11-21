@@ -14,10 +14,11 @@ const at = argv.indexOf('--project');
 const projectId = at >= 0 ? argv[at + 1] : '';
 const apply = argv.includes('--apply');
 const confirmed = argv.includes('--confirm-registration-frozen');
+const backupVerified = argv.includes('--confirm-backup-verified');
 const validProject = /^[a-z][a-z0-9-]{3,62}$/.test(projectId || '');
 
-if (!validProject || (apply && !confirmed)) {
-    console.error('Usage: node scripts/backfill-username-reservations.mjs --project PROJECT_ID [--apply --confirm-registration-frozen]');
+if (!validProject || (apply && (!confirmed || !backupVerified))) {
+    console.error('Usage: node scripts/backfill-username-reservations.mjs --project PROJECT_ID [--apply --confirm-registration-frozen --confirm-backup-verified]');
     process.exitCode = 2;
 } else {
     try {
@@ -27,6 +28,7 @@ if (!validProject || (apply && !confirmed)) {
         const result = await runUsernameReservationBackfill(getFirestore(), {
             apply,
             registrationFrozen: confirmed,
+            backupVerified,
             serverTimestamp: () => FieldValue.serverTimestamp()
         });
         // Only aggregate counters are logged; never expose usernames, emails or UIDs.

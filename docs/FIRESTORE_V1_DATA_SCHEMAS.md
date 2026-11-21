@@ -302,3 +302,6 @@ The auditor checks document-count parity and collection/order identity, then ver
 The synthetic rehearsal includes this audit as a required success gate. A rehearsal cannot report `passed` if the independent integrity report fails.
 
 This check is limited to the supplied in-memory files. It does not establish Firestore persistence, unique database document IDs, atomic server writes or production backup/restore capability.
+
+
+The standalone integrity auditor also validates the complete approved Migration Manifest before comparing input/output JSON. Incomplete or unapproved manifests are rejected before any integrity result is produced.

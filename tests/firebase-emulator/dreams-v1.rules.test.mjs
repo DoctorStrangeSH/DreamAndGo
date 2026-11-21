@@ -27,6 +27,9 @@ test('dream V1 rules enforce owner CRUD, private visibility, nested steps and ti
             const db = ctx.firestore();
             await setDoc(doc(db, 'users/alice'), { email: 'alice@example.test', username: 'alice' });
             await setDoc(doc(db, 'users/bob'), { email: 'bob@example.test', username: 'bob' });
+            await setDoc(doc(db, 'users/alice/dreams/legacy-public'), {
+                ...validDream(), isPublic: true
+            });
         });
 
         const alice = env.authenticatedContext('alice').firestore();
@@ -55,6 +58,17 @@ test('dream V1 rules enforce owner CRUD, private visibility, nested steps and ti
 
         await assertFails(setDoc(doc(alice, 'users/alice/dreams/public-dream'), {
             ...validDream(), isPublic: true
+        }));
+        await assertFails(setDoc(doc(alice, 'users/alice/dreams/invalid-visibility'), {
+            ...validDream(), isPublic: 'true'
+        }));
+        await assertSucceeds(updateDoc(doc(alice, 'users/alice/dreams/legacy-public'), {
+            title: 'Сохранённая старая мечта',
+            updatedAt: serverTimestamp()
+        }));
+        await assertFails(updateDoc(doc(alice, 'users/alice/dreams/legacy-public'), {
+            isPublic: false,
+            updatedAt: serverTimestamp()
         }));
         await assertSucceeds(setDoc(doc(alice, 'users/alice/dreams/private-dream'), {
             ...validDream(), isPublic: false

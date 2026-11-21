@@ -1,4 +1,5 @@
 import { normalizeLegacyDocument } from './legacy-document-normalizer.js';
+import { auditLegacyMigrationIntegrity } from './legacy-migration-integrity.js';
 
 /**
  * All-or-nothing in-memory rehearsal for synthetic documents.
@@ -40,7 +41,15 @@ export function runLegacyMigrationRehearsal({ documents, manifest }) {
         normalized.push({ collection: entry.collection, document: result.normalized });
     });
 
-    const success = failures.length === 0;
+    const normalizationSucceeded = failures.length === 0;
+    const integrity = normalizationSucceeded
+        ? auditLegacyMigrationIntegrity({
+            sourceDocuments: documents,
+            normalizedDocuments: normalized,
+            manifest
+        })
+        : null;
+    const success = normalizationSucceeded && integrity?.passed === true;
     return {
         mode: 'synthetic-in-memory-rehearsal',
         status: success ? 'passed' : 'blocked',
@@ -50,6 +59,7 @@ export function runLegacyMigrationRehearsal({ documents, manifest }) {
         normalizedDocuments: success ? normalized : [],
         normalizedCount: success ? normalized.length : 0,
         failures,
+        integrity,
         rollbackPreview: {
             snapshotCaptured: true,
             inputMutated: false,

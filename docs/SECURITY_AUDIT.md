@@ -486,3 +486,10 @@ No production rules or user data were changed. This inventory is source-derived 
 - Updated the access matrix, V1.0 data schema and delivery plan.
 - CI: 471/471 tests passed, 0 failures; syntax checks passed for 259 JavaScript files ([run 44901620982](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44901620982)).
 - No production Rules, Firebase configuration, or user data were changed.
+
+
+### SEC-DREAM-RULES-SCHEMA-01 — align Emulator dream rules with current write contract — 2026-11-21
+
+- Removed the stale `isPublic` requirement from the dream Rules fixture. New client writes do not contain this field.
+- Emulator tests now assert both `isPublic: true` and `isPublic: false` are rejected on create and update.
+- This remains an isolated recovery/test fixture, not production Rules. The other four personal collections remain write-denied in this fixture.

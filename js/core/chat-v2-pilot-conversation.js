@@ -85,7 +85,14 @@ export class ChatV2PilotConversation {
             }
         }
         if (!pending.length) return;
-        const results = await Promise.all(pending.map(id => this.session.refreshRead(id)));
+        let results;
+        try {
+            results = await Promise.all(pending.map(id => this.session.refreshRead(id)));
+        } catch {
+            // A logout, revoked pilot or transport failure must not create an
+            // unhandled rejection or alter the last confirmed delivery state.
+            return;
+        }
         if (!this.disposed && results.some(result => result?.status === 'read')) {
             this._renderCurrentHistoryState();
         }

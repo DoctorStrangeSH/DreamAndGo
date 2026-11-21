@@ -274,3 +274,16 @@ Important controls:
 - The function is pure and in-memory. It does not read/write Firestore, assign document IDs or generate server timestamps.
 
 Tests use synthetic fixtures for all five collections only. This module is not a batch migration runner and is not connected to production.
+
+
+## 17. Synthetic all-or-nothing rehearsal — 2026-11-21
+
+Run against synthetic JSON fixtures only:
+
+```bash
+npm run rehearse:legacy-migration -- manifest.json synthetic-documents.json
+```
+
+The input document array uses `{ "collection": "dreams", "document": { ... } }` entries. The runner validates every item using the approved-manifest-gated normalizer. If one item fails, the whole batch is marked blocked and no normalized documents are returned. The caller's input is never mutated.
+
+The report includes an immutable input snapshot restore preview. This verifies in-memory preservation only; it is not a backup of Firestore and does not prove a production restore. The runner is deliberately disconnected from Firebase and must remain so until the separate staging rehearsal is designed, reviewed and explicitly approved.

@@ -230,3 +230,15 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 - Regression tests assert exact recipient paths and allowlisted payload values.
 
 **Remaining:** implement trusted message/achievement notifications only after confirming the authoritative event sources; add Rules tests proving owner-only reads and read-state updates; run the complete flow with two staging accounts. Do not treat this candidate change as permission to deploy Functions or loosen production Rules.
+
+
+### SEC-NOTIFY-03 — stale friendship request notices — 2026-11-21
+
+**Status:** candidate transaction and regression tests updated; CI not yet confirmed.
+
+- Sender cancellation deletes the corresponding recipient-side request notification in the same transaction as request-index deletion.
+- Recipient acceptance/rejection deletes the incoming request notification in the same transaction as request resolution.
+- Acceptance additionally creates a separate fixed-schema notice for the original requester.
+- This avoids leaving an actionable-looking notification after the request no longer exists. The server remains the only notification creator.
+
+**Remaining:** verify tests on exact HEAD and validate Firestore Rules/staging behavior. The notification UI still relies on owner-only Rules, which have not been confirmed against production.

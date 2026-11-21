@@ -87,6 +87,7 @@ test('detects field type mismatches against the V1 collection contract', () => {
             fields: {
                 title: 'string',
                 progress: 'string',
+                status: 'string',
                 createdAt: 'timestamp',
                 updatedAt: 'timestamp'
             },

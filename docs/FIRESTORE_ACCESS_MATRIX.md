@@ -108,14 +108,14 @@
 
 ## 6. Открытые решения / релизные блокеры
 
-- [ ] Получить актуальные production Rules и подтвердить, что аварийный deny-all действительно опубликован.
+- [x] Получен от владельца текст текущих Firestore Rules: deny-all для всех путей и операций. Публикация именно в активном проекте ещё не проверена напрямую; перед подготовкой замены нужно подтвердить проект/базу.
 - [ ] Утвердить, сохраняется ли публичная мечта в V1.0 и через какую проекцию она доступна.
 - [x] Зафиксировать серверное создание friend-request/friend-accepted, achievement и private-message notifications с фиксированным payload в доверенных серверных транзакциях. Notification Rules/staging проверки остаются открытыми.
 - [x] Перевести friendship writes на `mutateFriendshipV2`: Auth UID, App Check, проверка получателя и атомарная транзакция для обеих сторон; браузерные записи удалены из `FriendsService`.
 - [ ] Провести staging two-account проверку всех пяти операций и подтвердить App Check на реально развернутой callable.
 - [ ] Определить момент и совместимость миграции legacy chat → Chat V2.
 - [ ] Утвердить точные схемы всех пяти коллекций и profile update allowlist.
-- [ ] Согласовать доступ к Storage, если V1.0 использует Firebase Storage.
+- [x] Firebase Storage исключён из V1.0: владелец подтвердил, что Storage не подключён и платный апгрейд сейчас не планируется. Не добавлять upload/attachment-функции в критерии приёмки V1.0.
 - [ ] Прогнать Emulator и staging; вручную проверить rollback.
 
 ## 7. Что не делать
@@ -254,3 +254,12 @@ The candidate `sendPrivateMessageV2` server transaction writes a fixed-schema `m
 ### Personal read service guard — 2026-11-21
 
 SearchService and LevelService perform only current-account reads. The client now checks the active Firebase Auth UID before and after async reads and before returning/caching data. This is defense in depth, not an authorization boundary; production Firestore Rules must enforce owner-only access.
+
+
+### Owner-provided current Firestore Rules — 2026-11-21
+
+The owner supplied the current rules text. It contains a recursive match with `allow read, write: if false`, so every client read/write is denied for both guests and authenticated users. Treat this as the current owner-reported configuration, not an independently verified deployed snapshot. Preserve it as the fail-closed rollback reference; do not replace it until the active project/database is confirmed and the complete least-privilege Rules candidate passes Emulator and two-account staging tests.
+
+### V1.0 Storage scope
+
+Firebase Storage is not configured and requires a paid upgrade. It is explicitly out of V1.0 scope. Do not add Storage dependencies or upload/attachment acceptance criteria. Revisit only as a separately approved post-V1.0 feature.

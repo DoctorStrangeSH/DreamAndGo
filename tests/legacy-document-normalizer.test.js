@@ -4,10 +4,17 @@ import { normalizeLegacyDocument } from '../js/core/legacy-document-normalizer.j
 
 const ts = { seconds: 1795280400, nanoseconds: 0 };
 const collections = ['dreams', 'travels', 'books', 'movies', 'restaurants'];
+const primaryFields = { dreams: 'title', travels: 'title', books: 'title', movies: 'title', restaurants: 'name' };
 const baseManifest = () => ({
+    version: 1,
+    approved: true,
+    sourceSchema: 'legacy-export-test-v1',
+    targetSchema: 'firestore-v1',
+    backup: { required: true, reference: 'synthetic-fixture-backup' },
+    rollback: { verified: true },
     collections: collections.map(name => ({
         name,
-        fields: []
+        fields: [{ source: primaryFields[name], action: 'keep' }]
     }))
 });
 const mapFor = (manifest, collection, fields) => {
@@ -22,7 +29,7 @@ test('normalizes a legacy book document with rename, drop, defaults and status m
         { source: 'author', action: 'keep' },
         { source: 'status', action: 'keep' },
         { source: 'legacyPrivateFlag', action: 'drop', dataLossApproval: true },
-        { source: 'notes', action: 'default', value: '' }
+        { source: 'notes', action: 'default', target: 'notes', value: '' }
     ]);
     manifest.collections.find(item => item.name === 'books').statusMap = { finished: 'read' };
     const source = {
@@ -103,14 +110,14 @@ test('rejects missing mappings, invalid target fields and unresolved manual revi
     });
     assert.equal(result.valid, false);
     assert.equal(result.normalized, null);
-    assert.ok(result.errors.includes('manual_review_required:oldStatus'));
+    assert.ok(result.errors.includes('migration_manifest_not_approved'));
     assert.ok(result.errors.includes('required_field_missing:status'));
 });
 
 test('rejects invalid dates, out-of-range values, unknown fields and malformed nested maps', () => {
     const manifest = baseManifest();
     const fields = [
-        'title','category','status','description','progress','deadline','steps','createdAt','updatedAt','isPublic'
+        'title','category','status','description','progress','deadline','steps','createdAt','updatedAt'
     ].map(source => ({ source, action: 'keep' }));
     mapFor(manifest, 'dreams', fields);
     const result = normalizeLegacyDocument({
@@ -126,7 +133,7 @@ test('rejects invalid dates, out-of-range values, unknown fields and malformed n
     assert.ok(result.errors.includes('invalid_field:progress'));
     assert.ok(result.errors.includes('invalid_field:deadline'));
     assert.ok(result.errors.includes('invalid_field:steps'));
-    assert.ok(result.errors.includes('unknown_target_field:isPublic'));
+    assert.ok(result.errors.includes('unmapped_source_field:isPublic'));
 });
 
 test('rejects target collisions and does not mutate the source document', () => {

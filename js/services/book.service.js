@@ -3,7 +3,7 @@ import { isAuthenticatedOwner, isValidFirestoreDocumentId } from '../core/owner-
 import { refreshUserStats } from './profile-stats.service.js';
 import { validateBookInput, validateBookUpdateInput } from '../core/collection-input-policy.js';
 import { 
-    collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc,
+    collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc, runTransaction,
     query, orderBy, serverTimestamp, where
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
@@ -82,13 +82,17 @@ export class BookService {
         if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid) || !isValidFirestoreDocumentId(bookId)) return { success: false, error: 'Недостаточно прав или неверный идентификатор.' };
         try {
             const bookRef = doc(this.db, 'users', userId, 'books', bookId);
-            const existingSnapshot = await getDoc(bookRef);
-            if (!existingSnapshot.exists()) return { success: false, error: 'Книга не найдена.' };
+            await runTransaction(this.db, async transaction => {
+                const existingSnapshot = await transaction.get(bookRef);
+                if (!existingSnapshot.exists()) throw new Error('Книга не найдена.');
 
-            const safeUpdates = validateBookUpdateInput(existingSnapshot.data(), updates);
-            await updateDoc(bookRef, {
-                ...safeUpdates,
-                updatedAt: serverTimestamp()
+                // Read, validate and write atomically so concurrent page updates
+                // cannot bypass the currentPage <= totalPages invariant.
+                const safeUpdates = validateBookUpdateInput(existingSnapshot.data(), updates);
+                transaction.update(bookRef, {
+                    ...safeUpdates,
+                    updatedAt: serverTimestamp()
+                });
             });
             await this.updateUserStats(userId);
             return { success: true };

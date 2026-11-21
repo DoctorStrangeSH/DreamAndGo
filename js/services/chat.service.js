@@ -1,5 +1,5 @@
 import { auth, db } from '../config/firebase.js';
-import { toPublicProfile } from '../core/public-profile.js';
+import { getPublicProfilesByIds } from './public-profile-callable.service.js';
 import { validateChatMessage, validChatParticipants, isValidChatUid, isValidChatPathSegment } from '../core/chat-message-policy.js';
 import {
     collection, doc, getDocs, getDoc, updateDoc, deleteDoc,
@@ -25,26 +25,27 @@ export class ChatService {
             const q = query(chatsRef, orderBy('lastMessageTime', 'desc'));
             const snapshot = await getDocs(q);
 
-            const chats = [];
-            for (const docSnap of snapshot.docs) {
-                if (docSnap.id !== '_init') {
-                    const chatData = docSnap.data();
-                    const partnerData = await this.getUserProfile(chatData.partnerId);
+            const chatDocs = snapshot.docs.filter(item => item.id !== '_init');
+            const partnerIds = [...new Set(chatDocs
+                .map(item => item.data().partnerId)
+                .filter(uid => isValidChatUid(uid) && uid !== userId))];
+            const profiles = await getPublicProfilesByIds(partnerIds);
+            const profilesById = new Map(profiles.map(profile => [profile.uid, profile]));
 
-                    chats.push({
-                        id: docSnap.id,
-                        partnerId: chatData.partnerId,
-                        partnerName: partnerData?.username || 'Пользователь',
-                        partnerAvatar: partnerData?.avatar || null,
-                        lastMessage: chatData.lastMessage || '',
-                        lastMessageTime: chatData.lastMessageTime?.toDate?.() || new Date(),
-                        unread: chatData.unread || 0,
-                        isGroup: chatData.isGroup || false
-                    });
-                }
-            }
-
-            return chats;
+            return chatDocs.map(docSnap => {
+                const chatData = docSnap.data();
+                const partnerData = profilesById.get(chatData.partnerId) || null;
+                return {
+                    id: docSnap.id,
+                    partnerId: chatData.partnerId,
+                    partnerName: partnerData?.username || 'Пользователь',
+                    partnerAvatar: partnerData?.avatar || null,
+                    lastMessage: chatData.lastMessage || '',
+                    lastMessageTime: chatData.lastMessageTime?.toDate?.() || new Date(),
+                    unread: chatData.unread || 0,
+                    isGroup: chatData.isGroup || false
+                };
+            });
         } catch (error) {
             console.error('Ошибка загрузки чатов:', error);
             return [];
@@ -227,13 +228,8 @@ export class ChatService {
     async getUserProfile(uid) {
         if (!isValidChatUid(uid)) return null;
         try {
-            const userDoc = await getDoc(doc(this.db, 'users', uid));
-            if (userDoc.exists()) {
-                // Keep the chat UI on the same explicit public allowlist as friends/search.
-                // This is defense in depth; Firestore Rules must still restrict document reads.
-                return toPublicProfile(uid, userDoc.data());
-            }
-            return null;
+            const profiles = await getPublicProfilesByIds([uid]);
+            return profiles.find(profile => profile.uid === uid) || null;
         } catch (error) {
             return null;
         }

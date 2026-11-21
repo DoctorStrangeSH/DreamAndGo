@@ -562,3 +562,16 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Auth + Firestore candidate emulator workflow: **14/14 rule tests and 59/59 server emulator tests passed**.
 - [ ] Review the 53-commit divergence from `main` and prepare a deliberate integration plan; PR #1 is not mergeable yet.
 - [ ] Obtain/export the actual active production Firestore rules and validate the complete live path inventory before any deployment.
+
+
+### Production Firestore readiness audit — 2026-11-21
+
+- [x] Audited direct Firestore operations in auth, personal collection, friends, notifications and legacy chat services.
+- [x] Audited exported callable Functions and document triggers in `server/index.js`.
+- [x] Added `docs/PRODUCTION_FIRESTORE_READINESS_AUDIT.md` with observed path inventory, P0/P1 blockers and production release gates.
+- [ ] Replace legacy client registration and global username queries with verified V2 callable flow.
+- [ ] Complete Chat V2 UI cutover and legacy history migration plan; remove browser writes to both participants' chat indexes.
+- [ ] Complete A/B/guest Emulator and staging QA for all five personal collections, friendship, notifications and public profiles.
+- [ ] Obtain production Rules export + project/database confirmation; build and manually approve a single complete production Ruleset.
+- [ ] Verify browser App Check, backup restore and rollback before production rollout.
+- **Production status: NOT READY. Existing deny-all Rules must remain unchanged until all release gates are satisfied.**

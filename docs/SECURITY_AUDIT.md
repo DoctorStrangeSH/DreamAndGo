@@ -629,3 +629,8 @@ No production rules or user data were changed. This inventory is source-derived 
 - Explicitly tested legacy compatibility: a pre-existing `isPublic: true` record can still be edited without changing visibility, while client attempts to change that field are denied.
 - Existing client validation remains in `js/core/dream-input-policy.js` and is covered by `tests/dream-input-policy.test.js`.
 - The test is included in the Emulator package script. No Emulator pass is claimed; production Rules and Firebase Console remain untouched.
+
+
+### SEC-RULES-DREAM-02 — preserve absence of legacy visibility field — 2026-11-21
+
+A second static review found that the first immutability condition could allow a client to add `isPublic` to a legacy document where the field was absent. Corrected the update predicate: the field must remain absent when absent before, or remain exactly equal when it already existed. The Emulator test's existing private-document mutation case exercises this regression. Emulator execution is still pending.

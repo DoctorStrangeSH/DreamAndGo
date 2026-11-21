@@ -369,3 +369,14 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Added `tests/collection-crud-stats-best-effort.test.js` to guard all five services and all 15 CRUD entry points.
 - [ ] Run root tests and syntax checks on the exact current HEAD; no CI pass is claimed yet.
 - [ ] Add emulator integration coverage for successful and denied CRUD operations, including server timestamps and cross-account access.
+
+
+### Firestore Rules candidate — first collection slice (travel) — 2026-11-21
+
+- [x] Created isolated `tests/firebase-emulator/collections-v1.rules` from the read-recovery fixture; it is explicitly test-only.
+- [x] Added a schema-specific owner CRUD rule for `travels`, including exact top-level allowlist, required fields, bounded strings, type/status enums, exact nested budget keys and bounds, HTTPS photo list validation, rating bounds and immutable/server timestamp checks.
+- [x] Added `collections-v1.rules.test.mjs` for owner CRUD, guest/second-account isolation and invalid payloads.
+- [x] Added the new test to `tests/firebase-emulator/package.json`.
+- [ ] Run the Emulator suite against the exact candidate HEAD and fix any Rules compiler/runtime failures.
+- [ ] Add equivalent isolated Rules + Emulator coverage for books, movies and restaurants. Dreams retain their existing isolated schema rule but need broader CRUD/timestamp tests.
+- **Safety:** this is not the production Rules file. Existing production deny-all remains untouched; no deploy performed.

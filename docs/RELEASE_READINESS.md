@@ -683,3 +683,14 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [ ] Confirm tests and syntax checks pass in CI on the latest exact HEAD.
 - [ ] Implement document-level dry-run only after actual source schema mappings are reviewed and approved.
 - **No Firestore connection, transformation or write path exists in this planner.**
+
+
+### Synthetic document normalization — 2026-11-21
+
+- [x] Added approved-manifest-gated pure normalizer.
+- [x] Enforced target V1 allowlists and collection-specific field constraints.
+- [x] Added synthetic fixtures for all five private collections.
+- [x] Added tests for renames, drops, defaults, status maps, malformed values, collisions, and input immutability.
+- [ ] Confirm full unit tests and syntax checks pass in CI on the exact latest HEAD.
+- [ ] Complete a synthetic rollback/reversibility rehearsal before any staging integration.
+- **No Firebase access or production migration is implemented.**

@@ -122,7 +122,7 @@ test('rejects empty or malformed audit inputs', () => {
         manifest
     });
     assert.equal(report.status, 'blocked');
-    assert.ok(report.blockers.includes('valid_non_empty_source_output_and_manifest_required'));
+    assert.ok(report.blockers.includes('valid_non_empty_source_output_and_approved_manifest_required'));
 });
 
 test('compares nested arrays, objects and timestamps without mutating inputs', () => {

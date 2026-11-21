@@ -411,3 +411,16 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Included the restaurant test in the Emulator package script.
 - [ ] Execute the complete Emulator suite on exact HEAD; no pass is claimed.
 - [ ] Expand dreams CRUD coverage and review cross-collection compatibility before any production Rules release.
+
+
+### Firestore Rules candidate — dreams slice and five-collection coverage — 2026-11-21
+
+- [x] Audited the dedicated `dream-input-policy.js` and existing dream Rules schema.
+- [x] Added explicit Emulator CRUD/owner-isolation/schema tests for dreams.
+- [x] Closed a visibility gap: new dream documents cannot set `isPublic: true`; optional visibility must be boolean and cannot be changed by clients.
+- [x] Preserved compatibility for legacy documents that already have `isPublic: true`: owners can still edit other allowed fields without changing visibility.
+- [x] Included the dreams test in the Emulator package script.
+- [x] All five private collection families now have explicit schema-specific Rules candidates in the isolated fixture: dreams, travels, books, movies and restaurants.
+- [ ] Run the full Emulator suite against exact HEAD and fix compiler/runtime failures.
+- [ ] Complete a cross-collection contract audit and verify legacy document compatibility before any production Rules release.
+- **No production Rules change or deploy.**

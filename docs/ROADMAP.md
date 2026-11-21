@@ -38,7 +38,7 @@ Dream&Go — социальное пространство мечтаний, п�
 - [ ] Лента активности и подписки с моделью приватности.
 - [ ] Публикация историй выполнения мечтаний, реакции и комментарии.
 - [ ] Коллекции впечатлений, рекомендации и совместные цели.
-- [ ] Уведомления и управление частотой/типами событий.
+- [ ] V1.1: настройки частоты и типов уведомлений (явно вне утверждённого scope V1.0).
 
 ## Правила реализации
 
@@ -226,7 +226,7 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Added eight server transaction tests and client/callable contract checks.
 - [x] Root Checks passed on `fd0ccc2f219758744135e066eda457de27c94440` ([run 44800645445](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44800645445)).
 - [ ] Run a real staging journey with two accounts and verify deployed Functions + App Check before rollout.
-- [ ] Client-side notification creation remains a separate security blocker; `notifications.service.js` still accepts an arbitrary target UID and payload.
+- [x] Client-side notification creation was removed from `notifications.service.js`; the service is owner-bound. Remaining notification authorization is tracked under SEC-NOTIFY-01…05 and the production Rules gate.
 
 
 ### Notification client-write removal — 2026-11-21

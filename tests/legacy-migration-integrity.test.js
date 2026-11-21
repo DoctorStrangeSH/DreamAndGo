@@ -15,19 +15,31 @@ const source = [{
     }
 }];
 const manifest = {
-    collections: [{
-        name: 'books',
-        fields: [
-            { source: 'oldTitle', action: 'rename', target: 'title' },
-            { source: 'author', action: 'keep' },
-            { source: 'status', action: 'keep' },
-            { source: 'createdAt', action: 'keep' },
-            { source: 'updatedAt', action: 'keep' },
-            { source: 'obsoleteFlag', action: 'drop', dataLossApproval: true },
-            { source: 'notes', action: 'default', target: 'notes', value: '' }
-        ],
-        statusMap: { finished: 'read' }
-    }]
+    version: 1,
+    approved: true,
+    sourceSchema: 'legacy-integrity-fixture-v1',
+    targetSchema: 'firestore-v1',
+    backup: { required: true, reference: 'synthetic-integrity-backup' },
+    rollback: { verified: true },
+    collections: [
+        { name: 'dreams', fields: [{ source: 'title', action: 'keep' }] },
+        { name: 'travels', fields: [{ source: 'title', action: 'keep' }] },
+        {
+            name: 'books',
+            fields: [
+                { source: 'oldTitle', action: 'rename', target: 'title' },
+                { source: 'author', action: 'keep' },
+                { source: 'status', action: 'keep' },
+                { source: 'createdAt', action: 'keep' },
+                { source: 'updatedAt', action: 'keep' },
+                { source: 'obsoleteFlag', action: 'drop', dataLossApproval: true },
+                { source: 'notes', action: 'default', target: 'notes', value: '' }
+            ],
+            statusMap: { finished: 'read' }
+        },
+        { name: 'movies', fields: [{ source: 'title', action: 'keep' }] },
+        { name: 'restaurants', fields: [{ source: 'name', action: 'keep' }] }
+    ]
 };
 const normalized = [{
     collection: 'books',
@@ -125,12 +137,9 @@ test('compares nested arrays, objects and timestamps without mutating inputs', (
     }];
     const output = structuredClone(input);
     const beforeInput = structuredClone(input);
-    const dreamManifest = {
-        collections: [{
-            name: 'dreams',
-            fields: Object.keys(input[0].document).map(field => ({ source: field, action: 'keep' }))
-        }]
-    };
+    const dreamManifest = structuredClone(manifest);
+    dreamManifest.collections.find(item => item.name === 'dreams').fields =
+        Object.keys(input[0].document).map(field => ({ source: field, action: 'keep' }));
     const report = auditLegacyMigrationIntegrity({
         sourceDocuments: input,
         normalizedDocuments: output,

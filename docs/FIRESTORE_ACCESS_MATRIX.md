@@ -197,3 +197,11 @@ The candidate `sendPrivateMessageV2` server transaction writes a fixed-schema `m
 - [x] Root Checks passed on candidate HEAD `05961cb3bcec5f6fbe6b70e84f2b261c700e9237`: 461/461 tests and syntax checks for 254 JavaScript files ([run 44893947666](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44893947666)).
 - [ ] Review the actual active production Rules and integrate this notification contract into the complete production Rules configuration. The candidate branch currently has no root `firestore.rules` or `firebase.json`; isolated fixture files are not deployable Rules.
 - [ ] Run two-account staging validation with App Check before any production rollout.
+
+
+## Repository configuration inventory — 2026-11-21
+
+- [x] Checked the repository root on both `main` and `refactor/security-foundation`: neither branch contains a deployable root `firestore.rules` or `firebase.json`.
+- [x] Confirmed `tests/firebase-emulator/firebase.json` points the emulator to `tests/firebase-emulator/chat.rules`; this is a test harness only. `notifications.rules`, `owner-read.rules` and `chat.rules` are isolated fixtures, each with a deny-by-default fallback and intentionally incomplete collection coverage.
+- [ ] Obtain the actual active Firestore Rules and Firebase project configuration from the authorized Firebase Console / CLI read-only export. GitHub repository access cannot establish what is currently deployed.
+- [ ] Compare the exported active Rules and indexes with this access matrix before drafting any production Rules candidate.

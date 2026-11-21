@@ -60,6 +60,9 @@ test('book V1 rules enforce owner CRUD, schema allowlist and page invariants', a
         await assertFails(setDoc(doc(alice, 'users/alice/books/invalid-status'), {
             ...validBook(), status: 'public'
         }));
+        await assertFails(setDoc(doc(alice, 'users/alice/books/duplicate-genres'), {
+            ...validBook(), genres: ['Фантастика', 'Фантастика']
+        }));
         await assertFails(setDoc(doc(alice, 'users/alice/books/invalid-genre'), {
             ...validBook(), genres: ['Неизвестный жанр']
         }));

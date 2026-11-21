@@ -714,3 +714,12 @@ Added `js/core/legacy-migration-dry-run.js` and an offline CLI. The planner cons
 Explicit field decisions (including approved drops) and explicit status mappings may resolve corresponding legacy inventory findings. Missing timestamps, missing required fields, malformed records, invalid timestamp metadata and type mismatches remain blockers because the aggregate inventory cannot prove a safe transformation for those cases.
 
 The output always sets `migrationApplied: false` and `executable: false`. It does not inspect document values or IDs, connect to Firebase, transform documents, or authorize production execution. This is a planning report only, not a document-level dry run or migration engine.
+
+
+### SEC-LEGACY-MIGRATION-03 — approved document normalization on synthetic fixtures — 2026-11-21
+
+Added `js/core/legacy-document-normalizer.js`, a pure in-memory transformation function. It refuses to run unless the supplied Migration Manifest passes the full approval/backup/rollback and target-field checks. It applies explicit keep, rename, approved drop, default and status-map decisions, then validates the resulting document against the documented V1 contract for each of the five collections.
+
+Validation includes required fields, enums, string limits, numeric ranges, dates, HTTPS URLs, nested maps/lists, unique values, timestamp metadata and cross-field book page constraints. Manual-review actions are deliberately non-executable and must be replaced by a concrete reviewed action. The function does not connect to Firestore or write data. Synthetic tests only; no user documents or production data were accessed.
+
+The normalizer returns the normalized document values to its caller, so it must only be used in a trusted local/staging process with appropriately handled input/output. Its metadata explicitly reports that normalized values are returned and document IDs are not included.

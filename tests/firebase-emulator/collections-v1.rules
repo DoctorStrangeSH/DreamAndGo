@@ -109,6 +109,7 @@ service cloud.firestore {
           'title', 'category', 'status', 'description', 'progress',
           'deadline', 'steps', 'isPublic', 'createdAt', 'updatedAt'
         ]) &&
+        (!('isPublic' in data) || data.isPublic == false) &&
         data.title is string && data.title.size() > 0 &&
         data.title.size() <= 120 &&
         data.category in ['', 'Путешествия', 'Карьера', 'Творчество',
@@ -412,6 +413,8 @@ service cloud.firestore {
         allow update: if isOwner(uid) &&
           isValidDream(request.resource.data) &&
           request.resource.data.createdAt == resource.data.createdAt &&
+          (!('isPublic' in resource.data) ||
+            request.resource.data.isPublic == resource.data.isPublic) &&
           request.resource.data.updatedAt == request.time;
         allow delete: if isOwner(uid);
       }

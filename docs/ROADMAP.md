@@ -235,8 +235,8 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Bound notification subscription and read-state mutations to the active Firebase Auth UID; stale snapshots are ignored after account changes.
 - [x] Added notification document-ID validation and regression tests in `tests/notifications-service-security.test.js`.
 - [x] Implement trusted server-generated notifications for friendship request/acceptance and newly awarded achievement levels; all writes use fixed server-derived payloads.
-- [ ] Implement trusted message notifications only after the server-side message event contract is complete; do not restore a generic client-selected recipient API.
-- [ ] Add and verify the complete production Firestore Rules for notification reads and owner-only read-state updates.
+- [x] Implement trusted message notifications in the candidate server-side message transaction; do not restore a generic client-selected recipient API.
+- [x] Add isolated notification Rules Emulator tests for owner reads and owner-only one-way read-state updates; production Rules integration remains a separate release blocker.
 - [ ] Run the notification flow in staging with two independent accounts and App Check.
 - **Status:** the arbitrary client notification-write path is removed from the candidate client. The V1.0 notification feature is not complete until trusted event generation and Rules/staging acceptance are verified.
 
@@ -249,7 +249,8 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Notification IDs are deterministic per actor/event type, so callable retries cannot create an unbounded series of duplicate notification documents.
 - [x] Extended friendship transaction tests to assert exact notification recipient, schema and transaction write.
 - [x] Add trusted server-side notification generation for friend, achievement and private-message events; achievement and message event writes are covered by dedicated transaction/Emulator tests.
-- [ ] Complete notification-specific Rules Emulator tests and two-account staging validation.
+- [x] Complete notification-specific Rules Emulator tests: 7/7 Rules tests and 59/59 server/Auth/Firestore Emulator tests passed (run 44893915020).
+- [ ] Complete two-account staging validation with App Check.
 - **Status:** all three notification event sources are implemented in candidate code; they are not production-ready until Rules and staging acceptance.
 
 
@@ -272,7 +273,8 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Stable document IDs (`achievement_{id}_level_{level}`) prevent duplicate notifications when the stats callable is retried after an award.
 - [x] Extended the Firestore Emulator profile-stats journey to verify the exact notification schema and idempotent repeat refresh.
 - [ ] Verify root tests, syntax checks and Emulator workflow on the exact updated candidate HEAD.
-- [ ] Complete owner-only notification Rules tests and two-account staging validation.
+- [x] Complete isolated owner-only notification Rules tests (7/7 Rules tests; run 44893915020).
+- [ ] Complete two-account staging validation with App Check.
 
 
 ### Trusted private-message notifications — 2026-11-21
@@ -282,5 +284,13 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Deterministic `message_{serverMessageId}` document IDs make retries idempotent: a repeated message request returns through the existing-message branch and cannot increment unread or create another notice.
 - [x] Emulator regression coverage checks the exact payload and verifies that retries leave exactly one notification.
 - [ ] Verify the new Emulator workflow and final candidate Checks on the exact HEAD.
-- [ ] Add notification-specific Firestore Rules for owner reads and owner-only `read` updates; server-created notices must remain client-uncreatable.
+- [x] Add isolated notification Firestore Rules tests for owner reads, immutable event fields, server-only create/delete and owner-only `read: false → true` updates; server-created notices remain client-uncreatable.
 - [ ] Validate friend, achievement and message notices with two staging accounts and App Check.
+
+
+### Notification milestone verification — 2026-11-21
+
+- [x] Root Checks passed on candidate HEAD `05961cb3bcec5f6fbe6b70e84f2b261c700e9237`: 461/461 tests, 0 failures; syntax checks passed for 254 JavaScript files ([run 44893947666](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44893947666)).
+- [x] Firebase Emulator workflow passed after the notification Rules fixture was added: 7/7 isolated Rules tests and 59/59 server/Auth/Firestore Emulator tests ([run 44893915020](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44893915020)).
+- [x] Trusted friend, achievement and private-message notification event sources are implemented in candidate server transactions; message retry idempotency and achievement repeat-refresh idempotency are covered.
+- [ ] Production Rules integration, review of the actual active Firebase Rules, and two-account staging validation with App Check remain release blockers. No root `firestore.rules` or `firebase.json` is present in this candidate branch; isolated test fixtures must not be deployed.

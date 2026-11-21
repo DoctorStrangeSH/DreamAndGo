@@ -545,3 +545,12 @@ No production rules or user data were changed. This inventory is source-derived 
 - Both methods now isolate statistics refresh in a best-effort try/catch and preserve success for the already-committed primary write. The secondary failure is logged for diagnosis.
 - Added source-level regression tests for both paths and validator tests confirming that a partial `budget` update must replace the complete validated nested map (planned, spent, currency); unknown keys and invalid ranges are rejected.
 - This change does not grant additional Firestore permissions and does not replace authoritative Rules validation.
+
+
+### SEC-COLLECTION-MOVIE-01 — avoid false failure after committed writes — 2026-11-21
+
+- `MovieService.addMovie` and `updateMovie` previously awaited the derived-statistics refresh inside the same outer try/catch as the primary Firestore write. A statistics failure after a successful write could return `success: false` and invite a duplicate retry.
+- Both paths now isolate statistics refresh as best-effort work and preserve success after the primary write is confirmed. Secondary failures are logged.
+- Added `tests/movie-service-write-result.test.js` for both paths.
+- Extended movie validator tests to reject impossible calendar dates and duplicate genre IDs. Existing allowlists continue to constrain TMDB metadata, HTTPS artwork URLs, bounded ratings, country maps and status values.
+- This is client reliability/input hardening only; Firestore Rules remain the authorization boundary and are not yet complete.

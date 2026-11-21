@@ -747,3 +747,12 @@ The auditor cannot prove database persistence, Firestore document-ID uniqueness,
 
 
 **Integrity audit input gate:** the standalone auditor now validates the complete Migration Manifest and requires it to be approved, including all five collection mappings, explicit source schema, backup reference and rollback declaration. Malformed or unapproved manifests fail closed before any comparison is attempted.
+
+
+### SEC-RULES-CALENDAR-01 — impossible calendar dates accepted by candidate Rules — 2026-11-21
+
+**Status:** corrected in the isolated Emulator candidate; execution evidence pending.
+
+The V1 Rules fixture previously relied on date-shaped regular expressions for dream deadlines, movie release dates and restaurant visit dates. Those expressions could accept impossible calendar values such as February 30. Added a shared Gregorian calendar validator with leap-year handling and applied it to all three fields. Empty dream deadlines and empty movie/restaurant date strings remain compatible with their documented optional-field contracts; restaurant `null` remains valid.
+
+Emulator regression cases now reject impossible dates and accept a valid leap day. These are candidate Rules tests only. The fixture is not production Rules and has not been deployed. The production deny-all baseline remains unchanged.

@@ -171,6 +171,80 @@ service cloud.firestore {
         data.createdAt is timestamp && data.updatedAt is timestamp;
     }
 
+
+    function isValidBookGenre(genre) {
+      return genre in ['Фантастика', 'Детектив', 'Роман', 'Биография', 'История',
+        'Психология', 'Бизнес', 'Наука', 'Философия', 'Другое'];
+    }
+    function isValidBookGenres(genres) {
+      return genres is list && genres.size() <= 10 &&
+        (genres.size() <= 0 || (genres[0] is string && genres[0].size() > 0 && genres[0].size() <= 40 && isValidBookGenre(genres[0]))) &&
+        (genres.size() <= 1 || (genres[1] is string && genres[1].size() > 0 && genres[1].size() <= 40 && isValidBookGenre(genres[1]))) &&
+        (genres.size() <= 2 || (genres[2] is string && genres[2].size() > 0 && genres[2].size() <= 40 && isValidBookGenre(genres[2]))) &&
+        (genres.size() <= 3 || (genres[3] is string && genres[3].size() > 0 && genres[3].size() <= 40 && isValidBookGenre(genres[3]))) &&
+        (genres.size() <= 4 || (genres[4] is string && genres[4].size() > 0 && genres[4].size() <= 40 && isValidBookGenre(genres[4]))) &&
+        (genres.size() <= 5 || (genres[5] is string && genres[5].size() > 0 && genres[5].size() <= 40 && isValidBookGenre(genres[5]))) &&
+        (genres.size() <= 6 || (genres[6] is string && genres[6].size() > 0 && genres[6].size() <= 40 && isValidBookGenre(genres[6]))) &&
+        (genres.size() <= 7 || (genres[7] is string && genres[7].size() > 0 && genres[7].size() <= 40 && isValidBookGenre(genres[7]))) &&
+        (genres.size() <= 8 || (genres[8] is string && genres[8].size() > 0 && genres[8].size() <= 40 && isValidBookGenre(genres[8]))) &&
+        (genres.size() <= 9 || (genres[9] is string && genres[9].size() > 0 && genres[9].size() <= 40 && isValidBookGenre(genres[9])));
+    }
+    function isValidBookQuotes(quotes) {
+      return quotes is list && quotes.size() <= 30 &&
+        (quotes.size() <= 0 || (quotes[0] is string && quotes[0].size() > 0 && quotes[0].size() <= 500)) &&
+        (quotes.size() <= 1 || (quotes[1] is string && quotes[1].size() > 0 && quotes[1].size() <= 500)) &&
+        (quotes.size() <= 2 || (quotes[2] is string && quotes[2].size() > 0 && quotes[2].size() <= 500)) &&
+        (quotes.size() <= 3 || (quotes[3] is string && quotes[3].size() > 0 && quotes[3].size() <= 500)) &&
+        (quotes.size() <= 4 || (quotes[4] is string && quotes[4].size() > 0 && quotes[4].size() <= 500)) &&
+        (quotes.size() <= 5 || (quotes[5] is string && quotes[5].size() > 0 && quotes[5].size() <= 500)) &&
+        (quotes.size() <= 6 || (quotes[6] is string && quotes[6].size() > 0 && quotes[6].size() <= 500)) &&
+        (quotes.size() <= 7 || (quotes[7] is string && quotes[7].size() > 0 && quotes[7].size() <= 500)) &&
+        (quotes.size() <= 8 || (quotes[8] is string && quotes[8].size() > 0 && quotes[8].size() <= 500)) &&
+        (quotes.size() <= 9 || (quotes[9] is string && quotes[9].size() > 0 && quotes[9].size() <= 500)) &&
+        (quotes.size() <= 10 || (quotes[10] is string && quotes[10].size() > 0 && quotes[10].size() <= 500)) &&
+        (quotes.size() <= 11 || (quotes[11] is string && quotes[11].size() > 0 && quotes[11].size() <= 500)) &&
+        (quotes.size() <= 12 || (quotes[12] is string && quotes[12].size() > 0 && quotes[12].size() <= 500)) &&
+        (quotes.size() <= 13 || (quotes[13] is string && quotes[13].size() > 0 && quotes[13].size() <= 500)) &&
+        (quotes.size() <= 14 || (quotes[14] is string && quotes[14].size() > 0 && quotes[14].size() <= 500)) &&
+        (quotes.size() <= 15 || (quotes[15] is string && quotes[15].size() > 0 && quotes[15].size() <= 500)) &&
+        (quotes.size() <= 16 || (quotes[16] is string && quotes[16].size() > 0 && quotes[16].size() <= 500)) &&
+        (quotes.size() <= 17 || (quotes[17] is string && quotes[17].size() > 0 && quotes[17].size() <= 500)) &&
+        (quotes.size() <= 18 || (quotes[18] is string && quotes[18].size() > 0 && quotes[18].size() <= 500)) &&
+        (quotes.size() <= 19 || (quotes[19] is string && quotes[19].size() > 0 && quotes[19].size() <= 500)) &&
+        (quotes.size() <= 20 || (quotes[20] is string && quotes[20].size() > 0 && quotes[20].size() <= 500)) &&
+        (quotes.size() <= 21 || (quotes[21] is string && quotes[21].size() > 0 && quotes[21].size() <= 500)) &&
+        (quotes.size() <= 22 || (quotes[22] is string && quotes[22].size() > 0 && quotes[22].size() <= 500)) &&
+        (quotes.size() <= 23 || (quotes[23] is string && quotes[23].size() > 0 && quotes[23].size() <= 500)) &&
+        (quotes.size() <= 24 || (quotes[24] is string && quotes[24].size() > 0 && quotes[24].size() <= 500)) &&
+        (quotes.size() <= 25 || (quotes[25] is string && quotes[25].size() > 0 && quotes[25].size() <= 500)) &&
+        (quotes.size() <= 26 || (quotes[26] is string && quotes[26].size() > 0 && quotes[26].size() <= 500)) &&
+        (quotes.size() <= 27 || (quotes[27] is string && quotes[27].size() > 0 && quotes[27].size() <= 500)) &&
+        (quotes.size() <= 28 || (quotes[28] is string && quotes[28].size() > 0 && quotes[28].size() <= 500)) &&
+        (quotes.size() <= 29 || (quotes[29] is string && quotes[29].size() > 0 && quotes[29].size() <= 500));
+    }
+    function isValidBook(data) {
+      return data is map &&
+        data.keys().hasAll(['title', 'author', 'status', 'notes', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly([
+          'title', 'author', 'status', 'genres', 'year', 'totalPages',
+          'currentPage', 'userRating', 'review', 'quotes', 'notes',
+          'createdAt', 'updatedAt'
+        ]) &&
+        data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+        data.author is string && data.author.size() > 0 && data.author.size() <= 120 &&
+        data.status in ['want_to_read', 'reading', 'read'] &&
+        data.notes is string && data.notes.size() <= 4000 &&
+        (!('genres' in data) || isValidBookGenres(data.genres)) &&
+        (!('year' in data) || data.year == null || (data.year is int && data.year >= 1000 && data.year <= 2099)) &&
+        (!('totalPages' in data) || (data.totalPages is int && data.totalPages >= 0 && data.totalPages <= 100000)) &&
+        (!('currentPage' in data) || (data.currentPage is int && data.currentPage >= 0 && data.currentPage <= 100000)) &&
+        (!('totalPages' in data) || !('currentPage' in data) || data.currentPage <= data.totalPages) &&
+        (!('userRating' in data) || (data.userRating is int && data.userRating >= 0 && data.userRating <= 10)) &&
+        (!('review' in data) || (data.review is string && data.review.size() <= 4000)) &&
+        (!('quotes' in data) || isValidBookQuotes(data.quotes)) &&
+        data.createdAt is timestamp && data.updatedAt is timestamp;
+    }
+
     match /users/{uid} {
       allow get: if isOwner(uid);
       allow list: if false;
@@ -204,6 +278,20 @@ service cloud.firestore {
           request.resource.data.updatedAt == request.time;
         allow update: if isOwner(uid) &&
           isValidTravel(request.resource.data) &&
+          request.resource.data.createdAt == resource.data.createdAt &&
+          request.resource.data.updatedAt == request.time;
+        allow delete: if isOwner(uid);
+      }
+
+
+      match /books/{bookId} {
+        allow create: if isOwner(uid) &&
+          exists(/databases/$(database)/documents/users/$(uid)) &&
+          isValidBook(request.resource.data) &&
+          request.resource.data.createdAt == request.time &&
+          request.resource.data.updatedAt == request.time;
+        allow update: if isOwner(uid) &&
+          isValidBook(request.resource.data) &&
           request.resource.data.createdAt == resource.data.createdAt &&
           request.resource.data.updatedAt == request.time;
         allow delete: if isOwner(uid);

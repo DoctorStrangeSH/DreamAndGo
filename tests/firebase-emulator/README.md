@@ -41,3 +41,11 @@ npx firebase-tools emulators:exec --project demo-dreamandgo-chat-rules --only fi
 `notifications.rules` проверяет отдельный минимальный контракт уведомлений: владелец может читать только собственную коллекцию; гость и другой пользователь не имеют доступа; клиент не может создавать или удалять уведомления; владелец может только перевести `read` из `false` в `true`, не меняя payload. Тесты запускаются общей командой Emulator workflow.
 
 Это отдельный fixture для тестирования матрицы доступа, а не готовый production Rules файл. Он не разрешает остальные коллекции и не должен деплоиться.
+
+
+## Isolated V1 travel Rules candidate
+
+- `collections-v1.rules` adds a schema-specific owner CRUD candidate for `users/{uid}/travels/{travelId}`, while retaining the recovery fixture's existing restricted profile/dream behavior and denying unrelated generic collection writes.
+- `collections-v1.rules.test.mjs` covers owner create/read/list/update/delete, guest and second-account isolation, unknown fields, invalid nested budget maps/currency/ranges, rating bounds, HTTPS photo URLs/list limits and server timestamp enforcement.
+- The test is included in the Emulator package script.
+- **Important:** this is a staged candidate for the travel collection only, not a complete V1.0 Rules file and not production configuration. Books, movies and restaurants remain write-denied by the generic fallback. Do not deploy or copy this fixture to Firebase Console.

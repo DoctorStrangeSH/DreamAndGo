@@ -505,3 +505,15 @@ No production rules or user data were changed. This inventory is source-derived 
 - The access matrix and `FIRESTORE_V1_DATA_SCHEMAS.md` are the source contracts for a separate complete candidate. Implement schema-specific allowlists and immutable-field checks; do not enable broad owner writes or infer authorization from legacy `isPublic` fields.
 - Current HEAD has no reported combined status checks or workflow runs in GitHub. Prior successful CI/Emulator runs must not be attributed to this HEAD.
 - No production Rules, Firebase settings, Functions, or user data were changed.
+
+
+### SEC-COLLECTION-BOOK-01 — partial page-count updates — 2026-11-21
+
+**Status: client-side mitigation implemented; authoritative Rules enforcement open.**
+
+- `validateBookInput(..., { partial: true })` could not compare a one-field page update with the persisted counterpart.
+- Added `validateBookUpdateInput(existing, updates)` to merge only the page-bound fields for invariant validation while retaining the allowlisted partial payload.
+- `BookService.updateBook` now fetches the existing book and rejects missing records before writing; it rejects updates that would make `currentPage > totalPages`.
+- Regression tests cover valid partial changes, current-page overflow, lowering total pages below the current page, malformed legacy counters and unrelated updates.
+- A read followed by a separate write is not atomic. Firestore Rules must independently compare `request.resource.data.currentPage` and `request.resource.data.totalPages` with the resulting document before this invariant can be considered secured against concurrent clients.
+- No production Rules or user data were changed. Exact-HEAD CI remains unverified.

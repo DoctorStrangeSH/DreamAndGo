@@ -284,7 +284,7 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 
 ### SEC-CALLABLE-01 — private chat callables did not enforce App Check — 2026-11-21
 
-**Status:** fixed in candidate code; regression test added. CI verification is pending for the latest implementation commit. This does not prove that deployed Functions have been updated.
+**Status:** fixed in candidate code; regression test passed. Root Checks passed 462/462 tests and syntax validation passed for 255 JavaScript files on implementation HEAD `1b7122d747b2bac336312e1caf925c5c4b3039c5` ([run 44894482895](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44894482895)). Firebase Emulator workflow is still running for that HEAD at the time of this update. This does not prove that deployed Functions have been updated.
 
 - The six candidate private-chat callable endpoints (`createPrivateChatV2`, `sendPrivateMessageV2`, `getPrivateMessageStatusV2`, `markPrivateMessageReadV2`, `getPrivateChatUnreadV2`, `getPrivateChatHistoryV2`) previously omitted `enforceAppCheck: true` while other V2 callable endpoints required it.
 - All six now explicitly require Firebase App Check in their callable options.

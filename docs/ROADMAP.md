@@ -548,3 +548,17 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Firestore V1 Rules candidate now rejects duplicate book genres/quotes, movie genre IDs and restaurant favorite dishes, matching the client/normalizer uniqueness contracts.
 
 - [x] Reduced movie production-country list limit from 30 to 10 across client validation, migration normalizer and Firestore Rules to keep the Rules evaluator within its expression budget; added regression tests.
+
+
+### Firestore V1 security candidate verification — 2026-11-21
+
+- [x] Gregorian date validation: impossible dates rejected; leap days and documented empty optional dates covered.
+- [x] List uniqueness checks aligned with client validators for books, movies and restaurants.
+- [x] Core V1 collection read rules separated from the legacy read-only catch-all matcher.
+- [x] Movie Rules expression budget brought under control by consolidating genre checks and bounding production countries to 10 across client, normalizer and Rules.
+- [x] Root unit tests: **528/528 passed**.
+- [x] Repository syntax checks: **passed**.
+- [x] Firestore Rules Emulator: **13/13 passed**.
+- [x] Auth + Firestore candidate emulator workflow: **14/14 rule tests and 59/59 server emulator tests passed**.
+- [ ] Review the 53-commit divergence from `main` and prepare a deliberate integration plan; PR #1 is not mergeable yet.
+- [ ] Obtain/export the actual active production Firestore rules and validate the complete live path inventory before any deployment.

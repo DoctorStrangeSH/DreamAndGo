@@ -66,7 +66,14 @@ export class RestaurantService {
             };
 
             const docRef = await addDoc(restaurantsRef, newRestaurant);
-            await this.updateUserStats(userId);
+
+            // Statistics are derived data. A refresh failure must not report
+            // an already committed restaurant create as failed.
+            try {
+                await this.updateUserStats(userId);
+            } catch (statsError) {
+                console.warn('Ресторан сохранён, но статистика не обновилась:', statsError);
+            }
 
             return { success: true, id: docRef.id };
         } catch (error) {
@@ -86,7 +93,15 @@ export class RestaurantService {
                 ...safeUpdates,
                 updatedAt: serverTimestamp()
             });
-            await this.updateUserStats(userId);
+
+            // Preserve the committed restaurant update result if the
+            // secondary statistics refresh fails.
+            try {
+                await this.updateUserStats(userId);
+            } catch (statsError) {
+                console.warn('Ресторан обновлён, но статистика не обновилась:', statsError);
+            }
+
             return { success: true };
         } catch (error) {
             console.error('Ошибка обновления ресторана:', error);

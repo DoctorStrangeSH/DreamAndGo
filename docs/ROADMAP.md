@@ -424,3 +424,6 @@ Dream&Go — социальное пространство мечтаний, п�
 - [ ] Run the full Emulator suite against exact HEAD and fix compiler/runtime failures.
 - [ ] Complete a cross-collection contract audit and verify legacy document compatibility before any production Rules release.
 - **No production Rules change or deploy.**
+
+
+- [x] Follow-up static review closed a legacy visibility edge case: clients cannot add `isPublic` to old documents where the field was absent; existing field values remain immutable.

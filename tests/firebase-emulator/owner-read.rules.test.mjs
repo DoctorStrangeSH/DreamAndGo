@@ -78,7 +78,7 @@ test('owner-only read recovery: guest and other users cannot read PII or write',
             title: 'Моя мечта', category: 'Знания', status: 'dreaming',
             description: 'Учиться', progress: 0, deadline: null,
             steps: [{ text: 'Первый шаг', done: false }],
-            isPublic: false, createdAt: serverTimestamp(),
+            createdAt: serverTimestamp(),
             updatedAt: serverTimestamp()
         });
         const newDream = doc(alice, 'users', 'alice', 'dreams', 'new');
@@ -89,6 +89,9 @@ test('owner-only read recovery: guest and other users cannot read PII or write',
         await assertFails(setDoc(doc(bob, 'users', 'alice', 'dreams', 'forged'), validDream()));
         await assertFails(setDoc(doc(alice, 'users', 'alice', 'dreams', 'public'), {
             ...validDream(), isPublic: true
+        }));
+        await assertFails(setDoc(doc(alice, 'users', 'alice', 'dreams', 'legacy-flag'), {
+            ...validDream(), isPublic: false
         }));
         await assertFails(setDoc(doc(alice, 'users', 'alice', 'dreams', 'role'), {
             ...validDream(), role: 'admin'
@@ -102,6 +105,7 @@ test('owner-only read recovery: guest and other users cannot read PII or write',
         await assertFails(updateDoc(newDream, { createdAt: serverTimestamp() }));
         await assertFails(updateDoc(newDream, { title: 'x'.repeat(121), updatedAt: serverTimestamp() }));
         await assertFails(updateDoc(newDream, { isPublic: true, updatedAt: serverTimestamp() }));
+        await assertFails(updateDoc(newDream, { isPublic: false, updatedAt: serverTimestamp() }));
         await assertSucceeds(deleteDoc(newDream));
 
     } finally {

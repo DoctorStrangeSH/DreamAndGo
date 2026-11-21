@@ -29,31 +29,24 @@ const SCHEMAS = Object.freeze({
 const FIRESTORE_TIMESTAMP_MIN_SECONDS = -62_135_596_800;
 const FIRESTORE_TIMESTAMP_MAX_SECONDS = 253_402_300_799;
 
-function isTimestamp(value) {
-    if (value instanceof Date) return Number.isFinite(value.getTime());
-    return Boolean(value && typeof value === 'object' &&
+const FIELD_TYPES = new Set(['string', 'boolean', 'integer', 'number', 'null', 'array', 'map', 'timestamp', 'unknown']);
+const FIRESTORE_TIMESTAMP_MIN_SECONDS = -62_135_596_800;
+const FIRESTORE_TIMESTAMP_MAX_SECONDS = 253_402_300_799;
+
+function validTimestampMetadata(value) {
+    return value && typeof value === 'object' &&
         Number.isInteger(value.seconds) &&
         Number.isInteger(value.nanoseconds) &&
         value.seconds >= FIRESTORE_TIMESTAMP_MIN_SECONDS &&
         value.seconds <= FIRESTORE_TIMESTAMP_MAX_SECONDS &&
         value.nanoseconds >= 0 &&
-        value.nanoseconds < 1_000_000_000);
-}
-
-function coarseType(value) {
-    if (value === null) return 'null';
-    if (Array.isArray(value)) return 'array';
-    if (value instanceof Date || (value && typeof value === 'object' &&
-        Number.isInteger(value.seconds) && Number.isInteger(value.nanoseconds))) return 'timestamp';
-    if (typeof value === 'object') return 'map';
-    if (typeof value === 'number') return Number.isInteger(value) ? 'integer' : 'number';
-    return typeof value;
+        value.nanoseconds < 1_000_000_000;
 }
 
 /**
- * Offline, read-only inventory. It never returns document IDs or field values.
- * Input: [{ collection: 'books', id: 'local-only-id', data: { ... } }]
- * Output contains field names and coarse type/count metadata only.
+ * Offline, read-only inventory. Input contains metadata only:
+ * { collection, fields: { fieldName: 'string'|'timestamp'|... }, status?: 'old_status' }
+ * No document IDs or actual user field values are accepted.
  */
 export function auditLegacyCollectionSnapshot(records) {
     if (!Array.isArray(records)) throw new TypeError('Snapshot must be an array');
@@ -75,7 +68,10 @@ export function auditLegacyCollectionSnapshot(records) {
     for (const record of records) {
         if (!record || typeof record !== 'object' || Array.isArray(record) ||
             !Object.hasOwn(SCHEMAS, record.collection) ||
-            !record.data || typeof record.data !== 'object' || Array.isArray(record.data)) {
+            !record.fields || typeof record.fields !== 'object' || Array.isArray(record.fields) ||
+            Object.keys(record).some(key => !['collection', 'fields', 'status'].includes(key)) ||
+            Object.values(record.fields).some(type => !FIELD_TYPES.has(type)) ||
+            (Object.hasOwn(record, 'status') && (typeof record.status !== 'string' || record.status.length > 64))) {
             invalidRecords++;
             issues.push({ code: 'invalid_record_shape' });
             continue;
@@ -83,35 +79,30 @@ export function auditLegacyCollectionSnapshot(records) {
 
         const schema = SCHEMAS[record.collection];
         const summary = collections[record.collection];
-        const data = record.data;
+        const fields = record.fields;
         summary.documents++;
 
-        for (const [field, value] of Object.entries(data)) {
+        for (const [field, type] of Object.entries(fields)) {
             const entry = summary.fields[field] ??= { count: 0, types: {} };
             entry.count++;
-            const type = coarseType(value);
             entry.types[type] = (entry.types[type] ?? 0) + 1;
         }
 
-        if (!Object.hasOwn(data, 'createdAt')) summary.missingCreatedAt++;
-        if (!Object.hasOwn(data, 'updatedAt')) summary.missingUpdatedAt++;
-        if ((Object.hasOwn(data, 'createdAt') && !isTimestamp(data.createdAt)) ||
-            (Object.hasOwn(data, 'updatedAt') && !isTimestamp(data.updatedAt))) {
+        if (!Object.hasOwn(fields, 'createdAt')) summary.missingCreatedAt++;
+        if (!Object.hasOwn(fields, 'updatedAt')) summary.missingUpdatedAt++;
+        if ((Object.hasOwn(fields, 'createdAt') && fields.createdAt !== 'timestamp') ||
+            (Object.hasOwn(fields, 'updatedAt') && fields.updatedAt !== 'timestamp')) {
             summary.invalidTimestampDocuments++;
         }
-        if (schema.required.some(key => !Object.hasOwn(data, key))) {
+        if (schema.required.some(key => !Object.hasOwn(fields, key))) {
             summary.missingRequiredFields++;
         }
-        if (Object.keys(data).some(key => !schema.allowed.has(key))) {
+        if (Object.keys(fields).some(key => !schema.allowed.has(key))) {
             summary.unknownFieldDocuments++;
         }
-        if (Object.hasOwn(data, 'status')) {
-            const status = data.status;
-            const statusKey = typeof status === 'string' && status.length <= 64
-                ? status
-                : '[non-string-or-long]';
-            summary.observedStatuses[statusKey] = (summary.observedStatuses[statusKey] ?? 0) + 1;
-            if (!schema.statuses.has(status)) summary.invalidStatus++;
+        if (Object.hasOwn(record, 'status')) {
+            summary.observedStatuses[record.status] = (summary.observedStatuses[record.status] ?? 0) + 1;
+            if (!schema.statuses.has(record.status)) summary.invalidStatus++;
         }
     }
 

@@ -386,3 +386,15 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 - Lookup now accepts only string IDs that are own keys of the fixed milestone map; unknown and malformed IDs return no milestone.
 - Added regression coverage for inherited keys and null input.
 - The achievement catalogue remains the source of supported IDs; this change does not alter earned achievements or stored data.
+
+### SEC-FIREBASE-APPCHECK-01 — callable inventory and production Rules boundary — 2026-11-21
+
+**Status:** source audit completed; candidate CI passed; production configuration remains an external release blocker.
+
+- Enumerated every exported `onCall` declaration in `server/index.js`: all 17 currently specify `enforceAppCheck: true`. The existing regression test `server/callable-app-check.test.js` enforces this invariant.
+- Confirmed the repository has no root `firestore.rules` or `firebase.json` on either `main` or `refactor/security-foundation`.
+- `tests/firebase-emulator/firebase.json` is isolated to test fixtures and points at `chat.rules`; it is not a production deployment configuration. The other rule files are also deliberately partial fixtures.
+- No production Rules were inferred, generated, or deployed. Obtain the active Firebase project Rules/config through an authorized read-only export before drafting the production candidate.
+- Latest candidate CI passed on `65849741d3893b0d181b526d3887812257256984`: 470/470 tests and syntax checks for all 258 JavaScript files ([run 44898060339](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44898060339)).
+
+**Release gate:** two-account Emulator/staging authorization tests against the complete Rules contract, active App Check enforcement verification on deployed callable endpoints, and a reviewed backup/rollback plan remain open.

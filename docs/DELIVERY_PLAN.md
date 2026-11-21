@@ -172,3 +172,14 @@
 - [ ] Define and test notification Firestore Rules against the approved V1.0 access matrix.
 - [ ] Verify notification delivery/read-state in staging with two accounts and App Check.
 - **Exit condition not met:** notification creation is contained on the candidate client, but the end-to-end V1.0 notification requirement is not accepted yet.
+
+
+### Trusted friendship notification delivery — 2026-11-21
+
+- [x] Friend request notification is written only by the authenticated/App-Check protected friendship callable's Admin SDK transaction.
+- [x] Friend acceptance notification is written to the original sender's own notification collection in the same transaction as relationship acceptance.
+- [x] Fixed payload schema and deterministic event document IDs are covered by transaction tests.
+- [ ] Add message and achievement event notifications using trusted persisted server events, not client-supplied payloads.
+- [ ] Add notification Rules Emulator tests for guest, cross-user and owner read-state cases.
+- [ ] Validate friend request/accept notifications in staging with two accounts and App Check.
+- **Exit condition not met:** only friendship notifications are implemented; end-to-end notifications and authorization remain a release gate.

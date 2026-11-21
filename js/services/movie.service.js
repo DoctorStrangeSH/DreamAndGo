@@ -250,7 +250,7 @@ export class MovieService {
             // Statistics are derived data. Do not report a committed movie
             // create as failed when the secondary refresh cannot complete.
             try {
-                await this.updateUserStats(userId);
+                await this.updateUserStatsBestEffort(userId);
             } catch (statsError) {
                 console.warn('Фильм сохранён, но статистика не обновилась:', statsError);
             }
@@ -277,7 +277,7 @@ export class MovieService {
             // The movie update is committed; a stats refresh failure must not
             // cause the UI to retry the already successful write.
             try {
-                await this.updateUserStats(userId);
+                await this.updateUserStatsBestEffort(userId);
             } catch (statsError) {
                 console.warn('Фильм обновлён, но статистика не обновилась:', statsError);
             }
@@ -294,12 +294,20 @@ export class MovieService {
         try {
             const movieRef = doc(this.db, 'users', userId, 'movies', movieId);
             await deleteDoc(movieRef);
-            await this.updateUserStats(userId);
+            await this.updateUserStatsBestEffort(userId);
             
             return { success: true };
         } catch (error) {
             console.error('Ошибка удаления фильма:', error);
             return { success: false, error: error.message };
+        }
+    }
+
+    async updateUserStatsBestEffort(userId) {
+        try {
+            await this.updateUserStats(userId);
+        } catch (statsError) {
+            console.warn('Основная операция сохранена, но статистика не обновилась:', statsError);
         }
     }
 

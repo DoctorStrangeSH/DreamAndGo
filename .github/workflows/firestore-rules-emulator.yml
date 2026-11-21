@@ -7,6 +7,10 @@ on:
   pull_request:
     paths:
       - "tests/firebase-emulator/**"
+      - "tests/**"
+      - "js/core/**"
+      - "scripts/**"
+      - "package.json"
       - ".github/workflows/firestore-rules-emulator.yml"
 
 permissions:
@@ -31,6 +35,12 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
+
+      - name: Run root unit tests
+        run: npm test
+
+      - name: Run repository syntax checks
+        run: npm run check
 
       - name: Install test dependencies
         working-directory: tests/firebase-emulator

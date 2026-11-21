@@ -579,3 +579,13 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [ ] Exact-HEAD Emulator suite execution pending.
 - [ ] Movies, restaurants and expanded dreams Rules coverage remain open.
 - **Release remains HOLD; no production Rules change or deploy.**
+
+
+### Firestore Rules — movies candidate slice — 2026-11-21
+
+- [x] Authored isolated movies Rules candidate and Emulator tests.
+- [x] Included movies test in the Emulator package script.
+- [x] Aligned null artwork and ISO country-code client validation.
+- [ ] Exact-HEAD Emulator suite execution pending.
+- [ ] Restaurants and expanded dreams Rules coverage remain open.
+- **Release remains HOLD; no production Rules change or deploy.**

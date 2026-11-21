@@ -702,3 +702,6 @@ Added `js/core/legacy-migration-manifest.js`, a pure validator for a versioned m
 The readiness assessor consumes only the sanitized inventory report. Any inventory gap blocks readiness. Even a clean inventory and structurally approved manifest remain blocked pending independent staging rehearsal and production backup verification. The module does not connect to Firebase, inspect user records, or write data.
 
 Added an offline CLI and an unapproved template. The template intentionally contains no field mappings and cannot pass validation. No legacy mappings are inferred and no migration runner exists.
+
+
+**Manifest validation refinement:** unknown placeholders such as `legacy-unknown` and `UNCONFIRMED` are rejected as source schema identifiers; a reviewed manifest must identify the actual source schema/version. Status-map targets are checked against the exact V1 status allowlist for the corresponding collection. Regression tests cover both guards.

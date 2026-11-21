@@ -425,4 +425,4 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 
 - [x] Own-key validation added for achievement milestone lookups.
 - [x] Regression tests cover inherited keys and malformed input.
-- [ ] Verify Root Checks on the exact candidate HEAD.
+- [x] Root Checks passed on the implementation commits: 470/470 tests, 0 failures; syntax validation passed for all 258 JavaScript files. See [implementation check](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44897935694) and [milestone-map check](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44897933324).

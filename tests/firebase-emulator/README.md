@@ -87,3 +87,8 @@ npx firebase-tools emulators:exec --project demo-dreamandgo-chat-rules --only fi
 ## Parallel suite isolation
 
 Each test file that creates a Firebase test environment uses its own project ID. This is intentional: Node's test runner may execute files concurrently, and sharing a project ID can cause rules/data from one suite to interfere with another. Keep project IDs unique when adding new test files.
+
+
+## Client-to-Rules contract
+
+`client-rules-contract.test.mjs` imports the real client validators for all five private collections and attempts to create documents under the isolated V1 Rules fixture. It includes the server timestamp fields and service-generated `notes` metadata used by create services. Keep this test aligned with actual service create payloads whenever a client schema or service changes.

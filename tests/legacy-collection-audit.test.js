@@ -2,15 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { auditLegacyCollectionSnapshot } from '../js/core/legacy-collection-audit.js';
 
-const timestamp = { seconds: 1_700_000_000, nanoseconds: 0 };
-
-test('reports missing timestamps, old statuses and unknown fields without exposing values or ids', () => {
+test('reports metadata-only legacy gaps without accepting personal values or ids', () => {
     const report = auditLegacyCollectionSnapshot([
-        { collection: 'dreams', id: 'private-doc-id', data: { title: 'private title', status: 'active', isPublic: true } },
-        { collection: 'travels', id: 'private-doc-id-2', data: { title: 'trip', type: 'city', status: 'visited', createdAt: timestamp, updatedAt: timestamp } },
-        { collection: 'books', data: { title: 'book', author: 'author', status: 'read', createdAt: new Date(), updatedAt: new Date() } },
-        { collection: 'movies', data: { movieId: 1, title: 'movie', status: 'watched', createdAt: timestamp, updatedAt: timestamp } },
-        { collection: 'restaurants', data: { name: 'place', cuisine: '', status: 'visited', createdAt: timestamp, updatedAt: timestamp } }
+        { collection: 'dreams', fields: { title: 'string', status: 'string', isPublic: 'boolean' }, status: 'active' },
+        { collection: 'travels', fields: { title: 'string', type: 'string', status: 'string', createdAt: 'timestamp', updatedAt: 'timestamp' }, status: 'visited' },
+        { collection: 'books', fields: { title: 'string', author: 'string', status: 'string', createdAt: 'timestamp', updatedAt: 'timestamp' }, status: 'read' },
+        { collection: 'movies', fields: { movieId: 'integer', title: 'string', status: 'string', createdAt: 'timestamp', updatedAt: 'timestamp' }, status: 'watched' },
+        { collection: 'restaurants', fields: { name: 'string', cuisine: 'string', status: 'string', createdAt: 'timestamp', updatedAt: 'timestamp' }, status: 'visited' }
     ]);
 
     assert.equal(report.mode, 'offline-read-only-inventory');
@@ -22,43 +20,47 @@ test('reports missing timestamps, old statuses and unknown fields without exposi
     assert.equal(report.summary.missingUpdatedAt, 1);
     assert.equal(report.summary.invalidStatus, 1);
     assert.equal(report.summary.unknownFieldDocuments, 1);
-    assert.equal(report.collections.dreams.fields.isPublic.count, 1);
     assert.equal(report.collections.dreams.fields.isPublic.types.boolean, 1);
     assert.equal(report.collections.dreams.observedStatuses.active, 1);
     const serialized = JSON.stringify(report);
     assert.equal(serialized.includes('private-doc-id'), false);
     assert.equal(serialized.includes('private title'), false);
-    assert.equal(serialized.includes('"active"'), true);
 });
 
-test('counts missing required fields and malformed timestamps', () => {
+test('counts missing required fields and wrong timestamp metadata types', () => {
     const report = auditLegacyCollectionSnapshot([
-        { collection: 'books', data: { title: 'book', createdAt: 'not-a-timestamp', updatedAt: null } }
+        { collection: 'books', fields: { title: 'string', createdAt: 'string', updatedAt: 'null' } }
     ]);
     assert.equal(report.summary.missingRequiredFields, 1);
     assert.equal(report.summary.invalidTimestampDocuments, 1);
 });
 
-test('rejects invalid snapshot shape and counts malformed records without throwing', () => {
+test('rejects raw values and invalid metadata records', () => {
     assert.throws(() => auditLegacyCollectionSnapshot(null), TypeError);
-    const report = auditLegacyCollectionSnapshot([null, { collection: 'unknown', data: {} }]);
-    assert.equal(report.summary.invalidRecords, 2);
-    assert.deepEqual(report.issues, [{ code: 'invalid_record_shape' }, { code: 'invalid_record_shape' }]);
+    const report = auditLegacyCollectionSnapshot([
+        null,
+        { collection: 'unknown', fields: {} },
+        { collection: 'books', id: 'should-not-be-accepted', fields: { title: 'string' } },
+        { collection: 'books', fields: { title: 'personal title' } },
+        { collection: 'books', fields: { title: 'string' }, status: { raw: 'value' } }
+    ]);
+    assert.equal(report.summary.invalidRecords, 5);
+    assert.equal(JSON.stringify(report).includes('should-not-be-accepted'), false);
 });
 
-
-test('accepts valid pre-epoch Firestore timestamps and reports coarse field types', () => {
+test('accepts valid timestamp type metadata and reports coarse field types', () => {
     const report = auditLegacyCollectionSnapshot([
         {
             collection: 'books',
-            data: {
-                title: 'book',
-                author: 'author',
-                status: 'read',
-                createdAt: { seconds: -1, nanoseconds: 0 },
-                updatedAt: { seconds: 0, nanoseconds: 0 },
-                pages: 200
-            }
+            fields: {
+                title: 'string',
+                author: 'string',
+                status: 'string',
+                createdAt: 'timestamp',
+                updatedAt: 'timestamp',
+                pages: 'integer'
+            },
+            status: 'read'
         }
     ]);
     assert.equal(report.summary.invalidTimestampDocuments, 0);

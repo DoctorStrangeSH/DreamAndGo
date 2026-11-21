@@ -264,27 +264,9 @@ service cloud.firestore {
       return id in [28, 12, 16, 35, 80, 99, 18, 10751, 14, 36, 27, 10402, 9648, 10749, 878, 10770, 53, 10752, 37];
     }
     function isValidMovieGenres(genres) {
-      return genres is list && genres.size() <= 20 && genres.toSet().size() == genres.size() &&
-        (genres.size() <= 0 || (genres[0] is int && isValidMovieGenre(genres[0]))) &&
-        (genres.size() <= 1 || (genres[1] is int && isValidMovieGenre(genres[1]))) &&
-        (genres.size() <= 2 || (genres[2] is int && isValidMovieGenre(genres[2]))) &&
-        (genres.size() <= 3 || (genres[3] is int && isValidMovieGenre(genres[3]))) &&
-        (genres.size() <= 4 || (genres[4] is int && isValidMovieGenre(genres[4]))) &&
-        (genres.size() <= 5 || (genres[5] is int && isValidMovieGenre(genres[5]))) &&
-        (genres.size() <= 6 || (genres[6] is int && isValidMovieGenre(genres[6]))) &&
-        (genres.size() <= 7 || (genres[7] is int && isValidMovieGenre(genres[7]))) &&
-        (genres.size() <= 8 || (genres[8] is int && isValidMovieGenre(genres[8]))) &&
-        (genres.size() <= 9 || (genres[9] is int && isValidMovieGenre(genres[9]))) &&
-        (genres.size() <= 10 || (genres[10] is int && isValidMovieGenre(genres[10]))) &&
-        (genres.size() <= 11 || (genres[11] is int && isValidMovieGenre(genres[11]))) &&
-        (genres.size() <= 12 || (genres[12] is int && isValidMovieGenre(genres[12]))) &&
-        (genres.size() <= 13 || (genres[13] is int && isValidMovieGenre(genres[13]))) &&
-        (genres.size() <= 14 || (genres[14] is int && isValidMovieGenre(genres[14]))) &&
-        (genres.size() <= 15 || (genres[15] is int && isValidMovieGenre(genres[15]))) &&
-        (genres.size() <= 16 || (genres[16] is int && isValidMovieGenre(genres[16]))) &&
-        (genres.size() <= 17 || (genres[17] is int && isValidMovieGenre(genres[17]))) &&
-        (genres.size() <= 18 || (genres[18] is int && isValidMovieGenre(genres[18]))) &&
-        (genres.size() <= 19 || (genres[19] is int && isValidMovieGenre(genres[19])));
+      return genres is list && genres.size() <= 20 &&
+        genres.toSet().size() == genres.size() &&
+        genres.hasOnly([28, 12, 16, 35, 80, 99, 18, 10751, 14, 36, 27, 10402, 9648, 10749, 878, 10770, 53, 10752, 37]);
     }
     function isValidMovieCountry(country) {
       return country is map && country.keys().hasAll(['iso_3166_1', 'name']) &&

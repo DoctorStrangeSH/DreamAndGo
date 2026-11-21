@@ -25,9 +25,8 @@
 | `deadline` | null или пустая строка, либо реальная календарная дата `YYYY-MM-DD` | Нет, default null |
 | `steps` | array max 20; item ровно `{text:string(1..200), done:boolean}` | Нет, default [] |
 | `createdAt`, `updatedAt` | Firestore timestamp; серверное время запроса | Да, добавляет сервис |
-| `isPublic` | boolean; сейчас create всегда false | Да, добавляет сервис |
 
-При update клиент передаёт только поля мечты из validator; сервис сохраняет `createdAt` и `isPublic`, а `updatedAt` обновляет серверным временем. В текущем candidate Rules мечта не может стать публичной через клиент.
+При update клиент передаёт только поля мечты из validator; сервис сохраняет `createdAt`, а `updatedAt` обновляет серверным временем. Новые документы не получают `isPublic`.
 
 ## 2. `users/{uid}/travels/{id}`
 
@@ -43,7 +42,6 @@
 | `notes` | string max 4000; сейчас validator принимает поле | Нет |
 | `photos` | array max 10 HTTPS URL, каждый max 2048 | Нет |
 | `createdAt`, `updatedAt` | Firestore timestamp | Да, добавляет сервис |
-| `isPublic` | boolean; сейчас create устанавливает true | Да, добавляет сервис |
 
 ## 3. `users/{uid}/books/{id}`
 
@@ -109,11 +107,11 @@
 
 ## 6. Важные расхождения и решения до production Rules
 
-1. **Публичность записей не согласована.** Travel, book и restaurant services записывают `isPublic: true`; dreams — `false`; movie не устанавливает `isPublic`. Наличие флага само по себе не является разрешением чтения. Владелец продукта должен утвердить, какие именно карточки реально публичны в V1.0 и через какую отдельную проекцию/серверный метод. Пока приватные документы остаются owner-only.
+1. **Публичность записей не входит в личную схему V1.0.** Candidate services больше не записывают `isPublic` ни в одну из пяти личных коллекций. Старые документы могут содержать исторические значения; они не дают права чтения. Публичное отображение возможно только через отдельную allowlist-проекцию с явным согласием владельца.
 2. **Дополнительные поля.** Book/movie/restaurant services добавляют `notes: ''`, хотя соответствующие input allowlists не принимают notes от формы. В Rules это серверно/сервисно добавляемое поле с фиксированным типом; нельзя разрешать произвольный клиентский notes, если форма его не редактирует.
 3. **Legacy shape.** Текущие пользовательские документы могут содержать старые поля, отсутствующие в validator allowlist. Нужен sanitized schema inventory и dry-run migration до строгих write rules.
 4. **Клиентская проверка недостаточна.** Rules должны повторить field allowlist, обязательность, типы, диапазоны, nested map keys, размеры списков и неизменяемость `createdAt`; query rules должны соответствовать реальным запросам.
-5. **Публичные флаги.** Решить, нужно ли сохранять текущие `isPublic: true` значения или менять семантику через миграцию. Не делать массовый flip без проверки UX и данных.
+5. **Legacy-поля.** Не выполнять массовое удаление исторических `isPublic` без отдельного аудита и миграции. Новые записи не создают это поле; Rules должны игнорировать его как источник публичных прав.
 
 ## 7. Следующие обязательные проверки
 
@@ -129,3 +127,11 @@
 `users/{uid}.publicProfileEnabled` is a boolean opt-in gate for public profile projection. Missing, false, or malformed values mean **private**. It must only be changed by the authenticated owner through an explicit privacy setting; no client may set it through arbitrary profile payloads. Public projections remain a separate allowlisted document and never expose the private `users/{uid}` document.
 
 This is a candidate security contract: the settings UI and production Firestore Rules are not yet complete. Migration is create-only and includes only accounts with the field explicitly set to true. It still scans all valid usernames for case-insensitive collisions, including private accounts.
+
+
+## 9. Private collection visibility flag removal — 2026-11-21
+
+- Candidate write services for dreams, travels, books and restaurants no longer persist `isPublic: true/false`; movie service also remains without this field.
+- Added `tests/private-collection-visibility.test.js` to assert that none of the five private collection services writes an `isPublic` field.
+- Existing legacy documents are not modified. Historical `isPublic` values are not authorization and must not be used to expose private subcollection documents.
+- Public sharing remains a separate explicit-consent projection and is outside these private collection documents.

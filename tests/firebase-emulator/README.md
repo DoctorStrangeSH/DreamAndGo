@@ -73,3 +73,12 @@ npx firebase-tools emulators:exec --project demo-dreamandgo-chat-rules --only fi
 - The schema enforces the restaurant field allowlist, required name/cuisine/status/notes/timestamps, cuisine and status enums, bounded address, nullable/formatted visit date, bill and rating ranges, bounded favorite-dish list, review length and HTTPS photo list limits.
 - `restaurants-v1.rules.test.mjs` covers owner CRUD, guest/second-account isolation, unknown fields, invalid cuisine/status/date, numeric bounds, excessive dishes/photos, non-HTTPS photos and timestamp forgery.
 - The test is included in the Emulator package script. This remains a test-only candidate, not production Rules.
+
+
+## Isolated V1 dreams Rules candidate
+
+- `collections-v1.rules` contains explicit owner CRUD for `users/{uid}/dreams/{dreamId}`, with a schema allowlist, category/status enums, bounded title/description/progress, deadline format and nested step validation.
+- New documents cannot set `isPublic: true`; if the optional field is present on creation, it must be `false`. The field must be boolean and cannot be changed by the client during updates.
+- Legacy documents that already contain `isPublic: true` remain editable without changing their visibility value. This avoids breaking existing records while preventing clients from changing visibility.
+- `dreams-v1.rules.test.mjs` covers owner CRUD, guest/second-account isolation, invalid schema values, nested steps, server timestamps, private creation and immutable legacy visibility.
+- Included in the Emulator package script. The fixture remains test-only, not production Rules.

@@ -135,3 +135,26 @@ Admin SDK обходит Firestore Rules. Поэтому тесты Security Rul
 **Статус: NOT READY FOR PRODUCTION.** Кандидатные unit и Emulator suites зелёные, но интеграционные блокеры остаются: legacy registration, legacy chat, отсутствие подтверждённого production Rules export, неполный staging App Check и незавершённый полный A/B/guest QA.
 
 Следующий технический шаг — не расширять доступ в Rules, а закончить client cutover регистрации и Chat V2, затем добавить сквозные A/B/guest tests по этой матрице. До этого production deny-all не менять.
+
+
+## 9. Дополнительная проверка Chat V2 UI — 2026-11-21
+
+В репозитории уже есть отдельные клиентские building blocks Chat V2: `ChatV2Session`, callable transport/invoker, history controller, pilot conversation/view, encrypted pending-intent adapter и deny-by-default allowlist feature gate. Их unit/integration harness покрывает историю, отправку, read receipts, восстановление pending intents, смену аккаунта и отзыв feature gate.
+
+Однако фактический `js/modules/chat/chat.js` по-прежнему импортирует и использует legacy `ChatService`; он вызывает legacy create/send/edit/delete/read/delete-chat методы и подписывается на legacy realtime snapshots. `js/app.js` не подключает Chat V2 pilot gate/session. Следовательно, наличие V2 transport и pilot UI не является клиентским cutover и не снимает P0 blocker.
+
+**Безопасный следующий порядок Chat V2:**
+1. Не менять legacy UI/production Rules до staging backend и backup.
+2. Сверить все функции Chat V2 с протоколом блокировок, лимитов, membership и lifecycle; отдельно закрыть незавершённую политику блокировок/лимитов для create/send.
+3. Подготовить импорт/экспорт истории и reconciliation отчёт; миграция только после backup и read-only audit реальных документов.
+4. Включить V2 только через динамический feature gate с allowlist и backendReady; проверить отзыв доступа и переключение аккаунта.
+5. Прогнать два реальных тестовых аккаунта на staging: create, send, retry/idempotency, history pagination, read receipt, block, delete/archive, reconnect и logout.
+6. Только после canary подтвердить выключение legacy writes и расширять rollout.
+
+## 10. CI повторно проверен после добавления production readiness audit
+
+На актуальном документальном HEAD `b6815cbb3a915b5d00389ecc975ff27ae3af9b90` GitHub Actions завершил успешно:
+- `Checks`: success.
+- `Firestore Rules Emulator`: success — root 528/528, Rules Emulator 13/13.
+
+Ранее проверенный Auth+Firestore candidate workflow также завершился успешно: 14/14 Rules/Auth journey cases и 59/59 server emulator tests. CI подтверждает кандидатный код и тестовые fixtures, но не production deploy.

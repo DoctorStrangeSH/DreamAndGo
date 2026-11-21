@@ -9,7 +9,7 @@ const collections = ['dreams', 'travels', 'books', 'movies', 'restaurants'];
 const approvedManifest = () => ({
     version: 1,
     approved: true,
-    sourceSchema: 'legacy-unknown',
+    sourceSchema: 'legacy-export-2026-11-21',
     targetSchema: 'firestore-v1',
     backup: { required: true, reference: 'staging-backup-2026-11-21' },
     rollback: { verified: true },
@@ -106,4 +106,15 @@ test('rejects inventories that include IDs or raw values', () => {
     assert.equal(result.ready, false);
     assert.equal(result.status, 'blocked');
     assert.ok(result.blockers.includes('sanitized_inventory_required'));
+});
+
+
+test('rejects unknown source schema identifiers and invalid V1 status targets', () => {
+    const unknown = approvedManifest();
+    unknown.sourceSchema = 'legacy-unknown';
+    assert.ok(validateLegacyMigrationManifest(unknown).errors.includes('source_schema_must_be_explicitly_identified'));
+
+    const invalidStatus = approvedManifest();
+    invalidStatus.collections[0].statusMap = { active: 'public' };
+    assert.ok(validateLegacyMigrationManifest(invalidStatus).errors.includes('invalid_status_mapping:dreams'));
 });

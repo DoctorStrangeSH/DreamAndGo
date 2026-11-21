@@ -16,6 +16,7 @@ const snapshotReservations = snapshots => snapshots.map(snapshot => ({
 export async function runUsernameReservationBackfill(db, {
     apply = false,
     registrationFrozen = false,
+    backupVerified = false,
     serverTimestamp,
     usersCollection = 'users',
     reservationsCollection = 'usernameReservations',
@@ -25,8 +26,8 @@ export async function runUsernameReservationBackfill(db, {
     if (!db || typeof db.collection !== 'function') {
         throw new TypeError('A Firestore database is required');
     }
-    if (apply && (!registrationFrozen || typeof serverTimestamp !== 'function')) {
-        throw new Error('Apply mode requires a frozen registration window and server timestamp provider');
+    if (apply && (!registrationFrozen || !backupVerified || typeof serverTimestamp !== 'function')) {
+        throw new Error('Apply mode requires a verified backup, frozen registration window and server timestamp provider');
     }
 
     const registryRef = db.collection(registryCollection).doc(registryDocument);

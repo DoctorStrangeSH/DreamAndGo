@@ -427,3 +427,7 @@ Dream&Go — социальное пространство мечтаний, п�
 
 
 - [x] Follow-up static review closed a legacy visibility edge case: clients cannot add `isPublic` to old documents where the field was absent; existing field values remain immutable.
+
+
+- [x] Added dedicated GitHub Actions workflow `.github/workflows/firestore-rules-emulator.yml` to execute the isolated Firestore Rules Emulator suite on pushes to the security branch and relevant pull-request changes.
+- [ ] Confirm the first CI run completes successfully; workflow creation is not a test pass.

@@ -106,3 +106,15 @@ node scripts/migrate-public-profiles.mjs --project YOUR_FIREBASE_PROJECT_ID --ap
 - The local Emulator / candidate Rules work must target the default Firestore database in project `dream-and-go`.
 - This confirms the target identity for planning only. It does not authorize deployment or change the published recursive deny-all Rules.
 - Before any production change, retain a timestamped export of the currently published deny-all Rules and verify the project/database selector in the Firebase Console one final time.
+
+
+### Client/server cutover findings — 2026-11-21
+
+The current app integration is not ready for Firestore access restoration:
+
+- Signup V2 is explicitly disabled in `js/app.js`; legacy signup still performs client-side global username queries and profile/bootstrap writes.
+- Registration V2 callable endpoints exist but depend on the server-side username registry migration gate.
+- The app still wires legacy `ChatModule` / `ChatService`; the V2 callable bridge is candidate-only and not imported by the active chat UI.
+- Legacy chat writes messages and both participants' indexes directly from the browser.
+
+Do not introduce permissive Rules as a compatibility workaround. Finish the server-backed registration and Chat V2 client cutover, migrate legacy data, then author and test the narrow Rules needed by the final client architecture.

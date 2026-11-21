@@ -285,28 +285,7 @@ service cloud.firestore {
         (countries.size() <= 6 || isValidMovieCountry(countries[6])) &&
         (countries.size() <= 7 || isValidMovieCountry(countries[7])) &&
         (countries.size() <= 8 || isValidMovieCountry(countries[8])) &&
-        (countries.size() <= 9 || isValidMovieCountry(countries[9])) &&
-        (countries.size() <= 10 || isValidMovieCountry(countries[10])) &&
-        (countries.size() <= 11 || isValidMovieCountry(countries[11])) &&
-        (countries.size() <= 12 || isValidMovieCountry(countries[12])) &&
-        (countries.size() <= 13 || isValidMovieCountry(countries[13])) &&
-        (countries.size() <= 14 || isValidMovieCountry(countries[14])) &&
-        (countries.size() <= 15 || isValidMovieCountry(countries[15])) &&
-        (countries.size() <= 16 || isValidMovieCountry(countries[16])) &&
-        (countries.size() <= 17 || isValidMovieCountry(countries[17])) &&
-        (countries.size() <= 18 || isValidMovieCountry(countries[18])) &&
-        (countries.size() <= 19 || isValidMovieCountry(countries[19])) &&
-        (countries.size() <= 20 || isValidMovieCountry(countries[20])) &&
-        (countries.size() <= 21 || isValidMovieCountry(countries[21])) &&
-        (countries.size() <= 22 || isValidMovieCountry(countries[22])) &&
-        (countries.size() <= 23 || isValidMovieCountry(countries[23])) &&
-        (countries.size() <= 24 || isValidMovieCountry(countries[24])) &&
-        (countries.size() <= 25 || isValidMovieCountry(countries[25])) &&
-        (countries.size() <= 26 || isValidMovieCountry(countries[26])) &&
-        (countries.size() <= 27 || isValidMovieCountry(countries[27])) &&
-        (countries.size() <= 28 || isValidMovieCountry(countries[28])) &&
-        (countries.size() <= 29 || isValidMovieCountry(countries[29]));
-    }
+        (countries.size() <= 9 || isValidMovieCountry(countries[9]));    }
     function isValidMovieDate(value) {
       return value == '' || isValidCalendarDate(value);
     }

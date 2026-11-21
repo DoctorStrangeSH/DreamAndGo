@@ -517,3 +517,11 @@ No production rules or user data were changed. This inventory is source-derived 
 - Regression tests cover valid partial changes, current-page overflow, lowering total pages below the current page, malformed legacy counters and unrelated updates.
 - A read followed by a separate write is not atomic. Firestore Rules must independently compare `request.resource.data.currentPage` and `request.resource.data.totalPages` with the resulting document before this invariant can be considered secured against concurrent clients.
 - No production Rules or user data were changed. Exact-HEAD CI remains unverified.
+
+
+### SEC-COLLECTION-BOOK-02 — preserve create validator wiring — 2026-11-21
+
+- During follow-up review, detected that the BookService import had been narrowed to `validateBookUpdateInput` while `addBook` still called `validateBookInput`. This would cause a runtime ReferenceError on book creation.
+- Restored both named imports and added `tests/book-service-validator-wiring.test.js` to guard imports and both call sites.
+- This is a source-level regression guard; it does not replace running the full test suite.
+- No production Rules or user data were changed.

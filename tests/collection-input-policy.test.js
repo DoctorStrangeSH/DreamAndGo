@@ -121,3 +121,30 @@ test('book partial updates preserve the persisted current-page and total-page in
         /Сначала исправь общее количество/
     );
 });
+
+
+test('travel partial budget updates replace the complete validated budget map', () => {
+    assert.deepEqual(
+        validateTravelInput({
+            budget: { planned: 900, spent: 125, currency: 'EUR' }
+        }, { partial: true }),
+        { budget: { planned: 900, spent: 125, currency: 'EUR' } }
+    );
+
+    assert.throws(
+        () => validateTravelInput({ budget: { spent: 125 } }, { partial: true }),
+        TypeError
+    );
+    assert.throws(
+        () => validateTravelInput({
+            budget: { planned: 900, spent: 125, currency: 'EUR', admin: true }
+        }, { partial: true }),
+        TypeError
+    );
+    assert.throws(
+        () => validateTravelInput({
+            budget: { planned: -1, spent: 125, currency: 'EUR' }
+        }, { partial: true }),
+        TypeError
+    );
+});

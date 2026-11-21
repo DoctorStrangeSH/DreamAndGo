@@ -32,6 +32,476 @@ service cloud.firestore {
         request.resource.data.uid == resource.data.uid;
     }
 
+    // Strict Gregorian calendar validation; a regex alone would accept
+    // impossible dates such as 2026-02-31.
+    function isValidCalendarDate(value) {
+      let parts = value.split('-');
+      let year = int(parts[0]);
+      let month = int(parts[1]);
+      let day = int(parts[2]);
+      let leapYear = (year % 400 == 0) ||
+        ((year % 4 == 0) && (year % 100 != 0));
+      let maxDay = month == 2
+        ? (leapYear ? 29 : 28)
+        : (month in [4, 6, 9, 11] ? 30 : 31);
+      return value is string &&
+        value.matches('^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])
+    // Private profiles: only bounded self-service display fields are editable.
+    // Creation, privileges, metrics and nickname changes remain denied.
+    function isValidUser(data) {
+      return data is map &&
+        data.keys().hasAll(['email', 'username']) &&
+        data.email is string && data.email.size() <= 254 &&
+        data.username is string && data.username.size() <= 60 &&
+        !data.keys().hasAny(['isAdmin', 'role', 'permissions']);
+    }
+
+    // Owner-editable profile fields are isolated from identity, role and stats.
+    // Other existing legacy fields may remain unchanged, but cannot be written.
+    function isValidProfileEdit(data) {
+      return data is map &&
+        data.keys().hasAll(['displayName', 'bio', 'location']) &&
+        data.displayName is string &&
+        data.displayName.size() > 0 &&
+        data.displayName.size() <= 80 &&
+        data.bio is string && data.bio.size() <= 500 &&
+        data.location is string && data.location.size() <= 120 &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['displayName', 'bio', 'location']);
+    }
+
+    function isValidOwnedDocument(data) {
+      return data is map && data.keys().size() <= 40;
+    }
+
+
+    // Dream schema: title:string(1..120), category:enum, status:enum,
+    // description:string(0..4000), progress:int(0..100),
+    // deadline:null|YYYY-MM-DD (format only), steps:list<=20 of
+    // {text:string(1..200), done:bool}, isPublic:false on create,
+    // createdAt/updatedAt:timestamp. Legacy documents may require migration.
+    function isValidDreamStep(step) {
+      return step is map &&
+        step.keys().hasAll(['text', 'done']) &&
+        step.keys().hasOnly(['text', 'done']) &&
+        step.text is string && step.text.size() > 0 &&
+        step.text.size() <= 200 &&
+        step.done is bool;
+    }
+
+    function areValidDreamSteps(steps) {
+      return steps is list && steps.size() <= 20 &&
+        (steps.size() <= 0 || isValidDreamStep(steps[0])) &&
+        (steps.size() <= 1 || isValidDreamStep(steps[1])) &&
+        (steps.size() <= 2 || isValidDreamStep(steps[2])) &&
+        (steps.size() <= 3 || isValidDreamStep(steps[3])) &&
+        (steps.size() <= 4 || isValidDreamStep(steps[4])) &&
+        (steps.size() <= 5 || isValidDreamStep(steps[5])) &&
+        (steps.size() <= 6 || isValidDreamStep(steps[6])) &&
+        (steps.size() <= 7 || isValidDreamStep(steps[7])) &&
+        (steps.size() <= 8 || isValidDreamStep(steps[8])) &&
+        (steps.size() <= 9 || isValidDreamStep(steps[9])) &&
+        (steps.size() <= 10 || isValidDreamStep(steps[10])) &&
+        (steps.size() <= 11 || isValidDreamStep(steps[11])) &&
+        (steps.size() <= 12 || isValidDreamStep(steps[12])) &&
+        (steps.size() <= 13 || isValidDreamStep(steps[13])) &&
+        (steps.size() <= 14 || isValidDreamStep(steps[14])) &&
+        (steps.size() <= 15 || isValidDreamStep(steps[15])) &&
+        (steps.size() <= 16 || isValidDreamStep(steps[16])) &&
+        (steps.size() <= 17 || isValidDreamStep(steps[17])) &&
+        (steps.size() <= 18 || isValidDreamStep(steps[18])) &&
+        (steps.size() <= 19 || isValidDreamStep(steps[19]));
+    }
+
+    function isValidDream(data) {
+      return data is map &&
+        data.keys().hasAll([
+          'title', 'category', 'status', 'description', 'progress',
+          'deadline', 'steps', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'title', 'category', 'status', 'description', 'progress',
+          'deadline', 'steps', 'isPublic', 'createdAt', 'updatedAt'
+        ]) &&
+        (!('isPublic' in data) || data.isPublic is bool) &&
+        data.title is string && data.title.size() > 0 &&
+        data.title.size() <= 120 &&
+        data.category in ['', 'Путешествия', 'Карьера', 'Творчество',
+          'Спорт', 'Отношения', 'Знания', 'Материальное', 'Другое'] &&
+        data.status in ['dreaming', 'in_progress', 'completed'] &&
+        data.description is string && data.description.size() <= 4000 &&
+        data.progress is int && data.progress >= 0 &&
+        data.progress <= 100 &&
+        (data.deadline == null ||
+          (data.deadline is string && isValidCalendarDate(data.deadline))) &&
+        areValidDreamSteps(data.steps) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+
+    // Travel schema candidate. Only the explicit V1 allowlist is writable.
+    function isValidTravelPhoto(url) {
+      return url is string && url.size() <= 2048 &&
+        url.matches('^https://.*');
+    }
+    function areValidTravelPhotos(photos) {
+      return photos is list && photos.size() <= 10 &&
+        (photos.size() <= 0 || isValidTravelPhoto(photos[0])) &&
+        (photos.size() <= 1 || isValidTravelPhoto(photos[1])) &&
+        (photos.size() <= 2 || isValidTravelPhoto(photos[2])) &&
+        (photos.size() <= 3 || isValidTravelPhoto(photos[3])) &&
+        (photos.size() <= 4 || isValidTravelPhoto(photos[4])) &&
+        (photos.size() <= 5 || isValidTravelPhoto(photos[5])) &&
+        (photos.size() <= 6 || isValidTravelPhoto(photos[6])) &&
+        (photos.size() <= 7 || isValidTravelPhoto(photos[7])) &&
+        (photos.size() <= 8 || isValidTravelPhoto(photos[8])) &&
+        (photos.size() <= 9 || isValidTravelPhoto(photos[9]));
+    }
+    function isValidTravelBudget(budget) {
+      return budget is map &&
+        budget.keys().hasAll(['planned', 'spent', 'currency']) &&
+        budget.keys().hasOnly(['planned', 'spent', 'currency']) &&
+        budget.planned is int && budget.planned >= 0 && budget.planned <= 1000000000 &&
+        budget.spent is int && budget.spent >= 0 && budget.spent <= 1000000000 &&
+        budget.currency in ['RUB', 'USD', 'EUR'];
+    }
+    function isValidTravel(data) {
+      return data is map &&
+        data.keys().hasAll(['title', 'type', 'status', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly([
+          'title', 'type', 'status', 'location', 'description', 'budget',
+          'rating', 'notes', 'photos', 'createdAt', 'updatedAt'
+        ]) &&
+        data.title is string && data.title.size() > 0 && data.title.size() <= 120 &&
+        data.type in ['city', 'nature', 'mountains', 'beach', 'culture'] &&
+        data.status in ['planned', 'visited'] &&
+        (!('location' in data) || (data.location is string && data.location.size() <= 200)) &&
+        (!('description' in data) || (data.description is string && data.description.size() <= 4000)) &&
+        (!('budget' in data) || isValidTravelBudget(data.budget)) &&
+        (!('rating' in data) || (data.rating is int && data.rating >= 0 && data.rating <= 10)) &&
+        (!('notes' in data) || (data.notes is string && data.notes.size() <= 4000)) &&
+        (!('photos' in data) || areValidTravelPhotos(data.photos)) &&
+        data.createdAt is timestamp && data.updatedAt is timestamp;
+    }
+
+
+    function isValidBookGenre(genre) {
+      return genre in ['Фантастика', 'Детектив', 'Роман', 'Биография', 'История',
+        'Психология', 'Бизнес', 'Наука', 'Философия', 'Другое'];
+    }
+    function isValidBookGenres(genres) {
+      return genres is list && genres.size() <= 10 &&
+        (genres.size() <= 0 || (genres[0] is string && genres[0].size() > 0 && genres[0].size() <= 40 && isValidBookGenre(genres[0]))) &&
+        (genres.size() <= 1 || (genres[1] is string && genres[1].size() > 0 && genres[1].size() <= 40 && isValidBookGenre(genres[1]))) &&
+        (genres.size() <= 2 || (genres[2] is string && genres[2].size() > 0 && genres[2].size() <= 40 && isValidBookGenre(genres[2]))) &&
+        (genres.size() <= 3 || (genres[3] is string && genres[3].size() > 0 && genres[3].size() <= 40 && isValidBookGenre(genres[3]))) &&
+        (genres.size() <= 4 || (genres[4] is string && genres[4].size() > 0 && genres[4].size() <= 40 && isValidBookGenre(genres[4]))) &&
+        (genres.size() <= 5 || (genres[5] is string && genres[5].size() > 0 && genres[5].size() <= 40 && isValidBookGenre(genres[5]))) &&
+        (genres.size() <= 6 || (genres[6] is string && genres[6].size() > 0 && genres[6].size() <= 40 && isValidBookGenre(genres[6]))) &&
+        (genres.size() <= 7 || (genres[7] is string && genres[7].size() > 0 && genres[7].size() <= 40 && isValidBookGenre(genres[7]))) &&
+        (genres.size() <= 8 || (genres[8] is string && genres[8].size() > 0 && genres[8].size() <= 40 && isValidBookGenre(genres[8]))) &&
+        (genres.size() <= 9 || (genres[9] is string && genres[9].size() > 0 && genres[9].size() <= 40 && isValidBookGenre(genres[9])));
+    }
+    function isValidBookQuotes(quotes) {
+      return quotes is list && quotes.size() <= 30 &&
+        (quotes.size() <= 0 || (quotes[0] is string && quotes[0].size() > 0 && quotes[0].size() <= 500)) &&
+        (quotes.size() <= 1 || (quotes[1] is string && quotes[1].size() > 0 && quotes[1].size() <= 500)) &&
+        (quotes.size() <= 2 || (quotes[2] is string && quotes[2].size() > 0 && quotes[2].size() <= 500)) &&
+        (quotes.size() <= 3 || (quotes[3] is string && quotes[3].size() > 0 && quotes[3].size() <= 500)) &&
+        (quotes.size() <= 4 || (quotes[4] is string && quotes[4].size() > 0 && quotes[4].size() <= 500)) &&
+        (quotes.size() <= 5 || (quotes[5] is string && quotes[5].size() > 0 && quotes[5].size() <= 500)) &&
+        (quotes.size() <= 6 || (quotes[6] is string && quotes[6].size() > 0 && quotes[6].size() <= 500)) &&
+        (quotes.size() <= 7 || (quotes[7] is string && quotes[7].size() > 0 && quotes[7].size() <= 500)) &&
+        (quotes.size() <= 8 || (quotes[8] is string && quotes[8].size() > 0 && quotes[8].size() <= 500)) &&
+        (quotes.size() <= 9 || (quotes[9] is string && quotes[9].size() > 0 && quotes[9].size() <= 500)) &&
+        (quotes.size() <= 10 || (quotes[10] is string && quotes[10].size() > 0 && quotes[10].size() <= 500)) &&
+        (quotes.size() <= 11 || (quotes[11] is string && quotes[11].size() > 0 && quotes[11].size() <= 500)) &&
+        (quotes.size() <= 12 || (quotes[12] is string && quotes[12].size() > 0 && quotes[12].size() <= 500)) &&
+        (quotes.size() <= 13 || (quotes[13] is string && quotes[13].size() > 0 && quotes[13].size() <= 500)) &&
+        (quotes.size() <= 14 || (quotes[14] is string && quotes[14].size() > 0 && quotes[14].size() <= 500)) &&
+        (quotes.size() <= 15 || (quotes[15] is string && quotes[15].size() > 0 && quotes[15].size() <= 500)) &&
+        (quotes.size() <= 16 || (quotes[16] is string && quotes[16].size() > 0 && quotes[16].size() <= 500)) &&
+        (quotes.size() <= 17 || (quotes[17] is string && quotes[17].size() > 0 && quotes[17].size() <= 500)) &&
+        (quotes.size() <= 18 || (quotes[18] is string && quotes[18].size() > 0 && quotes[18].size() <= 500)) &&
+        (quotes.size() <= 19 || (quotes[19] is string && quotes[19].size() > 0 && quotes[19].size() <= 500)) &&
+        (quotes.size() <= 20 || (quotes[20] is string && quotes[20].size() > 0 && quotes[20].size() <= 500)) &&
+        (quotes.size() <= 21 || (quotes[21] is string && quotes[21].size() > 0 && quotes[21].size() <= 500)) &&
+        (quotes.size() <= 22 || (quotes[22] is string && quotes[22].size() > 0 && quotes[22].size() <= 500)) &&
+        (quotes.size() <= 23 || (quotes[23] is string && quotes[23].size() > 0 && quotes[23].size() <= 500)) &&
+        (quotes.size() <= 24 || (quotes[24] is string && quotes[24].size() > 0 && quotes[24].size() <= 500)) &&
+        (quotes.size() <= 25 || (quotes[25] is string && quotes[25].size() > 0 && quotes[25].size() <= 500)) &&
+        (quotes.size() <= 26 || (quotes[26] is string && quotes[26].size() > 0 && quotes[26].size() <= 500)) &&
+        (quotes.size() <= 27 || (quotes[27] is string && quotes[27].size() > 0 && quotes[27].size() <= 500)) &&
+        (quotes.size() <= 28 || (quotes[28] is string && quotes[28].size() > 0 && quotes[28].size() <= 500)) &&
+        (quotes.size() <= 29 || (quotes[29] is string && quotes[29].size() > 0 && quotes[29].size() <= 500));
+    }
+    function isValidBook(data) {
+      return data is map &&
+        data.keys().hasAll(['title', 'author', 'status', 'notes', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly([
+          'title', 'author', 'status', 'genres', 'year', 'totalPages',
+          'currentPage', 'userRating', 'review', 'quotes', 'notes',
+          'createdAt', 'updatedAt'
+        ]) &&
+        data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+        data.author is string && data.author.size() > 0 && data.author.size() <= 120 &&
+        data.status in ['want_to_read', 'reading', 'read'] &&
+        data.notes is string && data.notes.size() <= 4000 &&
+        (!('genres' in data) || isValidBookGenres(data.genres)) &&
+        (!('year' in data) || data.year == null || (data.year is int && data.year >= 1000 && data.year <= 2099)) &&
+        (!('totalPages' in data) || (data.totalPages is int && data.totalPages >= 0 && data.totalPages <= 100000)) &&
+        (!('currentPage' in data) || (data.currentPage is int && data.currentPage >= 0 && data.currentPage <= 100000)) &&
+        (!('totalPages' in data) || !('currentPage' in data) || data.currentPage <= data.totalPages) &&
+        (!('userRating' in data) || (data.userRating is int && data.userRating >= 0 && data.userRating <= 10)) &&
+        (!('review' in data) || (data.review is string && data.review.size() <= 4000)) &&
+        (!('quotes' in data) || isValidBookQuotes(data.quotes)) &&
+        data.createdAt is timestamp && data.updatedAt is timestamp;
+    }
+
+    function isValidMovieGenre(id) {
+      return id in [28, 12, 16, 35, 80, 99, 18, 10751, 14, 36, 27, 10402, 9648, 10749, 878, 10770, 53, 10752, 37];
+    }
+    function isValidMovieGenres(genres) {
+      return genres is list && genres.size() <= 20 &&
+        (genres.size() <= 0 || (genres[0] is int && isValidMovieGenre(genres[0]))) &&
+        (genres.size() <= 1 || (genres[1] is int && isValidMovieGenre(genres[1]))) &&
+        (genres.size() <= 2 || (genres[2] is int && isValidMovieGenre(genres[2]))) &&
+        (genres.size() <= 3 || (genres[3] is int && isValidMovieGenre(genres[3]))) &&
+        (genres.size() <= 4 || (genres[4] is int && isValidMovieGenre(genres[4]))) &&
+        (genres.size() <= 5 || (genres[5] is int && isValidMovieGenre(genres[5]))) &&
+        (genres.size() <= 6 || (genres[6] is int && isValidMovieGenre(genres[6]))) &&
+        (genres.size() <= 7 || (genres[7] is int && isValidMovieGenre(genres[7]))) &&
+        (genres.size() <= 8 || (genres[8] is int && isValidMovieGenre(genres[8]))) &&
+        (genres.size() <= 9 || (genres[9] is int && isValidMovieGenre(genres[9]))) &&
+        (genres.size() <= 10 || (genres[10] is int && isValidMovieGenre(genres[10]))) &&
+        (genres.size() <= 11 || (genres[11] is int && isValidMovieGenre(genres[11]))) &&
+        (genres.size() <= 12 || (genres[12] is int && isValidMovieGenre(genres[12]))) &&
+        (genres.size() <= 13 || (genres[13] is int && isValidMovieGenre(genres[13]))) &&
+        (genres.size() <= 14 || (genres[14] is int && isValidMovieGenre(genres[14]))) &&
+        (genres.size() <= 15 || (genres[15] is int && isValidMovieGenre(genres[15]))) &&
+        (genres.size() <= 16 || (genres[16] is int && isValidMovieGenre(genres[16]))) &&
+        (genres.size() <= 17 || (genres[17] is int && isValidMovieGenre(genres[17]))) &&
+        (genres.size() <= 18 || (genres[18] is int && isValidMovieGenre(genres[18]))) &&
+        (genres.size() <= 19 || (genres[19] is int && isValidMovieGenre(genres[19])));
+    }
+    function isValidMovieCountry(country) {
+      return country is map && country.keys().hasAll(['iso_3166_1', 'name']) &&
+        country.keys().hasOnly(['iso_3166_1', 'name']) &&
+        country.iso_3166_1 is string && country.iso_3166_1.matches('^[A-Z]{2}$') &&
+        country.name is string && country.name.size() > 0 && country.name.size() <= 80;
+    }
+    function isValidMovieCountries(countries) {
+      return countries is list && countries.size() <= 30 &&
+        (countries.size() <= 0 || isValidMovieCountry(countries[0])) &&
+        (countries.size() <= 1 || isValidMovieCountry(countries[1])) &&
+        (countries.size() <= 2 || isValidMovieCountry(countries[2])) &&
+        (countries.size() <= 3 || isValidMovieCountry(countries[3])) &&
+        (countries.size() <= 4 || isValidMovieCountry(countries[4])) &&
+        (countries.size() <= 5 || isValidMovieCountry(countries[5])) &&
+        (countries.size() <= 6 || isValidMovieCountry(countries[6])) &&
+        (countries.size() <= 7 || isValidMovieCountry(countries[7])) &&
+        (countries.size() <= 8 || isValidMovieCountry(countries[8])) &&
+        (countries.size() <= 9 || isValidMovieCountry(countries[9])) &&
+        (countries.size() <= 10 || isValidMovieCountry(countries[10])) &&
+        (countries.size() <= 11 || isValidMovieCountry(countries[11])) &&
+        (countries.size() <= 12 || isValidMovieCountry(countries[12])) &&
+        (countries.size() <= 13 || isValidMovieCountry(countries[13])) &&
+        (countries.size() <= 14 || isValidMovieCountry(countries[14])) &&
+        (countries.size() <= 15 || isValidMovieCountry(countries[15])) &&
+        (countries.size() <= 16 || isValidMovieCountry(countries[16])) &&
+        (countries.size() <= 17 || isValidMovieCountry(countries[17])) &&
+        (countries.size() <= 18 || isValidMovieCountry(countries[18])) &&
+        (countries.size() <= 19 || isValidMovieCountry(countries[19])) &&
+        (countries.size() <= 20 || isValidMovieCountry(countries[20])) &&
+        (countries.size() <= 21 || isValidMovieCountry(countries[21])) &&
+        (countries.size() <= 22 || isValidMovieCountry(countries[22])) &&
+        (countries.size() <= 23 || isValidMovieCountry(countries[23])) &&
+        (countries.size() <= 24 || isValidMovieCountry(countries[24])) &&
+        (countries.size() <= 25 || isValidMovieCountry(countries[25])) &&
+        (countries.size() <= 26 || isValidMovieCountry(countries[26])) &&
+        (countries.size() <= 27 || isValidMovieCountry(countries[27])) &&
+        (countries.size() <= 28 || isValidMovieCountry(countries[28])) &&
+        (countries.size() <= 29 || isValidMovieCountry(countries[29]));
+    }
+    function isValidMovieDate(value) {
+      return value == '' || isValidCalendarDate(value);
+    }
+    function isValidMovie(data) {
+      return data is map &&
+        data.keys().hasAll(['movieId', 'title', 'status', 'notes', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['movieId', 'title', 'originalTitle', 'overview', 'poster', 'backdrop', 'voteAverage', 'voteCount', 'rating', 'releaseDate', 'genreIds', 'runtime', 'tagline', 'budget', 'productionCountries', 'status', 'userRating', 'review', 'notes', 'createdAt', 'updatedAt']) &&
+        data.movieId is int && data.movieId >= 1 && data.movieId <= 1000000000 &&
+        data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+        data.status in ['to_watch', 'watched'] && data.notes is string && data.notes.size() <= 4000 &&
+        (!('originalTitle' in data) || (data.originalTitle is string && data.originalTitle.size() <= 200)) &&
+        (!('overview' in data) || (data.overview is string && data.overview.size() <= 5000)) &&
+        (!('poster' in data) || data.poster == null || (data.poster is string && data.poster.size() <= 2048 && data.poster.matches('^https://.*'))) &&
+        (!('backdrop' in data) || data.backdrop == null || (data.backdrop is string && data.backdrop.size() <= 2048 && data.backdrop.matches('^https://.*'))) &&
+        (!('voteAverage' in data) || (data.voteAverage is number && data.voteAverage >= 0 && data.voteAverage <= 10)) &&
+        (!('voteCount' in data) || (data.voteCount is int && data.voteCount >= 0 && data.voteCount <= 1000000000)) &&
+        (!('rating' in data) || (data.rating is number && data.rating >= 0 && data.rating <= 10)) &&
+        (!('releaseDate' in data) || isValidMovieDate(data.releaseDate)) &&
+        (!('genreIds' in data) || isValidMovieGenres(data.genreIds)) &&
+        (!('runtime' in data) || (data.runtime is int && data.runtime >= 0 && data.runtime <= 1000)) &&
+        (!('tagline' in data) || (data.tagline is string && data.tagline.size() <= 300)) &&
+        (!('budget' in data) || (data.budget is int && data.budget >= 0 && data.budget <= 100000000000)) &&
+        (!('productionCountries' in data) || isValidMovieCountries(data.productionCountries)) &&
+        (!('userRating' in data) || (data.userRating is int && data.userRating >= 0 && data.userRating <= 5)) &&
+        (!('review' in data) || (data.review is string && data.review.size() <= 4000)) &&
+        data.createdAt is timestamp && data.updatedAt is timestamp;
+    }
+    function isValidRestaurantDishes(dishes) {
+      return dishes is list && dishes.size() <= 20 &&
+        (dishes.size() <= 0 || (dishes[0] is string && dishes[0].size() > 0 && dishes[0].size() <= 80)) &&
+        (dishes.size() <= 1 || (dishes[1] is string && dishes[1].size() > 0 && dishes[1].size() <= 80)) &&
+        (dishes.size() <= 2 || (dishes[2] is string && dishes[2].size() > 0 && dishes[2].size() <= 80)) &&
+        (dishes.size() <= 3 || (dishes[3] is string && dishes[3].size() > 0 && dishes[3].size() <= 80)) &&
+        (dishes.size() <= 4 || (dishes[4] is string && dishes[4].size() > 0 && dishes[4].size() <= 80)) &&
+        (dishes.size() <= 5 || (dishes[5] is string && dishes[5].size() > 0 && dishes[5].size() <= 80)) &&
+        (dishes.size() <= 6 || (dishes[6] is string && dishes[6].size() > 0 && dishes[6].size() <= 80)) &&
+        (dishes.size() <= 7 || (dishes[7] is string && dishes[7].size() > 0 && dishes[7].size() <= 80)) &&
+        (dishes.size() <= 8 || (dishes[8] is string && dishes[8].size() > 0 && dishes[8].size() <= 80)) &&
+        (dishes.size() <= 9 || (dishes[9] is string && dishes[9].size() > 0 && dishes[9].size() <= 80)) &&
+        (dishes.size() <= 10 || (dishes[10] is string && dishes[10].size() > 0 && dishes[10].size() <= 80)) &&
+        (dishes.size() <= 11 || (dishes[11] is string && dishes[11].size() > 0 && dishes[11].size() <= 80)) &&
+        (dishes.size() <= 12 || (dishes[12] is string && dishes[12].size() > 0 && dishes[12].size() <= 80)) &&
+        (dishes.size() <= 13 || (dishes[13] is string && dishes[13].size() > 0 && dishes[13].size() <= 80)) &&
+        (dishes.size() <= 14 || (dishes[14] is string && dishes[14].size() > 0 && dishes[14].size() <= 80)) &&
+        (dishes.size() <= 15 || (dishes[15] is string && dishes[15].size() > 0 && dishes[15].size() <= 80)) &&
+        (dishes.size() <= 16 || (dishes[16] is string && dishes[16].size() > 0 && dishes[16].size() <= 80)) &&
+        (dishes.size() <= 17 || (dishes[17] is string && dishes[17].size() > 0 && dishes[17].size() <= 80)) &&
+        (dishes.size() <= 18 || (dishes[18] is string && dishes[18].size() > 0 && dishes[18].size() <= 80)) &&
+        (dishes.size() <= 19 || (dishes[19] is string && dishes[19].size() > 0 && dishes[19].size() <= 80));
+    }
+    function isValidRestaurantPhotos(photos) {
+      return photos is list && photos.size() <= 10 &&
+        (photos.size() <= 0 || (photos[0] is string && photos[0].size() <= 2048 && photos[0].matches('^https://.*'))) &&
+        (photos.size() <= 1 || (photos[1] is string && photos[1].size() <= 2048 && photos[1].matches('^https://.*'))) &&
+        (photos.size() <= 2 || (photos[2] is string && photos[2].size() <= 2048 && photos[2].matches('^https://.*'))) &&
+        (photos.size() <= 3 || (photos[3] is string && photos[3].size() <= 2048 && photos[3].matches('^https://.*'))) &&
+        (photos.size() <= 4 || (photos[4] is string && photos[4].size() <= 2048 && photos[4].matches('^https://.*'))) &&
+        (photos.size() <= 5 || (photos[5] is string && photos[5].size() <= 2048 && photos[5].matches('^https://.*'))) &&
+        (photos.size() <= 6 || (photos[6] is string && photos[6].size() <= 2048 && photos[6].matches('^https://.*'))) &&
+        (photos.size() <= 7 || (photos[7] is string && photos[7].size() <= 2048 && photos[7].matches('^https://.*'))) &&
+        (photos.size() <= 8 || (photos[8] is string && photos[8].size() <= 2048 && photos[8].matches('^https://.*'))) &&
+        (photos.size() <= 9 || (photos[9] is string && photos[9].size() <= 2048 && photos[9].matches('^https://.*')));
+    }
+    function isValidRestaurantDate(value) {
+      return value == null || value == '' || isValidCalendarDate(value);
+    }
+    function isValidRestaurant(data) {
+      return data is map &&
+        data.keys().hasAll(['name', 'cuisine', 'status', 'notes', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['name', 'cuisine', 'status', 'address', 'visitDate', 'avgBill', 'userRating', 'favoriteDishes', 'review', 'photos', 'notes', 'createdAt', 'updatedAt']) &&
+        data.name is string && data.name.size() > 0 && data.name.size() <= 160 &&
+        data.cuisine in ['', 'Итальянская', 'Японская', 'Русская', 'Французская', 'Мексиканская', 'Китайская', 'Индийская', 'Грузинская'] &&
+        data.status in ['want_to_visit', 'visited'] && data.notes is string && data.notes.size() <= 4000 &&
+        (!('address' in data) || (data.address is string && data.address.size() <= 300)) &&
+        (!('visitDate' in data) || isValidRestaurantDate(data.visitDate)) &&
+        (!('avgBill' in data) || (data.avgBill is int && data.avgBill >= 0 && data.avgBill <= 10000000)) &&
+        (!('userRating' in data) || (data.userRating is int && data.userRating >= 0 && data.userRating <= 10)) &&
+        (!('favoriteDishes' in data) || isValidRestaurantDishes(data.favoriteDishes)) &&
+        (!('review' in data) || (data.review is string && data.review.size() <= 4000)) &&
+        (!('photos' in data) || isValidRestaurantPhotos(data.photos)) &&
+        data.createdAt is timestamp && data.updatedAt is timestamp;
+    }
+    match /users/{uid} {
+      allow get: if isOwner(uid);
+      allow list: if false;
+      allow create: if false && isOwner(uid) && uidUnchanged(uid) &&
+        isValidUser(request.resource.data);
+      allow update: if isOwner(uid) && uidNotModified() &&
+        isValidUser(request.resource.data) &&
+        isValidProfileEdit(request.resource.data);
+      allow delete: if false;
+
+
+      match /dreams/{dreamId} {
+        allow create: if isOwner(uid) &&
+          exists(/databases/$(database)/documents/users/$(uid)) &&
+          isValidDream(request.resource.data) &&
+          (!('isPublic' in request.resource.data) || request.resource.data.isPublic == false) &&
+          request.resource.data.createdAt == request.time &&
+          request.resource.data.updatedAt == request.time;
+        allow update: if isOwner(uid) &&
+          isValidDream(request.resource.data) &&
+          request.resource.data.createdAt == resource.data.createdAt &&
+          ((!('isPublic' in resource.data) &&
+            !('isPublic' in request.resource.data)) ||
+           (('isPublic' in resource.data) &&
+            request.resource.data.isPublic == resource.data.isPublic)) &&
+          request.resource.data.updatedAt == request.time;
+        allow delete: if isOwner(uid);
+      }
+
+
+      match /travels/{travelId} {
+        allow create: if isOwner(uid) &&
+          exists(/databases/$(database)/documents/users/$(uid)) &&
+          isValidTravel(request.resource.data) &&
+          request.resource.data.createdAt == request.time &&
+          request.resource.data.updatedAt == request.time;
+        allow update: if isOwner(uid) &&
+          isValidTravel(request.resource.data) &&
+          request.resource.data.createdAt == resource.data.createdAt &&
+          request.resource.data.updatedAt == request.time;
+        allow delete: if isOwner(uid);
+      }
+
+
+      match /books/{bookId} {
+        allow create: if isOwner(uid) &&
+          exists(/databases/$(database)/documents/users/$(uid)) &&
+          isValidBook(request.resource.data) &&
+          request.resource.data.createdAt == request.time &&
+          request.resource.data.updatedAt == request.time;
+        allow update: if isOwner(uid) &&
+          isValidBook(request.resource.data) &&
+          request.resource.data.createdAt == resource.data.createdAt &&
+          request.resource.data.updatedAt == request.time;
+        allow delete: if isOwner(uid);
+      }
+
+      match /movies/{movieId} {
+        allow create: if isOwner(uid) && exists(/databases/$(database)/documents/users/$(uid)) &&
+          isValidMovie(request.resource.data) && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time;
+        allow update: if isOwner(uid) && isValidMovie(request.resource.data) &&
+          request.resource.data.createdAt == resource.data.createdAt && request.resource.data.updatedAt == request.time;
+        allow delete: if isOwner(uid);
+      }
+      match /restaurants/{restaurantId} {
+        allow create: if isOwner(uid) && exists(/databases/$(database)/documents/users/$(uid)) &&
+          isValidRestaurant(request.resource.data) && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time;
+        allow update: if isOwner(uid) && isValidRestaurant(request.resource.data) &&
+          request.resource.data.createdAt == resource.data.createdAt && request.resource.data.updatedAt == request.time;
+        allow delete: if isOwner(uid);
+      }
+      match /{category}/{id} {
+        allow get, list: if isOwner(uid) &&
+          category in [
+            'travels', 'restaurants', 'movies', 'books', 'dreams',
+            'dailyTasks', 'notifications', 'friends',
+            'friendRequests', 'sentRequests', 'chats', 'messages'
+          ] &&
+          exists(/databases/$(database)/documents/users/$(uid));
+        allow create: if false && isOwner(uid) &&
+          isValidOwnedDocument(request.resource.data);
+        allow update: if false && isOwner(uid) &&
+          isValidOwnedDocument(request.resource.data);
+        allow delete: if false;
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+) &&
+        day <= maxDay;
+    }
+
     // Private profiles: only bounded self-service display fields are editable.
     // Creation, privileges, metrics and nickname changes remain denied.
     function isValidUser(data) {

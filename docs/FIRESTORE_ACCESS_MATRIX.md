@@ -30,7 +30,7 @@
 | `users/{uid}/friendRequests/{fromUid}` | Получатель-владелец | Server | Server (accept/decline) | Server | Отправитель не может создавать запрос от чужого имени; согласованность с sentRequests |
 | `users/{uid}/sentRequests/{toUid}` | Отправитель-владелец | Server | Server | Server | Парная запись к входящему запросу |
 | `users/{uid}/blockedUsers/{blockedUid}` | Owner / Server | Server (пока нет безопасного клиентского протокола) | Server | Server | Блокировка проверяется сервером при создании диалога |
-| `users/{uid}/notifications/{id}` | Owner | Server | Owner — только `read` и допустимый read-state; Server — создание | Owner — только если UX поддерживает удаление | Текущий клиентский `addNotification(userId, data)` позволяет передавать произвольный адресат/данные; клиентское создание отключить |
+| `users/{uid}/notifications/{id}` | Owner | Server event transaction only | Owner — только `read` и допустимый read-state; Server — создание | Owner — только если UX поддерживает удаление | Friend request/accept создаются в `mutateFriendshipV2` с фиксированным payload; message/achievement events ещё не реализованы |
 | `users/{uid}/chats/{partnerUid}` (legacy index) | Owner | Server / временно только после миграции | Server | Server | Нельзя доверять клиенту запись unread, preview или metadata в чужой индекс |
 | `chats/{chatId}/messages/{messageId}` (legacy chat) | Participant | Server | Server; авторское редактирование/удаление — только через проверенный серверный протокол | Server | Текущий legacy client пишет сообщения и обе стороны индекса; прямой доступ не открывать без отдельной модели и правил |
 | `chats/{chatId}` (Chat V2) | Participant через callable; прямой клиентский доступ — Deny | Server | Server | Server | `createPrivateChatV2` создаёт чат и pair в транзакции |
@@ -52,7 +52,7 @@
 | `auth.service.js` | Legacy query по `users.username/usernameNormalized`; создание профиля и `_init`; обновление `lastLogin` | Legacy поиск по приватным users отключить после перехода на public profile / callable. Регистрация V2 — Server. Не разрешать произвольный create/update профиля |
 | `dreams/travel/book/movie/restaurant.service.js` | CRUD в собственной подколлекции пользователя; фильтры по статусу/категории/кухне | Owner CRUD только по конкретной схеме; проверить все поля на create и update |
 | `friends.service.js` / `friendship-callable.service.js` | Читает только собственные списки; send/accept/reject/cancel/remove вызывают `mutateFriendshipV2` | Все изменения дружбы — Server only через Auth + App Check callable; UID берётся из Auth, парные записи проверяются и изменяются одной Admin SDK транзакцией. Двухаккаунтный staging-прогон обязателен |
-| `notifications.service.js` | Клиент создаёт уведомление в произвольном `users/{userId}`; подписка читает своё; update меняет read | Создание — Server only. Клиенту оставить ограниченное изменение read-state и чтение своего списка |
+| `notifications.service.js` | Подписка читает собственный список; update меняет read. Клиентское создание удалено | Создание — только доверенные server event transactions; клиенту оставить ограниченное изменение read-state и чтение собственного списка |
 | `chat.service.js` | Legacy client пишет messages и оба chat indexes, редактирует/удаляет сообщения | Не пытаться чинить общими правилами. Сначала cutover на серверный Chat V2 и подтверждённая миграция истории |
 | `profile-stats.service.js`, `daily-tasks.service.js` | Callable refresh/claim с UID из Auth; клиент не отправляет счётчики | Служебные документы закрыты от клиента; endpoint сам проверяет Auth и App Check |
 | `achievements.service.js`, `level.service.js` | Читают собственный users profile | Owner read; запись наград — Server only |
@@ -110,7 +110,7 @@
 
 - [ ] Получить актуальные production Rules и подтвердить, что аварийный deny-all действительно опубликован.
 - [ ] Утвердить, сохраняется ли публичная мечта в V1.0 и через какую проекцию она доступна.
-- [ ] Решить, какие уведомления могут создаваться только сервером; текущий общий клиентский `addNotification` недостаточно безопасен.
+- [x] Зафиксировать серверное создание friend-request/friend-accepted notifications с фиксированным payload в транзакции дружбы. Message/achievement notifications и Rules/staging проверки остаются открытыми.
 - [x] Перевести friendship writes на `mutateFriendshipV2`: Auth UID, App Check, проверка получателя и атомарная транзакция для обеих сторон; браузерные записи удалены из `FriendsService`.
 - [ ] Провести staging two-account проверку всех пяти операций и подтвердить App Check на реально развернутой callable.
 - [ ] Определить момент и совместимость миграции legacy chat → Chat V2.
@@ -165,3 +165,11 @@
 - Emulator regression tests deny owner browser attempts to create or update `publicProfileEnabled` with either boolean value.
 - Only the authenticated, App-Check protected `setPublicProfileVisibilityV2` Admin SDK callable can mutate the flag.
 - Public profile DTOs explicitly omit `publicProfileEnabled`; disclosure of consent metadata is not part of the public contract.
+
+
+### Notification write ownership update — 2026-11-21
+
+- Candidate client service no longer exposes any notification creation method.
+- `mutateFriendshipV2` is an Auth + App Check protected server callable. Its Admin SDK transaction creates only the fixed-schema friend-request and friend-accepted notification records at paths derived from authenticated actor and validated target UIDs.
+- Client read-state changes remain owner-scoped in the candidate service; actual authorization still depends on the not-yet-verified production Rules.
+- Message and achievement notification event sources are not yet implemented. Do not enable a generic notification creation endpoint.

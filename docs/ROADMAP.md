@@ -433,3 +433,11 @@ Dream&Go — социальное пространство мечтаний, п�
 - [ ] Confirm the first CI run completes successfully; workflow creation is not a test pass.
 
 - [x] Isolated each Firestore Emulator test suite under its own Firebase project ID to prevent parallel Node test files from overwriting each other's Rules or data.
+
+
+### Client-to-Rules contract verification — 2026-11-21
+
+- [x] Added an integration test that feeds the real client-side validators for dreams, travels, books, movies and restaurants into the isolated Firestore V1 Rules fixture.
+- [x] Uses the same server timestamp fields and service-added `notes` metadata used by create services for books, movies and restaurants.
+- [x] Included the contract suite in the Emulator package test script.
+- [ ] Execute the contract suite and full Emulator suite in CI; no pass is claimed.

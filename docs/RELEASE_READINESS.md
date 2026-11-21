@@ -401,7 +401,8 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [x] Added fail-closed `backupVerified` requirement to apply mode, in addition to frozen registration window.
 - [x] Added explicit CLI acknowledgement flag `--confirm-backup-verified`; default dry-run remains read-only.
 - [x] Added Firestore Emulator tests rejecting apply when backup acknowledgement or registration freeze is missing.
-- [ ] Verify Root Checks and Firebase Emulator workflow on the final candidate commit.
+- [x] Firebase Emulator workflow passed on implementation/test HEAD `e5f6aef2323c8e1a0175eaee323d3975de06aca7`: 7/7 Rules tests and 59/59 server/Auth/Firestore Emulator tests, 0 failures ([run 44896946136](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44896946136)).
+- [x] Root Checks passed on later candidate HEAD `8a5f59829ff932d2d03ab11a523d656dd386b4bc`: 469/469 tests, 0 failures; syntax validation passed for all 257 JavaScript files ([run 44897158331](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44897158331)).
 - [ ] Independently verify production backup and restore before any real backfill; the CLI flag is an operator acknowledgement, not proof.
 
 
@@ -410,5 +411,5 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [x] Added authenticated-owner checks to SearchService before and after each personal collection query and before cache/return.
 - [x] Added authenticated-owner checks to LevelService before and after reading users/{uid}.
 - [x] Added a regression test for both service contracts.
-- [ ] Verify Root Checks on the final candidate code commit.
+- [x] Root Checks passed on candidate HEAD `8a5f59829ff932d2d03ab11a523d656dd386b4bc`: 469/469 tests, 0 failures; syntax validation passed for all 257 JavaScript files ([run 44897158331](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44897158331)).
 - [ ] Verify owner-only behavior against the complete production Firestore Rules export.

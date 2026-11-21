@@ -263,3 +263,24 @@ The owner explicitly confirmed that this exact recursive deny-all ruleset is pub
 ### V1.0 Storage scope
 
 Firebase Storage is not configured and requires a paid upgrade. It is explicitly out of V1.0 scope. Do not add Storage dependencies or upload/attachment acceptance criteria. Revisit only as a separately approved post-V1.0 feature.
+
+### Published deny-all impact and client compatibility inventory — 2026-11-21
+
+Owner confirmed the recursive deny-all Rules are published. Therefore, if the web app is currently connected to this Firestore database, all direct Firestore SDK operations fail with permission denied, including:
+
+- `users/{uid}` profile read/create and `lastLogin` writes; username uniqueness queries over the entire `users` collection; initial placeholder writes (`_init`) in travels/restaurants/movies/books/dreams/friends/messages.
+- Owner CRUD and list queries in the five personal subcollections: dreams, travels, books, movies and restaurants.
+- Owner notification list/read-state updates.
+- Friend list reads from the owner subcollections.
+- Legacy chat index reads/writes under both participants' `users/{uid}/chats/{partnerUid}`, direct message writes/edits/deletes under `chats/{chatId}/messages`, and local conversation deletion.
+- Any other direct Firestore client operation; callable functions using Admin SDK are not governed by Firestore Rules, but retain their own Auth/App Check/validation requirements.
+
+**Important architecture conflicts discovered during the path inventory:**
+
+1. `AuthService` still performs client-side username queries against the global `users` collection and creates the user profile plus `_init` placeholders directly. These paths conflict with the planned server-owned username registry and must be migrated before enabling restrictive production Rules.
+2. Legacy chat writes cross both participants' private chat indexes from one client. A secure owner-only rule cannot safely allow a sender to update the recipient's index. Chat V2/server-side cutover is required; do not add broad exceptions.
+3. `books`, `travels`, and `restaurants` currently write `isPublic: true` by default, while the V1.0 access matrix keeps personal subcollections owner-only. This field does not itself grant access under Rules. Public visibility must use a separate approved projection and explicit consent, or be removed/disabled; never open the parent private document.
+4. `notifications` client updates only `read`, a candidate for a narrowly scoped owner update after schema validation. Server-created payloads must remain immutable to clients.
+5. Personal collection services call `refreshUserStats`; profile stats and achievements remain server-owned and must not become writable through general profile Rules.
+
+No production rules or user data were changed. This inventory is source-derived and still needs full validator/schema review plus Emulator tests.

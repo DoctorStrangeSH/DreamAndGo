@@ -441,3 +441,6 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Uses the same server timestamp fields and service-added `notes` metadata used by create services for books, movies and restaurants.
 - [x] Included the contract suite in the Emulator package test script.
 - [ ] Execute the contract suite and full Emulator suite in CI; no pass is claimed.
+
+- [x] Extended the client-to-Rules contract test to cover partial updates, immutable creation timestamps, and owner deletion across all five private collections.
+- [ ] Execute the expanded Emulator contract suite and full suite in CI.

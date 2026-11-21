@@ -56,10 +56,37 @@ test('server recomputes owned collection stats and preserves unrelated profile c
     assert.ok(Array.isArray(saved.get('achievements')));
     assert.ok(saved.get('achievements').length > 0);
 
+    const achievementNotice = await db.doc(
+        'users/' + uid + '/notifications/achievement_perfect_week_level_1'
+    ).get();
+    assert.equal(achievementNotice.exists, true);
+    assert.deepEqual({
+        type: achievementNotice.get('type'),
+        title: achievementNotice.get('title'),
+        icon: achievementNotice.get('icon'),
+        color: achievementNotice.get('color'),
+        link: achievementNotice.get('link'),
+        read: achievementNotice.get('read'),
+        achievementId: achievementNotice.get('achievementId'),
+        achievementLevel: achievementNotice.get('achievementLevel')
+    }, {
+        type: 'achievement',
+        title: 'Новое достижение!',
+        icon: 'bi-trophy',
+        color: 'warning',
+        link: '#achievements',
+        read: false,
+        achievementId: 'perfect_week',
+        achievementLevel: 1
+    });
+
     const repeated = await refreshUserStatsTransaction(db, uid);
     assert.equal(repeated.newAchievements.length, 0);
     const afterRepeat = await user.get();
     assert.equal(afterRepeat.get('achievements').length, saved.get('achievements').length);
+    assert.equal((await db.doc(
+        'users/' + uid + '/notifications/achievement_perfect_week_level_1'
+    ).get()).exists, true);
 });
 
 test('server refuses to create or mutate a missing profile during stats refresh', async () => {

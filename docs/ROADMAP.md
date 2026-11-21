@@ -509,3 +509,15 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Added synthetic fixtures for all five collections and regression tests for mapping, defaults, drops, status conversion, invalid data, collisions and source immutability.
 - [ ] Run full unit suite and syntax checks in CI on the exact current PR head.
 - [ ] Add a separate synthetic rollback/reversibility rehearsal; do not connect this module to Firebase or real user data.
+
+
+### Synthetic migration rehearsal — 2026-11-21
+
+- [x] Added all-or-nothing in-memory rehearsal across the five V1 private collections.
+- [x] Reuses the approved-manifest-gated document normalizer for every synthetic document.
+- [x] Any invalid entry/document blocks the entire batch; no partial normalized batch is returned.
+- [x] Preserves an immutable source snapshot and returns a rollback preview for comparison.
+- [x] Added CLI `npm run rehearse:legacy-migration -- manifest.json synthetic-documents.json`.
+- [x] Added regression coverage for all five collections, atomic failure, input immutability, malformed entries and unsupported collections.
+- [ ] Run complete unit tests and syntax checks in CI on the exact current PR head.
+- [ ] Perform a separate staging backup/restore rehearsal only after security review and explicit approval. The synthetic snapshot is not a production backup.

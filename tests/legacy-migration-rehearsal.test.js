@@ -56,7 +56,7 @@ test('blocks the whole batch when one document fails validation', () => {
     assert.equal(result.failures.length, 1);
     assert.equal(result.failures[0].index, 2);
     assert.deepEqual(documents, before);
-    assert.deepEqual(result.rollback.restoredDocuments, before);
+    assert.deepEqual(result.rollbackPreview.restoredDocuments, before);
 });
 
 test('does not mutate caller documents when normalizing successful input', () => {

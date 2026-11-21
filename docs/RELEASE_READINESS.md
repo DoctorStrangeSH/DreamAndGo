@@ -446,3 +446,14 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [ ] Reconcile collection schemas and actual client query patterns before authoring least-privilege Firestore Rules.
 - [ ] Pass complete Emulator Rules suite and two-account staging before any production rules change.
 - **Release decision: HOLD.** The deny-all rules are a safe lock-down, not a functioning application authorization policy.
+
+
+### Confirmed deny-all operational impact — 2026-11-21
+
+- [x] Recorded the owner-confirmed published recursive deny-all rules.
+- [x] Mapped direct Firestore operations that will be denied, including profile/bootstrap, personal collections, notifications, friend lists and legacy chat.
+- [x] Recorded blockers: global client username query, direct client profile creation, cross-owner legacy chat index writes, and default `isPublic: true` fields on private collection records.
+- [ ] Complete collection validator/schema review and define exact allowed fields/timestamps.
+- [ ] Migrate registration and chat writes to trusted server-side flows before opening the minimum required client Rules.
+- [ ] Complete full Emulator and two-account staging coverage before any production Rules change.
+- **Release decision: HOLD.** Do not replace deny-all with broad authenticated-user access.

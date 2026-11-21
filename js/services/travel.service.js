@@ -87,7 +87,6 @@ export class TravelService {
                 ...safeData,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
-                isPublic: true
             };
             
             const docRef = await addDoc(travelsRef, newTravel);

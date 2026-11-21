@@ -614,3 +614,7 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 
 
 - [x] Follow-up static review tightened dream visibility immutability to preserve both existing values and absence of the field.
+
+
+- [x] Added dedicated GitHub Actions workflow for repeatable Firestore Rules Emulator execution.
+- [ ] First CI run must pass before Rules candidate can leave HOLD.

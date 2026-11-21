@@ -501,3 +501,12 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - Trusted notification generation is implemented in candidate server transactions. Isolated notification Rules coverage and earlier Emulator runs are recorded in the roadmap, but exact-HEAD verification and two-account staging remain open.
 - The limited `owner-read.rules` fixture remains a recovery prototype: owner reads are covered, dreams have a narrow validated write path, and travels/books/movies/restaurants remain write-denied. It is not a complete V1.0 Rules candidate.
 - **Decision remains HOLD.** No merge, production Rules change, Functions deployment, username migration or live data mutation is authorized by this checkpoint.
+
+
+### Book collection consistency follow-up — 2026-11-21
+
+- [x] Client update path now checks page-count consistency against the persisted book before writing.
+- [x] Regression tests added for partial current-page and total-page updates.
+- [ ] Verify root CI on the exact implementation HEAD.
+- [ ] Add the invariant to authoritative Firestore Rules and test concurrent/forged writes in Emulator; the client-side preflight is not a substitute for Rules.
+- **Release remains HOLD.**

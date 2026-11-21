@@ -20,7 +20,9 @@ export async function mutateFriendship(db, uid, targetUid, action, serverTimesta
         reverseIncoming: own.collection('friendRequests').doc(targetUid),
         reverseOutgoing: target.collection('sentRequests').doc(uid),
         ownFriend: own.collection('friends').doc(targetUid),
-        targetFriend: target.collection('friends').doc(uid)
+        targetFriend: target.collection('friends').doc(uid),
+        requestNotification: target.collection('notifications').doc(`friend_request_${uid}`),
+        acceptedNotification: target.collection('notifications').doc(`friend_accepted_${uid}`)
     };
 
     return db.runTransaction(async tx => {
@@ -47,6 +49,17 @@ export async function mutateFriendship(db, uid, targetUid, action, serverTimesta
             };
             tx.create(refs.incoming, request);
             tx.create(refs.outgoing, request);
+            tx.set(refs.requestNotification, {
+                type: 'friend_request',
+                title: 'Новая заявка в друзья',
+                message: 'Пользователь хочет добавить тебя в друзья',
+                icon: 'bi-person-plus',
+                color: 'primary',
+                link: '#friends',
+                fromUserId: uid,
+                read: false,
+                createdAt: serverTimestamp()
+            });
             return { ok: true, action };
         }
 
@@ -69,6 +82,17 @@ export async function mutateFriendship(db, uid, targetUid, action, serverTimesta
                 const addedAt = serverTimestamp();
                 tx.create(refs.ownFriend, { friendId: targetUid, addedAt });
                 tx.create(refs.targetFriend, { friendId: uid, addedAt });
+                tx.set(refs.acceptedNotification, {
+                    type: 'friend_accepted',
+                    title: 'Заявка принята',
+                    message: 'Твоя заявка в друзья принята',
+                    icon: 'bi-person-check',
+                    color: 'success',
+                    link: `#profile/${uid}`,
+                    fromUserId: uid,
+                    read: false,
+                    createdAt: serverTimestamp()
+                });
             }
             tx.delete(refs.incoming);
             tx.delete(refs.reverseOutgoing);

@@ -18,6 +18,10 @@ for (const [name, singular] of [['travel', 'Travel'], ['movie', 'Movie']]) {
                 constructor() { this.db = {}; }
                 clearCache(uid) { calls.push(['clear', uid]); }
                 async updateUserStats(uid) { calls.push(['stats', uid]); }
+                async updateUserStatsBestEffort(uid) {
+                    try { await this.updateUserStats(uid); }
+                    catch (error) { console.warn('stats refresh failed', error); }
+                }
                 ${method}
             }
         `)(
@@ -25,7 +29,7 @@ for (const [name, singular] of [['travel', 'Travel'], ['movie', 'Movie']]) {
             async (_ref, data) => { calls.push(['write', data.status]); },
             () => 'timestamp',
             calls,
-            { error() {} },
+            { error() {}, warn() {} },
             (requestedUid, activeUid) => requestedUid === activeUid,
             value => typeof value === 'string' && value.length > 0 && !value.includes('/'),
             { currentUser: { uid: 'alice' } },

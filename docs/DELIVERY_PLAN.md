@@ -168,7 +168,8 @@
 - [x] Removed the generic client write API that allowed arbitrary notification recipients and payloads.
 - [x] Added active-UID guards to notification subscription and read-state mutation methods.
 - [x] Added regression tests for the removed write surface, owner binding and document ID validation.
-- [ ] Implement server-generated notification events for the V1.0 event sources; retain no generic client-selected recipient endpoint.
+- [x] Implement server-generated notifications for friend request/acceptance and newly awarded achievements; retain no generic client-selected recipient endpoint.
+- [ ] Implement server-generated message notifications after the authoritative message event contract is finalized.
 - [ ] Define and test notification Firestore Rules against the approved V1.0 access matrix.
 - [ ] Verify notification delivery/read-state in staging with two accounts and App Check.
 - **Exit condition not met:** notification creation is contained on the candidate client, but the end-to-end V1.0 notification requirement is not accepted yet.

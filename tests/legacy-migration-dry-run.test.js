@@ -85,14 +85,20 @@ test('maps legacy statuses only to target collection enum values', () => {
 
 test('blocks invalid status mappings and unresolved inventory gaps', () => {
     const config = manifest();
-    config.collections[0].statusMap = { active: 'public' };
+    config.collections[0].statusMap = { active: 'completed' };
     const source = inventory();
     source.summary.invalidStatus = 2;
     source.collections.dreams.observedStatuses = { active: 2 };
     const result = planLegacyMigrationDryRun({ manifest: config, inventory: source });
-    assert.equal(result.status, 'review-required');
-    assert.ok(result.blockers.includes('inventory:invalidStatus'));
-    assert.ok(result.blockers.includes('unmapped_status:dreams:active'));
+    assert.equal(result.status, 'plan-only');
+    assert.equal(result.collections.dreams.statusOperations[0].target, 'completed');
+
+    const unmapped = inventory();
+    unmapped.summary.invalidStatus = 2;
+    unmapped.collections.dreams.observedStatuses = { active: 2 };
+    const blocked = planLegacyMigrationDryRun({ manifest: manifest(), inventory: unmapped });
+    assert.equal(blocked.status, 'review-required');
+    assert.ok(blocked.blockers.includes('unmapped_status:dreams:active'));
 });
 
 test('rejects inventories that are not sanitized aggregate reports', () => {
@@ -102,4 +108,21 @@ test('rejects inventories that are not sanitized aggregate reports', () => {
     assert.equal(result.status, 'blocked');
     assert.equal(result.executable, false);
     assert.ok(result.blockers.includes('sanitized_inventory_required'));
+});
+
+
+test('allows explicit drop decisions to resolve unknown legacy fields in aggregate planning', () => {
+    const config = manifest();
+    config.collections[0].fields.push({
+        source: 'oldFlag',
+        action: 'drop',
+        dataLossApproval: true
+    });
+    const source = inventory();
+    source.summary.unknownFieldDocuments = 2;
+    source.collections.dreams.fields.oldFlag = { count: 2, types: { boolean: 2 } };
+    const result = planLegacyMigrationDryRun({ manifest: config, inventory: source });
+    assert.equal(result.status, 'plan-only');
+    assert.ok(result.collections.dreams.fieldOperations.some(item =>
+        item.source === 'oldFlag' && item.action === 'drop'));
 });

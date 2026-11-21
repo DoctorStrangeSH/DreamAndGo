@@ -730,3 +730,8 @@ The normalizer returns the normalized document values to its caller, so it must 
 Added `js/core/legacy-migration-rehearsal.js` and a CLI entrypoint. The rehearsal accepts only an in-memory array of synthetic `{collection, document}` records and an approved manifest. Every document is passed through the V1 normalizer. If any entry fails, the entire batch is blocked and the returned normalized batch is empty; no partial success can be mistaken for a completed migration.
 
 The function captures an immutable copy of the input and returns a restore preview. This only demonstrates in-memory source preservation and a deterministic rollback preview. It is not a Firestore backup, transaction, production restore test or authorization to migrate real users. The module has no Firebase SDK, network or write path.
+
+
+### Rehearsal report semantics clarification — 2026-11-21
+
+The rehearsal report field is named `rollbackPreview`, not a verified rollback. It records that an immutable input snapshot was captured, that the function did not mutate the caller's input, and that a copy of the original synthetic documents is available for inspection. It explicitly reports `productionRestoreVerified: false`. Empty batches are rejected. This avoids implying that a production backup/restore has been performed.

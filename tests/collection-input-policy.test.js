@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
     validateTravelInput,
     validateBookInput,
+    validateBookUpdateInput,
     validateMovieInput,
     validateRestaurantInput
 } from '../js/core/collection-input-policy.js';
@@ -84,4 +85,39 @@ test('public visibility and server metadata are not accepted as client collectio
         assert.throws(() => validator({ ...input, createdAt: 'client-controlled' }), TypeError);
         assert.throws(() => validator({ ...input, updatedAt: 'client-controlled' }), TypeError);
     }
+});
+
+
+test('book partial updates preserve the persisted current-page and total-page invariant', () => {
+    const existing = { ...book() };
+
+    assert.deepEqual(
+        validateBookUpdateInput(existing, { currentPage: 200 }),
+        { currentPage: 200 }
+    );
+    assert.deepEqual(
+        validateBookUpdateInput(existing, { totalPages: 600 }),
+        { totalPages: 600 }
+    );
+    assert.deepEqual(
+        validateBookUpdateInput(existing, { review: 'Перечитать позже' }),
+        { review: 'Перечитать позже' }
+    );
+
+    assert.throws(
+        () => validateBookUpdateInput(existing, { currentPage: 501 }),
+        /Текущая страница не может превышать/
+    );
+    assert.throws(
+        () => validateBookUpdateInput(existing, { totalPages: 100 }),
+        /Текущая страница не может превышать/
+    );
+    assert.throws(
+        () => validateBookUpdateInput({}, { currentPage: 1 }),
+        /Текущая страница не может превышать/
+    );
+    assert.throws(
+        () => validateBookUpdateInput({ totalPages: '500', currentPage: 0 }, { currentPage: 1 }),
+        /Сначала исправь общее количество/
+    );
 });

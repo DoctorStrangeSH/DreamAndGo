@@ -543,3 +543,12 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [x] Added validator regression cases for impossible release dates and duplicate genres.
 - [ ] Exact-HEAD root CI and Emulator results remain required.
 - **Release remains HOLD.**
+
+
+### Restaurant collection write consistency — 2026-11-21
+
+- [x] Restaurant create/update results are no longer downgraded to failures solely because derived statistics could not refresh after the primary write.
+- [x] Added regression tests for committed-write result handling.
+- [x] Expanded restaurant validator cases for invalid status, dates, ratings, dishes, photos and nullable visit date.
+- [ ] Exact-HEAD root CI and Emulator results remain required.
+- **Release remains HOLD.**

@@ -4,7 +4,7 @@ import { SnapshotGate } from '../core/snapshot-gate.js';
 import { getPublicProfilesByIds } from './public-profile-callable.service.js';
 import { isValidChatUid } from '../core/chat-message-policy.js';
 import { 
-    collection, doc, query, orderBy, limit, startAfter,
+    collection, query, orderBy, limit, startAfter,
     onSnapshot, getDocs
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 

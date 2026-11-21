@@ -359,3 +359,13 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Added `tests/restaurant-service-write-result.test.js` to guard both committed-write result paths.
 - [x] Expanded restaurant validator coverage for invalid status, impossible visit dates, rating bounds, favorite-dish list limits, photo list limits and nullable visit dates.
 - [ ] Run root tests and Firebase Emulator workflows on the exact resulting HEAD; no CI pass is claimed yet.
+
+
+### Cross-collection CRUD statistics consistency — 2026-11-21
+
+- [x] Audited create/update/delete paths for dreams, travels, books, movies and restaurants.
+- [x] Added a shared per-service `updateUserStatsBestEffort(userId)` wrapper and routed all 15 collection CRUD operations through it.
+- [x] Secondary statistics refresh failures are logged and cannot turn an already committed primary write/delete into a false failure response.
+- [x] Added `tests/collection-crud-stats-best-effort.test.js` to guard all five services and all 15 CRUD entry points.
+- [ ] Run root tests and syntax checks on the exact current HEAD; no CI pass is claimed yet.
+- [ ] Add emulator integration coverage for successful and denied CRUD operations, including server timestamps and cross-account access.

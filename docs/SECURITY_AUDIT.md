@@ -368,3 +368,12 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 - Added a regression test requiring owner checks and preserving the user-scoped collection paths.
 
 **Limit:** these client guards are defense in depth only. Firestore Rules must still enforce owner-only reads on the server. No Rules or production data were changed.
+
+
+### SEC-PROFILE-STATUS-01 — guard prototype-key lookups in profile status labels — 2026-11-21
+
+**Status:** implemented; regression test added; CI pending.
+
+- Profile dream status labels are now selected only when the status is an own key of the fixed label map. Unknown values, including inherited object keys such as `constructor` and `__proto__`, fall back to the safe `dreaming` label.
+- Added a source-contract regression test to prevent reintroducing prototype-chain lookup.
+- This is a rendering robustness hardening; no stored data or server authorization behavior changed.

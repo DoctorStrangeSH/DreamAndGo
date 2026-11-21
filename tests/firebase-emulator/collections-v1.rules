@@ -337,6 +337,61 @@ service cloud.firestore {
         (!('review' in data) || (data.review is string && data.review.size() <= 4000)) &&
         data.createdAt is timestamp && data.updatedAt is timestamp;
     }
+    function isValidRestaurantDishes(dishes) {
+      return dishes is list && dishes.size() <= 20 &&
+        (dishes.size() <= 0 || (dishes[0] is string && dishes[0].size() > 0 && dishes[0].size() <= 80)) &&
+        (dishes.size() <= 1 || (dishes[1] is string && dishes[1].size() > 0 && dishes[1].size() <= 80)) &&
+        (dishes.size() <= 2 || (dishes[2] is string && dishes[2].size() > 0 && dishes[2].size() <= 80)) &&
+        (dishes.size() <= 3 || (dishes[3] is string && dishes[3].size() > 0 && dishes[3].size() <= 80)) &&
+        (dishes.size() <= 4 || (dishes[4] is string && dishes[4].size() > 0 && dishes[4].size() <= 80)) &&
+        (dishes.size() <= 5 || (dishes[5] is string && dishes[5].size() > 0 && dishes[5].size() <= 80)) &&
+        (dishes.size() <= 6 || (dishes[6] is string && dishes[6].size() > 0 && dishes[6].size() <= 80)) &&
+        (dishes.size() <= 7 || (dishes[7] is string && dishes[7].size() > 0 && dishes[7].size() <= 80)) &&
+        (dishes.size() <= 8 || (dishes[8] is string && dishes[8].size() > 0 && dishes[8].size() <= 80)) &&
+        (dishes.size() <= 9 || (dishes[9] is string && dishes[9].size() > 0 && dishes[9].size() <= 80)) &&
+        (dishes.size() <= 10 || (dishes[10] is string && dishes[10].size() > 0 && dishes[10].size() <= 80)) &&
+        (dishes.size() <= 11 || (dishes[11] is string && dishes[11].size() > 0 && dishes[11].size() <= 80)) &&
+        (dishes.size() <= 12 || (dishes[12] is string && dishes[12].size() > 0 && dishes[12].size() <= 80)) &&
+        (dishes.size() <= 13 || (dishes[13] is string && dishes[13].size() > 0 && dishes[13].size() <= 80)) &&
+        (dishes.size() <= 14 || (dishes[14] is string && dishes[14].size() > 0 && dishes[14].size() <= 80)) &&
+        (dishes.size() <= 15 || (dishes[15] is string && dishes[15].size() > 0 && dishes[15].size() <= 80)) &&
+        (dishes.size() <= 16 || (dishes[16] is string && dishes[16].size() > 0 && dishes[16].size() <= 80)) &&
+        (dishes.size() <= 17 || (dishes[17] is string && dishes[17].size() > 0 && dishes[17].size() <= 80)) &&
+        (dishes.size() <= 18 || (dishes[18] is string && dishes[18].size() > 0 && dishes[18].size() <= 80)) &&
+        (dishes.size() <= 19 || (dishes[19] is string && dishes[19].size() > 0 && dishes[19].size() <= 80));
+    }
+    function isValidRestaurantPhotos(photos) {
+      return photos is list && photos.size() <= 10 &&
+        (photos.size() <= 0 || (photos[0] is string && photos[0].size() <= 2048 && photos[0].matches('^https://.*'))) &&
+        (photos.size() <= 1 || (photos[1] is string && photos[1].size() <= 2048 && photos[1].matches('^https://.*'))) &&
+        (photos.size() <= 2 || (photos[2] is string && photos[2].size() <= 2048 && photos[2].matches('^https://.*'))) &&
+        (photos.size() <= 3 || (photos[3] is string && photos[3].size() <= 2048 && photos[3].matches('^https://.*'))) &&
+        (photos.size() <= 4 || (photos[4] is string && photos[4].size() <= 2048 && photos[4].matches('^https://.*'))) &&
+        (photos.size() <= 5 || (photos[5] is string && photos[5].size() <= 2048 && photos[5].matches('^https://.*'))) &&
+        (photos.size() <= 6 || (photos[6] is string && photos[6].size() <= 2048 && photos[6].matches('^https://.*'))) &&
+        (photos.size() <= 7 || (photos[7] is string && photos[7].size() <= 2048 && photos[7].matches('^https://.*'))) &&
+        (photos.size() <= 8 || (photos[8] is string && photos[8].size() <= 2048 && photos[8].matches('^https://.*'))) &&
+        (photos.size() <= 9 || (photos[9] is string && photos[9].size() <= 2048 && photos[9].matches('^https://.*')));
+    }
+    function isValidRestaurantDate(value) {
+      return value == null || (value is string && (value == '' || value.matches('^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$')));
+    }
+    function isValidRestaurant(data) {
+      return data is map &&
+        data.keys().hasAll(['name', 'cuisine', 'status', 'notes', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['name', 'cuisine', 'status', 'address', 'visitDate', 'avgBill', 'userRating', 'favoriteDishes', 'review', 'photos', 'notes', 'createdAt', 'updatedAt']) &&
+        data.name is string && data.name.size() > 0 && data.name.size() <= 160 &&
+        data.cuisine in ['', 'Итальянская', 'Японская', 'Русская', 'Французская', 'Мексиканская', 'Китайская', 'Индийская', 'Грузинская'] &&
+        data.status in ['want_to_visit', 'visited'] && data.notes is string && data.notes.size() <= 4000 &&
+        (!('address' in data) || (data.address is string && data.address.size() <= 300)) &&
+        (!('visitDate' in data) || isValidRestaurantDate(data.visitDate)) &&
+        (!('avgBill' in data) || (data.avgBill is int && data.avgBill >= 0 && data.avgBill <= 10000000)) &&
+        (!('userRating' in data) || (data.userRating is int && data.userRating >= 0 && data.userRating <= 10)) &&
+        (!('favoriteDishes' in data) || isValidRestaurantDishes(data.favoriteDishes)) &&
+        (!('review' in data) || (data.review is string && data.review.size() <= 4000)) &&
+        (!('photos' in data) || isValidRestaurantPhotos(data.photos)) &&
+        data.createdAt is timestamp && data.updatedAt is timestamp;
+    }
     match /users/{uid} {
       allow get: if isOwner(uid);
       allow list: if false;
@@ -393,6 +448,13 @@ service cloud.firestore {
         allow create: if isOwner(uid) && exists(/databases/$(database)/documents/users/$(uid)) &&
           isValidMovie(request.resource.data) && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time;
         allow update: if isOwner(uid) && isValidMovie(request.resource.data) &&
+          request.resource.data.createdAt == resource.data.createdAt && request.resource.data.updatedAt == request.time;
+        allow delete: if isOwner(uid);
+      }
+      match /restaurants/{restaurantId} {
+        allow create: if isOwner(uid) && exists(/databases/$(database)/documents/users/$(uid)) &&
+          isValidRestaurant(request.resource.data) && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time;
+        allow update: if isOwner(uid) && isValidRestaurant(request.resource.data) &&
           request.resource.data.createdAt == resource.data.createdAt && request.resource.data.updatedAt == request.time;
         allow delete: if isOwner(uid);
       }

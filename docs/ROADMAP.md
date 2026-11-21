@@ -470,3 +470,6 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Fixed a duplicate timestamp-constant declaration in the offline auditor before further work.
 - [x] Extended legacy inventory to detect field-type mismatches against the V1 contract for all five collections; CLI now exits non-zero when a type mismatch is found.
 - [ ] Execute root test suite and syntax checks on the exact latest commit; no runtime pass is claimed.
+
+- [x] Extended the Firestore Emulator GitHub Actions workflow to run root unit tests and repository syntax checks before the Emulator suite; relevant code/test changes now trigger the PR workflow.
+- [ ] Confirm all three CI stages pass on the latest PR head.

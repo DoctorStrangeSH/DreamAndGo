@@ -705,3 +705,12 @@ Added an offline CLI and an unapproved template. The template intentionally cont
 
 
 **Manifest validation refinement:** unknown placeholders such as `legacy-unknown` and `UNCONFIRMED` are rejected as source schema identifiers; a reviewed manifest must identify the actual source schema/version. Status-map targets are checked against the exact V1 status allowlist for the corresponding collection. Regression tests cover both guards.
+
+
+### SEC-LEGACY-MIGRATION-02 — aggregate-only dry-run planner — 2026-11-21
+
+Added `js/core/legacy-migration-dry-run.js` and an offline CLI. The planner consumes the sanitized inventory report plus a validated migration manifest. It emits aggregate document counts, explicit field actions and status mapping previews. It rejects unclassified source fields, unsupported target fields, target collisions and invalid status targets.
+
+Explicit field decisions (including approved drops) and explicit status mappings may resolve corresponding legacy inventory findings. Missing timestamps, missing required fields, malformed records, invalid timestamp metadata and type mismatches remain blockers because the aggregate inventory cannot prove a safe transformation for those cases.
+
+The output always sets `migrationApplied: false` and `executable: false`. It does not inspect document values or IDs, connect to Firebase, transform documents, or authorize production execution. This is a planning report only, not a document-level dry run or migration engine.

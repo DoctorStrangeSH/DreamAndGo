@@ -79,3 +79,10 @@ node scripts/migrate-public-profiles.mjs --project YOUR_FIREBASE_PROJECT_ID --ap
 ## Матрица доступа V1.0
 
 Сводная таблица фактических операций клиента/сервера, ролей доступа, legacy несовместимостей и обязательных Emulator тестов перенесена в `docs/FIRESTORE_ACCESS_MATRIX.md`. Этот документ остаётся обзором рисков и миграционных требований; production Rules здесь не определяются.
+
+
+## V1.0 infrastructure scope update — 2026-11-21
+
+- **Firestore:** owner supplied the current deny-all Rules text (`allow read, write: if false` for all document paths). This is fail-closed but blocks all Firestore client operations if published. Active-project publication has not been independently verified. No replacement Rules have been deployed.
+- **Firebase Storage:** not configured; a paid upgrade would be required. Storage is excluded from V1.0. No upload or attachment flow may be treated as a V1.0 requirement.
+- **Release condition:** confirm the Firebase project/database, preserve the active ruleset, then author and test a least-privilege candidate against the real V1.0 data model. Never relax the current deny-all policy without complete Emulator and two-account staging coverage.

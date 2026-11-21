@@ -183,3 +183,12 @@
 - [ ] Add notification Rules Emulator tests for guest, cross-user and owner read-state cases.
 - [ ] Validate friend request/accept notifications in staging with two accounts and App Check.
 - **Exit condition not met:** only friendship notifications are implemented; end-to-end notifications and authorization remain a release gate.
+
+
+### Friendship notification consistency — 2026-11-21
+
+- [x] Remove pending request notices atomically on cancel, accept and reject.
+- [x] Keep acceptance notice creation in the same transaction as symmetric friendship creation.
+- [x] Add regression assertions for request-notice cleanup on all three resolution paths.
+- [ ] Verify root test/check workflows on exact candidate HEAD; no successful CI result is recorded yet.
+- [ ] Verify owner-only notification Rules and two-account staging behavior.

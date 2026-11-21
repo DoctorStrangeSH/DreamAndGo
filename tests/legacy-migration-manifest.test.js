@@ -6,6 +6,7 @@ import {
 } from '../js/core/legacy-migration-manifest.js';
 
 const collections = ['dreams', 'travels', 'books', 'movies', 'restaurants'];
+const primaryFields = { dreams: 'title', travels: 'title', books: 'title', movies: 'title', restaurants: 'name' };
 const approvedManifest = () => ({
     version: 1,
     approved: true,
@@ -15,7 +16,7 @@ const approvedManifest = () => ({
     rollback: { verified: true },
     collections: collections.map(name => ({
         name,
-        fields: [{ source: 'title', action: 'keep' }]
+        fields: [{ source: primaryFields[name], action: 'keep' }]
     }))
 });
 
@@ -117,4 +118,25 @@ test('rejects unknown source schema identifiers and invalid V1 status targets', 
     const invalidStatus = approvedManifest();
     invalidStatus.collections[0].statusMap = { active: 'public' };
     assert.ok(validateLegacyMigrationManifest(invalidStatus).errors.includes('invalid_status_mapping:dreams'));
+});
+
+
+test('rejects keep/rename/default mappings that do not target the V1 allowlist', () => {
+    const unknownKeep = approvedManifest();
+    unknownKeep.collections[0].fields = [{ source: 'oldField', action: 'keep' }];
+    assert.ok(validateLegacyMigrationManifest(unknownKeep).errors.includes('unknown_keep_target:dreams:oldField'));
+
+    const unknownRename = approvedManifest();
+    unknownRename.collections[0].fields = [{ source: 'oldTitle', action: 'rename', target: 'isPublic' }];
+    assert.ok(validateLegacyMigrationManifest(unknownRename).errors.includes('unknown_rename_target:dreams:oldTitle'));
+
+    const invalidDefault = approvedManifest();
+    invalidDefault.collections[0].fields = [{ source: 'legacyCategory', action: 'default', value: '', target: 'isPublic' }];
+    assert.ok(validateLegacyMigrationManifest(invalidDefault).errors.includes('default_target_required:dreams:legacyCategory'));
+});
+
+test('keeps manual-review mappings blocked until replaced by a concrete action', () => {
+    const manifest = approvedManifest();
+    manifest.collections[0].fields = [{ source: 'legacyField', action: 'manual_review', resolution: 'documented' }];
+    assert.ok(validateLegacyMigrationManifest(manifest).errors.includes('manual_review_requires_concrete_action:dreams:legacyField'));
 });

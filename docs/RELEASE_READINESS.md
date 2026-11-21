@@ -658,3 +658,15 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 
 - [x] Dedicated GitHub Actions workflow now includes root unit tests and syntax checks before Firestore Emulator tests.
 - [ ] Require successful root tests, syntax checks and Emulator suite on the exact release head.
+
+
+### Legacy migration control plane — 2026-11-21
+
+- [x] Added versioned fail-closed migration manifest validator.
+- [x] Added offline CLI and unapproved template covering all five private collections.
+- [x] Require explicit field decisions, approval, backup reference and verified rollback.
+- [x] Added tests for unsafe/incomplete manifests and inventory blockers.
+- [ ] Populate source mappings from real metadata-only inventory.
+- [ ] Build and test a separate dry-run planner after mappings are approved.
+- [ ] Complete independent staging rehearsal and backup/rollback verification.
+- **No migration runner, Firebase access, or production data changes.**

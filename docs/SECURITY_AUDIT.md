@@ -744,3 +744,6 @@ Added `js/core/legacy-migration-integrity.js`. The auditor independently compare
 The synthetic rehearsal now requires this audit to pass before it reports success or returns normalized documents. A failed normalization does not run an incomplete integrity comparison. A standalone JSON CLI is available for repeatable offline audits.
 
 The auditor cannot prove database persistence, Firestore document-ID uniqueness, transaction isolation or backup durability. It does not connect to Firestore and makes no writes. Approved drops are reported as intentional decisions, not silently counted as preserved fields.
+
+
+**Integrity audit input gate:** the standalone auditor now validates the complete Migration Manifest and requires it to be approved, including all five collection mappings, explicit source schema, backup reference and rollback declaration. Malformed or unapproved manifests fail closed before any comparison is attempted.

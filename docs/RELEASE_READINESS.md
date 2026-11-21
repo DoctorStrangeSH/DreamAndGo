@@ -379,5 +379,5 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [x] Removed raw users/{uid} reads from RealtimeService profile lookups.
 - [x] Chat, friends, incoming requests and sent requests now resolve profiles through the App Check protected getPublicProfilesV2 callable with deduplicated, bounded batches.
 - [x] Preserved snapshot generation gating after asynchronous profile batch resolution.
-- [ ] Confirm the new realtime service regression suite passes on the final candidate HEAD.
+- [x] Root Checks passed on implementation/test HEAD `174e0d06174369fb48290850e3db14c74f3e93ab`: 467/467 tests, 0 failures; syntax validation passed for all 256 JavaScript files ([run 44896463096](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44896463096)).
 - [ ] Verify public/private profile display across two staging accounts with App Check.

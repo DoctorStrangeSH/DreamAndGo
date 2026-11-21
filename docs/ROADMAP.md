@@ -390,3 +390,14 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Included the book test in the Emulator package script.
 - [ ] Execute the complete Emulator suite on the exact current HEAD; no test pass is claimed.
 - [ ] Continue with movies, restaurants and broader dreams CRUD coverage.
+
+
+### Firestore Rules candidate — movies slice — 2026-11-21
+
+- [x] Added schema-specific owner CRUD rules for `users/{uid}/movies/{movieId}` in the isolated V1 fixture.
+- [x] Enforced the movie field allowlist, required movieId/title/status/notes/timestamps, TMDB metadata bounds, HTTPS artwork or explicit null, allowed genre IDs, production-country map schema, rating/count/runtime/budget ranges and timestamp integrity.
+- [x] Added `movies-v1.rules.test.mjs` covering owner CRUD, guest/other-user denial and invalid metadata payloads.
+- [x] Aligned the client validator to accept null artwork (TMDB may omit it) and require uppercase two-letter country codes.
+- [x] Included the movie test in the Emulator package script.
+- [ ] Execute the complete Emulator suite on exact HEAD; no pass is claimed.
+- [ ] Restaurants and expanded dreams CRUD coverage remain open.

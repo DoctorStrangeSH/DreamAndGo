@@ -426,3 +426,13 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [x] Own-key validation added for achievement milestone lookups.
 - [x] Regression tests cover inherited keys and malformed input.
 - [x] Root Checks passed on the implementation commits: 470/470 tests, 0 failures; syntax validation passed for all 258 JavaScript files. See [implementation check](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44897935694) and [milestone-map check](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44897933324).
+
+### Firebase authorization boundary inventory — 2026-11-21
+
+- [x] Source audit confirms all 17 exported callable endpoints declare `enforceAppCheck: true`.
+- [x] Regression test protects the callable App Check requirement.
+- [x] Confirmed no deployable root `firestore.rules` or `firebase.json` exists on `main` or candidate branch.
+- [ ] Obtain active production Rules/config from the authorized Firebase project export.
+- [ ] Complete full Rules Emulator and two-account staging authorization tests.
+- [ ] Verify App Check is enforced on deployed endpoints and rehearse backup/rollback.
+- **Release decision: HOLD** until the external Firebase configuration and staging gates are complete.

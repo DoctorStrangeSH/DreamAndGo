@@ -704,3 +704,13 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [ ] Confirm full test and syntax CI on exact latest HEAD.
 - [ ] Separately rehearse staging backup/restore under an approved operational plan.
 - **Synthetic rollback evidence is not production backup/restore evidence.**
+
+
+### Migration integrity verification — 2026-11-21
+
+- [x] Added independent source/output count and field-value parity auditor.
+- [x] Added checks for keep/rename/default/drop/status mapping decisions.
+- [x] Made integrity pass mandatory for synthetic rehearsal success.
+- [x] Added standalone audit CLI and regression tests.
+- [ ] Confirm all tests and syntax checks pass in CI on latest exact HEAD.
+- [ ] Stage-only persistence/uniqueness verification remains pending separate approval.

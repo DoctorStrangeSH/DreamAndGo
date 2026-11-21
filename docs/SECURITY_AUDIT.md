@@ -536,3 +536,12 @@ No production rules or user data were changed. This inventory is source-derived 
 - The wiring regression test now asserts transactional read, validation and update call sites.
 - This does not replace server authorization. Firestore Rules must independently validate resulting document fields and immutable timestamps.
 - No production Rules, Firebase settings or user data were changed.
+
+
+### SEC-COLLECTION-TRAVEL-01 — avoid false failure after committed writes — 2026-11-21
+
+- `TravelService.addTravel` previously awaited a derived-statistics refresh inside the same outer try/catch as the primary `addDoc`. If the write committed but stats refresh failed, the method returned `success: false`, encouraging a duplicate retry.
+- `updateTravel` had the same issue after a committed `updateDoc`.
+- Both methods now isolate statistics refresh in a best-effort try/catch and preserve success for the already-committed primary write. The secondary failure is logged for diagnosis.
+- Added source-level regression tests for both paths and validator tests confirming that a partial `budget` update must replace the complete validated nested map (planned, spent, currency); unknown keys and invalid ranges are rejected.
+- This change does not grant additional Firestore permissions and does not replace authoritative Rules validation.

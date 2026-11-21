@@ -394,3 +394,12 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [ ] Complete two-account Signup V2/recovery staging with App Check and the full Rules suite.
 - [ ] Only then consider enabling Signup V2 and retiring legacy profile creation/query/lastLogin writes.
 - **Release decision: HOLD.** Do not grant broad users collection reads or client writes to protected profile fields to keep the legacy signup path alive.
+
+
+### Username backfill backup gate — 2026-11-21
+
+- [x] Added fail-closed `backupVerified` requirement to apply mode, in addition to frozen registration window.
+- [x] Added explicit CLI acknowledgement flag `--confirm-backup-verified`; default dry-run remains read-only.
+- [x] Added Firestore Emulator tests rejecting apply when backup acknowledgement or registration freeze is missing.
+- [ ] Verify Root Checks and Firebase Emulator workflow on the final candidate commit.
+- [ ] Independently verify production backup and restore before any real backfill; the CLI flag is an operator acknowledgement, not proof.

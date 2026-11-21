@@ -14,16 +14,30 @@
 
 The projection is defense in depth only. It does not prevent Firestore from sending private fields to the browser. Server-side Firestore Rules must still restrict reads.
 
-### SEC-RULES-01 — production Firestore Rules are not verifiable from this repository
+### SEC-RULES-01 — owner supplied current deny-all Firestore Rules
 
-**Status:** release blocker; owner/Firebase read-only confirmation required.
+**Status:** current rules text received from the owner; publication in the active Firebase project is not independently verified. Release blocker remains.
 
-- No deployable root `firestore.rules` or `firebase.json` was found on the candidate branch during this review.
-- The existing delivery plan records that permissive rules (`allow read, write: if true`) were previously found and that the owner later reported publishing emergency deny-all rules (`allow read, write: if false`).
-- The live ruleset has not been read directly. Its current state must not be inferred from repository history or that earlier report.
-- Do not deploy replacement rules, relax access, or modify production data as part of this code-only pass.
+The owner supplied this ruleset as the current Firestore Rules:
 
-**Required evidence before proceeding:** export the exact active production rules in read-only mode; identify the deployed Firebase project and database; preserve the export with a timestamp; then build a rules matrix and emulator tests against the real data model.
+```firestore
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+```
+
+- This is a fail-closed deny-all policy: guests and authenticated users are denied every Firestore read and write at every document path.
+- If this exact ruleset is published to the project's active database, Firestore-backed application features cannot operate until a reviewed, least-privilege ruleset is deployed.
+- The text was supplied in chat; no direct Firebase Console inspection or deployment verification was performed.
+- No deployable root `firestore.rules` or `firebase.json` exists in the candidate repository. The Emulator fixtures remain test-only and are not production rules.
+- Do not loosen access or deploy a replacement based only on this snapshot. First confirm the target project/database and preserve the active ruleset for rollback.
+
+**Next evidence:** confirm whether this exact deny-all ruleset is currently published to the intended Firebase project and provide the Firebase project ID (not credentials). Then reconcile actual collection schemas and queries before drafting least-privilege production Rules.
 
 ## Required authorization matrix
 
@@ -398,3 +412,13 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 - Latest candidate CI passed on `65849741d3893b0d181b526d3887812257256984`: 470/470 tests and syntax checks for all 258 JavaScript files ([run 44898060339](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44898060339)).
 
 **Release gate:** two-account Emulator/staging authorization tests against the complete Rules contract, active App Check enforcement verification on deployed callable endpoints, and a reviewed backup/rollback plan remain open.
+
+
+### SEC-STORAGE-01 — Firebase Storage excluded from V1.0 scope — 2026-11-21
+
+**Status:** owner confirmed Firebase Storage is not configured because enabling it requires a paid upgrade.
+
+- V1.0 will not require Firebase Storage or a paid Storage upgrade.
+- Do not add Storage deployment configuration, Storage Rules, upload flows or attachment features to the V1.0 acceptance criteria.
+- Any existing UI that implies upload/storage capability must be reviewed and either disabled or clearly marked out of scope before release.
+- Reconsider Storage only as a separately approved post-V1.0 enhancement; no upgrade is requested now.

@@ -16,6 +16,10 @@ function service({ write, read }) {
             constructor() { this.db = {}; }
             clearCache() { state.cacheClears++; }
             async updateUserStats() { state.statUpdates++; }
+            async updateUserStatsBestEffort(uid) {
+                try { await this.updateUserStats(uid); }
+                catch (error) { console.warn('stats refresh failed', error); }
+            }
             ${method}
         }`
     )(

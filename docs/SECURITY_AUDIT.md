@@ -257,3 +257,16 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 - The Emulator test checks the exact notification fields and confirms a repeated refresh does not remove or duplicate the awarded notice.
 
 **Remaining:** run the updated Emulator and root CI workflows; prove owner-only notification read and read-state update rules; validate with two staging accounts. No production Rules or Functions were changed.
+
+
+### SEC-NOTIFY-05 — trusted private-message notifications — 2026-11-21
+
+**Status:** implemented in candidate message transaction with Emulator regression coverage; CI/Rules/staging acceptance pending.
+
+- `sendPrivateMessageV2` authenticates the sender and delegates to `sendPrivateMessageTransaction`; the transaction validates the chat participant pair and both block directions before writing.
+- A new message creates a fixed-schema notification under the other participant's own `users/{recipientUid}/notifications` collection in the same transaction as the message, sequence, previews and unread counter.
+- The client cannot choose recipient, notification type, title, icon, color, route, sender ID or timestamp. The preview is bounded to 120 characters from the already validated message text.
+- Stable `message_{serverMessageId}` IDs and the existing deterministic message retry check ensure one notification per accepted message, not one per callable attempt.
+- Emulator test asserts the exact payload and verifies that repeated sends do not create duplicate notices or increment unread twice.
+
+**Remaining:** verify candidate CI and Emulator runs; implement and test owner-only notification read plus read-state-only updates in a dedicated Rules candidate; validate with two staging accounts. The message/chat v2 backend remains candidate-only and must not be deployed or connected to the legacy chat UI as part of this change.

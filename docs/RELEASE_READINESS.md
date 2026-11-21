@@ -510,3 +510,10 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [ ] Verify root CI on the exact implementation HEAD.
 - [ ] Add the invariant to authoritative Firestore Rules and test concurrent/forged writes in Emulator; the client-side preflight is not a substitute for Rules.
 - **Release remains HOLD.**
+
+
+### Book create/update wiring regression guard — 2026-11-21
+
+- [x] Restored the create validator import required by `BookService.addBook`.
+- [x] Added a focused test that verifies both create and update validators are wired into the service.
+- [ ] Exact-HEAD root CI remains required before this code is considered verified.

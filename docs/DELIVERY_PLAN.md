@@ -269,3 +269,12 @@
 - [x] Record owner-provided Firebase Project ID: `dream-and-go` (project number `185825350373`; Web App ID `1:185825350373:web:749c60926a0c6294f7fa0c`).
 - [ ] Confirm default vs named Firestore database and capture timestamped Rules export.
 - [ ] Use `dream-and-go` as the project identifier in local Emulator instructions; never use it to deploy production Rules without explicit approval.
+
+
+### Firestore target identity completed — 2026-11-21
+
+- [x] Confirmed Firebase Project ID `dream-and-go` (project number `185825350373`).
+- [x] Confirmed Firestore database ID `(default)`.
+- [ ] Capture timestamped export of current deny-all Rules and record rollback procedure.
+- [ ] Complete candidate Rules against actual schemas and run Emulator + two-account staging.
+- [ ] Obtain explicit approval before any production Rules deployment.

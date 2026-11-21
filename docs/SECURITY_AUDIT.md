@@ -575,3 +575,14 @@ No production rules or user data were changed. This inventory is source-derived 
 - Added a regression test that checks all 15 CRUD paths use the wrapper and do not directly await the throwing statistics method.
 - This does not establish atomic consistency of derived statistics. A future server-side trigger or transactional aggregate design may be considered only if already included in the V1 scope; do not expand scope here.
 - No Firestore Rules, production configuration or user data were changed.
+
+
+### SEC-RULES-TRAVEL-01 — schema-specific travel Rules candidate — 2026-11-21
+
+**Status: candidate authored; Emulator execution pending.**
+
+- Added a test-only `collections-v1.rules` fixture with explicit `travels` create/update/delete authorization. The generic owner collection matcher remains write-denied, so books/movies/restaurants and other categories are not accidentally opened.
+- Travel documents require the V1 field allowlist, required title/type/status/timestamps, bounded optional strings, known enums, exact budget map keys and numeric bounds, rating bounds, and bounded HTTPS photo lists.
+- Create requires both timestamps to equal `request.time`; update preserves `createdAt` and requires `updatedAt == request.time`; only the path owner can mutate or read.
+- Added positive/negative Emulator test cases. The Emulator suite has not yet been executed on this HEAD, so no pass is claimed.
+- The fixture deliberately does not modify root `firestore.rules`, Firebase Console, live documents or production settings.

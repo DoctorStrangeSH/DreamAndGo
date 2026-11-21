@@ -236,3 +236,8 @@ The candidate `sendPrivateMessageV2` server transaction writes a fixed-schema `m
 - [ ] notes принимается только в тех коллекциях и операциях, где оно действительно предусмотрено контрактом.
 - [ ] Вложенные объекты не принимают дополнительные ключи; все списки ограничены по длине и содержимому.
 - [ ] Запросы, использующие orderBy(createdAt) и фильтры по status/category/cuisine, проходят с Owner-only Rules без попытки использовать Rules как фильтр результатов.
+
+
+### Chat private profile read cutover — 2026-11-21
+
+`ChatService` no longer reads another user's raw `users/{uid}` document and sanitizes it in the browser. Chat list partner data is obtained from the Auth + App Check protected `getPublicProfilesV2` endpoint using bounded batches. Keep private profile Rules owner-only. Legacy chat message and index writes remain a separate migration gate.

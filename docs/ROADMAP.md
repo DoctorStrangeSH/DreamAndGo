@@ -444,3 +444,14 @@ Dream&Go — социальное пространство мечтаний, п�
 
 - [x] Extended the client-to-Rules contract test to cover partial updates, immutable creation timestamps, and owner deletion across all five private collections.
 - [ ] Execute the expanded Emulator contract suite and full suite in CI.
+
+
+### Legacy collection compatibility audit — 2026-11-21
+
+- [x] Added `legacy-collection-compatibility.test.mjs` with historical-shape fixtures for all five private collections.
+- [x] Verified owner direct-read and delete access remain available for legacy documents.
+- [x] Verified documents without `createdAt` are omitted by the current `orderBy('createdAt')` list-query pattern.
+- [x] Verified strict V1 update Rules reject incomplete/old-shape records instead of silently accepting malformed writes.
+- [ ] Design and implement a reviewed, dry-run-first migration/normalization path for legacy documents before strict V1 Rules can be deployed.
+- [ ] Decide how list services should surface legacy documents missing `createdAt` without silently dropping them.
+- **Release remains HOLD; no production Rules or data migration performed.**

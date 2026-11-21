@@ -401,3 +401,13 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Included the movie test in the Emulator package script.
 - [ ] Execute the complete Emulator suite on exact HEAD; no pass is claimed.
 - [ ] Restaurants and expanded dreams CRUD coverage remain open.
+
+
+### Firestore Rules candidate — restaurants slice — 2026-11-21
+
+- [x] Added explicit owner CRUD rules for `users/{uid}/restaurants/{restaurantId}` in the isolated V1 fixture.
+- [x] Enforced field allowlist, required name/cuisine/status/notes/timestamps, cuisine/status enums, address/date bounds, bill/rating bounds, favorite-dish and HTTPS photo limits, review length and timestamp integrity.
+- [x] Added `restaurants-v1.rules.test.mjs` for owner CRUD, guest/other-user denial and invalid restaurant payloads.
+- [x] Included the restaurant test in the Emulator package script.
+- [ ] Execute the complete Emulator suite on exact HEAD; no pass is claimed.
+- [ ] Expand dreams CRUD coverage and review cross-collection compatibility before any production Rules release.

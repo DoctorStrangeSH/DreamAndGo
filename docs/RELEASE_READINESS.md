@@ -672,3 +672,14 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - **No migration runner, Firebase access, or production data changes.**
 
 - [x] Migration manifest requires an identified source schema (unknown placeholders rejected) and validates mapped statuses against each collection's V1 enum.
+
+
+### Aggregate migration planner — 2026-11-21
+
+- [x] Added offline, report-only planner and CLI.
+- [x] Added aggregate preview for per-collection field/status actions.
+- [x] Added blockers for unmapped fields, target collisions, invalid statuses and unresolved structural gaps.
+- [x] Added tests for explicit field/status resolutions and sanitized inventory requirements.
+- [ ] Confirm tests and syntax checks pass in CI on the latest exact HEAD.
+- [ ] Implement document-level dry-run only after actual source schema mappings are reviewed and approved.
+- **No Firestore connection, transformation or write path exists in this planner.**

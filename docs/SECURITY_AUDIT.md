@@ -332,3 +332,16 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 - Added tests to forbid getDoc/toPublicProfile in RealtimeService and require the callable batch path for all four social/chat subscriptions.
 
 **Remaining:** green CI on final test revision and two-account staging for public/private profile behavior with App Check. Production users/{uid} Rules must remain owner-only. No raw private profile document should be exposed to another account.
+
+
+
+### SEC-SIGNUP-LEGACY-01 — legacy registration still requires unsafe client profile writes — 2026-11-21
+
+**Status:** confirmed release blocker; deliberately not changed because disabling the legacy path before migration would break registration for current users. Signup V2 remains fail-closed.
+
+- js/app.js explicitly sets all Signup V2 rollout gates to false: enabled=false, backendReady=false, legacyMigrationVerified=false.
+- With the rollout disabled, AuthService.signUpWithEmail uses the legacy browser path: it queries users by username/usernameNormalized, creates users/{uid} with client-supplied profile fields including stats/achievements/privacy, and creates _init subcollection documents. Login also writes lastLogin from the browser on the legacy path.
+- The username availability preflight queries the users collection directly. If Rules permit that query, Firestore returns complete matching user documents, not a redacted username-only projection; if Rules deny it, legacy registration fails. This cannot be made safe by client-side sanitization.
+- registerProfileV2 and the server-owned username reservation flow exist, but rollout remains intentionally disabled until the registry is backed up, legacy usernames are audited/backfilled, complete Rules are reviewed, and staging acceptance passes.
+
+**Decision:** do not loosen users Rules to preserve the legacy browser signup and do not enable Signup V2 based only on emulator tests. First complete read-only production inventory, registry backup/dry-run/backfill plan, and two-account staging. Keep the release on HOLD until this migration gate is satisfied.

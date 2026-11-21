@@ -1,102 +1,43 @@
-import { db } from '../config/firebase.js';
-import { 
-    collection, doc, addDoc, getDocs, updateDoc, deleteDoc,
-    query, orderBy, limit, serverTimestamp, onSnapshot, where
+import { auth, db } from '../config/firebase.js';
+import {
+    collection, doc, getDocs, updateDoc,
+    query, orderBy, limit, onSnapshot, where
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+const noop = () => {};
+const isValidDocumentId = value =>
+    typeof value === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(value);
 
 export class NotificationsService {
     constructor() {
         this.db = db;
+        this.auth = auth;
         this.listeners = {};
     }
 
-    async addNotification(userId, data) {
-        try {
-            const notifRef = collection(this.db, 'users', userId, 'notifications');
-            await addDoc(notifRef, {
-                ...data,
-                read: false,
-                createdAt: serverTimestamp()
-            });
-            return { success: true };
-        } catch (error) {
-            console.error('Ошибка создания уведомления:', error);
-            return { success: false };
-        }
-    }
-
-    // Типы уведомлений
-    async notifyFriendRequest(fromUserId, toUserId, fromUsername) {
-        await this.addNotification(toUserId, {
-            type: 'friend_request',
-            title: 'Новая заявка в друзья',
-            message: `@${fromUsername} хочет добавить тебя в друзья`,
-            icon: 'bi-person-plus',
-            color: 'primary',
-            link: '#friends',
-            fromUserId: fromUserId
-        });
-    }
-
-    async notifyFriendAccepted(fromUserId, toUserId, toUsername) {
-        await this.addNotification(fromUserId, {
-            type: 'friend_accepted',
-            title: 'Заявка принята',
-            message: `@${toUsername} принял твою заявку в друзья`,
-            icon: 'bi-person-check',
-            color: 'success',
-            link: `#profile/${toUserId}`,
-            fromUserId: toUserId
-        });
-    }
-
-    async notifyNewMessage(fromUserId, toUserId, fromUsername, text) {
-        await this.addNotification(toUserId, {
-            type: 'new_message',
-            title: 'Новое сообщение',
-            message: `@${fromUsername}: ${text.substring(0, 50)}`,
-            icon: 'bi-chat-dots',
-            color: 'info',
-            link: '#chat',
-            fromUserId: fromUserId
-        });
-    }
-
-    async notifyAchievement(userId, achievement) {
-        await this.addNotification(userId, {
-            type: 'achievement',
-            title: 'Новое достижение!',
-            message: `${achievement.emoji} ${achievement.title} — ${achievement.description}`,
-            icon: 'bi-trophy',
-            color: 'warning',
-            link: '#achievements'
-        });
-    }
-
-    async notifyLevelUp(userId, level, title) {
-        await this.addNotification(userId, {
-            type: 'level_up',
-            title: 'Новый уровень!',
-            message: `Ты достиг ${level} уровня — ${title}`,
-            icon: 'bi-star-fill',
-            color: 'warning',
-            link: '#profile'
-        });
+    isCurrentOwner(userId) {
+        return typeof userId === 'string' && userId.length > 0 &&
+            this.auth?.currentUser?.uid === userId;
     }
 
     subscribeToNotifications(userId, callback) {
         const key = `notifications_${userId}`;
         this.unsubscribe(key);
 
+        if (!this.isCurrentOwner(userId) || typeof callback !== 'function') {
+            if (typeof callback === 'function') callback([]);
+            return noop;
+        }
+
         const notifRef = collection(this.db, 'users', userId, 'notifications');
         const q = query(notifRef, orderBy('createdAt', 'desc'), limit(30));
-
-        const unsubscribe = onSnapshot(q, (snapshot) => {
+        const unsubscribe = onSnapshot(q, snapshot => {
+            if (!this.isCurrentOwner(userId)) return;
             const notifications = [];
-            snapshot.forEach(doc => {
-                const data = doc.data();
+            snapshot.forEach(document => {
+                const data = document.data();
                 notifications.push({
-                    id: doc.id,
+                    id: document.id,
                     ...data,
                     createdAt: data.createdAt?.toDate?.() || new Date()
                 });
@@ -105,29 +46,40 @@ export class NotificationsService {
         });
 
         this.listeners[key] = unsubscribe;
-        return unsubscribe;
+        return () => {
+            unsubscribe();
+            if (this.listeners[key] === unsubscribe) delete this.listeners[key];
+        };
     }
 
     async markAsRead(userId, notificationId) {
+        if (!this.isCurrentOwner(userId) || !isValidDocumentId(notificationId)) return false;
         try {
             const notifRef = doc(this.db, 'users', userId, 'notifications', notificationId);
             await updateDoc(notifRef, { read: true });
+            return true;
         } catch (error) {
             console.error('Ошибка отметки уведомления:', error);
+            return false;
         }
     }
 
     async markAllAsRead(userId) {
+        if (!this.isCurrentOwner(userId)) return false;
         try {
             const notifRef = collection(this.db, 'users', userId, 'notifications');
             const q = query(notifRef, where('read', '==', false));
             const snapshot = await getDocs(q);
-            
-            for (const docSnap of snapshot.docs) {
-                await updateDoc(docSnap.ref, { read: true });
+            if (!this.isCurrentOwner(userId)) return false;
+
+            for (const document of snapshot.docs) {
+                if (!this.isCurrentOwner(userId)) return false;
+                await updateDoc(document.ref, { read: true });
             }
+            return true;
         } catch (error) {
             console.error('Ошибка отметки всех уведомлений:', error);
+            return false;
         }
     }
 

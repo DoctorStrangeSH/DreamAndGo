@@ -278,3 +278,17 @@
 - [ ] Capture timestamped export of current deny-all Rules and record rollback procedure.
 - [ ] Complete candidate Rules against actual schemas and run Emulator + two-account staging.
 - [ ] Obtain explicit approval before any production Rules deployment.
+
+
+### Client/server cutover gates — 2026-11-21
+
+- [x] Confirmed Firebase project `dream-and-go` and Firestore database `(default)`.
+- [x] Confirmed signup V2 rollout is explicitly disabled in `js/app.js`; legacy browser registration still performs global `users` queries and direct profile/bootstrap writes.
+- [x] Confirmed registration V2 callables exist but the username registry migration gate remains mandatory.
+- [x] Confirmed `js/app.js` still registers legacy `ChatModule`; it imports legacy `ChatService`, while the V2 callable bridge is candidate-only and not integrated.
+- [x] Confirmed legacy chat writes both participants' indexes directly, incompatible with owner-only rules.
+- [ ] Complete username registry backfill from all existing profiles; dry-run, collision report, backup and rollback evidence.
+- [ ] Integrate signup V2 UI/recovery with verified App Check and callable backend; remove legacy global username query/profile writes.
+- [ ] Complete Chat V2 client integration and server-owned chat index/message mutations; migrate legacy history with rollback.
+- [ ] Validate every direct Firestore client path against the final access matrix; remove legacy calls before allowing only required operations.
+- [ ] Pass guest/A/B/C Emulator tests and two-account staging before changing production deny-all Rules.

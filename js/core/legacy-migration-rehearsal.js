@@ -5,12 +5,12 @@ import { normalizeLegacyDocument } from './legacy-document-normalizer.js';
  * Never connects to Firebase, mutates inputs, or writes any data.
  */
 export function runLegacyMigrationRehearsal({ documents, manifest }) {
-    if (!Array.isArray(documents)) {
+    if (!Array.isArray(documents) || documents.length === 0) {
         return {
             status: 'blocked',
             migrationApplied: false,
             executable: false,
-            blockers: ['documents_must_be_array'],
+            blockers: [Array.isArray(documents) ? 'documents_must_not_be_empty' : 'documents_must_be_array'],
             normalizedDocuments: [],
             rollbackPreview: []
         };
@@ -50,8 +50,11 @@ export function runLegacyMigrationRehearsal({ documents, manifest }) {
         normalizedDocuments: success ? normalized : [],
         normalizedCount: success ? normalized.length : 0,
         failures,
-        rollback: {
-            verified: success,
+        rollbackPreview: {
+            snapshotCaptured: true,
+            inputMutated: false,
+            restorePreviewAvailable: true,
+            productionRestoreVerified: false,
             strategy: 'immutable-input-snapshot',
             restoredDocuments: structuredClone(sourceSnapshot)
         },

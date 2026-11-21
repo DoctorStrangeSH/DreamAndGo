@@ -377,3 +377,12 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 - Profile dream status labels are now selected only when the status is an own key of the fixed label map. Unknown values, including inherited object keys such as `constructor` and `__proto__`, fall back to the safe `dreaming` label.
 - Added a source-contract regression test to prevent reintroducing prototype-chain lookup.
 - This is a rendering robustness hardening; no stored data or server authorization behavior changed.
+
+### SEC-ACH-01 — own-key validation for achievement milestone maps — 2026-11-21
+
+**Status:** implemented; regression tests added; CI pending.
+
+- The milestone map is a plain object, so direct bracket lookup could resolve inherited keys such as `constructor` or `__proto__` for malformed achievement IDs.
+- Lookup now accepts only string IDs that are own keys of the fixed milestone map; unknown and malformed IDs return no milestone.
+- Added regression coverage for inherited keys and null input.
+- The achievement catalogue remains the source of supported IDs; this change does not alter earned achievements or stored data.

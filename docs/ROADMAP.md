@@ -259,8 +259,9 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Pending friend-request notifications are removed transactionally when the recipient accepts or rejects the request.
 - [x] The acceptance notification is created for the original requester in the same transaction; stale actionable request notices do not remain in the recipient inbox.
 - [x] Regression tests cover pending-notification cleanup for cancel/reject/accept paths.
-- [ ] Verify the updated friendship transaction suite and full root CI on the exact branch HEAD.
-- [ ] Complete notification Rules Emulator and staging two-account verification.
+- [x] Root Checks passed: 461/461 tests and syntax checks for 253 JavaScript files on candidate implementation HEAD `d311e26065e01d5044e73f049c4629988dd5cf9b` ([run 44893286852](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44893286852)); current docs-only HEAD Checks also passed ([run 44893346213](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44893346213)).
+- [x] Firebase Emulator workflow passed: 6/6 Firestore rules tests and 59/59 server/Auth/Firestore emulator tests on implementation HEAD `d311e26065e01d5044e73f049c4629988dd5cf9b` ([run 44893286823](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44893286823)). The existing rules suite is not a notification-specific access test.
+- [ ] Add notification-specific Rules Emulator cases and complete staging two-account verification.
 
 
 ### Trusted achievement notifications — 2026-11-21

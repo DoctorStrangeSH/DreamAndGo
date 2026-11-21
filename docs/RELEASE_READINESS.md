@@ -311,3 +311,15 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [x] Server transaction tests and client contract tests added; Root Checks passed on `fd0ccc2f219758744135e066eda457de27c94440` ([run 44800645445](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44800645445)).
 - [ ] Staging two-account test of all five actions and deployed App Check verification remain mandatory.
 - [ ] Notification creation is not yet migrated: current `notifications.service.js` still allows client-selected recipient and payload. Do not loosen notification Rules.
+
+
+## Notification security gate — 2026-11-21
+
+- [x] Candidate root Checks passed: 461/461 tests, 0 failures; syntax validation passed for 254 JavaScript files on candidate HEAD `05961cb3bcec5f6fbe6b70e84f2b261c700e9237` ([run 44893947666](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44893947666)).
+- [x] Isolated Firebase Emulator workflow passed: 7/7 notification/chat/owner-read Rules tests and 59/59 server/Auth/Firestore Emulator tests ([run 44893915020](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44893915020)).
+- [x] Candidate server transactions now generate fixed-schema friend-request/acceptance, achievement and private-message notifications. Message retry and achievement refresh paths are covered for idempotency.
+- [ ] Production Rules remain a blocker: no root `firestore.rules` or `firebase.json` exists on this candidate branch, and the active production Rules have not been obtained/reviewed. Do not deploy the isolated fixtures.
+- [ ] Validate notification delivery and owner read-state across two staging accounts with App Check.
+- [ ] Complete full production Rules/indexes/Functions compatibility review, backup, rollback ownership and all previously listed staging gates.
+
+**Decision remains HOLD.** Emulator and unit test success does not establish production authorization or staging acceptance.

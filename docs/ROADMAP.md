@@ -533,3 +533,5 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Added tests for count mismatch, changed values, defaults, status maps, nested data and timestamps.
 - [ ] Confirm full tests and syntax checks in CI on the exact latest PR head.
 - [ ] Database-level uniqueness and persistence checks remain reserved for a separately approved staging plan.
+
+- [x] Integrity auditor now validates and requires a complete approved Migration Manifest before comparing source and output files.

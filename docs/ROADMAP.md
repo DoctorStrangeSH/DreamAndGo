@@ -485,3 +485,5 @@ Dream&Go — социальное пространство мечтаний, п�
 - [ ] Populate mappings only after reviewing real metadata-only inventory; no legacy aliases are guessed.
 - [ ] Implement a separate dry-run document planner only after mappings and source schema are approved.
 - [ ] Perform staging rehearsal and verify backup/rollback independently. No migration execution is implemented.
+
+- [x] Migration manifest rejects placeholder/unknown source schema IDs and validates every mapped status against the target V1 enum for its collection.

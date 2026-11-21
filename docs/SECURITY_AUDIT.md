@@ -242,3 +242,16 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 - This avoids leaving an actionable-looking notification after the request no longer exists. The server remains the only notification creator.
 
 **Remaining:** verify tests on exact HEAD and validate Firestore Rules/staging behavior. The notification UI still relies on owner-only Rules, which have not been confirmed against production.
+
+
+### SEC-NOTIFY-04 — trusted achievement notifications — 2026-11-21
+
+**Status:** implemented in candidate server transaction and Emulator test; CI/staging and Rules authorization remain open.
+
+- `refreshUserStatsV2` derives the target UID from Firebase Auth and calls `refreshUserStatsTransaction`.
+- When the trusted achievement policy returns newly awarded achievement levels, the same Firestore transaction updates the user's achievement state and writes a fixed-schema notification under that user's own `notifications` collection.
+- The client cannot submit a recipient, title, message, route, icon, achievement ID, level or timestamp. Those values come from server-computed achievement results and the fixed notification template.
+- Deterministic IDs include achievement ID and level, making a retried refresh idempotent and allowing a later level-up to produce its own notification.
+- The Emulator test checks the exact notification fields and confirms a repeated refresh does not remove or duplicate the awarded notice.
+
+**Remaining:** run the updated Emulator and root CI workflows; prove owner-only notification read and read-state update rules; validate with two staging accounts. No production Rules or Functions were changed.

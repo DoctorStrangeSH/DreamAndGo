@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { initializeTestEnvironment, assertSucceeds } from '@firebase/rules-unit-testing';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import {
     validateTravelInput,
     validateBookInput,
@@ -118,10 +118,43 @@ test('client create payloads for all five collections are accepted by the V1 Rul
             }]
         ];
 
+        const clientUpdates = {
+            dreams: { progress: 25, status: 'in_progress' },
+            travels: { title: 'Поездка обновлена', status: 'visited' },
+            books: { currentPage: 25, status: 'reading' },
+            movies: { status: 'watched', userRating: 4 },
+            restaurants: { status: 'visited', userRating: 9 }
+        };
+
         for (const [collectionName, documentId, payload] of clientCreates) {
+            const reference = doc(db, 'users/alice', collectionName, documentId);
             await assertSucceeds(
-                setDoc(doc(db, 'users/alice', collectionName, documentId), payload),
+                setDoc(reference, payload),
                 `Client payload for ${collectionName} must satisfy Firestore Rules`
+            );
+
+            // Exercise the same partial-document update shape used by the
+            // services. Firestore Rules validate the complete resulting doc.
+            await assertSucceeds(
+                updateDoc(reference, {
+                    ...clientUpdates[collectionName],
+                    updatedAt: serverTimestamp()
+                }),
+                `Client partial update for ${collectionName} must satisfy Firestore Rules`
+            );
+
+            // The original creation timestamp is immutable for every collection.
+            await assertFails(
+                updateDoc(reference, {
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                }),
+                `Client must not rewrite createdAt for ${collectionName}`
+            );
+
+            await assertSucceeds(
+                deleteDoc(reference),
+                `Owner must be able to delete own ${collectionName} document`
             );
         }
     } finally {

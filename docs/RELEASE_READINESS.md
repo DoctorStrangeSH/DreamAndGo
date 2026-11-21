@@ -611,3 +611,6 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [ ] Exact-HEAD Emulator suite execution and remediation pending.
 - [ ] Cross-collection contract and legacy compatibility audit pending.
 - **Release remains HOLD. No production Rules change or deploy.**
+
+
+- [x] Follow-up static review tightened dream visibility immutability to preserve both existing values and absence of the field.

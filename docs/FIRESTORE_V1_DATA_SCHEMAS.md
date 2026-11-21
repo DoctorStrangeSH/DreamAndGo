@@ -224,3 +224,18 @@ The metadata-only contract is demonstrated in `docs/examples/legacy-collection-m
 
 
 The metadata-only legacy auditor also compares each observed coarse field type with the V1 contract and reports `fieldTypeMismatches`. A mismatch is a migration-review blocker; the auditor does not coerce or rewrite values. The CLI exits with code 1 when any mismatch is detected.
+
+
+## 14. Legacy migration manifest contract — 2026-11-21
+
+Template: `docs/examples/legacy-migration-manifest.template.json`.
+
+Validate locally with:
+
+```bash
+npm run validate:legacy-migration -- docs/examples/legacy-migration-manifest.template.json
+```
+
+The template is intentionally unapproved and has empty field mappings, so validation must fail closed. A reviewed manifest must cover all five private collections and explicitly classify each observed legacy field as `keep`, `rename`, `drop`, `default`, or `manual_review`. Drops require data-loss approval; renames require a target field; defaults require an explicit value; manual-review items require a documented resolution. Approval, a backup reference, and verified rollback are mandatory.
+
+A valid manifest is not permission to migrate production. The readiness assessor still requires a clean sanitized inventory, independent staging rehearsal, and production backup verification. This code validates planning metadata only; it does not read, transform, or write Firestore documents.

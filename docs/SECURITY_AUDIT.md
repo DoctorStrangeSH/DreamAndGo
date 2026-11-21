@@ -735,3 +735,12 @@ The function captures an immutable copy of the input and returns a restore previ
 ### Rehearsal report semantics clarification — 2026-11-21
 
 The rehearsal report field is named `rollbackPreview`, not a verified rollback. It records that an immutable input snapshot was captured, that the function did not mutate the caller's input, and that a copy of the original synthetic documents is available for inspection. It explicitly reports `productionRestoreVerified: false`. Empty batches are rejected. This avoids implying that a production backup/restore has been performed.
+
+
+### SEC-LEGACY-MIGRATION-05 — independent data integrity verification — 2026-11-21
+
+Added `js/core/legacy-migration-integrity.js`. The auditor independently compares the supplied source and normalized document arrays. It verifies total document-count parity, per-document collection/order correspondence, every `keep` and `rename` value, explicit default values, approved drop counts and status mappings. Nested arrays/objects and Date/timestamp-shaped values are compared recursively without mutating either input.
+
+The synthetic rehearsal now requires this audit to pass before it reports success or returns normalized documents. A failed normalization does not run an incomplete integrity comparison. A standalone JSON CLI is available for repeatable offline audits.
+
+The auditor cannot prove database persistence, Firestore document-ID uniqueness, transaction isolation or backup durability. It does not connect to Firestore and makes no writes. Approved drops are reported as intentional decisions, not silently counted as preserved fields.

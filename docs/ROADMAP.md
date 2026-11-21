@@ -464,3 +464,5 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Added `tests/legacy-collection-audit.test.js` for missing timestamps, unknown fields, invalid statuses, malformed records and output redaction.
 - [ ] Run the tool against an owner-exported, minimized metadata snapshot (not raw production data in chat) and review aggregate results.
 - [ ] Only after reviewing real field names/statuses, define an explicit versioned migration mapping and dry-run planner. No migration is implemented.
+
+- [x] Hardened the legacy inventory input contract: it now accepts metadata-only records (field names, coarse types and categorical status), rejects document IDs/raw data fields, and includes a sanitized example JSON.

@@ -176,3 +176,11 @@ The current `tests/firebase-emulator/owner-read.rules` is a deliberately limited
 - Regression coverage rejects unknown cuisine/status values, impossible visit dates, out-of-range ratings, excessive favorite-dish and photo counts, while preserving explicit `visitDate: null` for partial updates.
 - The authoritative Firestore Rules candidate must enforce equivalent types, ranges, list limits and nested field restrictions; client validators remain defense in depth.
 - Derived statistics refresh is secondary work after the primary restaurant write. Its failure must not cause a retry of a restaurant create/update already committed by Firestore.
+
+
+### Cross-collection write-result contract — 2026-11-21
+
+- For all five private collection services, a confirmed primary create/update/delete operation determines the operation's success result.
+- User statistics are derived data and are refreshed best-effort after the primary operation. A statistics refresh error is logged but must not report a committed primary write as failed.
+- This client contract prevents duplicate retries caused by false failure responses. It does not guarantee that derived statistics are current; Emulator and integration tests must cover this distinction.
+- Firestore Rules remain authoritative for owner access, field allowlists, immutable timestamps, type/range checks and cross-account isolation.

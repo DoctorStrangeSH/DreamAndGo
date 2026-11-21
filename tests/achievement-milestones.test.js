@@ -15,6 +15,9 @@ test('achievement progress follows the next level and clamps malformed stats', (
     assert.deepEqual(getProgress({ id: 'first_travel' }, 1, { travels: 100 }), { current: 5, target: 5, percentage: 100 });
     assert.deepEqual(getProgress({ id: 'first_travel' }, 1, { travels: -99 }), { current: 0, target: 5, percentage: 0 });
     assert.equal(getProgress({ id: 'first_travel' }, 4, { travels: 100 }), null);
+    assert.equal(getProgress({ id: 'constructor' }, 0, {}), null);
+    assert.equal(getProgress({ id: '__proto__' }, 0, {}), null);
+    assert.equal(getProgress(null, 0, {}), null);
 });
 
 test('completed dreams and all collection categories use their actual milestones', () => {

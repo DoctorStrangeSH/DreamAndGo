@@ -241,3 +241,11 @@ The candidate `sendPrivateMessageV2` server transaction writes a fixed-schema `m
 ### Chat private profile read cutover — 2026-11-21
 
 `ChatService` no longer reads another user's raw `users/{uid}` document and sanitizes it in the browser. Chat list partner data is obtained from the Auth + App Check protected `getPublicProfilesV2` endpoint using bounded batches. Keep private profile Rules owner-only. Legacy chat message and index writes remain a separate migration gate.
+
+
+
+### Realtime profile lookup contract — 2026-11-21
+
+- Realtime chat, friends, incoming requests and sent requests must resolve partner profiles through getPublicProfilesV2, not direct browser reads of users/{uid}.
+- The client batches/deduplicates UIDs and accepts only the server allowlisted projection. Private or non-consenting profiles are omitted and UI uses a generic fallback label.
+- users/{uid} remains Owner-only. A client-side toPublicProfile() after getDoc() is not a privacy boundary because Firestore has already delivered the full document.

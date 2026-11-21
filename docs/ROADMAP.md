@@ -316,3 +316,10 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Added regression cases for current-page overflow, reducing total pages below the current page, malformed legacy counters and unrelated partial edits.
 - [ ] Run root CI and Firebase Emulator checks on the exact implementation HEAD; no checks are currently reported for the latest commit.
 - [ ] Enforce the same invariant atomically in the final Firestore Rules candidate; the client read-before-write check is defense in depth and is not race-proof by itself.
+
+
+### Book service validator wiring regression — 2026-11-21
+
+- [x] Follow-up review caught and fixed a missing `validateBookInput` import after the partial-update validator was introduced; without it, adding a book would fail at runtime.
+- [x] Added `tests/book-service-validator-wiring.test.js` to assert that both create/update validators are imported and called by `BookService`.
+- [ ] Run root CI on the exact resulting HEAD; GitHub has not reported checks for the latest candidate commits.

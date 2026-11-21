@@ -586,3 +586,13 @@ No production rules or user data were changed. This inventory is source-derived 
 - Create requires both timestamps to equal `request.time`; update preserves `createdAt` and requires `updatedAt == request.time`; only the path owner can mutate or read.
 - Added positive/negative Emulator test cases. The Emulator suite has not yet been executed on this HEAD, so no pass is claimed.
 - The fixture deliberately does not modify root `firestore.rules`, Firebase Console, live documents or production settings.
+
+
+### SEC-RULES-BOOK-01 — schema-specific books Rules candidate — 2026-11-21
+
+**Status: candidate authored; Emulator execution pending.**
+
+- Added owner-only create/read/list/update/delete for the private books subcollection to the isolated candidate fixture.
+- The candidate validates exact top-level fields, required title/author/status/notes/timestamps, status and genre allowlists, year/page/rating bounds, current-page versus total-pages invariant, review/quote bounds, immutable `createdAt`, and `updatedAt == request.time`.
+- Added positive and negative Emulator test coverage for owner CRUD, guest/second-account isolation, invalid enum/genre, page overflow, excessive lists, unknown fields and timestamp forgery.
+- This candidate does not modify root production rules, Firebase Console or live data. Emulator execution has not yet been performed.

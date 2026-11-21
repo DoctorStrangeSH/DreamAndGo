@@ -61,9 +61,17 @@ test('movie schema accepts API metadata and rejects arbitrary IDs, URLs and stat
 test('restaurant schema validates cuisine, dates, rating, dishes and photo URLs', () => {
     assert.equal(validateRestaurantInput(restaurant()).name, 'Тёплый дом');
     assert.throws(() => validateRestaurantInput({ ...restaurant(), cuisine: 'Unknown' }), TypeError);
+    assert.throws(() => validateRestaurantInput({ ...restaurant(), status: 'public' }), TypeError);
     assert.throws(() => validateRestaurantInput({ ...restaurant(), visitDate: '2026-02-31' }), TypeError);
     assert.throws(() => validateRestaurantInput({ ...restaurant(), userRating: -1 }), TypeError);
+    assert.throws(() => validateRestaurantInput({ ...restaurant(), userRating: 11 }), TypeError);
+    assert.throws(() => validateRestaurantInput({ ...restaurant(), favoriteDishes: Array(21).fill('Блюдо') }), TypeError);
     assert.throws(() => validateRestaurantInput({ ...restaurant(), photos: ['http://example.test/a.jpg'] }), TypeError);
+    assert.throws(() => validateRestaurantInput({ ...restaurant(), photos: Array(11).fill('https://cdn.example.test/photo.jpg') }), TypeError);
+    assert.deepEqual(
+        validateRestaurantInput({ visitDate: null }, { partial: true }),
+        { visitDate: null }
+    );
 });
 
 test('partial updates accept only explicitly supplied allowlisted fields', () => {

@@ -249,3 +249,8 @@ The candidate `sendPrivateMessageV2` server transaction writes a fixed-schema `m
 - Realtime chat, friends, incoming requests and sent requests must resolve partner profiles through getPublicProfilesV2, not direct browser reads of users/{uid}.
 - The client batches/deduplicates UIDs and accepts only the server allowlisted projection. Private or non-consenting profiles are omitted and UI uses a generic fallback label.
 - users/{uid} remains Owner-only. A client-side toPublicProfile() after getDoc() is not a privacy boundary because Firestore has already delivered the full document.
+
+
+### Personal read service guard — 2026-11-21
+
+SearchService and LevelService perform only current-account reads. The client now checks the active Firebase Auth UID before and after async reads and before returning/caching data. This is defense in depth, not an authorization boundary; production Firestore Rules must enforce owner-only access.

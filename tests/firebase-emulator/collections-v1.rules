@@ -191,7 +191,7 @@ service cloud.firestore {
         'Психология', 'Бизнес', 'Наука', 'Философия', 'Другое'];
     }
     function isValidBookGenres(genres) {
-      return genres is list && genres.size() <= 10 &&
+      return genres is list && genres.size() <= 10 && genres.toSet().size() == genres.size() &&
         (genres.size() <= 0 || (genres[0] is string && genres[0].size() > 0 && genres[0].size() <= 40 && isValidBookGenre(genres[0]))) &&
         (genres.size() <= 1 || (genres[1] is string && genres[1].size() > 0 && genres[1].size() <= 40 && isValidBookGenre(genres[1]))) &&
         (genres.size() <= 2 || (genres[2] is string && genres[2].size() > 0 && genres[2].size() <= 40 && isValidBookGenre(genres[2]))) &&
@@ -204,7 +204,7 @@ service cloud.firestore {
         (genres.size() <= 9 || (genres[9] is string && genres[9].size() > 0 && genres[9].size() <= 40 && isValidBookGenre(genres[9])));
     }
     function isValidBookQuotes(quotes) {
-      return quotes is list && quotes.size() <= 30 &&
+      return quotes is list && quotes.size() <= 30 && quotes.toSet().size() == quotes.size() &&
         (quotes.size() <= 0 || (quotes[0] is string && quotes[0].size() > 0 && quotes[0].size() <= 500)) &&
         (quotes.size() <= 1 || (quotes[1] is string && quotes[1].size() > 0 && quotes[1].size() <= 500)) &&
         (quotes.size() <= 2 || (quotes[2] is string && quotes[2].size() > 0 && quotes[2].size() <= 500)) &&
@@ -263,7 +263,7 @@ service cloud.firestore {
       return id in [28, 12, 16, 35, 80, 99, 18, 10751, 14, 36, 27, 10402, 9648, 10749, 878, 10770, 53, 10752, 37];
     }
     function isValidMovieGenres(genres) {
-      return genres is list && genres.size() <= 20 &&
+      return genres is list && genres.size() <= 20 && genres.toSet().size() == genres.size() &&
         (genres.size() <= 0 || (genres[0] is int && isValidMovieGenre(genres[0]))) &&
         (genres.size() <= 1 || (genres[1] is int && isValidMovieGenre(genres[1]))) &&
         (genres.size() <= 2 || (genres[2] is int && isValidMovieGenre(genres[2]))) &&
@@ -352,7 +352,7 @@ service cloud.firestore {
         data.createdAt is timestamp && data.updatedAt is timestamp;
     }
     function isValidRestaurantDishes(dishes) {
-      return dishes is list && dishes.size() <= 20 &&
+      return dishes is list && dishes.size() <= 20 && dishes.toSet().size() == dishes.size() &&
         (dishes.size() <= 0 || (dishes[0] is string && dishes[0].size() > 0 && dishes[0].size() <= 80)) &&
         (dishes.size() <= 1 || (dishes[1] is string && dishes[1].size() > 0 && dishes[1].size() <= 80)) &&
         (dishes.size() <= 2 || (dishes[2] is string && dishes[2].size() > 0 && dishes[2].size() <= 80)) &&

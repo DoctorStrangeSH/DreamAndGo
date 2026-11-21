@@ -306,3 +306,13 @@ Dream&Go — социальное пространство мечтаний, п�
 - [ ] Add positive and negative Emulator CRUD coverage for travels, books, movies and restaurants, including immutable `createdAt`, server `updatedAt`, nested payload validation, owner/guest/second-account isolation and legacy compatibility.
 - [ ] Complete signup V2 and Chat V2 client cutovers before considering any relaxation of the published deny-all Rules.
 - **Safety boundary:** production Rules remain unchanged. Test fixtures are not deployable production configuration.
+
+
+### Book page-count invariant — 2026-11-21
+
+- [x] Found a partial-update gap: changing only `currentPage` or only `totalPages` was validated without the persisted counterpart.
+- [x] Added `validateBookUpdateInput(existing, updates)` to validate merged page bounds while preserving partial-update semantics for unrelated fields.
+- [x] `BookService.updateBook` now reads the existing owner-scoped document before applying a partial update and rejects missing books or inconsistent page counts.
+- [x] Added regression cases for current-page overflow, reducing total pages below the current page, malformed legacy counters and unrelated partial edits.
+- [ ] Run root CI and Firebase Emulator checks on the exact implementation HEAD; no checks are currently reported for the latest commit.
+- [ ] Enforce the same invariant atomically in the final Firestore Rules candidate; the client read-before-write check is defense in depth and is not race-proof by itself.

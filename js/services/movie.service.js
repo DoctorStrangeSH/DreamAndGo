@@ -246,8 +246,15 @@ export class MovieService {
             };
             
             const docRef = await addDoc(moviesRef, newMovie);
-            await this.updateUserStats(userId);
-            
+
+            // Statistics are derived data. Do not report a committed movie
+            // create as failed when the secondary refresh cannot complete.
+            try {
+                await this.updateUserStats(userId);
+            } catch (statsError) {
+                console.warn('Фильм сохранён, но статистика не обновилась:', statsError);
+            }
+
             return { success: true, id: docRef.id };
         } catch (error) {
             console.error('Ошибка добавления фильма:', error);
@@ -266,7 +273,14 @@ export class MovieService {
                 ...safeUpdates,
                 updatedAt: serverTimestamp()
             });
-            await this.updateUserStats(userId);
+
+            // The movie update is committed; a stats refresh failure must not
+            // cause the UI to retry the already successful write.
+            try {
+                await this.updateUserStats(userId);
+            } catch (statsError) {
+                console.warn('Фильм обновлён, но статистика не обновилась:', statsError);
+            }
 
             return { success: true };
         } catch (error) {

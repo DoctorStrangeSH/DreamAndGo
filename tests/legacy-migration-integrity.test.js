@@ -139,3 +139,16 @@ test('compares nested arrays, objects and timestamps without mutating inputs', (
     assert.equal(report.status, 'passed');
     assert.deepEqual(input, beforeInput);
 });
+
+
+test('detects unexpected target fields that are not authorized by the manifest', () => {
+    const changed = structuredClone(normalized);
+    changed[0].document.unreviewedField = 'unexpected';
+    const report = auditLegacyMigrationIntegrity({
+        sourceDocuments: source,
+        normalizedDocuments: changed,
+        manifest
+    });
+    assert.equal(report.status, 'blocked');
+    assert.ok(report.blockers.some(item => item.includes('unexpected_target_field:0:unreviewedField')));
+});

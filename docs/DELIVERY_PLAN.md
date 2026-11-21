@@ -239,4 +239,4 @@
 
 - [x] Guard the milestone map against inherited object keys and malformed achievement IDs.
 - [x] Add regression tests for `constructor`, `__proto__`, and null input.
-- [ ] Verify Root Checks on the exact candidate HEAD.
+- [x] Root Checks passed on the implementation commits: 470/470 tests, 0 failures; syntax validation passed for all 258 JavaScript files. See [implementation check](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44897935694) and [milestone-map check](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44897933324).

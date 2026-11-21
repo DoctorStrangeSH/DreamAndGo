@@ -274,87 +274,7 @@ service cloud.firestore {
     function isValidMovieCountry(country) {
       return country is map && country.keys().hasAll(['iso_3166_1', 'name']) &&
         country.keys().hasOnly(['iso_3166_1', 'name']) &&
-        country.iso_3166_1 is string && country.iso_3166_1.matches('^[A-Z]{2}
-      allow get: if isOwner(uid);
-      allow list: if false;
-      allow create: if false && isOwner(uid) && uidUnchanged(uid) &&
-        isValidUser(request.resource.data);
-      allow update: if isOwner(uid) && uidNotModified() &&
-        isValidUser(request.resource.data) &&
-        isValidProfileEdit(request.resource.data);
-      allow delete: if false;
-
-
-      match /dreams/{dreamId} {
-        allow create: if isOwner(uid) &&
-          exists(/databases/$(database)/documents/users/$(uid)) &&
-          isValidDream(request.resource.data) &&
-          request.resource.data.createdAt == request.time &&
-          request.resource.data.updatedAt == request.time;
-        allow update: if isOwner(uid) &&
-          isValidDream(request.resource.data) &&
-          request.resource.data.createdAt == resource.data.createdAt &&
-          request.resource.data.updatedAt == request.time;
-        allow delete: if isOwner(uid);
-      }
-
-
-      match /travels/{travelId} {
-        allow create: if isOwner(uid) &&
-          exists(/databases/$(database)/documents/users/$(uid)) &&
-          isValidTravel(request.resource.data) &&
-          request.resource.data.createdAt == request.time &&
-          request.resource.data.updatedAt == request.time;
-        allow update: if isOwner(uid) &&
-          isValidTravel(request.resource.data) &&
-          request.resource.data.createdAt == resource.data.createdAt &&
-          request.resource.data.updatedAt == request.time;
-        allow delete: if isOwner(uid);
-      }
-
-
-      match /books/{bookId} {
-        allow create: if isOwner(uid) &&
-          exists(/databases/$(database)/documents/users/$(uid)) &&
-          isValidBook(request.resource.data) &&
-          request.resource.data.createdAt == request.time &&
-          request.resource.data.updatedAt == request.time;
-        allow update: if isOwner(uid) &&
-          isValidBook(request.resource.data) &&
-          request.resource.data.createdAt == resource.data.createdAt &&
-          request.resource.data.updatedAt == request.time;
-        allow delete: if isOwner(uid);
-      }
-
-      match /movies/{movieId} {
-        allow create: if isOwner(uid) && exists(/databases/$(database)/documents/users/$(uid)) &&
-          isValidMovie(request.resource.data) && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time;
-        allow update: if isOwner(uid) && isValidMovie(request.resource.data) &&
-          request.resource.data.createdAt == resource.data.createdAt && request.resource.data.updatedAt == request.time;
-        allow delete: if isOwner(uid);
-      }
-      match /{category}/{id} {
-        allow get, list: if isOwner(uid) &&
-          category in [
-            'travels', 'restaurants', 'movies', 'books', 'dreams',
-            'dailyTasks', 'notifications', 'friends',
-            'friendRequests', 'sentRequests', 'chats', 'messages'
-          ] &&
-          exists(/databases/$(database)/documents/users/$(uid));
-        allow create: if false && isOwner(uid) &&
-          isValidOwnedDocument(request.resource.data);
-        allow update: if false && isOwner(uid) &&
-          isValidOwnedDocument(request.resource.data);
-        allow delete: if false;
-      }
-    }
-
-    match /{document=**} {
-      allow read, write: if false;
-    }
-  }
-}
-) &&
+        country.iso_3166_1 is string && country.iso_3166_1.matches('^[A-Z]{2}$') &&
         country.name is string && country.name.size() > 0 && country.name.size() <= 80;
     }
     function isValidMovieCountries(countries) {
@@ -391,80 +311,7 @@ service cloud.firestore {
         (countries.size() <= 29 || isValidMovieCountry(countries[29]));
     }
     function isValidMovieDate(value) {
-      return value == '' || (value is string && value.matches('^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])
-      allow get: if isOwner(uid);
-      allow list: if false;
-      allow create: if false && isOwner(uid) && uidUnchanged(uid) &&
-        isValidUser(request.resource.data);
-      allow update: if isOwner(uid) && uidNotModified() &&
-        isValidUser(request.resource.data) &&
-        isValidProfileEdit(request.resource.data);
-      allow delete: if false;
-
-
-      match /dreams/{dreamId} {
-        allow create: if isOwner(uid) &&
-          exists(/databases/$(database)/documents/users/$(uid)) &&
-          isValidDream(request.resource.data) &&
-          request.resource.data.createdAt == request.time &&
-          request.resource.data.updatedAt == request.time;
-        allow update: if isOwner(uid) &&
-          isValidDream(request.resource.data) &&
-          request.resource.data.createdAt == resource.data.createdAt &&
-          request.resource.data.updatedAt == request.time;
-        allow delete: if isOwner(uid);
-      }
-
-
-      match /travels/{travelId} {
-        allow create: if isOwner(uid) &&
-          exists(/databases/$(database)/documents/users/$(uid)) &&
-          isValidTravel(request.resource.data) &&
-          request.resource.data.createdAt == request.time &&
-          request.resource.data.updatedAt == request.time;
-        allow update: if isOwner(uid) &&
-          isValidTravel(request.resource.data) &&
-          request.resource.data.createdAt == resource.data.createdAt &&
-          request.resource.data.updatedAt == request.time;
-        allow delete: if isOwner(uid);
-      }
-
-
-      match /books/{bookId} {
-        allow create: if isOwner(uid) &&
-          exists(/databases/$(database)/documents/users/$(uid)) &&
-          isValidBook(request.resource.data) &&
-          request.resource.data.createdAt == request.time &&
-          request.resource.data.updatedAt == request.time;
-        allow update: if isOwner(uid) &&
-          isValidBook(request.resource.data) &&
-          request.resource.data.createdAt == resource.data.createdAt &&
-          request.resource.data.updatedAt == request.time;
-        allow delete: if isOwner(uid);
-      }
-
-      match /{category}/{id} {
-        allow get, list: if isOwner(uid) &&
-          category in [
-            'travels', 'restaurants', 'movies', 'books', 'dreams',
-            'dailyTasks', 'notifications', 'friends',
-            'friendRequests', 'sentRequests', 'chats', 'messages'
-          ] &&
-          exists(/databases/$(database)/documents/users/$(uid));
-        allow create: if false && isOwner(uid) &&
-          isValidOwnedDocument(request.resource.data);
-        allow update: if false && isOwner(uid) &&
-          isValidOwnedDocument(request.resource.data);
-        allow delete: if false;
-      }
-    }
-
-    match /{document=**} {
-      allow read, write: if false;
-    }
-  }
-}
-));
+      return value == '' || (value is string && value.matches('^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$'));
     }
     function isValidMovie(data) {
       return data is map &&
@@ -542,6 +389,13 @@ service cloud.firestore {
         allow delete: if isOwner(uid);
       }
 
+      match /movies/{movieId} {
+        allow create: if isOwner(uid) && exists(/databases/$(database)/documents/users/$(uid)) &&
+          isValidMovie(request.resource.data) && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time;
+        allow update: if isOwner(uid) && isValidMovie(request.resource.data) &&
+          request.resource.data.createdAt == resource.data.createdAt && request.resource.data.updatedAt == request.time;
+        allow delete: if isOwner(uid);
+      }
       match /{category}/{id} {
         allow get, list: if isOwner(uid) &&
           category in [

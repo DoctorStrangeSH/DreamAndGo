@@ -234,7 +234,8 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Removed the generic browser-side notification creation API that accepted an arbitrary recipient UID and arbitrary payload.
 - [x] Bound notification subscription and read-state mutations to the active Firebase Auth UID; stale snapshots are ignored after account changes.
 - [x] Added notification document-ID validation and regression tests in `tests/notifications-service-security.test.js`.
-- [ ] Implement trusted server-generated notifications for verified friendship, message and achievement events; do not restore a generic client-selected recipient API.
+- [x] Implement trusted server-generated notifications for friendship request/acceptance and newly awarded achievement levels; all writes use fixed server-derived payloads.
+- [ ] Implement trusted message notifications only after the server-side message event contract is complete; do not restore a generic client-selected recipient API.
 - [ ] Add and verify the complete production Firestore Rules for notification reads and owner-only read-state updates.
 - [ ] Run the notification flow in staging with two independent accounts and App Check.
 - **Status:** the arbitrary client notification-write path is removed from the candidate client. The V1.0 notification feature is not complete until trusted event generation and Rules/staging acceptance are verified.

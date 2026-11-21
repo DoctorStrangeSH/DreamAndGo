@@ -1,6 +1,5 @@
 import { calculateAchievementAwards } from '../js/core/achievement-award-policy.js';
 import { ACHIEVEMENTS } from '../js/core/achievement-catalog.js';
-import { FieldValue } from 'firebase-admin/firestore';
 
 const COLLECTIONS = {
     travels: {
@@ -113,7 +112,7 @@ export async function refreshUserStatsTransaction(db, uid) {
                     read: false,
                     achievementId: achievement.id,
                     achievementLevel: achievement.level,
-                    createdAt: FieldValue.serverTimestamp()
+                    createdAt: new Date(achievement.awardedAt)
                 });
             }
         }

@@ -618,3 +618,14 @@ No production rules or user data were changed. This inventory is source-derived 
 - Rules validate exact top-level fields, required name/cuisine/status/notes/timestamps, cuisine/status allowlists, optional address and visit date, bill/rating bounds, bounded favorite-dish list, review length, HTTPS photo list and immutable/server timestamps.
 - Added positive/negative Emulator coverage for owner CRUD, guest/second-account isolation, unknown fields, invalid enum/date values, numeric bounds, list bounds, non-HTTPS photos and timestamp forgery.
 - The fixture remains test-only. Root production Rules, Firebase Console and live data were not modified. Emulator execution has not yet been performed.
+
+
+### SEC-RULES-DREAM-01 — dreams CRUD coverage and visibility integrity — 2026-11-21
+
+**Status: candidate and tests authored; Emulator execution pending.**
+
+- Added `dreams-v1.rules.test.mjs` for owner create/read/list/update/delete, guest and second-account denial, schema bounds, invalid enums, nested step validation, unknown fields and server timestamp integrity.
+- Tightened the candidate: a newly created dream may omit `isPublic` or set it to `false`, never `true`; when present, visibility must be boolean; updates must preserve the existing visibility value.
+- Explicitly tested legacy compatibility: a pre-existing `isPublic: true` record can still be edited without changing visibility, while client attempts to change that field are denied.
+- Existing client validation remains in `js/core/dream-input-policy.js` and is covered by `tests/dream-input-policy.test.js`.
+- The test is included in the Emulator package script. No Emulator pass is claimed; production Rules and Firebase Console remain untouched.

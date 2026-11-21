@@ -114,7 +114,7 @@ test('rejects missing mappings, invalid target fields and unresolved manual revi
     assert.equal(result.valid, false);
     assert.equal(result.normalized, null);
     assert.ok(result.errors.includes('migration_manifest_not_approved'));
-    assert.ok(result.errors.includes('required_field_missing:status'));
+    assert.ok(result.errors.includes('manual_review_requires_concrete_action:dreams:oldStatus'));
 });
 
 test('rejects invalid dates, out-of-range values, unknown fields and malformed nested maps', () => {

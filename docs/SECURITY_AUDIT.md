@@ -693,3 +693,12 @@ A static re-review found a duplicate timestamp constant declaration introduced d
 ### SEC-CI-EMULATOR-03 — root quality gates included in CI — 2026-11-21
 
 The dedicated workflow now runs `npm test` and `npm run check` before installing/running the Firestore Emulator suite. Pull-request path filters now include repository tests, core policies and scripts, in addition to Emulator files. This ensures changes to the legacy inventory tool trigger the checks rather than relying solely on pushes to the feature branch. Execution on the latest head remains unconfirmed.
+
+
+### SEC-LEGACY-MIGRATION-01 — fail-closed migration manifest contract — 2026-11-21
+
+Added `js/core/legacy-migration-manifest.js`, a pure validator for a versioned manifest. It requires explicit coverage of all five private collections, field-level actions, source/target schema declarations, explicit approval, a backup reference, and verified rollback. Destructive field drops require a separate data-loss approval; renames require a target; defaults require an explicit value; manual-review entries require a documented resolution.
+
+The readiness assessor consumes only the sanitized inventory report. Any inventory gap blocks readiness. Even a clean inventory and structurally approved manifest remain blocked pending independent staging rehearsal and production backup verification. The module does not connect to Firebase, inspect user records, or write data.
+
+Added an offline CLI and an unapproved template. The template intentionally contains no field mappings and cannot pass validation. No legacy mappings are inferred and no migration runner exists.

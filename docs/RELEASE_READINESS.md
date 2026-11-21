@@ -598,3 +598,16 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [ ] Exact-HEAD Emulator suite execution pending.
 - [ ] Expand dreams CRUD tests and perform cross-collection compatibility review.
 - **Release remains HOLD; no production Rules change or deploy.**
+
+
+### Firestore Rules — all five collection candidates authored — 2026-11-21
+
+- [x] Dreams: schema-specific Rules and CRUD/visibility Emulator test authored.
+- [x] Travels: schema-specific Rules and Emulator test authored.
+- [x] Books: schema-specific Rules and Emulator test authored.
+- [x] Movies: schema-specific Rules and Emulator test authored.
+- [x] Restaurants: schema-specific Rules and Emulator test authored.
+- [x] All five test files are included in the Emulator package script.
+- [ ] Exact-HEAD Emulator suite execution and remediation pending.
+- [ ] Cross-collection contract and legacy compatibility audit pending.
+- **Release remains HOLD. No production Rules change or deploy.**

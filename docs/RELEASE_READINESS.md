@@ -336,5 +336,6 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 
 - [x] Added `enforceAppCheck: true` to all six private-chat V2 callable endpoints that previously lacked it.
 - [x] Added a root test that scans every exported callable in `server/index.js` and rejects declarations without `enforceAppCheck: true`.
-- [ ] Confirm CI on the exact candidate HEAD and verify token enforcement against the deployed Firebase project in staging. Candidate source changes do not update already deployed Functions.
+- [x] Root Checks passed on implementation HEAD `1b7122d747b2bac336312e1caf925c5c4b3039c5`: 462/462 tests, 0 failures; syntax checks passed for all 255 JavaScript files ([run 44894482895](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44894482895)).
+- [ ] Confirm the Firebase Emulator workflow on the same implementation HEAD and verify token enforcement against the deployed Firebase project in staging. Candidate source changes do not update already deployed Functions.
 - [ ] Keep the existing HOLD decision until the complete production Rules and staging gates above are satisfied.

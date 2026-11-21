@@ -33,3 +33,12 @@ test('message mutations validate actor, conversation and message path segments',
         assert.match(body, /isValidChatPathSegment\(messageId, 128\)/);
     }
 });
+
+
+test('chat list uses the public profile callable instead of reading another users private document', () => {
+    assert.match(source, /import \{ getPublicProfilesByIds \} from ['"]\.\/public-profile-callable\.service\.js['"]/);
+    assert.match(source, /const profiles = await getPublicProfilesByIds\(partnerIds\)/);
+    assert.match(source, /profilesById\.get\(chatData\.partnerId\)/);
+    assert.doesNotMatch(source, /getDoc\(doc\(this\.db, ['"]users['"],\s*uid\)\)/);
+    assert.doesNotMatch(source, /toPublicProfile\(/);
+});

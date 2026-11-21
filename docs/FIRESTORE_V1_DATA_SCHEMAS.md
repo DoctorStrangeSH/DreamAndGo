@@ -207,3 +207,14 @@ This is a confirmed compatibility risk in the candidate contract, not a reason t
 7. Re-run Emulator tests against both pre-migration and normalized fixtures.
 
 No production data migration has been run. Synthetic tests only.
+
+
+## 13. Offline legacy collection inventory tool — 2026-11-21
+
+Added `npm run audit:legacy-collections -- /path/to/minimized-export.json`.
+
+The command is deliberately offline and read-only. It accepts a minimized JSON array of records shaped as `{ "collection": "books", "id": "optional-local-id", "data": { ... } }`, where collection is one of the five private V1 collections. Timestamp values must be normalized to ISO-compatible JavaScript dates before serialization or to objects shaped as `{ "seconds": integer, "nanoseconds": integer }`.
+
+The report contains aggregate counts only: document counts, missing timestamps, missing required fields, unknown-field documents, invalid statuses, invalid timestamp shapes, and malformed input records. It intentionally excludes document IDs and all field values. Exit code 0 means no detected schema gaps in the supplied snapshot; exit code 1 means review is required; exit code 2 means invocation/input error.
+
+**This is an inventory tool, not a migration tool.** It has no Firebase SDK dependency, credentials, network access, or write path. It does not infer old-to-new field mappings, change statuses, repair timestamps, or modify data. Unknown fields and historical statuses must be reviewed before a separately approved migration plan is authored.

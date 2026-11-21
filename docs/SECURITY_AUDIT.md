@@ -319,3 +319,16 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 - Added a service-contract regression test that rejects raw users/{uid} reads and requires the callable batch path.
 
 **Remaining:** verify the client cutover with two staging accounts and App Check; verify private profiles intentionally fall back to the generic chat label; keep production Rules owner-only for users/{uid}. Legacy chat message/index migration and cutover remain separate release gates. No production Rules or Functions were changed.
+
+
+
+### SEC-REALTIME-PRIVACY-01 — realtime social subscriptions read raw private profiles — 2026-11-21
+
+**Status:** candidate client cutover implemented; regression test added. The first test attempts exposed a test-boundary bug and are being corrected; final CI is pending. No production Rules or Functions were changed.
+
+- The realtime chat/friends/incoming-request/sent-request subscriptions previously called getUserProfile() once per row; that helper fetched the raw users/{uid} document and only then projected public fields in browser code.
+- Replaced per-row raw document reads with one deduplicated getPublicProfilesByIds() request per snapshot (the client helper splits batches into groups of 50). The server callable returns only the explicit public profile projection and enforces Auth, App Check, quota and public-profile opt-in.
+- Kept the snapshot generation gate so stale asynchronous profile batches cannot repaint a newer snapshot.
+- Added tests to forbid getDoc/toPublicProfile in RealtimeService and require the callable batch path for all four social/chat subscriptions.
+
+**Remaining:** green CI on final test revision and two-account staging for public/private profile behavior with App Check. Production users/{uid} Rules must remain owner-only. No raw private profile document should be exposed to another account.

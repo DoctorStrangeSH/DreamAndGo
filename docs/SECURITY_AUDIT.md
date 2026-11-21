@@ -768,3 +768,10 @@ The client validators and V1 normalizer require unique book genres, book quotes,
 ### SEC-RULES-COMPLEXITY-01 — Firestore Rules expression budget — 2026-11-21
 
 The movie V1 Rules candidate exceeded Firestore's per-evaluation expression budget because the country array validator expanded checks across up to 30 map entries. Reduced the V1 `productionCountries` cap to 10, kept strict validation of each entry, and aligned the browser input policy, legacy normalizer and Emulator tests. The movie genre allowlist was also consolidated with `hasOnly` plus set-cardinality uniqueness. This is a deliberate V1 input-bound change to keep writes enforceable by Rules; future expansion requires a separately reviewed server-side normalization path.
+
+
+### SEC-RULES-V1-CI-VERIFIED — candidate suite green — 2026-11-21
+
+The isolated candidate has now passed GitHub Actions: root suite 528/528, repository syntax checks, Firestore Rules Emulator suite 13/13, and the Auth-enabled emulator workflow 14/14 plus 59/59 server emulator tests. The date validation, list uniqueness, core collection matcher isolation, movie expression-budget reduction and owner-only access regressions are covered by these runs.
+
+This is CI evidence for the isolated test candidates only. It does not prove that the active Firebase project uses these files, and no production rules were deployed. The production Firestore baseline remains separate and must be inspected before any live rules change.

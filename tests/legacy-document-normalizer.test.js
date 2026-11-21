@@ -41,7 +41,8 @@ test('normalizes a legacy book document with rename, drop, defaults and status m
     });
     assert.equal(Object.hasOwn(source, 'bookTitle'), true);
     assert.equal(Object.hasOwn(result.normalized, 'legacyPrivateFlag'), false);
-    assert.equal(result.metadata.valuesIncluded, false);
+    assert.equal(result.metadata.normalizedValuesReturned, true);
+    assert.equal(result.metadata.documentIdIncluded, false);
 });
 
 test('validates all five target collection contracts with synthetic documents', () => {

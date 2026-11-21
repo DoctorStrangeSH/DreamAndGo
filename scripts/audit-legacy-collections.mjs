@@ -16,7 +16,7 @@ if (!inputPath || process.argv.length !== 3) {
         if (report.summary.invalidRecords || report.summary.missingCreatedAt ||
             report.summary.missingUpdatedAt || report.summary.missingRequiredFields ||
             report.summary.unknownFieldDocuments || report.summary.invalidStatus ||
-            report.summary.invalidTimestampDocuments) {
+            report.summary.invalidTimestampDocuments || report.summary.fieldTypeMismatches) {
             process.exitCode = 1;
         }
     } catch (error) {

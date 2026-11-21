@@ -626,3 +626,12 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 
 - [x] Client-to-Rules integration contract covers create, representative partial update, immutable `createdAt`, and owner delete for all five private collections.
 - [ ] Confirm expanded lifecycle contract and full Emulator suite pass in CI.
+
+
+### Legacy collection compatibility — 2026-11-21
+
+- [x] Added synthetic legacy fixtures for all five private collections.
+- [x] Added tests documenting owner read/delete behavior, missing-`createdAt` list omission, and strict-update rejection.
+- [ ] Implement a dry-run migration/normalization plan with backup and rollback.
+- [ ] Update list services to surface records missing sort timestamps safely.
+- **Release remains HOLD; no production migration or Rules deployment.**

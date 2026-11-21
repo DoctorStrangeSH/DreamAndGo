@@ -250,3 +250,13 @@ Dream&Go — социальное пространство мечтаний, п�
 - [ ] Add trusted notification generation for V1.0 message and achievement events after their event contracts are verified.
 - [ ] Complete notification Rules Emulator tests and two-account staging validation.
 - **Status:** friend-request and friend-accepted notification writes are implemented in the candidate server transaction; CI and staging are not yet verified.
+
+
+### Friendship notification lifecycle cleanup — 2026-11-21
+
+- [x] Pending friend-request notifications are removed transactionally when the sender cancels the request.
+- [x] Pending friend-request notifications are removed transactionally when the recipient accepts or rejects the request.
+- [x] The acceptance notification is created for the original requester in the same transaction; stale actionable request notices do not remain in the recipient inbox.
+- [x] Regression tests cover pending-notification cleanup for cancel/reject/accept paths.
+- [ ] Verify the updated friendship transaction suite and full root CI on the exact branch HEAD.
+- [ ] Complete notification Rules Emulator and staging two-account verification.

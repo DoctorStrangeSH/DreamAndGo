@@ -646,3 +646,12 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - **No production data was read or changed; migration remains unimplemented.**
 
 - [x] Legacy inventory accepts metadata-only input and rejects document IDs/raw document data; sanitized example committed.
+
+
+### Legacy auditor quality gate — 2026-11-21
+
+- [x] Removed duplicate timestamp constant declaration from the metadata-only auditor.
+- [x] Added V1 expected field-type metadata for all five collections.
+- [x] Added field-type mismatch counts and non-zero CLI exit behavior.
+- [x] Added regression test for field-type mismatch detection.
+- [ ] Run root tests and syntax checks on the exact latest PR head.

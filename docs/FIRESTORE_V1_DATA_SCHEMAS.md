@@ -218,3 +218,6 @@ The command is deliberately offline and read-only. It accepts a metadata-only JS
 The report contains aggregate counts plus field-name frequency/coarse-type counts and categorical status frequencies: document counts, missing timestamps, missing required fields, unknown-field documents, invalid statuses, invalid timestamp metadata, and malformed input records. It intentionally excludes document IDs and all personal field values. Exit code 0 means no detected schema gaps in the supplied snapshot; exit code 1 means review is required; exit code 2 means invocation/input error.
 
 **This is an inventory tool, not a migration tool.** It has no Firebase SDK dependency, credentials, network access, or write path. It does not infer old-to-new field mappings, change statuses, repair timestamps, or modify data. Unknown fields and historical statuses must be reviewed before a separately approved migration plan is authored.
+
+
+The metadata-only contract is demonstrated in `docs/examples/legacy-collection-metadata.example.json`. Each record represents one document's field-name/type inventory plus an optional categorical status label; no actual field contents or document IDs should be exported.

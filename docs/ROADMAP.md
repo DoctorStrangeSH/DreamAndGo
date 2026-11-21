@@ -294,3 +294,15 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Firebase Emulator workflow passed after the notification Rules fixture was added: 7/7 isolated Rules tests and 59/59 server/Auth/Firestore Emulator tests ([run 44893915020](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44893915020)).
 - [x] Trusted friend, achievement and private-message notification event sources are implemented in candidate server transactions; message retry idempotency and achievement repeat-refresh idempotency are covered.
 - [ ] Production Rules integration, review of the actual active Firebase Rules, and two-account staging validation with App Check remain release blockers. No root `firestore.rules` or `firebase.json` is present in this candidate branch; isolated test fixtures must not be deployed.
+
+
+### Current continuation checkpoint — 2026-11-21
+
+- [x] Re-read the live PR #1 metadata and current candidate HEAD: `2b938f4513400fc11fb2be3ec61690056c626f00`.
+- [x] Confirmed the notification implementation milestone remains complete in candidate code: trusted friend-request/acceptance, achievement and private-message events; isolated notification Rules tests cover owner reads, server-only creation/deletion and one-way read-state updates.
+- [x] Confirmed the private-collection visibility hardening: new writes in all five personal collection services no longer set `isPublic`; existing records were not migrated or modified.
+- [ ] Run root Checks and Firebase Emulator workflows on the exact current HEAD. GitHub currently returns no status checks/workflow runs for this SHA; historical green runs are not evidence for this HEAD.
+- [ ] Build a separate, complete Firestore Rules candidate from the approved V1.0 access matrix and five collection schemas. Do not turn the limited recovery fixture into production Rules by incremental broadening.
+- [ ] Add positive and negative Emulator CRUD coverage for travels, books, movies and restaurants, including immutable `createdAt`, server `updatedAt`, nested payload validation, owner/guest/second-account isolation and legacy compatibility.
+- [ ] Complete signup V2 and Chat V2 client cutovers before considering any relaxation of the published deny-all Rules.
+- **Safety boundary:** production Rules remain unchanged. Test fixtures are not deployable production configuration.

@@ -92,6 +92,12 @@ test('movie V1 rules enforce owner CRUD, TMDB schema and timestamps', async () =
         await assertFails(setDoc(doc(alice, 'users/alice/movies/bad-date'), {
             ...validMovie(), releaseDate: '1999-13-45'
         }));
+        await assertFails(setDoc(doc(alice, 'users/alice/movies/impossible-date'), {
+            ...validMovie(), releaseDate: '2026-02-30'
+        }));
+        await assertSucceeds(setDoc(doc(alice, 'users/alice/movies/leap-day'), {
+            ...validMovie(), releaseDate: '2028-02-29'
+        }));
         await assertFails(setDoc(doc(alice, 'users/alice/movies/bad-rating'), {
             ...validMovie(), userRating: 6
         }));

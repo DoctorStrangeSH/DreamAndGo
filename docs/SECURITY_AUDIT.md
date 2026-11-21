@@ -554,3 +554,12 @@ No production rules or user data were changed. This inventory is source-derived 
 - Added `tests/movie-service-write-result.test.js` for both paths.
 - Extended movie validator tests to reject impossible calendar dates and duplicate genre IDs. Existing allowlists continue to constrain TMDB metadata, HTTPS artwork URLs, bounded ratings, country maps and status values.
 - This is client reliability/input hardening only; Firestore Rules remain the authorization boundary and are not yet complete.
+
+
+### SEC-COLLECTION-RESTAURANT-01 — avoid false failure after committed writes — 2026-11-21
+
+- `RestaurantService.addRestaurant` and `updateRestaurant` previously awaited derived-statistics refresh inside the same outer try/catch as the primary Firestore write. A secondary refresh failure after a successful write could return `success: false` and encourage duplicate retries.
+- Both paths now isolate statistics refresh as best-effort work and preserve success after the primary Firestore write is confirmed. Secondary failures are logged.
+- Added `tests/restaurant-service-write-result.test.js` for both paths.
+- Expanded validator regression coverage for cuisine/status allowlists, impossible visit dates, nullable visit dates, rating bounds, favorite dish count and photo count. HTTPS-only photo validation remains enforced by the shared URL-list validator.
+- Client validation is not authorization. The final Firestore Rules candidate must independently enforce field allowlists, enum values, types, ranges, list bounds, timestamps and owner-only access.

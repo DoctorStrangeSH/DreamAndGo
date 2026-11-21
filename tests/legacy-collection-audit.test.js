@@ -67,3 +67,31 @@ test('accepts valid timestamp type metadata and reports coarse field types', () 
     assert.equal(report.collections.books.fields.pages.types.integer, 1);
     assert.equal(report.collections.books.fields.status.types.string, 1);
 });
+
+
+test('detects field type mismatches against the V1 collection contract', () => {
+    const report = auditLegacyCollectionSnapshot([
+        {
+            collection: 'books',
+            fields: {
+                title: 'integer',
+                author: 'string',
+                status: 'string',
+                createdAt: 'timestamp',
+                updatedAt: 'timestamp'
+            },
+            status: 'read'
+        },
+        {
+            collection: 'dreams',
+            fields: {
+                title: 'string',
+                progress: 'string',
+                createdAt: 'timestamp',
+                updatedAt: 'timestamp'
+            },
+            status: 'dreaming'
+        }
+    ]);
+    assert.equal(report.summary.fieldTypeMismatches, 2);
+});

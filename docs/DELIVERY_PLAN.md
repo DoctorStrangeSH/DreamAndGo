@@ -263,3 +263,9 @@
 - [ ] Decide whether V1.0 supports public records; if yes, use explicit-consent public projections, never public access to private collection documents.
 - [ ] Build complete production candidate Rules and Emulator tests for guest/A/B/C, including query constraints and field allowlists.
 - [ ] Run two-account staging, backup/rollback rehearsal, and manual approval before production Rules deployment.
+
+### Firebase project identity — 2026-11-21
+
+- [x] Record owner-provided Firebase Project ID: `dream-and-go` (project number `185825350373`; Web App ID `1:185825350373:web:749c60926a0c6294f7fa0c`).
+- [ ] Confirm default vs named Firestore database and capture timestamped Rules export.
+- [ ] Use `dream-and-go` as the project identifier in local Emulator instructions; never use it to deploy production Rules without explicit approval.

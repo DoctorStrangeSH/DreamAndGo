@@ -488,5 +488,6 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 
 ### Firebase Web App ID verification — 2026-11-21
 
-- [ ] Resolve discrepancy: Console screenshot appears to show `...749c6092...`, while both `main` and candidate config contain `...749e6092...`. Owner must confirm exact Web App ID from Firebase Console before App Check/staging sign-off.
-- [x] No configuration was changed while the ID is unverified.
+- [x] Owner explicitly confirmed Web App ID `1:185825350373:web:749e60926a0c6294f7fa0c`; it exactly matches `js/config/firebase.js` on the candidate branch.
+- [x] No Firebase config change required.
+- [ ] Verify App Check enforcement on deployed callable endpoints in staging; a matching App ID alone does not prove enforcement.

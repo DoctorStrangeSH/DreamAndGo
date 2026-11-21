@@ -1,10 +1,11 @@
 import { db } from '../config/firebase.js';
 import { SubscriptionVersions } from '../core/subscription-versions.js';
 import { SnapshotGate } from '../core/snapshot-gate.js';
-import { toPublicProfile } from '../core/public-profile.js';
+import { getPublicProfilesByIds } from './public-profile-callable.service.js';
+import { isValidChatUid } from '../core/chat-message-policy.js';
 import { 
     collection, doc, query, orderBy, limit, startAfter,
-    onSnapshot, getDoc, getDocs
+    onSnapshot, getDocs
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 export class RealtimeService {
@@ -79,15 +80,14 @@ export class RealtimeService {
 
         const unsubscribe = onSnapshot(q, async (snapshot) => {
             const snapshotId = gate.begin();
-            const chats = [];
-            
-            for (const docSnap of snapshot.docs) {
-                if (docSnap.id === '_init') continue;
-                
+            const chatDocs = snapshot.docs.filter(item => item.id !== '_init');
+            const profilesById = await this.getUserProfiles(
+                chatDocs.map(item => item.data().partnerId)
+            );
+            const chats = chatDocs.map(docSnap => {
                 const chatData = docSnap.data();
-                const partnerData = await this.getUserProfile(chatData.partnerId);
-                
-                chats.push({
+                const partnerData = profilesById.get(chatData.partnerId) || null;
+                return {
                     id: docSnap.id,
                     partnerId: chatData.partnerId,
                     partnerName: partnerData?.username || 'Пользователь',
@@ -97,8 +97,8 @@ export class RealtimeService {
                     unread: chatData.unread || 0,
                     isGroup: chatData.isGroup || false,
                     groupName: chatData.groupName || ''
-                });
-            }
+                };
+            });
             
             if (gate.isLatest(snapshotId)) this.deliverIfCurrent(key, token, callback, chats);
         }, (error) => {
@@ -122,20 +122,16 @@ export class RealtimeService {
         
         const unsubscribe = onSnapshot(friendsRef, async (snapshot) => {
             const snapshotId = gate.begin();
-            const friends = [];
-            
-            for (const docSnap of snapshot.docs) {
-                if (docSnap.id === '_init') continue;
-                
-                const friendData = await this.getUserProfile(docSnap.id);
-                if (friendData) {
-                    friends.push({
-                        uid: docSnap.id,
-                        ...friendData,
-                        addedAt: docSnap.data().addedAt?.toDate?.() || new Date()
-                    });
-                }
-            }
+            const friendDocs = snapshot.docs.filter(item => item.id !== '_init');
+            const profilesById = await this.getUserProfiles(friendDocs.map(item => item.id));
+            const friends = friendDocs.flatMap(docSnap => {
+                const friendData = profilesById.get(docSnap.id);
+                return friendData ? [{
+                    uid: docSnap.id,
+                    ...friendData,
+                    addedAt: docSnap.data().addedAt?.toDate?.() || new Date()
+                }] : [];
+            });
             
             if (gate.isLatest(snapshotId)) this.deliverIfCurrent(key, token, callback, friends);
         }, (error) => {
@@ -159,20 +155,16 @@ export class RealtimeService {
         
         const unsubscribe = onSnapshot(requestsRef, async (snapshot) => {
             const snapshotId = gate.begin();
-            const requests = [];
-            
-            for (const docSnap of snapshot.docs) {
-                if (docSnap.id === '_init') continue;
-                
-                const userData = await this.getUserProfile(docSnap.id);
-                if (userData) {
-                    requests.push({
-                        uid: docSnap.id,
-                        ...userData,
-                        createdAt: docSnap.data().createdAt?.toDate?.() || new Date()
-                    });
-                }
-            }
+            const requestDocs = snapshot.docs.filter(item => item.id !== '_init');
+            const profilesById = await this.getUserProfiles(requestDocs.map(item => item.id));
+            const requests = requestDocs.flatMap(docSnap => {
+                const userData = profilesById.get(docSnap.id);
+                return userData ? [{
+                    uid: docSnap.id,
+                    ...userData,
+                    createdAt: docSnap.data().createdAt?.toDate?.() || new Date()
+                }] : [];
+            });
             
             if (gate.isLatest(snapshotId)) this.deliverIfCurrent(key, token, callback, requests);
         }, (error) => {
@@ -196,20 +188,16 @@ export class RealtimeService {
         
         const unsubscribe = onSnapshot(sentRef, async (snapshot) => {
             const snapshotId = gate.begin();
-            const sent = [];
-            
-            for (const docSnap of snapshot.docs) {
-                if (docSnap.id === '_init') continue;
-                
-                const userData = await this.getUserProfile(docSnap.id);
-                if (userData) {
-                    sent.push({
-                        uid: docSnap.id,
-                        ...userData,
-                        createdAt: docSnap.data().createdAt?.toDate?.() || new Date()
-                    });
-                }
-            }
+            const sentDocs = snapshot.docs.filter(item => item.id !== '_init');
+            const profilesById = await this.getUserProfiles(sentDocs.map(item => item.id));
+            const sent = sentDocs.flatMap(docSnap => {
+                const userData = profilesById.get(docSnap.id);
+                return userData ? [{
+                    uid: docSnap.id,
+                    ...userData,
+                    createdAt: docSnap.data().createdAt?.toDate?.() || new Date()
+                }] : [];
+            });
             
             if (gate.isLatest(snapshotId)) this.deliverIfCurrent(key, token, callback, sent);
         }, (error) => {
@@ -223,16 +211,21 @@ export class RealtimeService {
         };
     }
 
-    async getUserProfile(uid) {
+    async getUserProfiles(uids) {
+        const uniqueUids = [...new Set(uids.filter(isValidChatUid))];
+        if (uniqueUids.length === 0) return new Map();
         try {
-            const userDoc = await getDoc(doc(this.db, 'users', uid));
-            if (userDoc.exists()) {
-                return toPublicProfile(uid, userDoc.data());
-            }
-            return null;
+            const profiles = await getPublicProfilesByIds(uniqueUids);
+            return new Map(profiles.map(profile => [profile.uid, profile]));
         } catch (error) {
-            return null;
+            return new Map();
         }
+    }
+
+    async getUserProfile(uid) {
+        if (!isValidChatUid(uid)) return null;
+        const profiles = await this.getUserProfiles([uid]);
+        return profiles.get(uid) || null;
     }
 
     deliverIfCurrent(key, token, callback, ...values) {

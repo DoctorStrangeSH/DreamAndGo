@@ -473,3 +473,15 @@ Dream&Go — социальное пространство мечтаний, п�
 
 - [x] Extended the Firestore Emulator GitHub Actions workflow to run root unit tests and repository syntax checks before the Emulator suite; relevant code/test changes now trigger the PR workflow.
 - [ ] Confirm all three CI stages pass on the latest PR head.
+
+
+### Legacy migration manifest — 2026-11-21
+
+- [x] Added a versioned, fail-closed manifest validator for all five private collections.
+- [x] Require explicit per-field actions: keep, rename, drop (with data-loss approval), default, or documented manual review.
+- [x] Require manifest approval, backup reference, and verified rollback before a manifest can validate.
+- [x] Added offline manifest validation CLI and unapproved template.
+- [x] Added tests for missing collection coverage, unapproved manifests, unresolved manual review, destructive drops, missing rename targets/defaults, and inventory blockers.
+- [ ] Populate mappings only after reviewing real metadata-only inventory; no legacy aliases are guessed.
+- [ ] Implement a separate dry-run document planner only after mappings and source schema are approved.
+- [ ] Perform staging rehearsal and verify backup/rollback independently. No migration execution is implemented.

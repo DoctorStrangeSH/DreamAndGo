@@ -40,8 +40,6 @@ test('travel V1 rules enforce owner CRUD, schema allowlist and server timestamps
         await assertSucceeds(getDoc(own));
         await assertSucceeds(getDocs(collection(alice, 'users/alice/travels')));
         await assertSucceeds(updateDoc(own, { title: 'Обновлённая поездка', updatedAt: serverTimestamp() }));
-        await assertSucceeds(deleteDoc(own));
-
         const bobPath = doc(bob, 'users/alice/travels/trip-1');
         await assertFails(getDoc(bobPath));
         await assertFails(getDocs(collection(bob, 'users/alice/travels')));
@@ -77,9 +75,8 @@ test('travel V1 rules enforce owner CRUD, schema allowlist and server timestamps
         await assertFails(setDoc(doc(alice, 'users/alice/travels/forged-created'), {
             ...validTravel(), createdAt: new Date(0)
         }));
-        await assertFails(updateDoc(doc(alice, 'users/alice/travels/legacy'), {
-            title: 'Не должно создаться', updatedAt: serverTimestamp()
-        }));
+        await assertFails(updateDoc(own, { createdAt: serverTimestamp(), updatedAt: serverTimestamp() }));
+        await assertSucceeds(deleteDoc(own));
     } finally {
         await env.cleanup();
     }

@@ -493,3 +493,15 @@ No production rules or user data were changed. This inventory is source-derived 
 - Removed the stale `isPublic` requirement from the dream Rules fixture. New client writes do not contain this field.
 - Emulator tests now assert both `isPublic: true` and `isPublic: false` are rejected on create and update.
 - This remains an isolated recovery/test fixture, not production Rules. The other four personal collections remain write-denied in this fixture.
+
+
+### SEC-RULES-SCOPE-02 — current Emulator fixtures are not a complete V1.0 Rules candidate — 2026-11-21
+
+**Status: open release blocker.**
+
+- Re-inspected `tests/firebase-emulator/owner-read.rules` and its tests on candidate HEAD `2b938f4513400fc11fb2be3ec61690056c626f00`.
+- The fixture allows owner reads for selected private paths and has a narrowly validated dream create/update/delete path. Generic writes for travels, books, movies and restaurants remain explicitly denied; this is intentional recovery-mode behavior.
+- The separate notification fixture tests owner-only reads, immutable event fields, server-only create/delete and one-way owner read-state updates. It does not constitute the full application Rules set.
+- The access matrix and `FIRESTORE_V1_DATA_SCHEMAS.md` are the source contracts for a separate complete candidate. Implement schema-specific allowlists and immutable-field checks; do not enable broad owner writes or infer authorization from legacy `isPublic` fields.
+- Current HEAD has no reported combined status checks or workflow runs in GitHub. Prior successful CI/Emulator runs must not be attributed to this HEAD.
+- No production Rules, Firebase settings, Functions, or user data were changed.

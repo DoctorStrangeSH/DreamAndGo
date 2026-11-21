@@ -292,3 +292,9 @@
 - [ ] Complete Chat V2 client integration and server-owned chat index/message mutations; migrate legacy history with rollback.
 - [ ] Validate every direct Firestore client path against the final access matrix; remove legacy calls before allowing only required operations.
 - [ ] Pass guest/A/B/C Emulator tests and two-account staging before changing production deny-all Rules.
+
+
+### Firebase Web App config verification — 2026-11-21
+
+- [ ] Confirm exact Web App ID from Firebase Console; screenshot and repository differ by one character. Do not edit configuration until verified.
+- [x] Confirmed both main and candidate currently contain the same repository App ID.

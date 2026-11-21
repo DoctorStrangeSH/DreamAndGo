@@ -8,6 +8,7 @@
     "plan:legacy-chat": "node scripts/plan-legacy-chats.mjs",
     "verify:chat-copy": "node scripts/verify-chat-copy.mjs",
     "check": "node scripts/check-syntax.mjs",
-    "audit:legacy-collections": "node scripts/audit-legacy-collections.mjs"
+    "audit:legacy-collections": "node scripts/audit-legacy-collections.mjs",
+    "validate:legacy-migration": "node scripts/validate-legacy-migration-manifest.mjs"
   }
 }

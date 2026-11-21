@@ -173,6 +173,6 @@ export function normalizeLegacyDocument({ collection, document, manifest }) {
         valid: errors.length === 0,
         normalized: errors.length === 0 ? output : null,
         errors: [...new Set(errors)],
-        metadata: { collection, fields: Object.keys(output).sort(), valuesIncluded: false, idsIncluded: false }
+        metadata: { collection, fields: Object.keys(output).sort(), normalizedValuesReturned: true, documentIdIncluded: false }
     };
 }

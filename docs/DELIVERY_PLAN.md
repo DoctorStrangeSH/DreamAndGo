@@ -298,3 +298,12 @@
 
 - [ ] Confirm exact Web App ID from Firebase Console; screenshot and repository differ by one character. Do not edit configuration until verified.
 - [x] Confirmed both main and candidate currently contain the same repository App ID.
+
+
+### Private collection visibility flag removal — 2026-11-21
+
+- [x] Removed automatic `isPublic` writes from create operations in dreams, travels, books and restaurants. Movies already did not write it.
+- [x] Added regression test `tests/private-collection-visibility.test.js` covering all five private collection services.
+- [x] Preserved existing user documents; no migration or production data mutation performed.
+- [x] Updated `FIRESTORE_ACCESS_MATRIX.md` and `FIRESTORE_V1_DATA_SCHEMAS.md` to distinguish historical fields from new V1.0 writes.
+- [ ] Run candidate CI and review complete legacy schema before designing production Rules.

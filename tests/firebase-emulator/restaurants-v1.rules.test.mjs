@@ -71,6 +71,12 @@ test('restaurant V1 rules enforce owner CRUD, schema allowlist and timestamps', 
         await assertFails(setDoc(doc(alice, 'users/alice/restaurants/invalid-date'), {
             ...validRestaurant(), visitDate: '2026-13-45'
         }));
+        await assertFails(setDoc(doc(alice, 'users/alice/restaurants/impossible-date'), {
+            ...validRestaurant(), visitDate: '2026-02-30'
+        }));
+        await assertSucceeds(setDoc(doc(alice, 'users/alice/restaurants/leap-day'), {
+            ...validRestaurant(), visitDate: '2028-02-29'
+        }));
         await assertFails(setDoc(doc(alice, 'users/alice/restaurants/invalid-bill'), {
             ...validRestaurant(), avgBill: -1
         }));

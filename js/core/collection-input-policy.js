@@ -160,6 +160,11 @@ export function validateMovieInput(raw, { partial = false } = {}) {
             case 'overview': out.overview = string(input.overview, key, 5000); break;
             case 'poster':
             case 'backdrop': {
+                // TMDB legitimately omits artwork for some titles.
+                if (input[key] === null) {
+                    out[key] = null;
+                    break;
+                }
                 const url = string(input[key], key, 2048);
                 if (url) {
                     let parsed;
@@ -191,7 +196,11 @@ export function validateMovieInput(raw, { partial = false } = {}) {
                 out.productionCountries = input.productionCountries.map(country => {
                     record(country, new Set(['iso_3166_1', 'name']), 'страна производства');
                     return {
-                        iso_3166_1: string(country.iso_3166_1, 'iso_3166_1', 2, { required: true, allowEmpty: false }),
+                        iso_3166_1: (() => {
+                            const code = string(country.iso_3166_1, 'iso_3166_1', 2, { required: true, allowEmpty: false });
+                            if (!/^[A-Z]{2}$/.test(code)) throw new TypeError('Некорректный код страны');
+                            return code;
+                        })(),
                         name: string(country.name, 'country.name', 80, { required: true, allowEmpty: false })
                     };
                 });

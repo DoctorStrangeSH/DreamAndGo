@@ -97,3 +97,64 @@ test('confirmed send reopens newest history and invalidates older pagination', a
     assert.deepEqual(h.snapshots.at(-1).messages.map(row => row.sequence), [2, 3]);
     h.conversation.dispose();
 });
+
+
+test('pilot wires only visible unread incoming messages to one managed receipt tracker', async () => {
+    const observed = new Set();
+    const unobserved = [];
+    let stopped = 0;
+    let trackerOptions;
+    let latestMessages = [];
+    const listRoot = { contains: element => observed.has(element) || element.connected === true };
+    const view = {
+        mount() {},
+        setHistoryState(state) {
+            latestMessages = state.messages;
+            this.items = state.messages
+                .filter(row => row.senderId !== 'alice' && row.read !== true)
+                .map(row => ({ element: { connected: true }, message: row }));
+        },
+        getMessageListElement: () => listRoot,
+        getIncomingMessageElements() { return this.items || []; },
+        destroy() {}
+    };
+    const session = {
+        userId: 'alice',
+        getUserId: () => 'alice',
+        watchIncoming(options) {
+            trackerOptions = options;
+            return {
+                observe(element, row) {
+                    observed.add(element);
+                    return row.senderId !== 'alice' && row.read !== true;
+                },
+                unobserve(element) { observed.delete(element); unobserved.push(element); },
+                stop() { stopped++; }
+            };
+        },
+        stopWatchingIncoming(tracker) { tracker.stop(); return true; }
+    };
+    const pages = [
+        { chatId: 'chat-a', messages: [message(2), message(1)], hasMore: false, nextBeforeSequence: null },
+        { chatId: 'chat-a', messages: [message(4), message(3)], hasMore: false, nextBeforeSequence: null }
+    ];
+    const conversation = new ChatV2PilotConversation({
+        root: {}, session, chatId: 'chat-a', lookup: async () => pages.shift(),
+        viewFactory: () => view,
+        observerFactory: () => ({}),
+        documentRef: { visibilityState: 'visible' }
+    });
+    await conversation.mount();
+    assert.equal(typeof trackerOptions.isActive, 'function');
+    assert.equal(trackerOptions.chatId, 'chat-a');
+    assert.equal(trackerOptions.root, listRoot);
+    assert.equal(observed.size, 1);
+    const oldElement = [...observed][0];
+    await conversation.refreshLatest();
+    assert.equal(observed.size, 1);
+    assert.ok(unobserved.includes(oldElement));
+    assert.equal(latestMessages.length, 2);
+    conversation.dispose();
+    assert.equal(stopped, 1);
+    assert.equal(observed.size, 0);
+});

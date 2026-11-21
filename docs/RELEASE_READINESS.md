@@ -623,3 +623,6 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 
 - [x] Added an Emulator integration test connecting actual client validators/create payload shapes to all five V1 Rules matchers.
 - [ ] Verify client-to-Rules contract suite passes in CI.
+
+- [x] Client-to-Rules integration contract covers create, representative partial update, immutable `createdAt`, and owner delete for all five private collections.
+- [ ] Confirm expanded lifecycle contract and full Emulator suite pass in CI.

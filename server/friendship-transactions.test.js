@@ -51,7 +51,8 @@ const paths = {
     ownFriend: 'users/alice/friends/bob',
     targetFriend: 'users/bob/friends/alice',
     requestNotification: 'users/bob/notifications/friend_request_alice',
-    acceptedNotification: 'users/alice/notifications/friend_accepted_bob'
+    acceptedNotification: 'users/alice/notifications/friend_accepted_bob',
+    incomingRequestNotification: 'users/bob/notifications/friend_request_alice'
 };
 const request = { from: 'alice', to: 'bob', status: 'pending', createdAt: 'CREATED' };
 
@@ -91,12 +92,17 @@ test('accept validates the recipient-owned pending request and creates symmetric
     const outgoingPath = 'users/alice/sentRequests/bob';
     const incoming = { ...request, from: 'alice', to: 'bob' };
     const outgoing = { ...request };
-    const state = fixture({ [incomingPath]: incoming, [outgoingPath]: outgoing });
+    const state = fixture({
+        [incomingPath]: incoming,
+        [outgoingPath]: outgoing,
+        [paths.incomingRequestNotification]: { type: 'friend_request', read: false }
+    });
     assert.deepEqual(await mutateFriendship(state.db, 'bob', 'alice', 'accept', timestamp), { ok: true, action: 'accept' });
     assert.equal(state.docs.get('users/bob/friends/alice').friendId, 'alice');
     assert.equal(state.docs.get('users/alice/friends/bob').friendId, 'bob');
     assert.equal(state.docs.has(incomingPath), false);
     assert.equal(state.docs.has(outgoingPath), false);
+    assert.equal(state.docs.has(paths.incomingRequestNotification), false);
     assert.equal(state.writes.filter(x => x.type === 'create').length, 2);
     assert.deepEqual(state.docs.get(paths.acceptedNotification), {
         type: 'friend_accepted',
@@ -112,22 +118,26 @@ test('reject removes only a validated incoming request and its matching sent ind
     const outgoingPath = 'users/alice/sentRequests/bob';
     const state = fixture({
         [incomingPath]: { ...request, from: 'alice', to: 'bob' },
-        [outgoingPath]: request
+        [outgoingPath]: request,
+        [paths.incomingRequestNotification]: { type: 'friend_request', read: false }
     });
     assert.deepEqual(await mutateFriendship(state.db, 'bob', 'alice', 'reject', timestamp), { ok: true, action: 'reject' });
     assert.equal(state.docs.has(incomingPath), false);
     assert.equal(state.docs.has(outgoingPath), false);
-    assert.equal(state.writes.length, 2);
+    assert.equal(state.docs.has(paths.incomingRequestNotification), false);
+    assert.equal(state.writes.length, 3);
 });
 
 test('sender can cancel their own outgoing request', async () => {
     const state = fixture({
         [paths.outgoing]: request,
-        [paths.incoming]: { ...request, from: 'alice', to: 'bob' }
+        [paths.incoming]: { ...request, from: 'alice', to: 'bob' },
+        [paths.requestNotification]: { type: 'friend_request', read: false }
     });
     assert.deepEqual(await mutateFriendship(state.db, 'alice', 'bob', 'cancel', timestamp), { ok: true, action: 'cancel' });
     assert.equal(state.docs.has(paths.incoming), false);
     assert.equal(state.docs.has(paths.outgoing), false);
+    assert.equal(state.docs.has(paths.requestNotification), false);
 });
 
 test('remove deletes only a verified symmetric friendship', async () => {

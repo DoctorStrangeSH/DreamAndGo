@@ -356,7 +356,7 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [x] Audited direct browser CRUD operations for dreams, travels, books, movies and restaurants.
 - [x] Added per-collection field allowlists, nested schema constraints and metadata ownership to docs/FIRESTORE_ACCESS_MATRIX.md.
 - [x] Added validator regressions rejecting client-supplied isPublic, createdAt and updatedAt for all five personal collection types.
-- [ ] Confirm Root Checks on the latest candidate HEAD.
+- [x] Root Checks passed on code HEAD `ade226b5e260171ceb81cabdb84a19f3ad6b8818`: 464/464 tests, 0 failures; syntax validation passed for all 255 JavaScript files ([run 44896155937](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44896155937)). Subsequent commits in this sequence only updated documentation.
 - [ ] Export and review active production Firestore Rules and indexes; do not deploy the isolated test fixtures or a guessed replacement.
 - [ ] Add the full owner/guest/cross-user Emulator Rules suite for all five personal collections against the reviewed complete Rules configuration.
 - [ ] Verify legacy isPublic data semantics and confirm that no personal subcollection is made public by this metadata. Until a reviewed public projection exists, all five collections remain owner-only.

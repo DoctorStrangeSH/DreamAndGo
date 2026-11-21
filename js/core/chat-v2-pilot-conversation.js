@@ -15,13 +15,15 @@ export class ChatV2PilotConversation {
         this.view = null;
         this.readTracker = null;
         this.observedIncomingElements = new Set();
+        this.currentHistoryState = null;
         this.documentRef = documentRef ?? root?.ownerDocument;
         this.observerFactory = observerFactory;
         this.isActive = isActive;
         this.history = new ChatV2HistoryController(historyLookup, snapshot => {
             if (this.disposed) return;
-            this.view?.setHistoryState(snapshot);
-            this._syncReadObservers();
+            this.currentHistoryState = snapshot;
+            this._renderCurrentHistoryState();
+            void this._refreshOutgoingReadStatuses(snapshot.messages);
         }, limit);
         const createView = viewFactory || (options => new ChatV2PilotView(options));
         this.view = createView({
@@ -47,6 +49,46 @@ export class ChatV2PilotConversation {
         const result = await this.history.open(this.chatId);
         if (!this.disposed) this.autoRefresh.start();
         return result;
+    }
+
+    _renderCurrentHistoryState() {
+        if (this.disposed || !this.currentHistoryState) return;
+        const deliveryStates = this.session?.delivery?.messages;
+        const byServerMessageId = new Map();
+        if (deliveryStates instanceof Map) {
+            for (const state of deliveryStates.values()) {
+                if (state?.messageId && typeof state.deliveryStatus === 'string') {
+                    byServerMessageId.set(state.messageId, state.deliveryStatus);
+                }
+            }
+        }
+        const messages = this.currentHistoryState.messages.map(message => {
+            const deliveryStatus = byServerMessageId.get(message.id);
+            return deliveryStatus ? { ...message, deliveryStatus } : message;
+        });
+        this.view?.setHistoryState({ ...this.currentHistoryState, messages });
+        this._syncReadObservers();
+    }
+
+    async _refreshOutgoingReadStatuses(messages) {
+        if (this.disposed || typeof this.session?.refreshRead !== 'function') return;
+        const states = this.session?.delivery?.messages;
+        if (!(states instanceof Map)) return;
+        const pending = [];
+        for (const message of messages) {
+            if (message.senderId !== this.session.userId) continue;
+            for (const [clientMessageId, state] of states) {
+                if (state?.messageId === message.id && state.deliveryStatus === 'sent') {
+                    pending.push(clientMessageId);
+                    break;
+                }
+            }
+        }
+        if (!pending.length) return;
+        const results = await Promise.all(pending.map(id => this.session.refreshRead(id)));
+        if (!this.disposed && results.some(result => result?.status === 'read')) {
+            this._renderCurrentHistoryState();
+        }
     }
 
     _syncReadObservers() {
@@ -103,6 +145,7 @@ export class ChatV2PilotConversation {
         this.disposed = true;
         this.autoRefresh.stop();
         this.history.clear();
+        this.currentHistoryState = null;
         if (this.readTracker) {
             if (typeof this.session?.stopWatchingIncoming === 'function') {
                 this.session.stopWatchingIncoming(this.readTracker);

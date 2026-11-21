@@ -169,8 +169,8 @@
 - [x] Added active-UID guards to notification subscription and read-state mutation methods.
 - [x] Added regression tests for the removed write surface, owner binding and document ID validation.
 - [x] Implement server-generated notifications for friend request/acceptance and newly awarded achievements; retain no generic client-selected recipient endpoint.
-- [ ] Implement server-generated message notifications after the authoritative message event contract is finalized.
-- [ ] Define and test notification Firestore Rules against the approved V1.0 access matrix.
+- [x] Implement server-generated message notifications in the candidate private-message transaction with idempotent message-based IDs.
+- [x] Add isolated notification Rules Emulator tests for owner-only reads and read-state-only updates. Production Rules integration remains blocked on the complete Rules configuration.
 - [ ] Verify notification delivery/read-state in staging with two accounts and App Check.
 - **Exit condition not met:** notification creation is contained on the candidate client, but the end-to-end V1.0 notification requirement is not accepted yet.
 
@@ -181,7 +181,7 @@
 - [x] Friend acceptance notification is written to the original sender's own notification collection in the same transaction as relationship acceptance.
 - [x] Fixed payload schema and deterministic event document IDs are covered by transaction tests.
 - [x] Add trusted achievement notifications in the server stats transaction and trusted message notifications in the private-message transaction; no client-selected notification payload is accepted.
-- [ ] Add notification Rules Emulator tests for guest, cross-user and owner read-state cases.
+- [x] Add notification Rules Emulator tests for guest, cross-user and owner read-state cases (7/7 Rules tests passed; run 44893915020).
 - [ ] Validate friend, achievement and message notifications in staging with two accounts and App Check.
 - **Exit condition not met:** all three event sources are implemented in candidate code; authorization and staging remain release gates.
 
@@ -192,7 +192,8 @@
 - [x] Keep acceptance notice creation in the same transaction as symmetric friendship creation.
 - [x] Add regression assertions for request-notice cleanup on all three resolution paths.
 - [ ] Verify root test/check workflows on exact candidate HEAD; no successful CI result is recorded yet.
-- [ ] Verify owner-only notification Rules and two-account staging behavior.
+- [x] Verify owner-only notification Rules in the isolated Emulator fixture (7/7 Rules tests passed; run 44893915020).
+- [ ] Verify two-account staging behavior with App Check.
 
 
 ### Achievement notification delivery — 2026-11-21
@@ -202,7 +203,8 @@
 - [x] Use stable achievement/level document IDs and a fixed payload; add Emulator regression coverage for payload and repeat refresh.
 - [x] Root Checks passed: 461/461 tests and syntax validation for 253 JavaScript files on implementation HEAD `d311e26065e01d5044e73f049c4629988dd5cf9b` (run 44893286852); latest docs-only HEAD also passed Checks (run 44893346213).
 - [x] Firebase Emulator passed 6/6 Firestore Rules tests and 59/59 server/Auth/Firestore emulator tests on the same implementation HEAD (run 44893286823). Existing Rules coverage is not notification-specific.
-- [ ] Add notification-specific Rules read/update tests and verify two-account staging behavior.
+- [x] Add and pass notification-specific Rules read/update tests (7/7 Rules tests passed; run 44893915020).
+- [ ] Verify two-account staging behavior with App Check.
 - **Exit condition not met:** achievement notification writes are implemented, but full notification Rules and end-to-end staging acceptance remain release gates.
 
 
@@ -215,3 +217,12 @@
 - [x] Add isolated notification Rules Emulator tests: owner read, guest/cross-user denial, client create/delete denial, and one-way owner read-state update with immutable event fields. This fixture is not deployable production Rules.
 - [ ] Integrate the notification access contract into the complete production Rules candidate and validate delivery/read-state in staging with two accounts and App Check.
 - **Exit condition not met:** message event generation is implemented in candidate code, but Rules and staging acceptance remain release gates.
+
+
+### Notification milestone verification — 2026-11-21
+
+- [x] Root Checks passed on candidate HEAD `05961cb3bcec5f6fbe6b70e84f2b261c700e9237`: 461/461 tests, 0 failures; syntax checks passed for 254 JavaScript files ([run 44893947666](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44893947666)).
+- [x] Firebase Emulator workflow passed: 7/7 isolated Firestore Rules tests and 59/59 server/Auth/Firestore Emulator tests ([run 44893915020](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44893915020)).
+- [ ] Obtain/review the active production Firestore Rules and integrate the approved notification contract into the complete production Rules configuration. The candidate branch has no root `firestore.rules` or `firebase.json`; isolated fixtures are test-only.
+- [ ] Validate friend, achievement and message notifications across two staging accounts with App Check.
+- **Exit condition:** candidate event generation and isolated Rules coverage are tested; production authorization and staging acceptance are still open.

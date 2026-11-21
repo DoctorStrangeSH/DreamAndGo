@@ -457,3 +457,10 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [ ] Migrate registration and chat writes to trusted server-side flows before opening the minimum required client Rules.
 - [ ] Complete full Emulator and two-account staging coverage before any production Rules change.
 - **Release decision: HOLD.** Do not replace deny-all with broad authenticated-user access.
+
+### Firebase project identity — 2026-11-21
+
+- [x] Recorded owner-provided Project ID `dream-and-go`, project number `185825350373`, and Web App ID from Firebase Console screenshot.
+- [ ] Confirm whether the app uses the default Firestore database or a named database.
+- [ ] Obtain timestamped export of the published deny-all Rules for rollback.
+- [ ] Keep all production Rules changes blocked until Emulator and two-account staging pass.

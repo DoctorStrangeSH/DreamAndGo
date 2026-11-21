@@ -240,3 +240,12 @@
 - [x] Guard the milestone map against inherited object keys and malformed achievement IDs.
 - [x] Add regression tests for `constructor`, `__proto__`, and null input.
 - [x] Root Checks passed on the implementation commits: 470/470 tests, 0 failures; syntax validation passed for all 258 JavaScript files. See [implementation check](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44897935694) and [milestone-map check](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44897933324).
+
+### Firebase authorization boundary inventory — 2026-11-21
+
+- [x] Enumerate all 17 exported callable functions; all require `enforceAppCheck: true`.
+- [x] Verify the App Check invariant is protected by `server/callable-app-check.test.js`.
+- [x] Confirm neither `main` nor the candidate branch contains deployable root Firestore Rules or Firebase config.
+- [ ] Obtain read-only export of the active Firebase project's Rules/config and compare it with `FIRESTORE_ACCESS_MATRIX.md`.
+- [ ] Run two-account authorization tests against the complete candidate Rules and verify App Check on deployed endpoints.
+- [ ] Approve backup, rollback and manual production deployment only after staging acceptance.

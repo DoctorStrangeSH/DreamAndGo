@@ -239,3 +239,6 @@ npm run validate:legacy-migration -- docs/examples/legacy-migration-manifest.tem
 The template is intentionally unapproved and has empty field mappings, so validation must fail closed. A reviewed manifest must cover all five private collections and explicitly classify each observed legacy field as `keep`, `rename`, `drop`, `default`, or `manual_review`. Drops require data-loss approval; renames require a target field; defaults require an explicit value; manual-review items require a documented resolution. Approval, a backup reference, and verified rollback are mandatory.
 
 A valid manifest is not permission to migrate production. The readiness assessor still requires a clean sanitized inventory, independent staging rehearsal, and production backup verification. This code validates planning metadata only; it does not read, transform, or write Firestore documents.
+
+
+The source schema identifier must name a reviewed/identified legacy schema version; placeholders such as `legacy-unknown` are rejected. Every status-map target is validated against the V1 enum for its collection. The committed template intentionally fails until a real source schema and reviewed mappings are supplied.

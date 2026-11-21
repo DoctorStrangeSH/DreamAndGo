@@ -618,3 +618,5 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 
 - [x] Added dedicated GitHub Actions workflow for repeatable Firestore Rules Emulator execution.
 - [ ] First CI run must pass before Rules candidate can leave HOLD.
+
+- [x] Assigned unique Emulator project IDs to parallel Rules suites to prevent cross-test data and Rules collisions.

@@ -756,3 +756,10 @@ The auditor cannot prove database persistence, Firestore document-ID uniqueness,
 The V1 Rules fixture previously relied on date-shaped regular expressions for dream deadlines, movie release dates and restaurant visit dates. Those expressions could accept impossible calendar values such as February 30. Added a shared Gregorian calendar validator with leap-year handling and applied it to all three fields. Empty dream deadlines and empty movie/restaurant date strings remain compatible with their documented optional-field contracts; restaurant `null` remains valid.
 
 Emulator regression cases now reject impossible dates and accept a valid leap day. These are candidate Rules tests only. The fixture is not production Rules and has not been deployed. The production deny-all baseline remains unchanged.
+
+
+### SEC-RULES-UNIQUE-01 — duplicate values accepted by Rules candidate — 2026-11-21
+
+**Status:** corrected in the isolated Emulator candidate; execution evidence pending.
+
+The client validators and V1 normalizer require unique book genres, book quotes, movie genre IDs and restaurant favorite dishes. The Rules candidate previously checked allowed values and list bounds but did not independently enforce uniqueness. Added set-cardinality checks to the relevant list validators and negative Emulator cases for duplicate values. This remains test-only candidate Rules and has not been deployed.

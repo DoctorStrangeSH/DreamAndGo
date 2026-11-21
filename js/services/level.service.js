@@ -1,4 +1,5 @@
-import { db } from '../config/firebase.js';
+import { auth, db } from '../config/firebase.js';
+import { isAuthenticatedOwner } from '../core/owner-access-policy.js';
 import { getLevelFromXP, normalizeXP } from '../core/level-policy.js';
 import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
@@ -32,8 +33,14 @@ export class LevelService {
     }
 
     async getUserLevel(userId) {
+        if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid)) {
+            return { level: 1, xp: 0, progress: 0 };
+        }
         try {
             const userDoc = await getDoc(doc(this.db, 'users', userId));
+            if (!isAuthenticatedOwner(userId, auth?.currentUser?.uid)) {
+                return { level: 1, xp: 0, progress: 0 };
+            }
             if (!userDoc.exists()) return { level: 1, xp: 0, progress: 0 };
             
             const xp = normalizeXP(userDoc.data().stats?.xp ?? 0);

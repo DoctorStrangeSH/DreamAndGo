@@ -323,3 +323,12 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Follow-up review caught and fixed a missing `validateBookInput` import after the partial-update validator was introduced; without it, adding a book would fail at runtime.
 - [x] Added `tests/book-service-validator-wiring.test.js` to assert that both create/update validators are imported and called by `BookService`.
 - [ ] Run root CI on the exact resulting HEAD; GitHub has not reported checks for the latest candidate commits.
+
+
+### Atomic book page-bound validation — 2026-11-21
+
+- [x] Upgraded the book partial-update consistency check from a separate read/write pair to a Firestore transaction.
+- [x] The transaction reads the existing book, validates the merged `currentPage`/`totalPages` invariant and writes the allowlisted update atomically.
+- [x] Extended the BookService wiring regression test to require transactional read/validate/write call sites.
+- [ ] Execute root test suite and Emulator workflows on the exact latest HEAD; no CI result is assumed until GitHub reports it.
+- [ ] Mirror the same invariant in authoritative Firestore Rules; client transaction validation remains defense in depth, not authorization.

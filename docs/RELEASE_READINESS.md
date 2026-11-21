@@ -339,3 +339,11 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [x] Root Checks passed on implementation HEAD `1b7122d747b2bac336312e1caf925c5c4b3039c5`: 462/462 tests, 0 failures; syntax checks passed for all 255 JavaScript files ([run 44894482895](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44894482895)).
 - [ ] Confirm the Firebase Emulator workflow on the same implementation HEAD and verify token enforcement against the deployed Firebase project in staging. Candidate source changes do not update already deployed Functions.
 - [ ] Keep the existing HOLD decision until the complete production Rules and staging gates above are satisfied.
+
+
+### Production Rules source inventory — 2026-11-21
+
+- [x] Verified the root of both `main` and `refactor/security-foundation`: neither contains deployable `firestore.rules` or `firebase.json` files.
+- [x] Verified `tests/firebase-emulator/firebase.json` references only the isolated `chat.rules` fixture. The notification and owner-read fixtures are separate test-only rule sets, not complete application Rules.
+- [ ] Export the active Firestore Rules and Firebase configuration from the authorized Firebase project in read-only mode. Repository inspection alone cannot reveal the live deployed Rules or App Check enforcement state.
+- **Safety:** do not create or deploy a guessed root Rules file. First reconcile the live export with `docs/FIRESTORE_ACCESS_MATRIX.md` and the actual deployed indexes/Functions.

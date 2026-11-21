@@ -233,4 +233,4 @@
 - [x] Audited profile own-collection cards and summary counts; user-authored text is escaped and counters use the bounded `getHomeSnapshot` projection.
 - [x] Audited dream status label rendering; switched to own-key lookup so inherited object properties cannot be rendered as labels.
 - [x] Added a regression test for unknown/prototype-key dream statuses.
-- [ ] Verify Root Checks on the exact candidate head.
+- [x] Root Checks passed on final candidate HEAD `bfa96394231e0c52c720cc3d7ba2f01cb1235600`: 470/470 tests, 0 failures; syntax validation passed for all 258 JavaScript files ([run 44897710078](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44897710078)).

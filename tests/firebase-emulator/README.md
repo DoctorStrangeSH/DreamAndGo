@@ -49,3 +49,11 @@ npx firebase-tools emulators:exec --project demo-dreamandgo-chat-rules --only fi
 - `collections-v1.rules.test.mjs` covers owner create/read/list/update/delete, guest and second-account isolation, unknown fields, invalid nested budget maps/currency/ranges, rating bounds, HTTPS photo URLs/list limits and server timestamp enforcement.
 - The test is included in the Emulator package script.
 - **Important:** this is a staged candidate for the travel collection only, not a complete V1.0 Rules file and not production configuration. Books, movies and restaurants remain write-denied by the generic fallback. Do not deploy or copy this fixture to Firebase Console.
+
+
+## Isolated V1 books Rules candidate
+
+- The same `collections-v1.rules` fixture now includes an explicit owner CRUD matcher for `users/{uid}/books/{bookId}`.
+- The candidate enforces the book field allowlist, required title/author/status/notes/timestamps, status and genre allowlists, year/page/rating bounds, `currentPage <= totalPages`, review/quote limits and immutable/server timestamps.
+- `books-v1.rules.test.mjs` covers owner CRUD, guest and second-account isolation, unknown fields, invalid enums/genres, page overflow, numeric bounds, quote bounds and timestamp forgery.
+- The test is included in the Emulator package script. This remains a test-only staged candidate, not production Rules.

@@ -188,3 +188,12 @@ The candidate `refreshUserStatsV2` server flow writes a fixed-schema achievement
 ### Trusted private-message notification event
 
 The candidate `sendPrivateMessageV2` server transaction writes a fixed-schema `message` notification to the other validated chat participant's own notification subcollection in the same transaction as the message and unread counter. The preview is bounded to 120 characters. Stable IDs are keyed by the server message document ID, so retries do not duplicate notices. Client notification creation remains prohibited. Dedicated owner-read/read-state Rules tests and staging validation are still required; the separate recovery Rules prototype remains read-only and is not the production Rules contract.
+
+
+## Notification access verification — 2026-11-21
+
+- [x] The isolated fixture `tests/firebase-emulator/notifications.rules` permits only owner reads, denies guest/cross-user access, denies client create/delete, and allows the owner to change only `read` from false to true.
+- [x] Regression workflow passed: 7/7 isolated Firestore Rules tests and 59/59 server/Auth/Firestore Emulator tests ([run 44893915020](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44893915020)).
+- [x] Root Checks passed on candidate HEAD `05961cb3bcec5f6fbe6b70e84f2b261c700e9237`: 461/461 tests and syntax checks for 254 JavaScript files ([run 44893947666](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44893947666)).
+- [ ] Review the actual active production Rules and integrate this notification contract into the complete production Rules configuration. The candidate branch currently has no root `firestore.rules` or `firebase.json`; isolated fixture files are not deployable Rules.
+- [ ] Run two-account staging validation with App Check before any production rollout.

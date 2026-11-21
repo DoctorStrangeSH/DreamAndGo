@@ -33,11 +33,15 @@ test('dry-run is read-only and apply creates only missing reservations without o
     assert.equal((await db.collection(collections.reservationsCollection).doc('backfill_bob').get()).exists, false);
 
     await assert.rejects(
-        runBackfill({ apply: true, registrationFrozen: false, serverTimestamp: timestamp }),
-        /frozen registration window/
+        runBackfill({ apply: true, registrationFrozen: false, backupVerified: true, serverTimestamp: timestamp }),
+        /verified backup, frozen registration window/
+    );
+    await assert.rejects(
+        runBackfill({ apply: true, registrationFrozen: true, serverTimestamp: timestamp }),
+        /verified backup, frozen registration window/
     );
     const applied = await runBackfill({
-        apply: true, registrationFrozen: true, serverTimestamp: timestamp
+        apply: true, registrationFrozen: true, backupVerified: true, serverTimestamp: timestamp
     });
     assert.equal(applied.safe, true);
     assert.equal(applied.created, 1);
@@ -47,7 +51,7 @@ test('dry-run is read-only and apply creates only missing reservations without o
     assert.equal((await control.get()).get('ready'), false);
 
     const repeated = await runBackfill({
-        apply: true, registrationFrozen: true, serverTimestamp: timestamp
+        apply: true, registrationFrozen: true, backupVerified: true, serverTimestamp: timestamp
     });
     assert.equal(repeated.missingReservations, 0);
     assert.equal(repeated.created, 0);
@@ -62,7 +66,7 @@ test('case-insensitive legacy collisions block every write and keep registry clo
     await db.collection(collections.usersCollection).doc('backfill-collision-b').set({ username: 'collision_name' });
 
     const result = await runBackfill({
-        apply: true, registrationFrozen: true, serverTimestamp: timestamp
+        apply: true, registrationFrozen: true, backupVerified: true, serverTimestamp: timestamp
     });
     assert.equal(result.safe, false);
     assert.equal(result.reason, 'preflight-blocked');
@@ -77,7 +81,7 @@ test('active registry prevents a backfill from running', async () => {
     });
     await assert.rejects(
         runBackfill({
-            apply: true, registrationFrozen: true, serverTimestamp: timestamp
+            apply: true, registrationFrozen: true, backupVerified: true, serverTimestamp: timestamp
         }),
         /already active/
     );

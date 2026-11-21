@@ -95,6 +95,20 @@ export class ChatV2PilotView {
         panel.replaceChildren(...template.content.querySelector('.chat-v2-pilot__messages').childNodes);
     }
 
+    getMessageListElement() {
+        return this.root.querySelector('.chat-v2-pilot__messages');
+    }
+
+    getIncomingMessageElements() {
+        const list = this.getMessageListElement();
+        if (!list) return [];
+        return Array.from(list.querySelectorAll('[data-v2-incoming-id]')).map(element => ({
+            element,
+            messageId: element.getAttribute('data-v2-incoming-id'),
+            message: this.messages.find(item => item.id === element.getAttribute('data-v2-incoming-id')) || null
+        })).filter(item => item.message);
+    }
+
     setHistoryState(state) {
         if (this.destroyed) return;
         if (!state || state.chatId !== this.chatId || !Array.isArray(state.messages)) return;

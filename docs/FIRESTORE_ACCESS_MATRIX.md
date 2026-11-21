@@ -108,7 +108,7 @@
 
 ## 6. Открытые решения / релизные блокеры
 
-- [x] Получен от владельца текст текущих Firestore Rules: deny-all для всех путей и операций. Публикация именно в активном проекте ещё не проверена напрямую; перед подготовкой замены нужно подтвердить проект/базу.
+- [x] Владелец подтвердил, что предоставленный deny-all ruleset опубликован в Firebase Console. Все Firestore read/write запрещены. До проектирования замены нужно зафиксировать project ID, database ID и timestamped export.
 - [ ] Утвердить, сохраняется ли публичная мечта в V1.0 и через какую проекцию она доступна.
 - [x] Зафиксировать серверное создание friend-request/friend-accepted, achievement и private-message notifications с фиксированным payload в доверенных серверных транзакциях. Notification Rules/staging проверки остаются открытыми.
 - [x] Перевести friendship writes на `mutateFriendshipV2`: Auth UID, App Check, проверка получателя и атомарная транзакция для обеих сторон; браузерные записи удалены из `FriendsService`.
@@ -258,7 +258,7 @@ SearchService and LevelService perform only current-account reads. The client no
 
 ### Owner-provided current Firestore Rules — 2026-11-21
 
-The owner supplied the current rules text. It contains a recursive match with `allow read, write: if false`, so every client read/write is denied for both guests and authenticated users. Treat this as the current owner-reported configuration, not an independently verified deployed snapshot. Preserve it as the fail-closed rollback reference; do not replace it until the active project/database is confirmed and the complete least-privilege Rules candidate passes Emulator and two-account staging tests.
+The owner explicitly confirmed that this exact recursive deny-all ruleset is published in Firebase Console. Every Firestore read/write is denied for guests and authenticated users. The active project/database identity and timestamped export still need to be recorded. Preserve the deny-all rules as the rollback baseline; do not replace them until the full least-privilege candidate passes Emulator and two-account staging tests.
 
 ### V1.0 Storage scope
 

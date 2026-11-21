@@ -483,3 +483,13 @@ No production rules or user data were changed. This inventory is source-derived 
 - The project ID and sender/project number match. The app ID differs at one character (`c` in the screenshot vs `e` in repository config).
 - This must be resolved from the Firebase Console's Web App configuration (or the app's Firebase SDK config snippet) before changing config or relying on App Check verification. Do not infer which value is correct from the screenshot transcription.
 - No Firebase config, App Check key, Auth settings, or production deployment was changed as part of this audit.
+
+
+### SEC-PRIVATE-VISIBILITY-01 — remove ambiguous public flags from new private records — 2026-11-21
+
+- Removed automatic `isPublic` writes from create operations in `dreams`, `travels`, `books`, and `restaurants`; `movies` already did not write the flag.
+- Added `tests/private-collection-visibility.test.js` to prevent future writes of `isPublic` in any of the five private collection services.
+- Existing legacy documents are untouched. Historical values are not authorization and must not grant public reads.
+- Updated the access matrix, V1.0 data schema and delivery plan.
+- CI: 471/471 tests passed, 0 failures; syntax checks passed for 259 JavaScript files ([run 44901620982](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44901620982)).
+- No production Rules, Firebase configuration, or user data were changed.

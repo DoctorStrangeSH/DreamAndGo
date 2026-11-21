@@ -280,3 +280,15 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 **Verification:** Root Checks passed 461/461; isolated notification Rules passed 7/7 and server/Auth/Firestore Emulator tests passed 59/59. The fixture is not production Rules.
 
 **Remaining:** obtain/review the active production Rules, integrate the tested notification contract into the complete production Rules configuration, and validate with two staging accounts and App Check. The message/chat v2 backend remains candidate-only and must not be deployed or connected to the legacy chat UI as part of this change.
+
+
+### SEC-CALLABLE-01 — private chat callables did not enforce App Check — 2026-11-21
+
+**Status:** fixed in candidate code; regression test added. CI verification is pending for the latest implementation commit. This does not prove that deployed Functions have been updated.
+
+- The six candidate private-chat callable endpoints (`createPrivateChatV2`, `sendPrivateMessageV2`, `getPrivateMessageStatusV2`, `markPrivateMessageReadV2`, `getPrivateChatUnreadV2`, `getPrivateChatHistoryV2`) previously omitted `enforceAppCheck: true` while other V2 callable endpoints required it.
+- All six now explicitly require Firebase App Check in their callable options.
+- Added `server/callable-app-check.test.js`, which scans exported callable declarations in `server/index.js` and fails if any lacks `enforceAppCheck: true`.
+- Static source audit confirms all 17 exported V2 callable declarations currently require App Check.
+
+**Remaining:** confirm the regression test and full CI on the exact candidate HEAD; verify App Check enforcement and token acceptance on the deployed Firebase project; deploy Functions only after the complete production Rules, staging, migration and rollback gates are approved. No Functions were deployed by this change.

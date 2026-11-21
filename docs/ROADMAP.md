@@ -260,3 +260,13 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Regression tests cover pending-notification cleanup for cancel/reject/accept paths.
 - [ ] Verify the updated friendship transaction suite and full root CI on the exact branch HEAD.
 - [ ] Complete notification Rules Emulator and staging two-account verification.
+
+
+### Trusted achievement notifications — 2026-11-21
+
+- [x] Server-side profile refresh now writes a fixed-schema `achievement` notification for each newly awarded achievement/level in the same Firestore transaction as the profile achievement update.
+- [x] Notification recipient is the authenticated user's own profile path; message, icon, color, route, achievement ID and level are derived from the trusted achievement catalog/policy result.
+- [x] Stable document IDs (`achievement_{id}_level_{level}`) prevent duplicate notifications when the stats callable is retried after an award.
+- [x] Extended the Firestore Emulator profile-stats journey to verify the exact notification schema and idempotent repeat refresh.
+- [ ] Verify root tests, syntax checks and Emulator workflow on the exact updated candidate HEAD.
+- [ ] Complete owner-only notification Rules tests and two-account staging validation.

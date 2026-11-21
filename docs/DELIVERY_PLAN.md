@@ -212,6 +212,6 @@
 - [x] Derive recipient from the validated two-person chat and create the notice atomically with the message/unread write.
 - [x] Use a stable server-message-based ID and bounded preview; cover exact schema and retry idempotency in Emulator tests.
 - [ ] Verify root Checks and Firebase Emulator workflow on exact candidate HEAD.
-- [ ] Add notification Rules tests: owner can read, another user/guest cannot, owner can update only `read`, clients cannot create or alter server-owned fields.
-- [ ] Validate notification delivery and read-state in staging with two accounts and App Check.
+- [x] Add isolated notification Rules Emulator tests: owner read, guest/cross-user denial, client create/delete denial, and one-way owner read-state update with immutable event fields. This fixture is not deployable production Rules.
+- [ ] Integrate the notification access contract into the complete production Rules candidate and validate delivery/read-state in staging with two accounts and App Check.
 - **Exit condition not met:** message event generation is implemented in candidate code, but Rules and staging acceptance remain release gates.

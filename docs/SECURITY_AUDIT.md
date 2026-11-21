@@ -14,30 +14,17 @@
 
 The projection is defense in depth only. It does not prevent Firestore from sending private fields to the browser. Server-side Firestore Rules must still restrict reads.
 
-### SEC-RULES-01 — owner supplied current deny-all Firestore Rules
+### SEC-RULES-01 — production Firestore Rules confirmed deny-all by owner
 
-**Status:** current rules text received from the owner; publication in the active Firebase project is not independently verified. Release blocker remains.
+**Status:** owner explicitly confirmed the supplied deny-all rules are published in Firebase Console. Active project/database identity and a timestamped export have not yet been independently captured.
 
-The owner supplied this ruleset as the current Firestore Rules:
+- The published rules are a recursive catch-all with `allow read, write: if false`.
+- Therefore all Firestore document reads and writes are denied to guests and authenticated users, across all collections and subcollections.
+- This is fail-closed and protects against unauthorized client access, but it also blocks all Firestore-backed application functionality. Firebase Auth sign-in itself may still work; Firestore profile creation, personal collections, chat, friends, notifications and any client-side Firestore reads/writes will fail unless routed through an authorized server endpoint.
+- Treat this exact deny-all ruleset as the current rollback baseline. Do not relax or replace it until the active Firebase project/database is identified, the full path/schema inventory is reconciled, and least-privilege Rules pass Emulator plus two-account staging tests.
+- No production rules were changed by this audit.
 
-```firestore
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if false;
-    }
-  }
-}
-```
-
-- This is a fail-closed deny-all policy: guests and authenticated users are denied every Firestore read and write at every document path.
-- If this exact ruleset is published to the project's active database, Firestore-backed application features cannot operate until a reviewed, least-privilege ruleset is deployed.
-- The text was supplied in chat; no direct Firebase Console inspection or deployment verification was performed.
-- No deployable root `firestore.rules` or `firebase.json` exists in the candidate repository. The Emulator fixtures remain test-only and are not production rules.
-- Do not loosen access or deploy a replacement based only on this snapshot. First confirm the target project/database and preserve the active ruleset for rollback.
-
-**Next evidence:** confirm whether this exact deny-all ruleset is currently published to the intended Firebase project and provide the Firebase project ID (not credentials). Then reconcile actual collection schemas and queries before drafting least-privilege production Rules.
+**Next evidence:** Firebase project ID (not credentials), confirm the Firestore database is the default database, and preserve the active ruleset/export with a timestamp before any proposed change.
 
 ## Required authorization matrix
 

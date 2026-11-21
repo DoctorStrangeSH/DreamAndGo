@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "approved": false,
+  "sourceSchema": "legacy-unknown",
+  "targetSchema": "firestore-v1",
+  "backup": {
+    "required": true,
+    "reference": ""
+  },
+  "rollback": {
+    "verified": false
+  },
+  "collections": [
+    {
+      "name": "dreams",
+      "fields": [],
+      "statusMap": {}
+    },
+    {
+      "name": "travels",
+      "fields": [],
+      "statusMap": {}
+    },
+    {
+      "name": "books",
+      "fields": [],
+      "statusMap": {}
+    },
+    {
+      "name": "movies",
+      "fields": [],
+      "statusMap": {}
+    },
+    {
+      "name": "restaurants",
+      "fields": [],
+      "statusMap": {}
+    }
+  ]
+}

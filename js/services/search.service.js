@@ -1,4 +1,5 @@
-import { db } from '../config/firebase.js';
+import { auth, db } from '../config/firebase.js';
+import { isAuthenticatedOwner } from '../core/owner-access-policy.js';
 import { collection, getDocs, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 export class SearchService {
@@ -9,7 +10,12 @@ export class SearchService {
         this.cacheUserId = null;
     }
 
+    isCurrentOwner(userId) {
+        return isAuthenticatedOwner(userId, auth?.currentUser?.uid);
+    }
+
     async searchAll(userId, query) {
+        if (!this.isCurrentOwner(userId)) return [];
         const searchTerm = query.toLowerCase().trim();
         if (!searchTerm) return [];
 
@@ -22,14 +28,16 @@ export class SearchService {
 
         // Кеш на 30 секунд только для текущего аккаунта.
         if (this.cache && this.cacheUserId === userId && Date.now() - this.cacheTime < 30000) {
-            return this.filterCache(searchTerm);
+            return this.isCurrentOwner(userId) ? this.filterCache(searchTerm) : [];
         }
 
         const results = [];
 
         try {
             // Путешествия
+            if (!this.isCurrentOwner(userId)) return [];
             const travelsSnap = await getDocs(collection(this.db, 'users', userId, 'travels'));
+            if (!this.isCurrentOwner(userId)) return [];
             travelsSnap.forEach(doc => {
                 if (doc.id === '_init') return;
                 const data = doc.data();
@@ -48,7 +56,9 @@ export class SearchService {
             });
 
             // Рестораны
+            if (!this.isCurrentOwner(userId)) return [];
             const restSnap = await getDocs(collection(this.db, 'users', userId, 'restaurants'));
+            if (!this.isCurrentOwner(userId)) return [];
             restSnap.forEach(doc => {
                 if (doc.id === '_init') return;
                 const data = doc.data();
@@ -67,7 +77,9 @@ export class SearchService {
             });
 
             // Фильмы
+            if (!this.isCurrentOwner(userId)) return [];
             const moviesSnap = await getDocs(collection(this.db, 'users', userId, 'movies'));
+            if (!this.isCurrentOwner(userId)) return [];
             moviesSnap.forEach(doc => {
                 if (doc.id === '_init') return;
                 const data = doc.data();
@@ -86,7 +98,9 @@ export class SearchService {
             });
 
             // Книги
+            if (!this.isCurrentOwner(userId)) return [];
             const booksSnap = await getDocs(collection(this.db, 'users', userId, 'books'));
+            if (!this.isCurrentOwner(userId)) return [];
             booksSnap.forEach(doc => {
                 if (doc.id === '_init') return;
                 const data = doc.data();
@@ -105,7 +119,9 @@ export class SearchService {
             });
 
             // Мечты
+            if (!this.isCurrentOwner(userId)) return [];
             const dreamsSnap = await getDocs(collection(this.db, 'users', userId, 'dreams'));
+            if (!this.isCurrentOwner(userId)) return [];
             dreamsSnap.forEach(doc => {
                 if (doc.id === '_init') return;
                 const data = doc.data();
@@ -123,12 +139,13 @@ export class SearchService {
                 });
             });
 
+            if (!this.isCurrentOwner(userId)) return [];
             if (this.cacheUserId === userId) {
                 this.cache = results;
                 this.cacheTime = Date.now();
             }
 
-            return this.filterCache(searchTerm);
+            return this.isCurrentOwner(userId) ? this.filterCache(searchTerm) : [];
         } catch (error) {
             console.error('Ошибка поиска:', error);
             return [];

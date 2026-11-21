@@ -499,3 +499,13 @@ Dream&Go — социальное пространство мечтаний, п�
 - [x] Added tests for clean plans, unmapped fields, collisions, status remapping, inventory blockers and sanitized-input enforcement.
 - [ ] Execute root tests and syntax checks in CI on the exact current head.
 - [ ] Build document-level normalization only after actual legacy metadata and mapping approvals. Planner is report-only and never executable.
+
+
+### Synthetic document normalizer — 2026-11-21
+
+- [x] Added a pure document normalizer that applies only approved keep/rename/drop/default/status-map decisions.
+- [x] Requires a fully valid and approved Migration Manifest before processing a document.
+- [x] Validates normalized output against collection-specific V1 allowlists, enums, types, bounds, nested structures and required fields.
+- [x] Added synthetic fixtures for all five collections and regression tests for mapping, defaults, drops, status conversion, invalid data, collisions and source immutability.
+- [ ] Run full unit suite and syntax checks in CI on the exact current PR head.
+- [ ] Add a separate synthetic rollback/reversibility rehearsal; do not connect this module to Firebase or real user data.

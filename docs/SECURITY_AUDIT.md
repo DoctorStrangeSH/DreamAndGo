@@ -215,7 +215,7 @@ No production rules, App Check enforcement, Cloud Functions, or user data were c
 - Added `tests/notifications-service-security.test.js` to guard against reintroducing client creation helpers and cross-account access paths.
 - This is defense in depth, not an authorization boundary. Production Firestore Rules are still absent from the repository and have not been read from Firebase Console.
 
-**Remaining:** create notifications only from trusted server-side domain events with validated payloads; define owner-only read/update Rules; test allowed and denied operations in Emulator and staging with two accounts. Do not deploy or loosen Rules based on this client change alone.
+**Remaining:** message notifications are not implemented; define owner-only read/update Rules; test allowed and denied operations in Emulator and staging with two accounts. Friendship and achievement event writes are covered by later findings SEC-NOTIFY-02 and SEC-NOTIFY-04. Do not deploy or loosen Rules based on these client/server candidate changes alone.
 
 
 ### SEC-NOTIFY-02 — trusted friendship event notifications — 2026-11-21

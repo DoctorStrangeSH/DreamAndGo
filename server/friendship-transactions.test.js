@@ -49,7 +49,9 @@ const paths = {
     reverseIncoming: 'users/alice/friendRequests/bob',
     reverseOutgoing: 'users/bob/sentRequests/alice',
     ownFriend: 'users/alice/friends/bob',
-    targetFriend: 'users/bob/friends/alice'
+    targetFriend: 'users/bob/friends/alice',
+    requestNotification: 'users/bob/notifications/friend_request_alice',
+    acceptedNotification: 'users/alice/notifications/friend_accepted_bob'
 };
 const request = { from: 'alice', to: 'bob', status: 'pending', createdAt: 'CREATED' };
 
@@ -57,10 +59,17 @@ test('send creates matching incoming and outgoing requests atomically', async ()
     const state = fixture();
     assert.deepEqual(await mutateFriendship(state.db, 'alice', 'bob', 'send', timestamp), { ok: true, action: 'send' });
     assert.deepEqual(state.writes.map(x => [x.type, x.path]), [
-        ['create', paths.incoming], ['create', paths.outgoing]
+        ['create', paths.incoming], ['create', paths.outgoing], ['set', paths.requestNotification]
     ]);
     assert.deepEqual(state.docs.get(paths.incoming), { ...request, createdAt: 'SERVER_TIME' });
     assert.deepEqual(state.docs.get(paths.outgoing), state.docs.get(paths.incoming));
+    assert.deepEqual(state.docs.get(paths.requestNotification), {
+        type: 'friend_request',
+        title: 'Новая заявка в друзья',
+        message: 'Пользователь хочет добавить тебя в друзья',
+        icon: 'bi-person-plus', color: 'primary', link: '#friends',
+        fromUserId: 'alice', read: false, createdAt: 'SERVER_TIME'
+    });
 });
 
 test('send rejects existing, reverse and already-friend relationships without writes', async () => {
@@ -89,6 +98,13 @@ test('accept validates the recipient-owned pending request and creates symmetric
     assert.equal(state.docs.has(incomingPath), false);
     assert.equal(state.docs.has(outgoingPath), false);
     assert.equal(state.writes.filter(x => x.type === 'create').length, 2);
+    assert.deepEqual(state.docs.get(paths.acceptedNotification), {
+        type: 'friend_accepted',
+        title: 'Заявка принята',
+        message: 'Твоя заявка в друзья принята',
+        icon: 'bi-person-check', color: 'success', link: '#profile/bob',
+        fromUserId: 'bob', read: false, createdAt: 'SERVER_TIME'
+    });
 });
 
 test('reject removes only a validated incoming request and its matching sent index', async () => {

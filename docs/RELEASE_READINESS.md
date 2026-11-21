@@ -323,3 +323,10 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [ ] Complete full production Rules/indexes/Functions compatibility review, backup, rollback ownership and all previously listed staging gates.
 
 **Decision remains HOLD.** Emulator and unit test success does not establish production authorization or staging acceptance.
+
+
+### Latest candidate verification — 2026-11-21
+
+- [x] Root Checks passed on latest reviewed documentation HEAD `90273d3d046238414966247a418e5b66c8ed26e9`: 461/461 tests, 0 failures; syntax validation passed for all 254 JavaScript files ([run 44894282252](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44894282252)).
+- [x] Notification-specific Emulator workflow passed on candidate code/test HEAD `bd2b996dc1a1e663bc5d08be77c23b2d57629cd5`: 7/7 isolated Rules tests and 59/59 server/Auth/Firestore Emulator tests ([run 44893915020](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44893915020)). Later changes in this interval were documentation-only.
+- [ ] PR #1 mergeability and branch synchronization must be rechecked before merge; no merge or production deployment was performed.

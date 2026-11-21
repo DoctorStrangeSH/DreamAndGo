@@ -140,11 +140,14 @@ service cloud.firestore {
         allow create: if isOwner(uid) &&
           exists(/databases/$(database)/documents/users/$(uid)) &&
           isValidDream(request.resource.data) &&
+          (!('isPublic' in request.resource.data) || request.resource.data.isPublic == false) &&
           request.resource.data.createdAt == request.time &&
           request.resource.data.updatedAt == request.time;
         allow update: if isOwner(uid) &&
           isValidDream(request.resource.data) &&
           request.resource.data.createdAt == resource.data.createdAt &&
+          ((!('isPublic' in resource.data) && !('isPublic' in request.resource.data)) ||
+           (('isPublic' in resource.data) && request.resource.data.isPublic == resource.data.isPublic)) &&
           request.resource.data.updatedAt == request.time;
         allow delete: if isOwner(uid);
       }

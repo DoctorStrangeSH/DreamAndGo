@@ -120,12 +120,6 @@ The current app integration is not ready for Firestore access restoration:
 Do not introduce permissive Rules as a compatibility workaround. Finish the server-backed registration and Chat V2 client cutover, migrate legacy data, then author and test the narrow Rules needed by the final client architecture.
 
 
-### SEC-FIREBASE-APPID-01 — Console screenshot and repository Web App ID discrepancy — 2026-11-21
+### SEC-FIREBASE-APPID-01 — Web App ID confirmation — 2026-11-21
 
-**Status:** owner confirmation required; no configuration changed.
-
-- Owner-provided Firebase Console screenshot visually shows Web App ID `1:185825350373:web:749c60926a0c6294f7fa0c`.
-- Both `main` and `refactor/security-foundation` currently configure `1:185825350373:web:749e60926a0c6294f7fa0c` in `js/config/firebase.js`.
-- The project ID and sender/project number match. The app ID differs at one character (`c` in the screenshot vs `e` in repository config).
-- This must be resolved from the Firebase Console's Web App configuration (or the app's Firebase SDK config snippet) before changing config or relying on App Check verification. Do not infer which value is correct from the screenshot transcription.
-- No Firebase config, App Check key, Auth settings, or production deployment was changed as part of this audit.
+**Resolved:** owner explicitly confirmed `1:185825350373:web:749e60926a0c6294f7fa0c`; this exactly matches the candidate `js/config/firebase.js`. No configuration edit required. App Check enforcement and deployed callable verification remain separate release gates.

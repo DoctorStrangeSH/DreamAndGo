@@ -275,7 +275,7 @@ service cloud.firestore {
         country.name is string && country.name.size() > 0 && country.name.size() <= 80;
     }
     function isValidMovieCountries(countries) {
-      return countries is list && countries.size() <= 30 &&
+      return countries is list && countries.size() <= 10 &&
         (countries.size() <= 0 || isValidMovieCountry(countries[0])) &&
         (countries.size() <= 1 || isValidMovieCountry(countries[1])) &&
         (countries.size() <= 2 || isValidMovieCountry(countries[2])) &&

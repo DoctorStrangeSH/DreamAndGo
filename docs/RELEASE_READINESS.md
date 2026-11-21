@@ -484,3 +484,9 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [ ] Complete Chat V2 client/server cutover, history migration and two-account staging.
 - [ ] Complete final Rules Emulator suite before production rules change.
 - **Release decision: HOLD.** Do not relax deny-all to accommodate legacy client writes.
+
+
+### Firebase Web App ID verification — 2026-11-21
+
+- [ ] Resolve discrepancy: Console screenshot appears to show `...749c6092...`, while both `main` and candidate config contain `...749e6092...`. Owner must confirm exact Web App ID from Firebase Console before App Check/staging sign-off.
+- [x] No configuration was changed while the ID is unverified.

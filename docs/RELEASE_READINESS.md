@@ -716,3 +716,11 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [ ] Stage-only persistence/uniqueness verification remains pending separate approval.
 
 - [x] Standalone integrity audit fails closed on incomplete or unapproved manifests.
+
+
+### Firestore V1 date validation — 2026-11-21
+
+- [x] Replaced format-only checks with Gregorian calendar validation for dreams, movies and restaurants in the isolated Rules candidate.
+- [x] Added negative tests for impossible dates and positive leap-day/empty optional values.
+- [ ] Confirm Firestore Emulator workflow passes on the exact latest branch HEAD.
+- **No production Rules deployment or user-data change.**

@@ -620,3 +620,6 @@ These changes reduce stale-response and cross-account UI leakage risks. They do 
 - [ ] First CI run must pass before Rules candidate can leave HOLD.
 
 - [x] Assigned unique Emulator project IDs to parallel Rules suites to prevent cross-test data and Rules collisions.
+
+- [x] Added an Emulator integration test connecting actual client validators/create payload shapes to all five V1 Rules matchers.
+- [ ] Verify client-to-Rules contract suite passes in CI.

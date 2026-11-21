@@ -213,7 +213,7 @@ No production data migration has been run. Synthetic tests only.
 
 Added `npm run audit:legacy-collections -- /path/to/minimized-export.json`.
 
-The command is deliberately offline and read-only. It accepts a minimized JSON array of records shaped as `{ "collection": "books", "id": "optional-local-id", "data": { ... } }`, where collection is one of the five private V1 collections. Timestamp values must be normalized to ISO-compatible JavaScript dates before serialization or to objects shaped as `{ "seconds": integer, "nanoseconds": integer }`.
+The command is deliberately offline and read-only. It accepts a minimized JSON array of records shaped as `{ "collection": "books", "id": "optional-local-id", "data": { ... } }`, where collection is one of the five private V1 collections. Timestamp values must be normalized in the minimized snapshot to objects shaped as `{ "seconds": integer, "nanoseconds": integer }`; do not serialize JavaScript `Date` objects as strings for this tool.
 
 The report contains aggregate counts only: document counts, missing timestamps, missing required fields, unknown-field documents, invalid statuses, invalid timestamp shapes, and malformed input records. It intentionally excludes document IDs and all field values. Exit code 0 means no detected schema gaps in the supplied snapshot; exit code 1 means review is required; exit code 2 means invocation/input error.
 

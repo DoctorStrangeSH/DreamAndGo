@@ -162,3 +162,13 @@
 
 - [x] Fixed test import path after CI caught an incorrect relative module path.
 - [ ] Exact-head CI on corrected commit pending.
+
+
+### Firestore access-control inventory — 2026-11-22
+
+- [x] Audited major Firestore paths and client read/write patterns.
+- [x] Documented high-risk cross-user writes and mixed public/private profile document.
+- [x] Added `docs/FIRESTORE_ACCESS_MATRIX.md` as the source of truth for the V1.0 Rules migration.
+- [ ] Public/private profile split and server-mediated chat/friend/notification operations remain NOT DONE.
+- [ ] Path-specific Rules and positive/negative Rules Emulator tests remain NOT DONE.
+- [ ] Rules stay deny-all; no production change.

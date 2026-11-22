@@ -26,6 +26,32 @@ function validateProfileInput(data, HttpsError) {
     return result;
 }
 
+function serializeTimestamp(value) {
+    if (!value) return value;
+    if (typeof value.toDate === 'function') {
+        const date = value.toDate();
+        return Number.isNaN(date.getTime()) ? null : date.toISOString();
+    }
+    if (value instanceof Date) {
+        return Number.isNaN(value.getTime()) ? null : value.toISOString();
+    }
+    return value;
+}
+
+function serializePrivateProfile(data) {
+    const profile = { ...data };
+    for (const key of ['createdAt', 'lastLogin', 'privacyUpdatedAt', 'profileUpdatedAt']) {
+        if (profile[key]) profile[key] = serializeTimestamp(profile[key]);
+    }
+    if (Array.isArray(profile.achievements)) {
+        profile.achievements = profile.achievements.map(item => ({
+            ...item,
+            ...(item?.awardedAt ? { awardedAt: serializeTimestamp(item.awardedAt) } : {})
+        }));
+    }
+    return profile;
+}
+
 function isRegistryReady(snapshot) {
     return snapshot?.exists === true &&
         snapshot.get('ready') === true &&
@@ -68,7 +94,7 @@ export function createProfileAccountCallables({
             if (!snapshot?.exists) {
                 throw new HttpsError('not-found', 'Профиль не найден');
             }
-            return { profile: snapshot.data() };
+            return { profile: serializePrivateProfile(snapshot.data()) };
         } catch (error) {
             if (error instanceof HttpsError) throw error;
             throw new HttpsError('unavailable', 'Не удалось загрузить профиль');

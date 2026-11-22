@@ -195,3 +195,13 @@
 - [ ] Firebase Emulator integration, callable deployment, App Check provider verification and two-account staging remain NOT DONE.
 - [ ] No Firebase deploy, production rules update, registry write, legacy profile migration or user-data change was performed.
 - **Batch status: server callable implementation and unit tests committed; runtime verification pending.**
+
+
+### CI verification — server registration batch — 2026-11-22
+
+- [x] GitHub Actions run [44993468260](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44993468260) completed successfully on the exact documentation HEAD `40e8da45d634ee57783c80a7c03e09080195afcb`, which includes the server registration implementation and tests.
+- [x] Root unit suite: 46 passed, 0 failed.
+- [x] Syntax validation: all 51 JavaScript files passed.
+- [x] Confirmed the earlier failure on commit `ba7830c` was a real failing regression test for unexpected helper exceptions; fixed the callable to map unknown failures to a generic `internal` error, and the later exact-head run is green.
+- [ ] Firebase Emulator integration, Admin SDK deployment smoke test, App Check provider validation and two-account staging remain NOT DONE.
+- **Verified status: isolated server registration code and unit suite are green; production readiness is not established.**

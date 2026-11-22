@@ -79,6 +79,9 @@ class DreamAndGo {
             this.authResolved = true;
 
             if (user) {
+                // Auth emits immediately after account creation, before the
+                // registration callable has committed the profile.
+                if (this.authService.isSignupInProgress) return;
                 if (this.signupV2Service.isTransportReady) {
                     const registration = await this.authService.getRegistrationState();
                     if (registration.success && registration.status === 'needs-profile') {

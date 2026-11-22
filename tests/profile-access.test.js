@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { getProfileCollection } from './profile-access.js';
+import { getProfileCollection } from '../js/core/profile-access.js';
 
 test('owner profile resolves to private users collection', () => {
     assert.equal(getProfileCollection('user-1', 'user-1'), 'users');

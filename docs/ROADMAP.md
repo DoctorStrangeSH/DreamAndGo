@@ -63,3 +63,13 @@
 - [x] Added 13 focused tests for username, rollout policy and signup rollback paths.
 - [ ] CI/test execution still needs confirmation on the current integration HEAD.
 - [ ] Firebase registry transaction, App Check, callable bridge and Emulator tests remain NOT DONE.
+
+
+### Username registry transaction core — 2026-11-22
+
+- [x] Added server-only transactional username reservation helper.
+- [x] Added fail-closed legacy registry readiness gate.
+- [x] Added safe idempotent recovery for an already-committed matching profile/reservation pair.
+- [x] Added 7 transaction-mock tests for reservation, conflicts, migration gate and retries.
+- [ ] Firebase callable, App Check and Firestore Emulator integration remain NOT DONE.
+- [ ] Test execution on the exact integration HEAD remains unverified.

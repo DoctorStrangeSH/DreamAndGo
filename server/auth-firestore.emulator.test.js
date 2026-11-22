@@ -2,7 +2,7 @@ import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 import { initializeApp, deleteApp } from 'firebase-admin/app';
-import { getAuth, verifyIdToken } from 'firebase-admin/auth';
+import { getAuth } from 'firebase-admin/auth';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { createRegistrationCallables } from './registration-callables.js';
 import { registerProfileWithReservedUsername } from './username-reservation.js';
@@ -18,6 +18,8 @@ let auth;
 let db;
 let registerProfileV2;
 let getRegistrationStateV2;
+const createdReservations = [];
+const createdProfiles = [];
 
 class EmulatorHttpsError extends Error {
     constructor(code, message) {
@@ -86,8 +88,12 @@ before(async () => {
 
 after(async () => {
     if (!app) return;
-    await Promise.all(accounts.map(uid => auth.deleteUser(uid).catch(() => {})));
-    await db.collection('system').doc('usernameRegistry').delete().catch(() => {});
+    await Promise.all([
+        ...createdReservations.map(username => db.collection('usernameReservations').doc(username).delete().catch(() => {})),
+        ...createdProfiles.map(uid => db.collection('users').doc(uid).delete().catch(() => {})),
+        ...accounts.map(uid => auth.deleteUser(uid).catch(() => {})),
+        db.collection('system').doc('usernameRegistry').delete().catch(() => {})
+    ]);
     await deleteApp(app);
 });
 
@@ -101,6 +107,8 @@ test('Auth Emulator identity is verified and callable creates profile using trus
     assert.equal(storedAccount.disabled, false);
 
     const username = `em${uniquePart()}`.slice(0, 20);
+    createdReservations.push(username);
+    createdProfiles.push(account.uid);
     const result = await registerProfileV2({
         auth: { uid: account.uid },
         data: { username, email: 'forged@example.test' }
@@ -117,6 +125,8 @@ test('two Auth Emulator accounts cannot claim the same username', { skip: !avail
     const first = await createEmulatorAccount();
     const second = await createEmulatorAccount();
     const username = `du${uniquePart()}`.slice(0, 20);
+    createdReservations.push(username);
+    createdProfiles.push(first.uid, second.uid);
 
     const results = await Promise.allSettled([
         registerProfileV2({ auth: { uid: first.uid }, data: { username } }),
@@ -135,6 +145,8 @@ test('registration recovery callable reports only the current account state', { 
     });
 
     const username = `rc${uniquePart()}`.slice(0, 20);
+    createdReservations.push(username);
+    createdProfiles.push(account.uid);
     await registerProfileV2({ auth: { uid: account.uid }, data: { username } });
     assert.deepEqual(await getRegistrationStateV2({ auth: { uid: account.uid } }), {
         status: 'complete'

@@ -6,6 +6,7 @@ import { getFirestore, FieldValue, connectFirestoreEmulator } from 'firebase-adm
 import { registerProfileWithReservedUsername } from './username-reservation.js';
 
 const emulatorHost = process.env.FIRESTORE_EMULATOR_HOST;
+const emulatorAvailable = Boolean(emulatorHost);
 const projectId = process.env.GCLOUD_PROJECT || 'demo-dream-and-go';
 const registryRefPath = ['system', 'usernameRegistry'];
 
@@ -20,8 +21,9 @@ function uniqueUsername() {
 }
 
 before(async () => {
+    if (!emulatorAvailable) return;
     assert.ok(emulatorHost, 'FIRESTORE_EMULATOR_HOST must point to Firestore Emulator');
-    assert.match(emulatorHost, /^(127\\.0\\.0\\.1|localhost):\\d+$/);
+    assert.match(emulatorHost, /^(127\.0\.0\.1|localhost):\d+$/);
     app = initializeApp({ projectId }, `registration-emulator-${process.pid}`);
     db = getFirestore(app);
     const [host, port] = emulatorHost.split(':');
@@ -44,7 +46,7 @@ after(async () => {
     if (app) await deleteApp(app);
 });
 
-test('Firestore Emulator atomically reserves a username and creates the profile', async () => {
+test('Firestore Emulator atomically reserves a username and creates the profile', { skip: !emulatorAvailable }, async () => {
     const uid = `emulator-user-${randomBytes(6).toString('hex')}`;
     const username = uniqueUsername();
     createdReservations.push(username);
@@ -64,7 +66,7 @@ test('Firestore Emulator atomically reserves a username and creates the profile'
     assert.equal(profile.get('email'), 'emulator@example.test');
 });
 
-test('Firestore Emulator recovers a committed registration idempotently', async () => {
+test('Firestore Emulator recovers a committed registration idempotently', { skip: !emulatorAvailable }, async () => {
     const uid = `emulator-user-${randomBytes(6).toString('hex')}`;
     const username = uniqueUsername();
     createdReservations.push(username);
@@ -81,7 +83,7 @@ test('Firestore Emulator recovers a committed registration idempotently', async 
     assert.deepEqual(retry, { ok: true, username, recovered: true });
 });
 
-test('Firestore Emulator prevents two accounts from claiming the same username concurrently', async () => {
+test('Firestore Emulator prevents two accounts from claiming the same username concurrently', { skip: !emulatorAvailable }, async () => {
     const username = uniqueUsername();
     const firstUid = `emulator-user-${randomBytes(6).toString('hex')}`;
     const secondUid = `emulator-user-${randomBytes(6).toString('hex')}`;
@@ -104,7 +106,7 @@ test('Firestore Emulator prevents two accounts from claiming the same username c
     assert.ok([firstUid, secondUid].includes(reservation.get('uid')));
 });
 
-test('Firestore Emulator fails closed while the legacy username backfill gate is closed', async () => {
+test('Firestore Emulator fails closed while the legacy username backfill gate is closed', { skip: !emulatorAvailable }, async () => {
     const username = uniqueUsername();
     const uid = `emulator-user-${randomBytes(6).toString('hex')}`;
     createdReservations.push(username);

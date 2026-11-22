@@ -7,7 +7,8 @@
     "node": "22"
   },
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "test:emulator": "node --test username-reservation.emulator.test.js"
   },
   "dependencies": {
     "firebase-admin": "^13.0.0",

@@ -11,8 +11,8 @@ import { createProfileAccountCallables } from './profile-account-callables.js';
 
 if (getApps().length === 0) initializeApp();
 
-// This deployment unit deliberately exposes only the isolated signup
-// endpoints. Do not deploy until Emulator and staging acceptance are complete.
+// This deployment unit exposes isolated signup and owner-scoped profile
+// callables only. Do not deploy until Emulator and staging acceptance are complete.
 const registration = createRegistrationCallables({
     onCall,
     HttpsError,

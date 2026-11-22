@@ -2,7 +2,7 @@ import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 import { initializeApp, deleteApp } from 'firebase-admin/app';
-import { getFirestore, FieldValue, connectFirestoreEmulator } from 'firebase-admin/firestore';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { registerProfileWithReservedUsername } from './username-reservation.js';
 
 const emulatorHost = process.env.FIRESTORE_EMULATOR_HOST;
@@ -26,8 +26,7 @@ before(async () => {
     assert.match(emulatorHost, /^(127\.0\.0\.1|localhost):\d+$/);
     app = initializeApp({ projectId }, `registration-emulator-${process.pid}`);
     db = getFirestore(app);
-    const [host, port] = emulatorHost.split(':');
-    connectFirestoreEmulator(db, host, Number(port));
+    // Firebase Admin SDK automatically targets FIRESTORE_EMULATOR_HOST.
     registryRef = db.collection(registryRefPath[0]).doc(registryRefPath[1]);
     await registryRef.set({
         ready: true,

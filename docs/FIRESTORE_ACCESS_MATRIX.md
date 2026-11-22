@@ -44,7 +44,7 @@ This is an implementation review, not a permission grant. The checked-in rules r
 
 - [x] Inventory major Firestore paths in Auth, profile, books, chats, tasks, dreams, friends, level, movies, notifications, restaurants, search, travels and settings services.
 - [x] Record current deny-all posture and unsafe cross-user operations.
-- [ ] Separate public profile projection from private account data.
+- [x] Separate public profile projection from private account data in the profile reader: owners read `users/{uid}`; visitors read only `publicProfiles/{uid}`. Public Rules remain deny-all until tested.
 - [ ] Move notification creation, friend acceptance and bilateral chat mutations behind trusted server operations or redesign them.
 - [ ] Add path-specific Rules and Rules Emulator tests in small groups.
 - [ ] Reconcile UI/services with the new access contract.
@@ -83,3 +83,8 @@ The public projection now has a separate profile-level consent gate. This is del
 - It atomically replaces the legacy privacy map and creates/updates or deletes `publicProfiles/{uid}` using the allowlist projection. Legacy public defaults are overwritten only after the owner submits the complete new settings.
 - Unit tests cover auth, malformed paths, unknown/missing keys, public projection, private deletion, missing profile and generic storage errors.
 - The callable is not yet wired to the browser UI; App Check provider configuration, Emulator callable tests, Rules for public profile reads, consent UX and staging remain NOT DONE. Do not deploy.
+
+
+### Client privacy settings wiring — candidate only
+
+The Settings module now exposes explicit profile-level and category-level visibility selectors and invokes the owner-authorized callable through a small client service. The browser initializes Firebase App Check only when a valid reCAPTCHA v3 site key is supplied in `index.html` meta `firebase-app-check-site-key`. The checked-in value is intentionally empty; the privacy save control stays disabled. No Rules have been opened. The existing general profile-edit form still performs legacy direct writes and must be migrated before owner write permissions are introduced.

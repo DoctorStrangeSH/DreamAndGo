@@ -88,8 +88,8 @@ class DreamAndGo {
                         this.showAuth('recovery');
                         return;
                     }
-                    if (registration.success && registration.status === 'temporarily-unavailable') {
-                        this.showAuth('recovery');
+                    if (!registration.success || registration.status === 'temporarily-unavailable') {
+                        this.showAuth('recovery', registration.error || 'Состояние аккаунта временно недоступно. Аккаунт сохранён — попробуйте восстановление позже.');
                         return;
                     }
                 }
@@ -180,7 +180,7 @@ class DreamAndGo {
         mainContent.innerHTML = this.ui.createLoader();
     }
 
-    showAuth(mode = 'login') {
+    showAuth(mode = 'login', initialError = '') {
         const appContainer = document.getElementById('app');
         if (!appContainer) return;
         appContainer.classList.remove('d-none');
@@ -188,6 +188,7 @@ class DreamAndGo {
         const authModule = new AuthModule(this.authService);
         authModule.mode = mode;
         authModule.render();
+        if (initialError) authModule.showError(initialError);
     }
 
     async resumeAfterSignup() {

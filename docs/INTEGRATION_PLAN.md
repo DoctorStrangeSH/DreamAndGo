@@ -304,3 +304,15 @@
 - [ ] Existing privacy settings are not yet a complete consent UX; profile/settings UI currently does not expose the visibility controls. A backfill must not assume legacy defaults are user consent.
 - [ ] Private/public document split, owner-authorized server sync, data backfill/dry-run, Rules tests and browser integration remain NOT DONE.
 - **Safety decision: projection is an isolated tested building block only. Do not deploy or backfill it until consent defaults, legacy compatibility and rollback are approved.**
+
+
+### Repository presentation and cleanup — 2026-11-22
+
+- [x] Reorganized the repository front door: README now explains the product, fixed V1.0 scope, quick start, commands, structure and security boundaries.
+- [x] Added a documentation index to make the approved specification, delivery plan, architecture, roadmap and audits discoverable.
+- [x] Added CONTRIBUTING and SECURITY policies plus GitHub issue / pull request templates.
+- [x] Added consistent editor settings, LF line endings and ignore rules for local credentials, Firebase Emulator output, dependencies, logs and generated artifacts.
+- [x] Scanned the repository's JavaScript/MJS application modules, services, server code, tests and scripts for explicit DeepSeek / Deep Seek / ChatGPT / AI-generated attribution markers; no matches were found. No comments were removed because no confirmed obsolete attribution was present.
+- [x] Reviewed the tracked file inventory for obvious duplicate/generated files; no deletion was justified.
+- [ ] Final exact-HEAD CI validation pending.
+- [ ] No runtime source logic, Firebase Rules, production project settings or user data changed.

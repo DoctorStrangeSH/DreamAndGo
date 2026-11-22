@@ -137,3 +137,13 @@
 - [x] Syntax check: 51 JS files passed.
 - [ ] HTTPS callable transport, App Check exchange and two-real-account staging remain NOT DONE.
 - [ ] Production deploy, rules publication and data migration remain NOT DONE.
+
+
+### Legacy AuthService audit — 2026-11-22
+
+- [x] Audited current main signup/login/profile flow against V2 server contract.
+- [x] Documented race-prone client nickname checks, direct profile writes, unsafe rollback on uncertain network outcome, unnecessary placeholder docs, client lastLogin writes and direct profile reads under deny-all Rules.
+- [x] Added docs/AUTH_INTEGRATION_AUDIT.md with safe integration sequence and explicit non-actions.
+- [ ] Browser callable adapter, App Check site key/provider wiring and HTTPS callable tests remain NOT DONE.
+- [ ] Owner-scoped profile/collection Rules and browser staging remain NOT DONE.
+- [ ] Signup V2 stays disabled; no production changes.

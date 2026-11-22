@@ -1,6 +1,4 @@
-import { db } from '../../config/firebase.js';
 import { ProfilePrivacyService } from '../../services/profile-privacy.service.js';
-import { doc, getDoc, updateDoc, collection, query, where, getDocs, limit } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 function escapeHTML(value) {
     return String(value ?? '').replace(/[&<>"']/g, character => ({
@@ -22,10 +20,8 @@ export class SettingsModule {
 
         mainContent.innerHTML = window.app.ui.createLoader();
 
-        const userRef = doc(db, 'users', userId);
-        const userDoc = await getDoc(userRef);
-        if (window.app.currentUser?.uid !== userId || !mainContent.isConnected) return;
-        const userData = userDoc.exists() ? userDoc.data() : {};
+        const userData = window.app.userData;
+        if (!userData || window.app.currentUser?.uid !== userId || !mainContent.isConnected) return;
         const privacy = userData.privacy || {};
         const visibilityOptions = (name, label, description) => `
             <div class="d-flex align-items-center justify-content-between gap-3 py-3 border-bottom">
@@ -258,40 +254,39 @@ export class SettingsModule {
             if (window.app.currentUser?.uid !== uid) return;
             const currentUser = window.app.userData;
 
-            if (username !== currentUser?.username) {
-                const usersRef = collection(db, 'users');
-                const normalized = username.trim().toLowerCase();
-                const [indexed, legacy] = await Promise.all([
-                    getDocs(query(usersRef, where('usernameNormalized', '==', normalized), limit(2))),
-                    getDocs(query(usersRef, where('username', '==', username.trim()), limit(2)))
-                ]);
-                const isTakenByAnotherUser = [...indexed.docs, ...legacy.docs]
-                    .some(userDoc => userDoc.id !== uid);
-
-                if (isTakenByAnotherUser) {
-                    window.app.ui.showToast('Этот ник уже занят 😔', 'warning');
-                    submitBtn.innerHTML = originalText;
-                    submitBtn.disabled = false;
-                    return;
-                }
-            }
-
-            const userRef = doc(db, 'users', uid);
-            await updateDoc(userRef, {
-                username: username,
-                usernameNormalized: username.trim().toLowerCase(),
-                displayName: displayName,
-                bio: bio,
-                location: location
+            const result = await window.app.profileAccountService.updateMyProfile({
+                username,
+                displayName,
+                bio,
+                location
             });
 
             if (window.app.currentUser?.uid !== uid || !form.isConnected) return;
-            window.app.userData = { ...window.app.userData, username, displayName, bio, location };
-            window.app.ui.showToast('Настройки сохранены! ✨', 'success');
+            window.app.userData = {
+                ...window.app.userData,
+                username: result.username,
+                usernameNormalized: result.usernameNormalized,
+                displayName: result.displayName,
+                bio: result.bio,
+                location: result.location
+            };
+            window.app.ui.showToast(
+                result.publicProfileUpdated
+                    ? 'Профиль сохранён и публичная страница обновлена! ✨'
+                    : 'Профиль сохранён! ✨',
+                'success'
+            );
         } catch (error) {
             console.error('Ошибка сохранения:', error);
             if (window.app.currentUser?.uid === uid && form.isConnected) {
-                window.app.ui.showToast('Ошибка сохранения', 'error');
+                const message = error.code === 'functions/already-exists'
+                    ? 'Этот никнейм уже занят 😔'
+                    : error.code === 'functions/failed-precondition'
+                        ? 'Смена никнейма пока недоступна: завершается безопасная миграция.'
+                        : error.code === 'app-check/not-configured'
+                            ? 'Сначала настрой App Check в Firebase Console.'
+                            : 'Ошибка сохранения';
+                window.app.ui.showToast(message, 'error');
             }
         } finally {
             if (form.isConnected) {

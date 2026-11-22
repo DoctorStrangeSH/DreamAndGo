@@ -194,3 +194,13 @@
 - [ ] Validate the final housekeeping HEAD with CI.
 - [ ] Full runtime browser smoke test and responsive/accessibility review remain NOT DONE.
 - **Safety:** no production configuration, Firestore Rules, user records or application runtime logic changed in this housekeeping batch.
+
+
+### Public profile consent hardening — 2026-11-22
+
+- [x] Added a separate explicit `privacy.profile === 'public'` gate to the projection.
+- [x] Legacy category-level `public` defaults no longer imply consent to publish a profile.
+- [x] Missing, unknown and private profile visibility fail closed by returning no public projection.
+- [x] Added regression tests for absent, private, unknown and explicit profile consent, plus independent category visibility.
+- [ ] Consent UI, trusted callable synchronization, Firestore Rules and migration/backfill remain NOT DONE.
+- [ ] No public documents are written; no production data or Rules changed.

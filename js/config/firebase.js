@@ -1,4 +1,5 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { initializeAppCheck, ReCaptchaV3Provider } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app-check.js';
 import { 
     getAuth,
     signInWithEmailAndPassword,
@@ -30,12 +31,24 @@ const firebaseConfig = {
 };
 
 // Инициализация Firebase с проверкой ошибок
-let app, auth, db;
+let app, auth, db, appCheck = null;
 
 try {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = getFirestore(app);
+
+    // App Check remains fail-closed until the Firebase Console site key is configured.
+    const appCheckSiteKey = document.querySelector('meta[name="firebase-app-check-site-key"]')?.content?.trim();
+    if (appCheckSiteKey && /^[A-Za-z0-9_-]{20,128}$/.test(appCheckSiteKey)) {
+        appCheck = initializeAppCheck(app, {
+            provider: new ReCaptchaV3Provider(appCheckSiteKey),
+            isTokenAutoRefreshEnabled: true
+        });
+        console.log('🛡️ Firebase App Check initialized');
+    } else {
+        console.warn('🛡️ Firebase App Check is not configured; protected callables remain unavailable.');
+    }
     
     // Подключаемся к эмулятору только для разработки (если нужно)
     // connectFirestoreEmulator(db, 'localhost', 8080);
@@ -48,7 +61,7 @@ try {
 }
 
 // Экспортируем для использования в других модулях
-export { app, auth, db };
+export { app, auth, db, appCheck };
 
 // Дополнительно: проверка подключения
 export async function checkFirebaseConnection() {

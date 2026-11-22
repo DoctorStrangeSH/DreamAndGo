@@ -1,5 +1,6 @@
 import { db } from '../../config/firebase.js';
 import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { getProfileCollection } from '../../core/profile-access.js';
 
 function escapeHTML(value) {
     return String(value ?? '').replace(/[&<>"']/g, character => ({
@@ -410,8 +411,9 @@ export class ProfileModule {
 
     async loadUserProfile(userId) {
         try {
-            if (!userId) return null;
-            const userDoc = await getDoc(doc(db, 'users', userId));
+            const collectionName = getProfileCollection(userId, window.app.currentUser?.uid);
+            if (!collectionName) return null;
+            const userDoc = await getDoc(doc(db, collectionName, userId));
             return userDoc.exists() ? userDoc.data() : null;
         } catch (error) {
             return null;

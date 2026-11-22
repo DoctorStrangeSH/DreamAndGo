@@ -227,3 +227,15 @@
 - [x] Added a revocation safeguard: choosing private always deletes the public projection even when legacy public fields are invalid.
 - [ ] CI must be rerun after subsequent commits; this result applies only to the exact commit above.
 - [ ] Profile visibility callable is unit-tested but not yet covered by a callable Emulator transport test or browser UI; Rules and staging remain NOT DONE.
+
+
+### Public profile access and privacy settings UI — 2026-11-22
+
+- [x] Added a shared profile access resolver: own profile reads `users/{uid}`; another user's page reads only `publicProfiles/{uid}`.
+- [x] Added tests for owner/public collection selection and invalid identifiers.
+- [x] Added browser ProfilePrivacyService for `updateProfileVisibilityV1` in `europe-west3`.
+- [x] Added explicit privacy controls to Settings for profile visibility and each public statistic; missing preferences render as private.
+- [x] Added App Check initialization from the page meta configuration slot. The privacy form remains disabled until a valid reCAPTCHA v3 site key is supplied.
+- [ ] Owner profile edits still use legacy direct Firestore writes and need reconciliation with callable/server-authorized profile updates.
+- [ ] Public profile Firestore read Rules, callable transport Emulator coverage, real App Check site key, and staging remain NOT DONE.
+- [ ] No deployment, Firestore Rules broadening, or production data changes.

@@ -59,6 +59,9 @@ export function createProfileAccountCallables({
         if (typeof uid !== 'string' || !uid || uid.length > 128 || uid.includes('/')) {
             throw new HttpsError('unauthenticated', 'Требуется вход в аккаунт');
         }
+        if (request.data && (typeof request.data !== 'object' || Array.isArray(request.data) || Object.keys(request.data).length > 0)) {
+            throw new HttpsError('invalid-argument', 'Параметры чтения профиля не поддерживаются');
+        }
 
         try {
             const snapshot = await getFirestore().collection('users').doc(uid).get();
@@ -140,6 +143,9 @@ export function createProfileAccountCallables({
                 if (current.privacy?.profile === 'public') {
                     try {
                         publicProjection = buildPublicProfile(uid, updatedProfile);
+                        if (!publicProjection) {
+                            throw new HttpsError('failed-precondition', 'Публичный профиль не прошёл проверку данных');
+                        }
                     } catch {
                         throw new HttpsError('failed-precondition', 'Публичный профиль содержит некорректные данные');
                     }

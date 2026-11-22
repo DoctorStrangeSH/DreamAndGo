@@ -324,3 +324,12 @@
 - [x] Added focused tests for consent states and category-level privacy.
 - [ ] Consent UI, server-authorized synchronization callable, document lifecycle, Rules Emulator coverage and staging remain NOT DONE.
 - [ ] Do not backfill or publish legacy profiles without a user-visible consent flow.
+
+
+### Profile visibility callable foundation — 2026-11-22
+
+- [x] Added owner-authenticated, App Check-enforced callable to atomically update the complete privacy map and public projection lifecycle.
+- [x] Added unit coverage and root test runner registration.
+- [ ] Add a browser adapter and an explicit consent UI with all visibility choices shown to the user.
+- [ ] Add callable Emulator integration tests, public-profile Rules tests and staging checks.
+- [ ] Keep deployment and legacy-profile backfill blocked until consent UX and Rules are accepted.

@@ -156,3 +156,9 @@
 - [x] Added eight unit tests; no Firebase config, AuthService, App Check or rollout was changed.
 - [ ] Latest exact-head CI verification pending.
 - [ ] Main app wiring and staging remain NOT DONE.
+
+
+### Signup V2 adapter test correction — 2026-11-22
+
+- [x] Fixed test import path after CI caught an incorrect relative module path.
+- [ ] Exact-head CI on corrected commit pending.

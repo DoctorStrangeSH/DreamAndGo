@@ -67,3 +67,12 @@ The browser-side signup V2 wiring is now present on `integration/v1.0-reconcilia
 - Signup and recovery reconcile ambiguous callable outcomes with server state before deciding success or cleanup. Unknown outcomes preserve the Auth account.
 - The registration UI remains disabled because the site key and all three rollout signals are intentionally unset/false.
 - No Firebase deployment, Rules publication, production migration or live account operation was performed.
+
+
+### Latest integration CI — 2026-11-22
+
+- [x] Signup V2/AuthService/recovery integration exact-head CI passed: [45001035800](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/45001035800).
+- [x] 100/100 root unit tests, 14/14 Firestore Emulator tests, and syntax validation for 62 JavaScript files.
+- [x] A separate false-by-default `firebase-functions-backend-ready` flag prevents callable traffic before a staging backend is deployed.
+- [x] Recovery UI includes an explicit sign-out escape when the registry is temporarily unavailable.
+- [ ] Real App Check site key, deployed Functions transport, two-account staging, and legacy registry migration remain NOT DONE.

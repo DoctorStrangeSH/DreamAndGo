@@ -273,3 +273,11 @@
 - [x] Added eight adapter unit tests. The adapter does not initialize Firebase, configure App Check, enable rollout or alter the legacy AuthService.
 - [ ] CI for the latest adapter test HEAD pending because a prior Actions run on the same branch is still marked in progress.
 - [ ] Wiring into main AuthService, Firebase Functions SDK and App Check remains NOT DONE pending provider/site key and transport verification.
+
+
+### Signup V2 client adapter CI correction — 2026-11-22
+
+- [x] Investigated failed exact-head CI run [44994754725](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44994754725).
+- [x] Root cause: test file imported `./signup-v2-client.js` from `tests/`, but implementation is in `js/core/`; Node correctly failed with `ERR_MODULE_NOT_FOUND`.
+- [x] Corrected the test import to `../js/core/signup-v2-client.js`.
+- [ ] Re-run CI on the corrected exact HEAD; adapter tests remain unverified until Actions passes.

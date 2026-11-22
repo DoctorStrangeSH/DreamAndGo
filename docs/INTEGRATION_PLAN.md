@@ -382,3 +382,11 @@
 - [x] New signup remains visibly disabled while App Check or any migration rollout signal is false.
 - [x] The auth bootstrap race is guarded while the new account's profile callable is in flight.
 - [ ] Exact-head CI and browser/Auth Emulator flow remain pending.
+
+
+### Firebase backend readiness gate — 2026-11-22
+
+- [x] Callable clients require both App Check initialization and the explicit Functions backend readiness flag.
+- [x] The HTML readiness flag defaults to false; absent staging deployment cannot accidentally trigger protected callable traffic.
+- [x] Added profile client tests for the disabled backend gate.
+- [ ] Real staging deployment and callable/App Check end-to-end verification remain NOT DONE.

@@ -333,3 +333,10 @@
 - [ ] Add a browser adapter and an explicit consent UI with all visibility choices shown to the user.
 - [ ] Add callable Emulator integration tests, public-profile Rules tests and staging checks.
 - [ ] Keep deployment and legacy-profile backfill blocked until consent UX and Rules are accepted.
+
+
+### Profile visibility foundation — verification evidence
+
+- [x] GitHub Actions run [44996877016](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44996877016) passed on exact commit `9b8626587aedd27d71e8bea36bb02d392af3275f`.
+- [x] Root unit tests 73/73; Auth + Firestore Emulator tests 10/10; syntax checker 53/53 JavaScript files.
+- [ ] Callable transport Emulator coverage, browser consent UI, public profile Rules and staging acceptance remain NOT DONE.

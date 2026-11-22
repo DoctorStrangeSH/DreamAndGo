@@ -234,3 +234,19 @@
 - [ ] This verifies the callable handler with real emulator-backed Admin SDKs, but does not yet exercise the HTTPS callable transport or App Check token exchange end-to-end.
 - [ ] No production deployment, rules publication, migration, registry backfill or user data write was performed.
 - **Batch status: Auth/Firestore and Rules test coverage committed; runtime verification pending.**
+
+
+### Auth + Firestore Emulator CI verification — 2026-11-22
+
+- [x] GitHub Actions run [44994432130](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44994432130) completed successfully on exact test HEAD `43f607d77b87f4710fb97f3d872925d67242a3b7`.
+- [x] Root unit tests: 46 passed, 0 failed.
+- [x] Emulator integration tests: 10 passed, 0 failed, 0 skipped.
+- [x] Auth Emulator verified account creation, ID-token verification, Admin SDK account lookup and registration callable handler integration.
+- [x] Two independent Auth Emulator users racing for one username: exactly one succeeds and one receives an already-exists conflict.
+- [x] Recovery callable returns needs-profile then complete for the same authenticated user; unauthenticated recovery is rejected.
+- [x] Firestore Rules Emulator: anonymous, owner and unrelated clients are denied reads/writes under the current deny-all rules; privileged server/test context can manage server-owned records.
+- [x] Existing Firestore transaction emulator scenarios: atomic profile/reservation, idempotent retry, concurrent collision and closed migration gate all pass.
+- [x] JavaScript syntax check passed for all 51 files.
+- [ ] HTTPS callable transport and App Check token exchange remain NOT DONE; current tests invoke the callable handler factory with real emulator-backed Admin SDK dependencies.
+- [ ] Staging acceptance with two real accounts, production App Check configuration and deployment remain NOT DONE.
+- **Verified status: Auth + Firestore Admin SDK integration and deny-all Rules tests are green on the exact test HEAD. No production deployment or data mutation occurred.**

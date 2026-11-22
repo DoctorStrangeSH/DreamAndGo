@@ -36,13 +36,18 @@ export function createRegistrationCallables({
             throw new HttpsError('failed-precondition', 'Нужен действующий аккаунт с email');
         }
 
-        const result = await registerProfileWithReservedUsername(
-            getFirestore(),
-            uid,
-            request.data?.username,
-            account.email,
-            () => FieldValue.serverTimestamp()
-        );
+        let result;
+        try {
+            result = await registerProfileWithReservedUsername(
+                getFirestore(),
+                uid,
+                request.data?.username,
+                account.email,
+                () => FieldValue.serverTimestamp()
+            );
+        } catch {
+            throw new HttpsError('internal', 'Не удалось завершить регистрацию');
+        }
 
         if (!result?.ok) {
             const code = result?.code;

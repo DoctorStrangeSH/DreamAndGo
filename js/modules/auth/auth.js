@@ -148,6 +148,18 @@ ${this.mode !== 'recovery' ? `
             });
         }
 
+        const recoverySignOut = document.getElementById('recoverySignOut');
+        if (recoverySignOut) {
+            recoverySignOut.addEventListener('click', async () => {
+                recoverySignOut.disabled = true;
+                const result = await this.authService.signOut();
+                if (!result.success) {
+                    recoverySignOut.disabled = false;
+                    this.showError(result.error);
+                }
+            });
+        }
+
         const authForm = document.getElementById('authForm');
         if (authForm) {
             authForm.addEventListener('submit', async (e) => {

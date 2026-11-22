@@ -15,7 +15,7 @@
 
 ### Качество приложения
 - [ ] Root unit tests проходят на точном integration HEAD.
-- [ ] Синтаксическая проверка проходит на точном integration HEAD.
+- [ ] Синтаксическая проверка проходит на точном integration HEAD (checker added; execution evidence pending).
 - [ ] Emulator suites проходят на точном integration HEAD.
 - [ ] CI не зависает; для каждого набора есть сохранённый итоговый job result и логи.
 
@@ -53,3 +53,13 @@
 - [x] Added six regression tests for current main security helpers.
 - [x] Added bounded CI workflow for the integration branch.
 - [ ] Await actual GitHub Actions execution; empty run list/status is not a pass.
+
+
+### Username and signup foundation — 2026-11-22
+
+- [x] Canonical username normalization and validation helpers added.
+- [x] Signup V2 rollout policy defaults closed unless all three readiness signals are true.
+- [x] Signup orchestration protects uncertain callable outcomes from destructive Auth-account rollback.
+- [x] Added 13 focused tests for username, rollout policy and signup rollback paths.
+- [ ] CI/test execution still needs confirmation on the current integration HEAD.
+- [ ] Firebase registry transaction, App Check, callable bridge and Emulator tests remain NOT DONE.

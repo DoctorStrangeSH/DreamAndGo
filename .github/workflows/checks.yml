@@ -36,7 +36,7 @@ jobs:
         run: npm test
 
       - name: Run Firestore Emulator integration tests
-        run: npx --yes firebase-tools@14.22.0 emulators:exec --only firestore --project demo-dream-and-go "npm --prefix server run test:emulator"
+        run: npx --yes firebase-tools@14.22.0 emulators:exec --only auth,firestore --project demo-dream-and-go "npm --prefix server run test:emulator"
 
       - name: Check JavaScript syntax
         run: npm run check

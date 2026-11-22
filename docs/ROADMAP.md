@@ -126,3 +126,14 @@
 - [ ] Exact-head CI success pending.
 - [ ] HTTPS callable transport and App Check token exchange end-to-end remain NOT DONE.
 - [ ] No production rules/deployment/migration changes.
+
+
+### Auth + Firestore Emulator CI verified — 2026-11-22
+
+- [x] Exact-head GitHub Actions run [44994432130](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44994432130): success.
+- [x] Root unit suite: 46/46 passed.
+- [x] Auth + Firestore Emulator integration suite: 10/10 passed, including auth identity/token, duplicate-username race, recovery, and Rules access matrix.
+- [x] Firestore transaction integration suite: atomic signup, retry recovery, concurrency conflict and migration gate all passed.
+- [x] Syntax check: 51 JS files passed.
+- [ ] HTTPS callable transport, App Check exchange and two-real-account staging remain NOT DONE.
+- [ ] Production deploy, rules publication and data migration remain NOT DONE.

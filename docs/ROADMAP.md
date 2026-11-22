@@ -45,3 +45,11 @@
 - Production Firebase Rules, Functions и пользовательские данные не изменяются.
 - Не выполнять миграции и не включать rollout gates до staging-приёмки.
 - Любая задача считается DONE только при наличии проверяемого результата на актуальном HEAD.
+
+
+### Test harness batch — 2026-11-22
+
+- [x] Added dependency-free root test runner and syntax checker.
+- [x] Added six regression tests for current main security helpers.
+- [x] Added bounded CI workflow for the integration branch.
+- [ ] Await actual GitHub Actions execution; empty run list/status is not a pass.

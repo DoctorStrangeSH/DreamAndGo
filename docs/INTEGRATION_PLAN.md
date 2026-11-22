@@ -359,3 +359,10 @@
 - [x] Settings reads cached owner data and saves through the callable, removing direct Firestore reads/writes from this settings flow.
 - [ ] Verify exact-head CI and add real Firestore Emulator transaction coverage for profile edits.
 - [ ] Signup V2 integration, callable HTTPS transport tests, App Check token exchange, Rules and staging remain NOT DONE.
+
+
+### Profile account Emulator coverage — 2026-11-22
+
+- [x] Added real Firestore Emulator tests for owner-only profile read, allowlisted public projection refresh, username reservation move and collision rollback.
+- [ ] Exact-head CI execution pending.
+- [ ] HTTPS callable transport, App Check exchange and two-account staging remain NOT DONE.

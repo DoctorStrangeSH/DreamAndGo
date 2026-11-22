@@ -316,3 +316,11 @@
 - [x] Reviewed the tracked file inventory for obvious duplicate/generated files; no deletion was justified.
 - [ ] Final exact-HEAD CI validation pending.
 - [ ] No runtime source logic, Firebase Rules, production project settings or user data changed.
+
+
+### Public profile consent policy — 2026-11-22
+
+- [x] Hardened the pure projection helper with a separate profile-level opt-in; old category defaults cannot publish a profile by themselves.
+- [x] Added focused tests for consent states and category-level privacy.
+- [ ] Consent UI, server-authorized synchronization callable, document lifecycle, Rules Emulator coverage and staging remain NOT DONE.
+- [ ] Do not backfill or publish legacy profiles without a user-visible consent flow.

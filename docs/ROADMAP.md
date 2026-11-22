@@ -575,3 +575,15 @@ Dream&Go — социальное пространство мечтаний, п�
 - [ ] Obtain production Rules export + project/database confirmation; build and manually approve a single complete production Ruleset.
 - [ ] Verify browser App Check, backup restore and rollback before production rollout.
 - **Production status: NOT READY. Existing deny-all Rules must remain unchanged until all release gates are satisfied.**
+
+### Exact-head CI evidence gate — 2026-11-22
+
+- [x] Reviewed current PR #1 head: `c8b501dafee72d446cca6a19b1b8a104d0da1723` (`test(chat): assert loaded pilot history rather than loading snapshot`). The commit changes only `tests/chat-v2-pilot-conversation.test.js` and strengthens assertions to inspect the loaded ready snapshot rather than assuming the first emitted snapshot already contains history.
+- [x] Confirmed PR #1 remains open and GitHub reports `mergeable: false`; no rebase, force-push or merge was attempted.
+- [x] Queried commit-associated workflow runs and combined commit statuses for this exact HEAD; both returned no records. This is **unverified**, not a pass or a failure.
+- [x] Preserved the earlier documented 528/528 root tests, syntax checks, 13/13 collection Rules tests and 14/14 + 59/59 Auth/Firestore Emulator results as historical evidence only.
+- [ ] Re-run root tests and syntax checks on exact HEAD `c8b501d`.
+- [ ] Re-run the complete Firestore Rules Emulator workflow on exact HEAD and retain the run URL plus job output.
+- [ ] Re-run the Auth + Firestore candidate Emulator workflow on exact HEAD and retain the run URL plus job output.
+- [ ] Only after exact-head checks pass, proceed with the next bounded Chat V2 client-integration task. Production Rules, App Check, data and `main` remain untouched.
+- **Gate status:** candidate implementation is progressing; exact-head CI evidence is pending. Do not mark the Emulator/CI gate complete from historical results.

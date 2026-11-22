@@ -28,6 +28,7 @@ import { LevelService } from './services/level.service.js';
 import { LevelWidget } from './modules/level/level-widget.js';
 import { DailyTasksService } from './services/daily-tasks.service.js';
 import { DailyTasksWidget } from './modules/daily-tasks/daily-tasks.js';
+import { ProfilePrivacyService } from './services/profile-privacy.service.js';
 
 class DreamAndGo {
     constructor() {
@@ -48,6 +49,7 @@ class DreamAndGo {
         this.levelWidget = new LevelWidget();
         this.dailyTasksService = new DailyTasksService();
         this.dailyTasksWidget = new DailyTasksWidget();
+        this.profilePrivacyService = new ProfilePrivacyService();
 
         this.currentUser = null;
         this.userData = null;

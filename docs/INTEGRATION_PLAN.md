@@ -120,8 +120,9 @@
 1. [x] Add a minimal, deterministic root test/syntax harness with bounded execution time and no Firebase credentials. Initial regression coverage targets the current main security baseline; CI execution evidence is still pending.
 2. [x] Port pure username normalization/validation and signup policy/flow helpers, with focused unit tests. The flow keeps uncertain backend outcomes non-destructive.
 3. [ ] Port App Check bootstrap + Firebase Functions initialization behind safe initialization handling; verify that Auth UI remains usable when App Check provider initialization fails, while protected callables fail closed.
-4. [ ] Port only the username registry transaction + registration/recovery callable and its Emulator tests. Keep rollout disabled.
-5. [ ] Only after those tests pass, reconcile AuthService and AuthModule with the current main implementation and confirm legacy login remains available.
+4. [x] Port the isolated username registry transaction core with deterministic mock-transaction tests. Production callable and Firestore Emulator integration remain separate and NOT DONE.
+5. [ ] Port only the username registry callable + registration/recovery endpoint and Emulator tests. Keep rollout disabled.
+6. [ ] Only after those tests pass, reconcile AuthService and AuthModule with the current main implementation and confirm legacy login remains available.
 
 ### Explicit blockers / non-actions
 
@@ -152,3 +153,14 @@
 - [ ] Execute root tests and syntax check on the exact integration HEAD; no Actions result has been confirmed yet.
 - [ ] App Check/Functions bridge, username registry transaction, callable endpoints and Emulator suite are not yet ported to this branch.
 - **Batch status: source and tests committed; execution unverified; no Auth UI or production behavior changed.**
+
+
+### Username registry transaction core — 2026-11-22
+
+- [x] Added `server/username-reservation.js`, an isolated server-side transactional helper that reserves the canonical username and creates the initial profile together.
+- [x] Registry gate fails closed unless `ready === true`, `schemaVersion === 1` and `legacyBackfillComplete === true`.
+- [x] Existing profile retries are accepted only when both profile and reservation match the same Auth UID; mismatched profiles/reservations are rejected without repair or overwrite.
+- [x] Added 7 deterministic tests using a transaction mock. Tests cover invalid input, missing/incomplete migration gate, atomic reservation/profile creation, occupied nickname, mismatched existing profile, idempotent retry and attempts to claim a different username.
+- [ ] Runtime execution and syntax validation are not yet confirmed on the exact branch HEAD.
+- [ ] This helper is not yet called by a deployed Firebase callable; no live Firestore registry document was created and no user data was touched.
+- **Batch status: isolated server logic and tests committed; Firebase integration and execution evidence pending.**

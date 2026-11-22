@@ -5,6 +5,8 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { registerProfileWithReservedUsername } from './username-reservation.js';
 import { getRegistrationState } from './registration-state.js';
 import { createRegistrationCallables } from './registration-callables.js';
+import { createProfileCallables } from './profile-callables.js';
+import { buildPublicProfile } from './public-profile.js';
 
 if (getApps().length === 0) initializeApp();
 
@@ -22,3 +24,14 @@ const registration = createRegistrationCallables({
 
 export const registerProfileV2 = registration.registerProfileV2;
 export const getRegistrationStateV2 = registration.getRegistrationStateV2;
+
+
+const profile = createProfileCallables({
+    onCall,
+    HttpsError,
+    getFirestore,
+    FieldValue,
+    buildPublicProfile
+});
+
+export const updateProfileVisibilityV1 = profile.updateProfileVisibilityV1;

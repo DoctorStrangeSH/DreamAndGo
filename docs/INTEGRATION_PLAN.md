@@ -96,3 +96,36 @@
 - Два аккаунта не могут читать/изменять приватные данные друг друга.
 - История чата и пользовательские данные сохранены; миграция имеет подтверждённый rollback.
 - Ни один rollout не включён до прохождения релизных ворот.
+
+## First P0 security/auth review — 2026-11-22
+
+### Current main baseline (confirmed from repository tree)
+
+- [x] `main` currently has no root `package.json`, no `tests/`, no `scripts/`, no `server/`, no `firebase.json`, and no committed `firestore.rules` file. Therefore candidate CI workflows that invoke `npm test`, `npm run check`, or Emulator suites cannot simply be copied into this branch and expected to pass; the test harness and candidate source dependencies must be ported together.
+- [x] Current main already contains `js/core/security.js` with HTML escaping, internal-route allowlisting, icon/document-ID validation, bounded counters and HTTPS URL validation. This is the baseline to preserve; candidate modules that import `escape-html.js` or `home-snapshot.js` must be adapted deliberately rather than replacing the main security module.
+- [x] Current main `js/config/firebase.js` initializes Firebase App/Auth/Firestore but does not initialize App Check or export Functions.
+- [x] Current main `AuthService` still performs client-side username queries against `users`, creates the profile directly from the browser, and attempts to create placeholder subcollections. This is not compatible with a deny-all Firestore Rules deployment and does not provide atomic username reservation.
+- [x] Current main `AuthModule` is the compact legacy form; candidate UI adds presentation and autocomplete attributes but is not required for the first security batch.
+
+### Candidate architecture review
+
+- [x] Candidate adds App Check bootstrap and Firebase Functions client setup in `js/config/firebase.js`; this is a required dependency for the protected callable endpoints, but the public site key/provider configuration and production App Check enforcement still require environment/staging verification.
+- [x] Candidate `AuthService` has an opt-in server-backed signup/recovery path guarded by `canUseSignupV2`; its default rollout is disabled. Keep it disabled until the registry backfill and backend are verified.
+- [x] Candidate `registerProfileV2` derives UID and email from Firebase Auth on the server and calls a transactional username reservation helper. The helper fails closed unless `system/usernameRegistry` is ready, schema version 1 and legacy backfill complete. This is a useful design to port with tests; it is not deploy-ready merely because the code exists.
+- [x] Candidate server exports multiple callable endpoints with App Check enforcement and a large set of chat/profile/friendship/XP/daily-task dependencies. Do not port the entire `server/index.js` as one batch; split by V1.0 requirement and review every callable's auth, validation, quota, transaction and data-access contract.
+- [x] Candidate Emulator config points to isolated local ports and candidate rules; it is not a production rules file. Candidate docs explicitly state that the production ruleset is not verified or replaced.
+
+### P0 implementation sequence
+
+1. [ ] Add a minimal, deterministic root test/syntax harness to the integration branch, with bounded execution time and no Firebase credentials. First test only the current main source baseline.
+2. [ ] Port pure username normalization/validation and signup policy/flow helpers, adapting imports to main's `security.js` and adding focused unit tests.
+3. [ ] Port App Check bootstrap + Firebase Functions initialization behind safe initialization handling; verify that Auth UI remains usable when App Check provider initialization fails, while protected callables fail closed.
+4. [ ] Port only the username registry transaction + registration/recovery callable and its Emulator tests. Keep rollout disabled.
+5. [ ] Only after those tests pass, reconcile AuthService and AuthModule with the current main implementation and confirm legacy login remains available.
+
+### Explicit blockers / non-actions
+
+- [ ] No confirmed current production Firestore Rules export is present in the repository. Do not author/deploy replacement production rules based solely on candidate emulator rules.
+- [ ] The owner previously reported a deny-all Firestore Rules configuration and Storage is excluded from V1.0; preserve this constraint until the exact active project/database/ruleset is independently verified and the candidate rules pass two-account staging.
+- [ ] No Firebase Functions deployment, App Check enforcement change, username backfill, production data write or UI rollout was performed.
+- **P0 status: audit complete; implementation not yet started.**

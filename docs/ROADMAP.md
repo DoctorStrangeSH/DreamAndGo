@@ -172,3 +172,12 @@
 - [ ] Public/private profile split and server-mediated chat/friend/notification operations remain NOT DONE.
 - [ ] Path-specific Rules and positive/negative Rules Emulator tests remain NOT DONE.
 - [ ] Rules stay deny-all; no production change.
+
+
+### Public profile projection — 2026-11-22
+
+- [x] Added isolated server-side allowlist projection for public profile data.
+- [x] Added privacy-aware statistic filtering and fail-closed defaults.
+- [x] Added tests for private-field exclusion, privacy filtering, URL validation, bounded text, UID validation and timestamp handling.
+- [ ] Server write/sync callable, private profile split, consent UI, migration/backfill and Rules remain NOT DONE.
+- [ ] No production data or Rules changed.

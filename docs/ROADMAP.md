@@ -599,3 +599,14 @@ Dream&Go — социальное пространство мечтаний, п�
 - PR #1 remains open; GitHub reports `mergeable: false` / `dirty`. No rebase, force-push or merge was attempted.
 - Chat V2 remains candidate-only; the active app still registers legacy `ChatModule`. No UI cutover, Firebase deployment, production Rules change, or user-data migration was performed.
 - **Gate status: HOLD.** Next action is to obtain a completed exact-HEAD CI run, then separately plan PR integration and Chat V2 staging.
+
+### PR #1 integration scope audit — 2026-11-22
+
+- [x] Re-read PR #1 metadata after the documentation correction. Head: `4ed281d1f6eada89511bf9a6da56ce77819a77c9`; PR base recorded by GitHub: `ffc60beca6d1f7840c52483019e4d8e0117de08c`; current `main` branch head observed separately: `f02171c362d5944143a1202f425cd96f2386348f`.
+- [x] GitHub PR metadata reports **1,624 commits**, **331 changed files**, **34,860 additions**, **7,464 deletions**, and `mergeable: false` / `mergeable_state: dirty`.
+- [x] Sampled the PR file inventory: it includes broad application, router, auth, CSS/design, migration, security, test and workflow changes. This is a large integration/reconciliation effort, not a small isolated Chat V2 patch.
+- [x] No merge, rebase, force-push, branch deletion or production action was attempted.
+- [ ] Establish the true common ancestor and compare the branch against the current `main` head; identify which commits/files are genuinely unique and which are already represented on `main`.
+- [ ] Build a reviewed integration manifest grouped by product area; prefer a fresh integration branch from current `main` with selectively ported, tested changes over merging the dirty PR wholesale.
+- [ ] Reconcile current exact-head CI evidence before porting code. The existing Actions runs still refer to `7931c30`; no completed exact-head result has been established for `4ed281d`.
+- **Integration gate: HOLD.** PR #1 must not be merged as-is. `main`, Production Firebase Rules, deployed Functions and user data remain untouched.

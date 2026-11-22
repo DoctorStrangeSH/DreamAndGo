@@ -12,6 +12,7 @@ export class AuthService {
         this.auth = auth;
         this.signupV2Service = signupV2Service;
         this.profileAccountService = profileAccountService;
+        this.isSignupInProgress = false;
     }
 
     onAuthChange(callback) {
@@ -54,23 +55,28 @@ export class AuthService {
             };
         }
 
-        return completeSignupV2({
-            email,
-            password,
-            username,
-            createAuthUser: async (normalizedEmail, rawPassword) => {
-                const credential = await createUserWithEmailAndPassword(
-                    this.auth,
-                    normalizedEmail,
-                    rawPassword
-                );
-                return credential.user;
-            },
-            registerProfile: value => this.signupV2Service.registerProfile(value),
-            getRegistrationState: () => this.signupV2Service.getRegistrationState(),
-            deleteAuthUser: account => deleteUser(account),
-            signOutAuth: () => signOut(this.auth)
-        });
+        this.isSignupInProgress = true;
+        try {
+            return await completeSignupV2({
+                email,
+                password,
+                username,
+                createAuthUser: async (normalizedEmail, rawPassword) => {
+                    const credential = await createUserWithEmailAndPassword(
+                        this.auth,
+                        normalizedEmail,
+                        rawPassword
+                    );
+                    return credential.user;
+                },
+                registerProfile: value => this.signupV2Service.registerProfile(value),
+                getRegistrationState: () => this.signupV2Service.getRegistrationState(),
+                deleteAuthUser: account => deleteUser(account),
+                signOutAuth: () => signOut(this.auth)
+            });
+        } finally {
+            this.isSignupInProgress = false;
+        }
     }
 
     async getRegistrationState() {

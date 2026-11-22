@@ -205,3 +205,16 @@
 - [x] Confirmed the earlier failure on commit `ba7830c` was a real failing regression test for unexpected helper exceptions; fixed the callable to map unknown failures to a generic `internal` error, and the later exact-head run is green.
 - [ ] Firebase Emulator integration, Admin SDK deployment smoke test, App Check provider validation and two-account staging remain NOT DONE.
 - **Verified status: isolated server registration code and unit suite are green; production readiness is not established.**
+
+
+### Firestore Emulator registration integration batch — 2026-11-22
+
+- [x] Added root `firebase.json` with an isolated Firestore Emulator on loopback port 8080; no live project is selected by the test command.
+- [x] Added checked-in `firestore.rules` with deny-by-default client access, matching the currently documented locked-down posture. Firebase Admin SDK server tests bypass client Rules as intended.
+- [x] Added opt-in `server/username-reservation.emulator.test.js` against the real Firestore Emulator/Admin SDK.
+- [x] Emulator scenarios cover atomic profile + username reservation, idempotent retry, two-account concurrent username collision, and the closed legacy-backfill gate.
+- [x] Added `server:test:emulator` script and CI step to install server dependencies and run Firebase CLI's Firestore Emulator in a demo project.
+- [ ] Exact-head GitHub Actions verification pending.
+- [ ] Client Firestore Rules authorization tests and Auth Emulator / callable end-to-end tests remain NOT DONE.
+- [ ] No production Firebase deployment, Firestore Rules publication, registry backfill, or live data writes were performed.
+- **Batch status: emulator integration infrastructure committed; CI execution pending.**

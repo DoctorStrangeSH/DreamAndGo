@@ -111,6 +111,7 @@
 - [x] Added deny-by-default Firestore Rules file; client access remains closed pending audited path-specific policies.
 - [x] Added Admin SDK transaction integration tests for atomic signup, retry recovery, concurrent username collision, and migration gate behavior.
 - [x] CI now installs server dependencies and runs the Firestore Emulator integration suite.
+- [x] Emulator test suite is isolated from dependency-free unit discovery; Admin SDK uses the emulator host environment.
 - [ ] Verify exact-head CI success.
 - [ ] Client Rules tests and Auth Emulator/callable end-to-end coverage remain NOT DONE.
 - [ ] No production deploy or migration performed.

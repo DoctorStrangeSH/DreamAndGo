@@ -103,3 +103,14 @@
 - [x] Syntax check passed for 51 JavaScript files.
 - [x] Previous failing edge case was fixed and covered by the passing exact-head run.
 - [ ] Firebase Emulator and staging acceptance remain NOT DONE.
+
+
+### Firestore Emulator integration — 2026-11-22
+
+- [x] Added isolated Firestore Emulator configuration using demo project ID in CI.
+- [x] Added deny-by-default Firestore Rules file; client access remains closed pending audited path-specific policies.
+- [x] Added Admin SDK transaction integration tests for atomic signup, retry recovery, concurrent username collision, and migration gate behavior.
+- [x] CI now installs server dependencies and runs the Firestore Emulator integration suite.
+- [ ] Verify exact-head CI success.
+- [ ] Client Rules tests and Auth Emulator/callable end-to-end coverage remain NOT DONE.
+- [ ] No production deploy or migration performed.

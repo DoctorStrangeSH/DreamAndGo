@@ -246,6 +246,7 @@
 
 - [x] Added App Check-enforced `getMyProfileV1`; it derives the UID only from verified Auth context and rejects caller-supplied profile parameters.
 - [x] AuthService now loads the private profile through the owner-scoped callable rather than a direct Firestore read.
+- [x] ProfileModule uses cached owner data for the owner's page and reads only the public projection for other users.
 - [x] Added App Check-enforced `updateMyProfileV1` with a strict four-field allowlist and bounded input validation.
 - [x] Profile settings now use the server callable; no direct Firestore profile update or client-side username lookup remains in this form.
 - [x] Username changes require a fully backfilled registry and atomically move the old/new reservation with the profile write.

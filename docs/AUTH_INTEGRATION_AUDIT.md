@@ -76,3 +76,10 @@ The browser-side signup V2 wiring is now present on `integration/v1.0-reconcilia
 - [x] A separate false-by-default `firebase-functions-backend-ready` flag prevents callable traffic before a staging backend is deployed.
 - [x] Recovery UI includes an explicit sign-out escape when the registry is temporarily unavailable.
 - [ ] Real App Check site key, deployed Functions transport, two-account staging, and legacy registry migration remain NOT DONE.
+
+
+### Final exact HEAD CI confirmation — 2026-11-22
+
+- [x] Final documentation HEAD `ce990b79c8495ffb0c406b6a83db98452d938b33` passed [GitHub Actions 45001207890](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/45001207890).
+- [x] 100/100 unit tests, 14/14 Firestore Emulator tests, 62 JavaScript syntax checks.
+- [ ] App Check key, staging Functions deployment and real callable transport remain not done.

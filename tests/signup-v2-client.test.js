@@ -97,7 +97,7 @@ test('recovery returns only an allowlisted registration state', async () => {
 
 test('recovery rejects malformed or unknown server states', async () => {
     for (const stateResult of [
-        undefined,
+        {},
         { data: { status: 'another-user-exists' } },
         { data: null }
     ]) {

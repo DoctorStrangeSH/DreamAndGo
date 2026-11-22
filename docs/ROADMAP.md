@@ -73,3 +73,13 @@
 - [x] Added 7 transaction-mock tests for reservation, conflicts, migration gate and retries.
 - [ ] Firebase callable, App Check and Firestore Emulator integration remain NOT DONE.
 - [ ] Test execution on the exact integration HEAD remains unverified.
+
+
+### CI and Firebase client helper batch — 2026-11-22
+
+- [x] Root CI on `4eb0f6537b64e73de69e07c2e7627b05b60da95a`: 26/26 unit tests passed; syntax check passed for 47 JS files.
+- [x] App Check bootstrap helper and tests added (SDK wiring pending).
+- [x] Chat V2 callable invoker allowlist and tests added (server-side authz still required).
+- [ ] Re-run CI on the new HEAD; do not carry forward the previous success.
+- [ ] Verify App Check key / Functions region / deployed endpoints before Firebase config wiring.
+- [ ] Firestore Emulator integration and two-account staging remain NOT DONE.

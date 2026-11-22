@@ -94,7 +94,7 @@ export class SettingsModule {
                                 <div class="rounded-3 bg-primary bg-opacity-10 text-primary p-3"><i class="bi bi-shield-lock fs-4"></i></div>
                                 <div>
                                     <h5 class="fw-bold mb-1">Приватность профиля</h5>
-                                    <p class="text-muted small mb-0">Решай сам, что увидят другие пользователи. По умолчанию всё закрыто.</p>
+                                    <p class="text-muted small mb-0">Решай сам, что увидят другие пользователи. Публичная страница выключена по умолчанию; категории настраиваются отдельно.</p>
                                 </div>
                             </div>
                             <form id="profilePrivacyForm" data-settings-owner="${escapeHTML(userId)}">

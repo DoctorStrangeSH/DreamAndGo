@@ -250,3 +250,16 @@
 - [ ] HTTPS callable transport and App Check token exchange remain NOT DONE; current tests invoke the callable handler factory with real emulator-backed Admin SDK dependencies.
 - [ ] Staging acceptance with two real accounts, production App Check configuration and deployment remain NOT DONE.
 - **Verified status: Auth + Firestore Admin SDK integration and deny-all Rules tests are green on the exact test HEAD. No production deployment or data mutation occurred.**
+
+
+### Legacy AuthService reconciliation audit — 2026-11-22
+
+- [x] Reviewed current main AuthService, AuthModule, app bootstrap and Firebase config against the new server registration contract.
+- [x] Confirmed current browser registration still performs global username queries, creates Auth users, writes profiles directly, and attempts seven placeholder subcollection writes.
+- [x] Identified a destructive rollback risk: a profile write can commit despite a lost response, while the legacy client may then delete the Auth account.
+- [x] Confirmed login still attempts a client-side lastLogin write and authenticated app bootstrap reads the profile directly; both conflict with the current deny-all Rules posture.
+- [x] Recorded findings and a safe migration sequence in docs/AUTH_INTEGRATION_AUDIT.md.
+- [ ] Browser Functions SDK adapter and App Check provider/site key wiring remain NOT DONE.
+- [ ] Owner-scoped profile read/update Rules and per-collection access matrix remain NOT DONE.
+- [ ] Legacy login compatibility, recovery UI and two-account browser staging remain NOT DONE.
+- **Decision: do not enable signup V2 or alter current login/profile reads until the browser integration and access matrix are implemented and staged.**

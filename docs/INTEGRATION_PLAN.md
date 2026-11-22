@@ -129,3 +129,14 @@
 - [ ] The owner previously reported a deny-all Firestore Rules configuration and Storage is excluded from V1.0; preserve this constraint until the exact active project/database/ruleset is independently verified and the candidate rules pass two-account staging.
 - [ ] No Firebase Functions deployment, App Check enforcement change, username backfill, production data write or UI rollout was performed.
 - **P0 status: audit complete; implementation not yet started.**
+
+
+### First integration batch — test harness and main security regression coverage — 2026-11-22
+
+- [x] Added root `package.json` with dependency-free `npm test` and `npm run check` scripts (Node.js 22+).
+- [x] Added `scripts/check-syntax.mjs`, which recursively checks JavaScript source in `js/`, `scripts/` and `tests/` and fails if no source files are found.
+- [x] Added `tests/security.test.js` with six focused regression tests for HTML escaping, route allowlisting, document IDs, bounded counters, HTTPS URL validation and icon class validation.
+- [x] Added a dedicated `.github/workflows/checks.yml` with read-only permissions, Node 22, a five-minute timeout and concurrency cancellation. It is scoped to the integration branch and PRs targeting main/integration.
+- [ ] GitHub Actions run for integration HEAD `ceb30bedfb720bb2d239a6c3a9462d5044e1db13` is not visible yet; commit runs and combined statuses returned empty. Do not mark tests passed until execution evidence exists.
+- [ ] Verify the workflow is enabled for the repository/branch or identify why push did not enqueue it; then obtain a completed run.
+- **Batch status: files committed; execution unverified.** No production Firebase, main branch, user data or deployed services changed.

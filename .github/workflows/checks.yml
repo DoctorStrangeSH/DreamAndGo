@@ -19,7 +19,7 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,8 +29,14 @@ jobs:
         with:
           node-version: 22
 
+      - name: Install server dependencies
+        run: npm install --prefix server --no-package-lock --ignore-scripts
+
       - name: Run unit tests
         run: npm test
+
+      - name: Run Firestore Emulator integration tests
+        run: npx --yes firebase-tools@14.22.0 emulators:exec --only firestore --project demo-dream-and-go "npm --prefix server run test:emulator"
 
       - name: Check JavaScript syntax
         run: npm run check

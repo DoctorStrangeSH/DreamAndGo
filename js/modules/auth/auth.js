@@ -28,7 +28,7 @@ export class AuthModule {
 
                             <div class="card-premium p-4 fade-in-up" style="animation-delay: 0.2s">
                                 <form id="authForm" class="auth-form">
-                                    ${this.mode !== 'recovery' ? `
+${this.mode !== 'recovery' ? `
                                     <div class="mb-3">
                                         <label class="form-label fw-semibold">
                                             <i class="bi bi-envelope me-2"></i>Email
@@ -45,7 +45,7 @@ export class AuthModule {
                                         </div>
                                     </div>
                                     ` : ''}
-                                    ${this.mode === 'register' || this.mode === 'recovery' ? `
+${this.mode === 'register' || this.mode === 'recovery' ? `
                                         <div class="mb-3">
                                             <label class="form-label fw-semibold">
                                                 <i class="bi bi-person-badge me-2"></i>Никнейм
@@ -67,28 +67,7 @@ export class AuthModule {
                                         </div>
                                     ` : ''}
 
-                                    ${this.mode !== 'recovery' ? `
-                                    <div class="mb-3">
-                                            <label class="form-label fw-semibold">
-                                                <i class="bi bi-person-badge me-2"></i>Никнейм
-                                            </label>
-                                            <div class="input-group">
-                                                <span class="input-group-text bg-transparent">@</span>
-                                                <input type="text" 
-                                                       class="form-control" 
-                                                       id="username" 
-                                                       placeholder="your_nickname" 
-                                                       minlength="3"
-                                                       maxlength="20"
-                                                       required>
-                                            </div>
-                                            <div class="form-text">
-                                                <i class="bi bi-info-circle me-1"></i>
-                                                От 3 до 20 символов, только буквы, цифры и _
-                                            </div>
-                                        </div>
-                                    ` : ''}
-
+${this.mode !== 'recovery' ? `
                                     <div class="mb-3">
                                         <label class="form-label fw-semibold">
                                             <i class="bi bi-shield-lock me-2"></i>Пароль

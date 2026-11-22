@@ -291,3 +291,16 @@
 - [x] Added `docs/FIRESTORE_ACCESS_MATRIX.md` with intended V1.0 access, blockers, cross-cutting Rules requirements and implementation order.
 - [ ] Public/private profile split, server-mediated cross-user operations, path-specific Rules, Rules Emulator matrix and two-account staging remain NOT DONE.
 - **Decision: keep deny-all rules unchanged; do not open client access until services are reconciled to this matrix.**
+
+
+### Public profile projection — first isolated implementation — 2026-11-22
+
+- [x] Added `server/public-profile.js`, a pure allowlist projection for `publicProfiles/{uid}`.
+- [x] Projection excludes email, lastLogin, normalized username key, friends list, achievements, privacy preferences and private account preferences.
+- [x] Statistics are included only when their corresponding existing privacy flag is explicitly `public`; missing/unknown values fail closed. Restaurant counts map to the existing `food` privacy flag. Friend count is not published because no corresponding privacy control exists.
+- [x] Public strings are bounded; avatar and website accept only HTTPS URLs without embedded credentials; creation date is copied only in a recognized timestamp/date form.
+- [x] Added six unit tests and included them in the root test command.
+- [ ] Projection is not yet wired to Firestore writes or reads; no `publicProfiles` documents are created and no UI reads have changed.
+- [ ] Existing privacy settings are not yet a complete consent UX; profile/settings UI currently does not expose the visibility controls. A backfill must not assume legacy defaults are user consent.
+- [ ] Private/public document split, owner-authorized server sync, data backfill/dry-run, Rules tests and browser integration remain NOT DONE.
+- **Safety decision: projection is an isolated tested building block only. Do not deploy or backfill it until consent defaults, legacy compatibility and rollback are approved.**

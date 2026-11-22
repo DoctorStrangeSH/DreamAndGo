@@ -220,3 +220,17 @@
 - [ ] Client Firestore Rules authorization tests and Auth Emulator / callable end-to-end tests remain NOT DONE.
 - [ ] No production Firebase deployment, Firestore Rules publication, registry backfill, or live data writes were performed.
 - **Batch status: emulator integration infrastructure committed; CI execution pending.**
+
+
+### Auth Emulator and Firestore Rules verification batch — 2026-11-22
+
+- [x] Extended Firebase Emulator configuration with Auth on loopback port 9099; Firestore remains on loopback port 8080.
+- [x] Added Auth + Firestore integration coverage using the Auth Emulator REST signup endpoint, Admin SDK identity/token verification, and the actual registration callable handler factory wired to Firebase Admin Auth/Firestore.
+- [x] Integration cases cover trusted Auth email (client-forged email ignored), same-username collision across two Auth accounts, and authenticated registration-state recovery.
+- [x] Added Firestore Rules Emulator tests for unauthenticated clients, owner, unrelated user, and privileged server/test context. Current deny-all rules remain explicit and are not broadened.
+- [x] CI installs Firebase client SDK and Rules Unit Testing dependencies and starts Auth + Firestore emulators in a demo project.
+- [x] Emulator test files are serialized to avoid shared registry fixture races; each test suite cleans up its own Auth users and Firestore records.
+- [ ] Exact-head CI execution pending.
+- [ ] This verifies the callable handler with real emulator-backed Admin SDKs, but does not yet exercise the HTTPS callable transport or App Check token exchange end-to-end.
+- [ ] No production deployment, rules publication, migration, registry backfill or user data write was performed.
+- **Batch status: Auth/Firestore and Rules test coverage committed; runtime verification pending.**

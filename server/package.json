@@ -8,7 +8,7 @@
   },
   "scripts": {
     "test": "node --test",
-    "test:emulator": "node --test *emulator.test.js"
+    "test:emulator": "node --test --test-concurrency=1 *emulator.test.js"
   },
   "dependencies": {
     "firebase-admin": "^13.0.0",

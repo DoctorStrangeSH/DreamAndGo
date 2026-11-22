@@ -11,7 +11,7 @@ This is an implementation review, not a permission grant. The checked-in rules r
 
 | Path | Current client operations observed | V1.0 intended access | Security decision / blocker |
 |---|---|---|---|
-| `users/{uid}` | Auth/profile reads; profile stats, level and metadata updates; settings edits; username lookup queries | Public profile projection readable only for fields approved by profile privacy; owner may read own private profile; narrowly allowlisted owner updates | Current document mixes public and private data (`email`, privacy, stats, profile fields). Do not allow broad public document reads or unrestricted owner `update`. Split public profile from private account data or expose a safe public projection before enabling public reads. |
+| `users/{uid}` | Legacy app modules still contain direct profile/stat/metadata writes; AuthService profile read and Settings profile read/edit now use owner-only callables | Public projection is separate; owner private reads and allowlisted profile edits through App Check-enforced callables; other owner operations need path-specific Rules or server APIs | Do not open broad client read/write access. Direct legacy writes in signup, stats, levels and other modules remain blockers. |
 | `users/{uid}/travels/{id}` | Owner CRUD; profile/search reads | Owner-only CRUD by default; public reads only if a separate explicit privacy policy is implemented and query behavior is validated | Must validate `request.auth.uid == uid`; public profile privacy cannot be inferred from current rules. |
 | `users/{uid}/restaurants/{id}` | Owner CRUD; profile/search reads | Owner-only CRUD by default | Same owner check; validate fields and prevent client changes to server-managed counters. |
 | `users/{uid}/movies/{id}` | Owner CRUD; profile/search reads | Owner-only CRUD by default | Same owner check; validate fields and prevent client changes to server-managed counters. |
@@ -88,3 +88,8 @@ The public projection now has a separate profile-level consent gate. This is del
 ### Client privacy settings wiring — candidate only
 
 The Settings module now exposes explicit profile-level and category-level visibility selectors and invokes the owner-authorized callable through a small client service. The browser initializes Firebase App Check only when a valid reCAPTCHA v3 site key is supplied in `index.html` meta `firebase-app-check-site-key`. The checked-in value is intentionally empty; the privacy save control stays disabled. No Rules have been opened. The existing general profile-edit form still performs legacy direct writes and must be migrated before owner write permissions are introduced.
+
+
+### Owner profile callable boundary — 2026-11-22
+
+The integration branch now routes the Settings profile editor and AuthService private-profile load through `getMyProfileV1` and `updateMyProfileV1`. Both require Auth and App Check. The update callable accepts only username, displayName, bio and location; username changes require a ready registry and atomically move reservations. If profile visibility is public, the allowlisted public projection is refreshed in the same transaction. This does not authorize any direct client access to `users/{uid}`; Rules remain deny-all and the legacy signup/statistics/level flows still need migration.

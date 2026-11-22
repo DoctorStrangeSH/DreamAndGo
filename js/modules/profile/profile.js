@@ -411,8 +411,12 @@ export class ProfileModule {
 
     async loadUserProfile(userId) {
         try {
-            const collectionName = getProfileCollection(userId, window.app.currentUser?.uid);
-            if (!collectionName) return null;
+            const currentUserId = window.app.currentUser?.uid;
+            if (userId === currentUserId) {
+                return window.app.userData || await window.app.profileAccountService.getMyProfile();
+            }
+            const collectionName = getProfileCollection(userId, currentUserId);
+            if (collectionName !== 'publicProfiles') return null;
             const userDoc = await getDoc(doc(db, collectionName, userId));
             return userDoc.exists() ? userDoc.data() : null;
         } catch (error) {

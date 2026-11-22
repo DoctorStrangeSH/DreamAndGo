@@ -29,10 +29,12 @@ import { LevelWidget } from './modules/level/level-widget.js';
 import { DailyTasksService } from './services/daily-tasks.service.js';
 import { DailyTasksWidget } from './modules/daily-tasks/daily-tasks.js';
 import { ProfilePrivacyService } from './services/profile-privacy.service.js';
+import { ProfileAccountService } from './services/profile-account.service.js';
 
 class DreamAndGo {
     constructor() {
-        this.authService = new AuthService(auth, db);
+        this.profileAccountService = new ProfileAccountService();
+        this.authService = new AuthService(auth, db, this.profileAccountService);
         this.db = db;
         this.themeService = new ThemeService();
         this.router = new Router();

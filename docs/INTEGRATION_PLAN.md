@@ -214,6 +214,8 @@
 - [x] Added opt-in `server/username-reservation.emulator.test.js` against the real Firestore Emulator/Admin SDK.
 - [x] Emulator scenarios cover atomic profile + username reservation, idempotent retry, two-account concurrent username collision, and the closed legacy-backfill gate.
 - [x] Added `server:test:emulator` script and CI step to install server dependencies and run Firebase CLI's Firestore Emulator in a demo project.
+- [x] Kept emulator-only test file out of dependency-free root unit discovery; server dependencies are installed only for the dedicated Emulator CI step.
+- [x] Firebase Admin SDK reads `FIRESTORE_EMULATOR_HOST` directly; removed an unsupported client-SDK emulator connector import.
 - [ ] Exact-head GitHub Actions verification pending.
 - [ ] Client Firestore Rules authorization tests and Auth Emulator / callable end-to-end tests remain NOT DONE.
 - [ ] No production Firebase deployment, Firestore Rules publication, registry backfill, or live data writes were performed.

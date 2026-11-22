@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createSignupV2Client } from './signup-v2-client.js';
+import { createSignupV2Client } from '../js/core/signup-v2-client.js';
 
 function setup({ registerResult, stateResult, registerError, stateError } = {}) {
     const calls = [];

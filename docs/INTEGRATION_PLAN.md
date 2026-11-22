@@ -180,3 +180,18 @@
 - [ ] Firebase config wiring remains blocked pending verification of the App Check site key registration, Functions region and callable deployment; no public key copied from candidate has been assumed valid.
 - [ ] No Functions deployment, App Check enforcement change, production Rules change or live user data write was performed.
 - **Batch status: helper code and tests committed; exact-head CI pending.**
+
+
+### Server-side registration callable batch — 2026-11-22
+
+- [x] Added isolated `server/index.js` exposing only `registerProfileV2` and `getRegistrationStateV2`; no Chat V2 or unrelated candidate functions are included in this deployment unit.
+- [x] Added injectable `server/registration-callables.js` with fixed `europe-west3` region and `enforceAppCheck: true` on both callable endpoints.
+- [x] Registration derives UID from callable auth context and email/disabled state from Firebase Admin Auth; client-supplied email is ignored.
+- [x] Registration delegates to the transactional username registry helper; only allowlisted error codes are returned. Unexpected backend failures map to a generic internal error.
+- [x] Added read-only `getRegistrationStateV2`; it returns only one of `complete`, `needs-profile`, or `temporarily-unavailable` for the caller's own UID.
+- [x] Added 10 callable contract tests and 4 recovery-state tests. Root `node --test` now discovers server unit tests too.
+- [x] Added isolated Functions package manifest with Firebase Admin 13 / Functions 6 and Node 22.
+- [ ] Exact-head CI after this batch is pending; do not mark this batch tested until Actions is green.
+- [ ] Firebase Emulator integration, callable deployment, App Check provider verification and two-account staging remain NOT DONE.
+- [ ] No Firebase deploy, production rules update, registry write, legacy profile migration or user-data change was performed.
+- **Batch status: server callable implementation and unit tests committed; runtime verification pending.**

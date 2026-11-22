@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { ProfilePrivacyService } from '../js/services/profile-privacy.service.js';
+import { ProfilePrivacyClient } from '../js/core/profile-privacy-client.js';
 
 test('privacy service fails closed when App Check is not initialized', async () => {
-    const service = new ProfilePrivacyService({
+    const service = new ProfilePrivacyClient({
         firebaseApp: {},
         check: null,
         functionsFactory: () => { throw new Error('must not initialize Functions'); },
@@ -16,7 +16,7 @@ test('privacy service fails closed when App Check is not initialized', async () 
 
 test('privacy service invokes the allowlisted callable in europe-west3', async () => {
     const calls = [];
-    const service = new ProfilePrivacyService({
+    const service = new ProfilePrivacyClient({
         firebaseApp: { name: 'app' },
         check: { name: 'app-check' },
         functionsFactory: (app, region) => {

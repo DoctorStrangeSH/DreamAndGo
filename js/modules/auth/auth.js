@@ -29,7 +29,21 @@ export class AuthModule {
                             <div class="card-premium p-4 fade-in-up" style="animation-delay: 0.2s">
                                 <form id="authForm" class="auth-form">
                                     ${this.mode !== 'recovery' ? `
-${emailBlock.trimEnd()}
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold">
+                                            <i class="bi bi-envelope me-2"></i>Email
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-transparent">
+                                                <i class="bi bi-at"></i>
+                                            </span>
+                                            <input type="email" 
+                                                   class="form-control" 
+                                                   id="email" 
+                                                   placeholder="your@email.com" 
+                                                   required>
+                                        </div>
+                                    </div>
                                     ` : ''}
                                     ${this.mode === 'register' || this.mode === 'recovery' ? `
                                         <div class="mb-3">
@@ -54,7 +68,48 @@ ${emailBlock.trimEnd()}
                                     ` : ''}
 
                                     ${this.mode !== 'recovery' ? `
-${passwordBlock.trimEnd()}
+                                    <div class="mb-3">
+                                            <label class="form-label fw-semibold">
+                                                <i class="bi bi-person-badge me-2"></i>Никнейм
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-transparent">@</span>
+                                                <input type="text" 
+                                                       class="form-control" 
+                                                       id="username" 
+                                                       placeholder="your_nickname" 
+                                                       minlength="3"
+                                                       maxlength="20"
+                                                       required>
+                                            </div>
+                                            <div class="form-text">
+                                                <i class="bi bi-info-circle me-1"></i>
+                                                От 3 до 20 символов, только буквы, цифры и _
+                                            </div>
+                                        </div>
+                                    ` : ''}
+
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold">
+                                            <i class="bi bi-shield-lock me-2"></i>Пароль
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-transparent">
+                                                <i class="bi bi-key"></i>
+                                            </span>
+                                            <input type="password" 
+                                                   class="form-control" 
+                                                   id="password" 
+                                                   placeholder="Минимум 6 символов" 
+                                                   minlength="6"
+                                                   required>
+                                            <button class="btn btn-outline-secondary" 
+                                                    type="button" 
+                                                    id="togglePassword">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </div>
+                                    </div>
                                     ` : ''}
                                     ${this.mode === 'register' && !this.authService.getSignupStatus().available ? `<div class="alert alert-info small" role="status">${this.authService.getSignupStatus().message}</div>` : ''}
                                     <button type="submit" class="btn btn-premium w-100 mb-3" ${this.mode === 'register' && !this.authService.getSignupStatus().available ? 'disabled' : ''}>
@@ -63,7 +118,14 @@ ${passwordBlock.trimEnd()}
                                     </button>
 
 ${this.mode !== 'recovery' ? `
-${toggleBlock.trimEnd()}
+                                    <div class="text-center">
+                                        <span class="text-muted">
+                                            ${this.mode === 'login' ? 'Нет аккаунта?' : 'Уже есть аккаунт?'}
+                                        </span>
+                                        <button type="button" class="btn btn-link text-decoration-none" id="toggleMode">
+                                            ${this.mode === 'login' ? 'Зарегистрироваться' : 'Войти'}
+                                        </button>
+                                    </div>
                                     ` : ''}
 
                                 </form>
@@ -159,7 +221,7 @@ ${toggleBlock.trimEnd()}
 
         if (result.success) {
             this.hideError();
-            if (this.mode === 'recovery') {
+            if (this.mode === 'recovery' || this.mode === 'register') {
                 await window.app?.resumeAfterSignup?.();
             }
         } else {

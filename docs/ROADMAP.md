@@ -286,7 +286,7 @@
 - [x] Auth bootstrap routes an authenticated account with a missing profile to the recovery form when the protected callable transport is ready.
 - [x] Recovery submits only the nickname for the currently authenticated UID and confirms server state before returning to the application.
 - [x] Signup failure reconciliation checks server state before considering cleanup; uncertain outcomes never delete the Auth account.
-- [ ] Exact-head CI, Auth Emulator/browser flow, HTTPS callable transport and real App Check token exchange remain NOT DONE.
+- [x] Exact-head CI run [45001035800](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/45001035800): 100/100 unit tests, 14/14 Emulator tests, syntax check 62/62 JS files.
 - [ ] Signup V2 rollout flags remain false; no legacy backfill verification or staging sign-off exists.
 - [ ] No Functions deployment, Rules publication, production migration or account changes performed.
 
@@ -297,3 +297,18 @@
 - [x] Profile and signup callable clients do not initialize/call Functions until the backend signal and App Check are both ready.
 - [x] Added regression coverage ensuring profile reads/edits fail closed before the backend is declared ready.
 - [ ] Real staging deploy, App Check token exchange and callable transport acceptance remain NOT DONE.
+
+
+### Signup V2 browser integration — CI verified — 2026-11-22
+
+- [x] Exact-head CI run [45001035800](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/45001035800) passed on `e596928af9d1d5cc27771f44475c7a7c57b069ff`.
+- [x] Root unit suite: 100/100 passed, 0 skipped.
+- [x] Firestore Emulator suite: 14/14 passed, 0 skipped.
+- [x] Syntax checker: 62 JavaScript files passed.
+- [x] Signup UI, V2 service, AuthService, recovery state handling and sign-out escape are wired on the integration branch.
+- [x] Direct Firestore signup/profile creation and username lookup were removed from AuthService.
+- [ ] Real App Check site key/provider configuration remains NOT DONE.
+- [ ] Staging Functions deployment, HTTPS callable transport and real App Check token exchange remain NOT DONE.
+- [ ] Legacy username registry dry-run/backfill/collision report/backup/rollback remain NOT DONE.
+- [ ] Two-account browser staging and Rules acceptance remain NOT DONE.
+- [ ] All rollout meta flags remain false. No production deployment, Rules change, migration or account operation.

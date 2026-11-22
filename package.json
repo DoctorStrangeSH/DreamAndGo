@@ -6,7 +6,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "test": "node --test tests/*.test.js server/registration-callables.test.js server/registration-state.test.js server/public-profile.test.js server/profile-callables.test.js server/username-reservation.test.js tests/profile-access.test.js",
+    "test": "node --test tests/*.test.js server/registration-callables.test.js server/registration-state.test.js server/public-profile.test.js server/profile-callables.test.js server/username-reservation.test.js tests/profile-access.test.js tests/profile-privacy-service.test.js",
     "check": "node scripts/check-syntax.mjs"
   }
 }

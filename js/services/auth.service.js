@@ -118,6 +118,14 @@ export class AuthService {
             }
             return { success: true, user: this.auth.currentUser, recovered: true };
         } catch (error) {
+            try {
+                const state = await this.signupV2Service.getRegistrationState();
+                if (state.status === 'complete') {
+                    return { success: true, user: this.auth.currentUser, recovered: true };
+                }
+            } catch {
+                // Preserve the account and surface a retryable recovery error.
+            }
             const messages = {
                 'functions/already-exists': 'Этот никнейм уже занят. Попробуйте другой.',
                 'functions/invalid-argument': 'Проверьте никнейм: от 3 до 20 латинских букв, цифр или _.',

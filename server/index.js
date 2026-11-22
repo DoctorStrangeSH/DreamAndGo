@@ -7,6 +7,7 @@ import { getRegistrationState } from './registration-state.js';
 import { createRegistrationCallables } from './registration-callables.js';
 import { createProfileCallables } from './profile-callables.js';
 import { buildPublicProfile } from './public-profile.js';
+import { createProfileAccountCallables } from './profile-account-callables.js';
 
 if (getApps().length === 0) initializeApp();
 
@@ -35,3 +36,15 @@ const profile = createProfileCallables({
 });
 
 export const updateProfileVisibilityV1 = profile.updateProfileVisibilityV1;
+
+
+const profileAccount = createProfileAccountCallables({
+    onCall,
+    HttpsError,
+    getFirestore,
+    FieldValue,
+    buildPublicProfile
+});
+
+export const getMyProfileV1 = profileAccount.getMyProfileV1;
+export const updateMyProfileV1 = profileAccount.updateMyProfileV1;

@@ -390,3 +390,14 @@
 - [x] The HTML readiness flag defaults to false; absent staging deployment cannot accidentally trigger protected callable traffic.
 - [x] Added profile client tests for the disabled backend gate.
 - [ ] Real staging deployment and callable/App Check end-to-end verification remain NOT DONE.
+
+
+### Signup V2 browser integration — exact-head CI verified — 2026-11-22
+
+- [x] Exact-head GitHub Actions run [45001035800](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/45001035800) passed on `e596928af9d1d5cc27771f44475c7a7c57b069ff`.
+- [x] Unit tests: 100/100 passed; Firestore Emulator: 14/14 passed; syntax: 62/62 JavaScript files.
+- [x] Browser signup is server-callable-backed and disabled until App Check, backend readiness and migration rollout signals are true.
+- [x] Authenticated incomplete-profile recovery and explicit sign-out path are integrated.
+- [ ] Real App Check site key, staging Functions deployment and callable transport acceptance remain NOT DONE.
+- [ ] Username registry migration rehearsal, Rules matrix staging and two-account browser acceptance remain NOT DONE.
+- [ ] No production deployment or data migration.

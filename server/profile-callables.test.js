@@ -211,3 +211,27 @@ test('visibility update maps storage failures to generic errors and does not lea
 test('factory rejects incomplete dependencies', () => {
     assert.throws(() => createProfileCallables({}), TypeError);
 });
+
+
+test('private visibility revokes publication even when legacy public fields are invalid', async () => {
+    const { dependencies, writes } = setup({ profile: { username: 'not a valid username' } });
+    dependencies.buildPublicProfile = () => {
+        throw new Error('must not build a projection for a private profile');
+    };
+    const callable = createProfileCallables(dependencies).updateProfileVisibilityV1;
+    const result = await callable({
+        auth: { uid: 'user-1' },
+        data: {
+            visibility: {
+                ...validVisibility,
+                profile: 'private'
+            }
+        }
+    });
+    assert.deepEqual(result, {
+        profileVisibility: 'private',
+        publicProfilePublished: false
+    });
+    assert.equal(writes[1].operation, 'delete');
+    assert.equal(writes[1].path, 'publicProfiles/user-1');
+});

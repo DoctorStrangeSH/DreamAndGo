@@ -77,10 +77,12 @@ export function createProfileCallables({
         const userData = snapshot.data();
         let projection;
         try {
-            projection = buildPublicProfile(uid, {
-                ...userData,
-                privacy: visibility
-            });
+            // Revocation must never depend on the validity of public fields.
+            // A private choice always removes the projection, even for legacy
+            // profiles that need repair before they can be published again.
+            projection = visibility.profile === 'public'
+                ? buildPublicProfile(uid, { ...userData, privacy: visibility })
+                : null;
         } catch {
             throw new HttpsError('failed-precondition', 'Профиль содержит некорректные данные и требует проверки');
         }

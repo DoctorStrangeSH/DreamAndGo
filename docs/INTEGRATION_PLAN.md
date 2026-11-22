@@ -366,3 +366,11 @@
 - [x] Added real Firestore Emulator tests for owner-only profile read, allowlisted public projection refresh, username reservation move and collision rollback.
 - [ ] Exact-head CI execution pending.
 - [ ] HTTPS callable transport, App Check exchange and two-account staging remain NOT DONE.
+
+
+### Signup V2 UI and auth-event race hardening — 2026-11-22
+
+- [x] Recovery form renders only the nickname field; it does not ask the signed-in user to re-enter email/password.
+- [x] Successful registration and successful recovery both resume the authenticated application after the profile is server-confirmed.
+- [x] Auth state listener ignores the transient event emitted between Firebase Auth account creation and completion of the profile callable; this prevents premature routing into recovery.
+- [ ] Exact-head CI and browser/Auth Emulator flow pending.

@@ -117,8 +117,8 @@
 
 ### P0 implementation sequence
 
-1. [ ] Add a minimal, deterministic root test/syntax harness to the integration branch, with bounded execution time and no Firebase credentials. First test only the current main source baseline.
-2. [ ] Port pure username normalization/validation and signup policy/flow helpers, adapting imports to main's `security.js` and adding focused unit tests.
+1. [x] Add a minimal, deterministic root test/syntax harness with bounded execution time and no Firebase credentials. Initial regression coverage targets the current main security baseline; CI execution evidence is still pending.
+2. [x] Port pure username normalization/validation and signup policy/flow helpers, with focused unit tests. The flow keeps uncertain backend outcomes non-destructive.
 3. [ ] Port App Check bootstrap + Firebase Functions initialization behind safe initialization handling; verify that Auth UI remains usable when App Check provider initialization fails, while protected callables fail closed.
 4. [ ] Port only the username registry transaction + registration/recovery callable and its Emulator tests. Keep rollout disabled.
 5. [ ] Only after those tests pass, reconcile AuthService and AuthModule with the current main implementation and confirm legacy login remains available.
@@ -128,7 +128,7 @@
 - [ ] No confirmed current production Firestore Rules export is present in the repository. Do not author/deploy replacement production rules based solely on candidate emulator rules.
 - [ ] The owner previously reported a deny-all Firestore Rules configuration and Storage is excluded from V1.0; preserve this constraint until the exact active project/database/ruleset is independently verified and the candidate rules pass two-account staging.
 - [ ] No Firebase Functions deployment, App Check enforcement change, username backfill, production data write or UI rollout was performed.
-- **P0 status: audit complete; implementation not yet started.**
+- **P0 status: audit and pure-helper/test batch committed; runtime execution and Firebase integration remain pending.**
 
 
 ### First integration batch — test harness and main security regression coverage — 2026-11-22
@@ -140,3 +140,15 @@
 - [ ] GitHub Actions run for integration HEAD `ceb30bedfb720bb2d239a6c3a9462d5044e1db13` is not visible yet; commit runs and combined statuses returned empty. Do not mark tests passed until execution evidence exists.
 - [ ] Verify the workflow is enabled for the repository/branch or identify why push did not enqueue it; then obtain a completed run.
 - **Batch status: files committed; execution unverified.** No production Firebase, main branch, user data or deployed services changed.
+
+
+### Username policy and signup orchestration batch — 2026-11-22
+
+- [x] Added `js/core/username.js` with canonical lowercase/trim normalization and 3–20 character Latin username validation.
+- [x] Added `js/core/signup-v2-policy.js`; rollout is available only when enabled, backend-ready and legacy migration independently verified. Missing/partial flags fail closed.
+- [x] Added `js/core/signup-v2-flow.js` with injected Firebase operations. It validates before creating Auth users, rolls back only on definitive callable errors, and never deletes an account when the backend outcome is uncertain.
+- [x] Added unit coverage: 3 username tests, 2 rollout-policy tests and 8 signup-flow tests. Together with the six baseline security tests this is 19 test cases in the root suite.
+- [x] Added defensive dependency validation and recovery guidance for failed rollback.
+- [ ] Execute root tests and syntax check on the exact integration HEAD; no Actions result has been confirmed yet.
+- [ ] App Check/Functions bridge, username registry transaction, callable endpoints and Emulator suite are not yet ported to this branch.
+- **Batch status: source and tests committed; execution unverified; no Auth UI or production behavior changed.**

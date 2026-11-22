@@ -181,3 +181,16 @@
 - [x] Added tests for private-field exclusion, privacy filtering, URL validation, bounded text, UID validation and timestamp handling.
 - [ ] Server write/sync callable, private profile split, consent UI, migration/backfill and Rules remain NOT DONE.
 - [ ] No production data or Rules changed.
+
+
+### Repository housekeeping and developer experience — 2026-11-22
+
+- [x] Reworked root README with product overview, scope/status, repository map, local launch, test commands and security caveats.
+- [x] Added documentation index at `docs/README.md`.
+- [x] Added contribution guide, security policy, pull request checklist and structured bug report template.
+- [x] Added `.gitignore`, `.editorconfig` and `.gitattributes` for predictable local development and clean commits.
+- [x] Audited JavaScript / MJS application, service, server, test and tooling files for explicit DeepSeek / Deep Seek / ChatGPT / AI-generated attribution markers; no matches found, so no code comments were removed.
+- [x] Reviewed tracked file inventory (81 files before housekeeping); no safe-to-delete duplicate or generated artifact was identified. No source files were deleted.
+- [ ] Validate the final housekeeping HEAD with CI.
+- [ ] Full runtime browser smoke test and responsive/accessibility review remain NOT DONE.
+- **Safety:** no production configuration, Firestore Rules, user records or application runtime logic changed in this housekeeping batch.

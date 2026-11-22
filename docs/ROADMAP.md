@@ -251,6 +251,15 @@
 - [x] Username changes require a fully backfilled registry and atomically move the old/new reservation with the profile write.
 - [x] Public projection refresh is in the same transaction as profile edits; invalid public projections fail closed.
 - [x] Added dependency-injected browser client tests and server authorization/validation/transaction-mock tests.
-- [ ] Exact-head CI, Firestore Emulator transaction test for profile edits, HTTPS callable transport and App Check exchange remain NOT DONE.
+- [ ] Exact-head CI and Firestore Emulator transaction test for profile edits remain pending.
+- [ ] HTTPS callable transport and App Check exchange remain NOT DONE.
 - [ ] Signup still contains legacy direct profile creation; Signup V2 must be wired before client writes can remain deny-all.
 - [ ] Public-profile read Rules and two-account staging remain NOT DONE. No deployment or production data changes.
+
+
+### Profile account Emulator coverage — 2026-11-22
+
+- [x] Added Firestore Emulator integration scenarios for owner-only profile reads, safe public projection refresh, username reservation move and collision rollback.
+- [x] Emulator suite runs under the existing serialized `test:emulator` command.
+- [ ] Exact-head CI result pending.
+- [ ] Callable HTTPS transport and real App Check token exchange remain NOT DONE.

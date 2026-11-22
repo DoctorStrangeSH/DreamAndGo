@@ -60,11 +60,16 @@ This is an implementation review, not a permission grant. The checked-in rules r
 
 ## Public profile document contract (candidate; not deployed)
 
-`publicProfiles/{uid}` is a server-generated projection. It may contain only:
+`publicProfiles/{uid}` is a server-generated projection and must exist only when the owner explicitly sets `privacy.profile` to `public`. Missing, legacy, unknown or `private` values mean no public document; category-level legacy defaults do not establish profile-level consent. When enabled, the projection may contain only:
 
 - `uid`, normalized `username`, bounded `displayName`, `bio`, `location`.
 - `avatar` and `website` only as HTTPS URLs without embedded credentials.
 - `createdAt` when it is a recognized Firestore Timestamp or ISO date.
-- `stats` containing only `travels`, `restaurants`, `movies`, `books`, `dreams` whose existing privacy flag is explicitly `public`. `restaurants` maps to legacy `privacy.food`. Missing/unknown flags hide the statistic. `friends` count is omitted until a dedicated visibility preference exists.
+- `stats` containing only `travels`, `restaurants`, `movies`, `books`, `dreams` whose corresponding category privacy flag is explicitly `public`. `restaurants` maps to legacy `privacy.food`. Missing/unknown flags hide the statistic. `friends` count is omitted until a dedicated visibility preference exists.
 
-It must never contain email, last login, `usernameNormalized`, friends list, achievements, account preferences, or the privacy preference map itself. `server/public-profile.js` implements only this deterministic projection and is covered by `server/public-profile.test.js`; it does not perform authorization, persistence, synchronization, migration, or Rules enforcement. It is not wired into the running application and no public profile documents are currently created by this change.
+It must never contain email, last login, `usernameNormalized`, friends list, achievements, account preferences, or the privacy preference map itself. `server/public-profile.js` implements only this deterministic projection and is covered by `server/public-profile.test.js`; it does not perform authorization, persistence, synchronization, migration, or Rules enforcement. It is not wired into the running application and no public profile documents are currently created by this change. The projection returns `null` unless the separate `privacy.profile === 'public'` opt-in is present.
+
+
+### Consent hardening — 2026-11-22
+
+The public projection now has a separate profile-level consent gate. This is deliberately distinct from legacy category preferences: historical signup defaults marked several categories as public, but those defaults are not treated as consent to publish a public profile. Missing, unknown and private profile-level visibility produce no projection. Category statistics remain independently filtered.

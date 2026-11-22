@@ -29,16 +29,16 @@ The server registration foundation is implemented and passes Auth + Firestore Em
 - [x] Recovery callable returns an allowlisted status for the current UID only.
 - [x] App Check is required by both callable endpoint options.
 - [x] Auth + Firestore Admin SDK integration tests and deny-all Rules tests pass in emulators.
-- [ ] Browser Firebase Functions SDK wiring is not present on main.
+- [x] Added an isolated dependency-injected browser callable adapter in the integration branch; it is not wired into main.
 - [ ] Browser App Check provider/site key is not configured.
-- [ ] HTTPS callable transport and App Check token exchange are not tested end-to-end.
+- [ ] HTTPS callable transport and App Check token exchange are not tested end-to-end. The adapter is currently tested with injected callable handles.
 - [ ] Functions are not deployed to staging or production.
 - [ ] Legacy users have not been backfilled into the username registry.
 
 ## Safe integration sequence
 
 1. Keep the current main login path and legacy user data untouched.
-2. Add a dependency-injected client adapter for the two V2 callables, with no default enablement.
+2. [x] Add a dependency-injected client adapter for the two V2 callables, with no default enablement. Adapter unit tests are included; it is not wired into the main app.
 3. Wire Firebase Functions and App Check only after the real site key/provider and Functions region are confirmed.
 4. Keep signup V2 behind a server-enforced and client-visible disabled-by-default gate.
 5. Add an Auth UI recovery state: incomplete profile → sign in → call recovery endpoint → either complete, resume signup, or show temporary unavailability.

@@ -349,3 +349,13 @@
 - [x] App Check bootstrap reads a reCAPTCHA v3 site key from the HTML meta configuration. The UI fails closed and disables saving until the key is configured.
 - [ ] Do not treat this as staging-ready: App Check key is intentionally blank, public-profile read Rules are still deny-all, and callable transport Emulator tests are pending.
 - [ ] Legacy profile edit form still writes directly to `users/{uid}`; refactor to trusted callable before opening owner-write Rules.
+
+
+### Owner profile read/edit integration — 2026-11-22
+
+- [x] Private profile reads now use an App Check-enforced owner-only callable; UID is never accepted from client payload.
+- [x] Profile edits use an allowlisted callable; nickname changes are gated by registry readiness and atomically move reservations.
+- [x] Public projection refresh/deletion is coupled to the profile transaction; private fields are never copied to the public projection.
+- [x] Settings reads cached owner data and saves through the callable, removing direct Firestore reads/writes from this settings flow.
+- [ ] Verify exact-head CI and add real Firestore Emulator transaction coverage for profile edits.
+- [ ] Signup V2 integration, callable HTTPS transport tests, App Check token exchange, Rules and staging remain NOT DONE.

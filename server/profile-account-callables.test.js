@@ -20,7 +20,21 @@ function setup({ profile = {}, registryReady = true, oldReservation = true, newR
     const ref = path => ({ path });
     const db = {
         collection(name) {
-            return { doc(id) { return ref(`${name}/${id}`); } };
+            return {
+                doc(id) {
+                    const document = ref(`${name}/${id}`);
+                    return {
+                        ...document,
+                        async get() {
+                            const value = records.get(document.path);
+                            return {
+                                exists: value !== undefined && value !== null,
+                                data: () => value
+                            };
+                        }
+                    };
+                }
+            };
         },
         async runTransaction(callback) {
             const writes = [];

@@ -1,5 +1,3 @@
-import { ProfilePrivacyService } from '../../services/profile-privacy.service.js';
-
 function escapeHTML(value) {
     return String(value ?? '').replace(/[&<>"']/g, character => ({
         '&': '&amp;',

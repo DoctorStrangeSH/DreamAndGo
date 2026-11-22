@@ -1,226 +1,141 @@
-import { 
+import {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
     signOut,
     deleteUser,
     onAuthStateChanged
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { 
-    doc,
-    setDoc,
-    getDoc,
-    query,
-    collection,
-    where,
-    getDocs,
-    limit,
-    serverTimestamp
-} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { completeSignupV2 } from '../core/signup-v2-flow.js';
 
 export class AuthService {
-    constructor(auth, db, profileAccountService = null) {
+    constructor(auth, signupV2Service = null, profileAccountService = null) {
         this.auth = auth;
-        this.db = db;
+        this.signupV2Service = signupV2Service;
         this.profileAccountService = profileAccountService;
     }
 
-    // Отслеживание состояния авторизации
     onAuthChange(callback) {
-        return onAuthStateChanged(this.auth, (user) => {
-            console.log('🔄 Состояние авторизации изменилось:', user ? 'Вошёл' : 'Вышел');
+        return onAuthStateChanged(this.auth, user => {
             callback(user);
-        }, (error) => {
-            console.error('❌ Ошибка отслеживания авторизации:', error);
+        }, error => {
+            console.error('Ошибка отслеживания авторизации:', error);
             callback(null);
         });
     }
 
-    // Вход по email
     async signInWithEmail(email, password) {
         try {
-            console.log('🔑 Попытка входа:', email);
-            const result = await signInWithEmailAndPassword(this.auth, email, password);
-            console.log('✅ Успешный вход');
-            
-            // Обновляем время последнего входа
-            await this.updateLastLogin(result.user.uid);
-            
+            const result = await signInWithEmailAndPassword(this.auth, email.trim(), password);
             return { success: true, user: result.user };
         } catch (error) {
-            console.error('❌ Ошибка входа:', error.code, error.message);
-            return { 
-                success: false, 
-                error: this.getErrorMessage(error.code),
-                code: error.code 
+            console.error('Ошибка входа:', error.code, error.message);
+            return {
+                success: false,
+                code: error.code,
+                error: this.getErrorMessage(error.code)
             };
         }
     }
 
-    // Регистрация
-    async signUpWithEmail(email, password, username) {
-        try {
-            console.log('📝 Попытка регистрации:', email, username);
-            
-            // Проверяем уникальность ника
-            const isUnique = await this.checkUsernameUnique(username);
-            if (isUnique === null) {
-                return { success: false, error: 'Не удалось проверить никнейм. Проверь подключение и попробуй снова.' };
-            }
-            if (!isUnique) {
-                console.warn('⚠️ Ник уже занят:', username);
-                return { success: false, error: 'Этот ник уже занят 😔 Придумай другой!' };
-            }
+    getSignupStatus() {
+        return this.signupV2Service?.signupStatus || {
+            available: false,
+            message: 'Новая регистрация пока недоступна.'
+        };
+    }
 
-            // Создаём аккаунт
-            const result = await createUserWithEmailAndPassword(this.auth, email, password);
-            console.log('✅ Аккаунт создан');
-            
-            // Создаём профиль пользователя в Firestore.
-            // If profile creation fails, roll back the just-created Auth account.
-            try {
-                await this.createUserProfile(result.user.uid, {
-                email: email,
-                username: username,
-                usernameNormalized: username.trim().toLowerCase(),
-                displayName: username,
-                createdAt: serverTimestamp(),
-                lastLogin: serverTimestamp(),
-                avatar: null,
-                bio: '',
-                location: '',
-                website: '',
-                stats: {
-                    travels: 0,
-                    restaurants: 0,
-                    movies: 0,
-                    books: 0,
-                    dreams: 0,
-                    friends: 0
-                },
-                achievements: [],
-                friends: [],
-                privacy: {
-                    travels: 'public',
-                    food: 'public',
-                    movies: 'public',
-                    books: 'public',
-                    dreams: 'public'
-                },
-                preferences: {
-                    theme: 'light',
-                    language: 'ru'
-                }
-                });
-            } catch (profileError) {
-                console.error('Не удалось создать профиль после регистрации:', profileError);
-                let rollbackFailed = false;
-                try {
-                    await deleteUser(result.user);
-                } catch (cleanupError) {
-                    rollbackFailed = true;
-                    console.error('Не удалось откатить незавершённую регистрацию:', cleanupError);
-                    try {
-                        await signOut(this.auth);
-                    } catch (signOutError) {
-                        console.error('Не удалось завершить сессию после ошибки регистрации:', signOutError);
-                    }
-                }
+    async signUpWithEmail(email, password, username) {
+        if (!this.signupV2Service?.canStartNewSignup) {
+            const status = this.getSignupStatus();
+            return {
+                success: false,
+                code: 'signup-v2/disabled',
+                error: status.message || 'Новая регистрация пока недоступна.'
+            };
+        }
+
+        return completeSignupV2({
+            email,
+            password,
+            username,
+            createAuthUser: async (normalizedEmail, rawPassword) => {
+                const credential = await createUserWithEmailAndPassword(
+                    this.auth,
+                    normalizedEmail,
+                    rawPassword
+                );
+                return credential.user;
+            },
+            registerProfile: value => this.signupV2Service.registerProfile(value),
+            getRegistrationState: () => this.signupV2Service.getRegistrationState(),
+            deleteAuthUser: account => deleteUser(account),
+            signOutAuth: () => signOut(this.auth)
+        });
+    }
+
+    async getRegistrationState() {
+        if (!this.signupV2Service?.isTransportReady) {
+            return {
+                success: false,
+                error: 'Проверка регистрации временно недоступна.'
+            };
+        }
+        try {
+            const state = await this.signupV2Service.getRegistrationState();
+            return { success: true, ...state };
+        } catch (error) {
+            console.error('Не удалось проверить состояние регистрации:', error);
+            return {
+                success: false,
+                code: error.code,
+                error: 'Не удалось проверить состояние аккаунта. Попробуйте позже.'
+            };
+        }
+    }
+
+    async completeProfileRecovery(username) {
+        if (!this.auth.currentUser || !this.signupV2Service?.isTransportReady) {
+            return {
+                success: false,
+                error: 'Восстановление профиля сейчас недоступно. Попробуйте позже.'
+            };
+        }
+
+        try {
+            await this.signupV2Service.registerProfile(username);
+            const state = await this.signupV2Service.getRegistrationState();
+            if (state.status !== 'complete') {
                 return {
                     success: false,
-                    error: rollbackFailed
-                        ? 'Аккаунт создан, но профиль не сохранился. Не регистрируйся повторно с этим email: требуется восстановление профиля.'
-                        : 'Не удалось сохранить профиль. Попробуй зарегистрироваться ещё раз.'
+                    error: 'Профиль пока не подтверждён сервером. Попробуйте ещё раз позже.'
                 };
             }
-
-            return { success: true, user: result.user };
+            return { success: true, user: this.auth.currentUser, recovered: true };
         } catch (error) {
-            console.error('❌ Ошибка регистрации:', error.code, error.message);
-            return { 
-                success: false, 
-                error: this.getErrorMessage(error.code),
-                code: error.code 
+            const messages = {
+                'functions/already-exists': 'Этот никнейм уже занят. Попробуйте другой.',
+                'functions/invalid-argument': 'Проверьте никнейм: от 3 до 20 латинских букв, цифр или _.',
+                'functions/failed-precondition': 'Восстановление временно недоступно до завершения безопасной миграции.',
+                'app-check/not-configured': 'Защищённая проверка аккаунта пока не настроена.'
+            };
+            return {
+                success: false,
+                code: error.code,
+                error: messages[error.code] || 'Не удалось восстановить профиль. Аккаунт сохранён — повторная регистрация не нужна.'
             };
         }
     }
 
-    // Выход
     async signOut() {
         try {
-            console.log('👋 Выход из аккаунта');
             await signOut(this.auth);
             return { success: true };
         } catch (error) {
-            console.error('❌ Ошибка выхода:', error);
+            console.error('Ошибка выхода:', error);
             return { success: false, error: 'Не удалось выйти' };
         }
     }
 
-    // Проверка уникальности ника
-    async checkUsernameUnique(username) {
-        try {
-            const usersRef = collection(this.db, 'users');
-            const normalized = String(username ?? '').trim().toLowerCase();
-            const [indexed, legacy] = await Promise.all([
-                getDocs(query(usersRef, where('usernameNormalized', '==', normalized), limit(1))),
-                getDocs(query(usersRef, where('username', '==', String(username ?? '').trim()), limit(1)))
-            ]);
-            const isUnique = indexed.empty && legacy.empty;
-
-            console.log(`🔍 Проверка ника "${username}":`, isUnique ? 'свободен' : 'занят');
-            return isUnique;
-        } catch (error) {
-            console.error('❌ Ошибка проверки ника:', error);
-            // Never allow registration when uniqueness could not be checked.
-            return null;
-        }
-    }
-
-    // Создание профиля пользователя
-    async createUserProfile(uid, data) {
-        try {
-            await setDoc(doc(this.db, 'users', uid), data);
-            console.log('👤 Профиль создан для:', uid);
-            
-            // Создаём подколлекции
-            await this.createUserCollections(uid);
-            
-            return true;
-        } catch (error) {
-            console.error('❌ Ошибка создания профиля:', error);
-            throw error;
-        }
-    }
-
-    // Создание начальных коллекций пользователя
-    async createUserCollections(uid) {
-        const collections = ['travels', 'restaurants', 'movies', 'books', 'dreams', 'friends', 'messages'];
-        
-        for (const collectionName of collections) {
-            try {
-                // Создаём документ-заглушку для инициализации коллекции
-                const initDoc = doc(this.db, 'users', uid, collectionName, '_init');
-                await setDoc(initDoc, { 
-                    created: serverTimestamp(),
-                    _note: `Коллекция для ${collectionName}`
-                });
-            } catch (error) {
-                console.warn(`⚠️ Не удалось создать коллекцию ${collectionName}:`, error);
-            }
-        }
-    }
-
-    // Обновление времени последнего входа
-    async updateLastLogin(uid) {
-        try {
-            const userRef = doc(this.db, 'users', uid);
-            await setDoc(userRef, { lastLogin: serverTimestamp() }, { merge: true });
-        } catch (error) {
-            console.warn('⚠️ Не удалось обновить время входа:', error);
-        }
-    }
-
-    // Получение данных пользователя
     async getUserData(uid) {
         try {
             if (!uid || uid !== this.auth.currentUser?.uid || !this.profileAccountService) {
@@ -229,16 +144,15 @@ export class AuthService {
             const data = await this.profileAccountService.getMyProfile();
             return { success: true, data };
         } catch (error) {
-            console.error('❌ Ошибка получения данных:', error);
+            console.error('Ошибка получения данных:', error);
             return { success: false, error: 'Ошибка загрузки данных' };
         }
     }
 
-    // Обработка ошибок
     getErrorMessage(code) {
         const errors = {
             'auth/invalid-email': 'Неверный формат email 📧',
-            'auth/user-disabled': 'Аккаунт отключен администратором',
+            'auth/user-disabled': 'Аккаунт отключён администратором',
             'auth/user-not-found': 'Пользователь с таким email не найден',
             'auth/wrong-password': 'Неверный пароль 🔒',
             'auth/email-already-in-use': 'Этот email уже зарегистрирован',
@@ -248,7 +162,6 @@ export class AuthService {
             'auth/network-request-failed': 'Проблемы с интернетом 🌐',
             'auth/internal-error': 'Техническая ошибка. Попробуйте позже'
         };
-        
-        return errors[code] || `Произошла ошибка (${code}). Попробуйте еще раз`;
+        return errors[code] || 'Не удалось выполнить запрос. Попробуйте ещё раз.';
     }
 }

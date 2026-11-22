@@ -83,3 +83,15 @@
 - [ ] Re-run CI on the new HEAD; do not carry forward the previous success.
 - [ ] Verify App Check key / Functions region / deployed endpoints before Firebase config wiring.
 - [ ] Firestore Emulator integration and two-account staging remain NOT DONE.
+
+
+### Server-side registration callables — 2026-11-22
+
+- [x] Isolated Functions entrypoint exposes signup V2 endpoints only.
+- [x] App Check is enforced at callable boundary; authenticated UID and email are taken from verified Firebase Auth context/Admin Auth.
+- [x] Username registry transaction is used for profile creation; rollout remains off until registry readiness gate is verified.
+- [x] Recovery endpoint exposes only an allowlisted registration state for the caller's own account.
+- [x] Added callable and recovery-state unit tests.
+- [ ] CI on exact current HEAD pending.
+- [ ] Emulator tests and staging verification with two accounts remain NOT DONE.
+- [ ] Functions deploy and production data migration remain explicitly prohibited until release gates are passed.

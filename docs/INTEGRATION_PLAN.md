@@ -119,10 +119,12 @@
 
 1. [x] Add a minimal, deterministic root test/syntax harness with bounded execution time and no Firebase credentials. Initial regression coverage targets the current main security baseline; CI execution evidence is still pending.
 2. [x] Port pure username normalization/validation and signup policy/flow helpers, with focused unit tests. The flow keeps uncertain backend outcomes non-destructive.
-3. [ ] Port App Check bootstrap + Firebase Functions initialization behind safe initialization handling; verify that Auth UI remains usable when App Check provider initialization fails, while protected callables fail closed.
-4. [x] Port the isolated username registry transaction core with deterministic mock-transaction tests. Production callable and Firestore Emulator integration remain separate and NOT DONE.
-5. [ ] Port only the username registry callable + registration/recovery endpoint and Emulator tests. Keep rollout disabled.
-6. [ ] Only after those tests pass, reconcile AuthService and AuthModule with the current main implementation and confirm legacy login remains available.
+3. [x] Port isolated App Check bootstrap helper with dependency validation and token refresh; SDK wiring into Firebase config and staging verification remain NOT DONE.
+4. [x] Port Firebase-independent Chat V2 callable invoker with an explicit endpoint allowlist, payload validation and cached callable handles; backend authorization remains mandatory.
+5. [ ] Wire App Check + Firebase Functions into the main Firebase config only after the registered site key, Functions region and backend deployment are independently verified.
+6. [x] Port the isolated username registry transaction core with deterministic mock-transaction tests. Production callable and Firestore Emulator integration remain separate and NOT DONE.
+7. [ ] Port only the username registry callable + registration/recovery endpoint and Emulator tests. Keep rollout disabled.
+8. [ ] Only after those tests pass, reconcile AuthService and AuthModule with the current main implementation and confirm legacy login remains available.
 
 ### Explicit blockers / non-actions
 
@@ -164,3 +166,17 @@
 - [ ] Runtime execution and syntax validation are not yet confirmed on the exact branch HEAD.
 - [ ] This helper is not yet called by a deployed Firebase callable; no live Firestore registry document was created and no user data was touched.
 - **Batch status: isolated server logic and tests committed; Firebase integration and execution evidence pending.**
+
+
+### CI baseline and App Check / callable adapter batch — 2026-11-22
+
+- [x] Verified GitHub Actions run [44993100677](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44993100677) on exact HEAD `4eb0f6537b64e73de69e07c2e7627b05b60da95a`: completed successfully.
+- [x] Job logs confirm `npm test`: 26 passed, 0 failed; `npm run check`: syntax validation passed for all 47 JavaScript files.
+- [x] Added isolated `js/core/app-check-bootstrap.js` with dependency/site-key validation and automatic token refresh.
+- [x] Added App Check bootstrap tests for success and invalid dependencies.
+- [x] Added `js/core/chat-v2-callable-invoker.js`: strict allowlist of six Chat V2 callable names, payload validation, and cached callable handles. Server authorization remains the security boundary.
+- [x] Added callable-invoker tests for allowlist, malformed payloads, handle caching and missing dependencies.
+- [ ] Run CI on the new exact HEAD after these additions; the previous green run is evidence only for its own SHA.
+- [ ] Firebase config wiring remains blocked pending verification of the App Check site key registration, Functions region and callable deployment; no public key copied from candidate has been assumed valid.
+- [ ] No Functions deployment, App Check enforcement change, production Rules change or live user data write was performed.
+- **Batch status: helper code and tests committed; exact-head CI pending.**

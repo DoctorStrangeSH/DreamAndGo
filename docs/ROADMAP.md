@@ -115,3 +115,14 @@
 - [ ] Verify exact-head CI success.
 - [ ] Client Rules tests and Auth Emulator/callable end-to-end coverage remain NOT DONE.
 - [ ] No production deploy or migration performed.
+
+
+### Auth Emulator and Firestore Rules tests — 2026-11-22
+
+- [x] Added Auth Emulator to local/CI emulator configuration.
+- [x] Added Auth+Firestore integration tests for trusted email, duplicate username race and signup recovery using real Admin SDK clients.
+- [x] Added Rules Unit Testing coverage for anonymous, owner and unrelated user under current deny-all policy.
+- [x] CI now starts Auth and Firestore emulators together and runs serialized integration suites.
+- [ ] Exact-head CI success pending.
+- [ ] HTTPS callable transport and App Check token exchange end-to-end remain NOT DONE.
+- [ ] No production rules/deployment/migration changes.

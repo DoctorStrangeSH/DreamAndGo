@@ -77,7 +77,8 @@ test('both account callables enforce App Check in europe-west3', () => {
 test('private profile read derives UID from auth and never accepts caller UID', async () => {
     const ctx = setup({ profile: { username: 'old_name', email: 'private@test.invalid' } });
     const callable = ctx.create().getMyProfileV1;
-    const result = await callable({ auth: { uid: 'user-1' }, data: { uid: 'user-2' } });
+    await assert.rejects(callable({ auth: { uid: 'user-1' }, data: { uid: 'user-2' } }), error => error.code === 'invalid-argument');
+    const result = await callable({ auth: { uid: 'user-1' }, data: {} });
     assert.equal(result.profile.email, 'private@test.invalid');
     assert.equal(ctx.calls[0].path, 'users/user-1');
 });

@@ -73,3 +73,13 @@ It must never contain email, last login, `usernameNormalized`, friends list, ach
 ### Consent hardening — 2026-11-22
 
 The public projection now has a separate profile-level consent gate. This is deliberately distinct from legacy category preferences: historical signup defaults marked several categories as public, but those defaults are not treated as consent to publish a public profile. Missing, unknown and private profile-level visibility produce no projection. Category statistics remain independently filtered.
+
+
+### Profile visibility callable — candidate implementation
+
+- `updateProfileVisibilityV1` is an App Check-enforced callable in `europe-west3`.
+- The authenticated UID is taken only from callable auth context; the client cannot select another UID or send arbitrary profile fields.
+- The callable requires the complete allowlisted visibility map: `profile`, `travels`, `food`, `movies`, `books`, `dreams`, each exactly `public` or `private`.
+- It atomically replaces the legacy privacy map and creates/updates or deletes `publicProfiles/{uid}` using the allowlist projection. Legacy public defaults are overwritten only after the owner submits the complete new settings.
+- Unit tests cover auth, malformed paths, unknown/missing keys, public projection, private deletion, missing profile and generic storage errors.
+- The callable is not yet wired to the browser UI; App Check provider configuration, Emulator callable tests, Rules for public profile reads, consent UX and staging remain NOT DONE. Do not deploy.

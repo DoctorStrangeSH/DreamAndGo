@@ -340,3 +340,12 @@
 - [x] GitHub Actions run [44996877016](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44996877016) passed on exact commit `9b8626587aedd27d71e8bea36bb02d392af3275f`.
 - [x] Root unit tests 73/73; Auth + Firestore Emulator tests 10/10; syntax checker 53/53 JavaScript files.
 - [ ] Callable transport Emulator coverage, browser consent UI, public profile Rules and staging acceptance remain NOT DONE.
+
+
+### Public profile access and privacy UI — 2026-11-22
+
+- [x] Profile document resolver routes owner reads to `users/{uid}` and all other-user reads to `publicProfiles/{uid}`; unit tests cover both and invalid IDs.
+- [x] Added Settings privacy controls and browser callable adapter.
+- [x] App Check bootstrap reads a reCAPTCHA v3 site key from the HTML meta configuration. The UI fails closed and disables saving until the key is configured.
+- [ ] Do not treat this as staging-ready: App Check key is intentionally blank, public-profile read Rules are still deny-all, and callable transport Emulator tests are pending.
+- [ ] Legacy profile edit form still writes directly to `users/{uid}`; refactor to trusted callable before opening owner-write Rules.

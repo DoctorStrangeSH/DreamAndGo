@@ -95,3 +95,11 @@
 - [ ] CI on exact current HEAD pending.
 - [ ] Emulator tests and staging verification with two accounts remain NOT DONE.
 - [ ] Functions deploy and production data migration remain explicitly prohibited until release gates are passed.
+
+
+### CI verification — registration batch — 2026-11-22
+
+- [x] Server registration and recovery unit suite included in green CI: 46/46 passed.
+- [x] Syntax check passed for 51 JavaScript files.
+- [x] Previous failing edge case was fixed and covered by the passing exact-head run.
+- [ ] Firebase Emulator and staging acceptance remain NOT DONE.

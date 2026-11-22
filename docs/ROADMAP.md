@@ -216,3 +216,14 @@
 - [ ] Browser consent UI and callable adapter remain NOT DONE.
 - [ ] Authenticated callable Emulator tests, public profile read Rules and two-account staging remain NOT DONE.
 - [ ] No deployment, migration or production Rules changes.
+
+
+### Profile visibility foundation — CI verified
+
+- [x] Exact-head GitHub Actions run [44996877016](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44996877016) on commit `9b8626587aedd27d71e8bea36bb02d392af3275f`: success.
+- [x] Root unit tests: 73/73 passed.
+- [x] Auth + Firestore Emulator suite: 10/10 passed.
+- [x] JavaScript syntax check: all 53 files passed.
+- [x] Added a revocation safeguard: choosing private always deletes the public projection even when legacy public fields are invalid.
+- [ ] CI must be rerun after subsequent commits; this result applies only to the exact commit above.
+- [ ] Profile visibility callable is unit-tested but not yet covered by a callable Emulator transport test or browser UI; Rules and staging remain NOT DONE.

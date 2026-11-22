@@ -58,6 +58,10 @@ export function buildPublicProfile(uid, userData) {
     const privacy = userData.privacy && typeof userData.privacy === 'object'
         ? userData.privacy
         : {};
+    // A public profile requires a separate explicit opt-in. Legacy category
+    // defaults (some historically set to `public`) are not proof of consent.
+    if (privacy.profile !== 'public') return null;
+
     const sourceStats = userData.stats && typeof userData.stats === 'object'
         ? userData.stats
         : {};

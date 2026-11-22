@@ -610,3 +610,20 @@ Dream&Go — социальное пространство мечтаний, п�
 - [ ] Build a reviewed integration manifest grouped by product area; prefer a fresh integration branch from current `main` with selectively ported, tested changes over merging the dirty PR wholesale.
 - [ ] Reconcile current exact-head CI evidence before porting code. The existing Actions runs still refer to `7931c30`; no completed exact-head result has been established for `4ed281d`.
 - **Integration gate: HOLD.** PR #1 must not be merged as-is. `main`, Production Firebase Rules, deployed Functions and user data remain untouched.
+
+### Branch divergence audit — exact GitHub compare — 2026-11-22
+
+- [x] Ran GitHub compare for `main...refactor/security-foundation` and confirmed the merge base is `ffc60beca6d1f7840c52483019e4d8e0117de08c`.
+- [x] Exact divergence: feature branch ahead by 1,625 commits; `main` ahead by 53 commits; GitHub compare status is `diverged`.
+- [x] Compared each side independently from the merge base:
+  - `main`: 53 commits, 22 changed paths.
+  - `refactor/security-foundation`: 1,625 commits, 300 changed paths.
+  - 20 paths overlap. The overlapping set includes `js/app.js`, `js/modules/chat/chat.js`, `js/services/auth.service.js`, `js/core/ui-components.js`, and the product/delivery documents.
+- [x] Sampled current versions on both branches. Overlapping files are materially different, not identical snapshots: e.g. main `js/app.js` 358 lines vs feature 474; main Chat module 433 vs feature 753; main auth service 254 vs feature 321. Main uses consolidated `js/core/security.js`; feature has separate escape/snapshot helpers and a larger candidate architecture. These require deliberate reconciliation, not blind cherry-pick.
+- [x] Main has newer security baseline and app changes in the overlapping files; feature has a much larger set of unique server, migration, Chat V2, emulator, policy and documentation assets.
+- [ ] Create a file-level integration manifest grouping candidate-only paths into: required V1.0 backend/security, client integrations, tests/CI, documentation, and non-release/visual work.
+- [ ] Reconcile the 20 overlapping paths against current `main` manually, preserving main's security baseline and importing only verified behavior from the candidate branch.
+- [ ] Port candidate-only files in small, reviewable batches onto a fresh branch from current `main`; run root tests and Emulator suites per batch.
+- [ ] Do not carry over candidate CI workflow files unchanged until their triggers, concurrency, runtime and test duration are corrected and validated.
+- **Decision:** do not merge PR #1 as-is and do not cherry-pick its 1,625-commit history wholesale. Use current `main` as the integration base and perform a reviewed, file-level port.
+- **Safety:** no branch was created, no application code was changed, and no merge/rebase/deploy/data migration was performed in this audit.

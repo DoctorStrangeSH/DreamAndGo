@@ -30,11 +30,13 @@ import { DailyTasksService } from './services/daily-tasks.service.js';
 import { DailyTasksWidget } from './modules/daily-tasks/daily-tasks.js';
 import { ProfilePrivacyService } from './services/profile-privacy.service.js';
 import { ProfileAccountService } from './services/profile-account.service.js';
+import { SignupV2Service } from './services/signup-v2.service.js';
 
 class DreamAndGo {
     constructor() {
         this.profileAccountService = new ProfileAccountService();
-        this.authService = new AuthService(auth, db, this.profileAccountService);
+        this.signupV2Service = new SignupV2Service();
+        this.authService = new AuthService(auth, this.signupV2Service, this.profileAccountService);
         this.db = db;
         this.themeService = new ThemeService();
         this.router = new Router();
@@ -77,6 +79,21 @@ class DreamAndGo {
             this.authResolved = true;
 
             if (user) {
+                if (this.signupV2Service.isTransportReady) {
+                    const registration = await this.authService.getRegistrationState();
+                    if (registration.success && registration.status === 'needs-profile') {
+                        this.showAuth('recovery');
+                        return;
+                    }
+                    if (registration.success && registration.status === 'temporarily-unavailable') {
+                        this.showAuth('recovery');
+                        const authModule = new AuthModule(this.authService);
+                        authModule.mode = 'recovery';
+                        authModule.render();
+                        authModule.showError('Реестр регистрации ещё не готов. Аккаунт сохранён; попробуйте восстановление позже.');
+                        return;
+                    }
+                }
                 this.showApp();
                 this.notificationsWidget.init();
                 await this.loadUserData();
@@ -164,12 +181,23 @@ class DreamAndGo {
         mainContent.innerHTML = this.ui.createLoader();
     }
 
-    showAuth() {
+    showAuth(mode = 'login') {
         const appContainer = document.getElementById('app');
         if (!appContainer) return;
         appContainer.classList.remove('d-none');
         appContainer.innerHTML = '';
-        new AuthModule(this.authService).render();
+        const authModule = new AuthModule(this.authService);
+        authModule.mode = mode;
+        authModule.render();
+    }
+
+    async resumeAfterSignup() {
+        if (!this.currentUser) return;
+        this.showApp();
+        this.notificationsWidget.init();
+        await this.loadUserData();
+        if (!this.router.isReady) this.router.init();
+        setTimeout(() => this.renderNavWidgets(), 500);
     }
 
     async loadUserData() {

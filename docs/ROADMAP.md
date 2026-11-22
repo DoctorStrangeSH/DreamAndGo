@@ -204,3 +204,15 @@
 - [x] Added regression tests for absent, private, unknown and explicit profile consent, plus independent category visibility.
 - [ ] Consent UI, trusted callable synchronization, Firestore Rules and migration/backfill remain NOT DONE.
 - [ ] No public documents are written; no production data or Rules changed.
+
+
+### Profile visibility callable foundation — 2026-11-22
+
+- [x] Added App Check-enforced `updateProfileVisibilityV1` callable in the existing Functions region.
+- [x] Server derives UID only from verified callable auth context; no client-selected UID or arbitrary profile field writes.
+- [x] Requires a complete allowlisted visibility map and validates every value.
+- [x] Uses one Firestore batch to replace privacy preferences and create/update or delete the public projection atomically.
+- [x] Added focused unit tests for auth, validation, projection, deletion and failure handling; included them in root CI test script.
+- [ ] Browser consent UI and callable adapter remain NOT DONE.
+- [ ] Authenticated callable Emulator tests, public profile read Rules and two-account staging remain NOT DONE.
+- [ ] No deployment, migration or production Rules changes.

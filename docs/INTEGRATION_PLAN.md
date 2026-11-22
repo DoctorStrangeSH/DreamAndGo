@@ -374,3 +374,11 @@
 - [x] Successful registration and successful recovery both resume the authenticated application after the profile is server-confirmed.
 - [x] Auth state listener ignores the transient event emitted between Firebase Auth account creation and completion of the profile callable; this prevents premature routing into recovery.
 - [ ] Exact-head CI and browser/Auth Emulator flow pending.
+
+
+### Signup V2 browser integration — follow-up verification — 2026-11-22
+
+- [x] Auth UI now conditionally renders email/password only for login/new signup; recovery asks only for the missing nickname.
+- [x] New signup remains visibly disabled while App Check or any migration rollout signal is false.
+- [x] The auth bootstrap race is guarded while the new account's profile callable is in flight.
+- [ ] Exact-head CI and browser/Auth Emulator flow remain pending.

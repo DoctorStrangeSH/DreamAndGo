@@ -6,7 +6,7 @@ Scope: js/services/auth.service.js, js/modules/auth/auth.js, js/app.js, Firebase
 
 ## Executive result
 
-The server registration foundation is implemented and passes Auth + Firestore Emulator tests, but the production browser application still uses the legacy client-side registration flow. The V2 server endpoints are not wired into the main app, the App Check web provider/site key is not configured, and no Functions deployment exists. Therefore signup V2 must remain disabled.
+The server registration foundation and browser integration are implemented on the isolated integration branch. The browser uses the V2 callable adapter and recovery UI, while all rollout flags remain false. The real App Check site key, HTTPS callable transport verification, legacy registry backfill and staging acceptance are still missing. Signup V2 therefore remains disabled.
 
 ## Findings in the current main AuthService
 
@@ -40,9 +40,9 @@ The server registration foundation is implemented and passes Auth + Firestore Em
 1. Keep the current main login path and legacy user data untouched.
 2. [x] Add a dependency-injected client adapter for the two V2 callables, with no default enablement. Adapter unit tests are included; it is not wired into the main app.
 3. Wire Firebase Functions and App Check only after the real site key/provider and Functions region are confirmed.
-4. Keep signup V2 behind a server-enforced and client-visible disabled-by-default gate.
-5. Add an Auth UI recovery state: incomplete profile → sign in → call recovery endpoint → either complete, resume signup, or show temporary unavailability.
-6. Reconcile AuthService so the V2 path never queries the global users collection or writes profile documents from the browser.
+4. [x] Keep signup V2 behind a server-enforced and client-visible disabled-by-default gate.
+5. [x] Add an Auth UI recovery state: incomplete profile → sign in → call recovery endpoint → either complete, resume signup, or show temporary unavailability.
+6. [x] Reconcile AuthService so the V2 path never queries the global users collection or writes profile documents from the browser.
 7. Preserve the old login path until owner-scoped profile reads and legacy account compatibility are tested.
 8. Define the Firestore access matrix for profile self-read/update and each user-owned collection before changing deny-all Rules.
 9. Run two-account browser staging, including registration, logout/login, recovery after simulated timeout, and cross-account access denial.
@@ -56,3 +56,14 @@ The server registration foundation is implemented and passes Auth + Firestore Em
 - No App Check enforcement/provider changes in Firebase Console.
 - No Auth account deletion, profile write, username reservation or user migration in the live project.
 - No enabling of signup V2.
+
+## Integration branch update — 2026-11-22
+
+The browser-side signup V2 wiring is now present on `integration/v1.0-reconciliation`:
+
+- `SignupV2Service` creates only the two allowlisted callable handles in `europe-west3` and requires App Check for transport readiness.
+- `AuthService` uses the V2 orchestration flow; no direct Firestore username query, profile creation, placeholder writes or client `lastLogin` write remain.
+- Auth bootstrap checks the signed-in UID's registration state and routes missing profiles to the recovery form.
+- Signup and recovery reconcile ambiguous callable outcomes with server state before deciding success or cleanup. Unknown outcomes preserve the Auth account.
+- The registration UI remains disabled because the site key and all three rollout signals are intentionally unset/false.
+- No Firebase deployment, Rules publication, production migration or live account operation was performed.

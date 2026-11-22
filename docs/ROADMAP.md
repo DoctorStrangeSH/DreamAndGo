@@ -587,3 +587,15 @@ Dream&Go — социальное пространство мечтаний, п�
 - [ ] Re-run the Auth + Firestore candidate Emulator workflow on exact HEAD and retain the run URL plus job output.
 - [ ] Only after exact-head checks pass, proceed with the next bounded Chat V2 client-integration task. Production Rules, App Check, data and `main` remain untouched.
 - **Gate status:** candidate implementation is progressing; exact-head CI evidence is pending. Do not mark the Emulator/CI gate complete from historical results.
+
+### CI evidence correction — 2026-11-22
+
+- The previous section's reference to `c8b501d` described an earlier checkpoint and is superseded by this entry.
+- Current branch HEAD at the time of this update: `7931c30981e138ab82a87dc47fd20f7799a71dd3`.
+- GitHub Actions runs associated with that exact HEAD:
+  - Checks: [run 44990080876](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44990080876), status reported `in_progress`; job `test` was still executing `npm test`, with syntax check pending.
+  - Firestore Rules Emulator: [run 44990080981](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44990080981), status reported `in_progress`; job was still executing the preliminary root `npm test`, so the Rules Emulator command had not started.
+- No pass/fail conclusion is inferred from an in-progress run. These records must be checked again against the then-current HEAD before accepting any gate.
+- PR #1 remains open; GitHub reports `mergeable: false` / `dirty`. No rebase, force-push or merge was attempted.
+- Chat V2 remains candidate-only; the active app still registers legacy `ChatModule`. No UI cutover, Firebase deployment, production Rules change, or user-data migration was performed.
+- **Gate status: HOLD.** Next action is to obtain a completed exact-HEAD CI run, then separately plan PR integration and Chat V2 staging.

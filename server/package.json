@@ -15,7 +15,7 @@
     "firebase-functions": "^6.0.0"
   },
   "devDependencies": {
-    "firebase": "^12.5.0",
+    "firebase": "^11.10.0",
     "@firebase/rules-unit-testing": "^4.0.1"
   }
 }

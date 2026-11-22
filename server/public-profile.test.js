@@ -25,6 +25,7 @@ const fullProfile = {
     friends: ['private-friend-uid'],
     preferences: { theme: 'dark', language: 'ru' },
     privacy: {
+        profile: 'public',
         travels: 'public',
         food: 'private',
         movies: 'public',
@@ -97,4 +98,36 @@ test('only valid creation timestamps are copied', () => {
         createdAt: { unexpected: 'data' }
     });
     assert.equal(invalid.createdAt, undefined);
+});
+
+
+test('public profile requires a separate explicit profile-level opt-in', () => {
+    const { privacy, ...legacyProfile } = fullProfile;
+    assert.equal(buildPublicProfile('user-123', {
+        ...legacyProfile,
+        privacy: { travels: 'public', movies: 'public' }
+    }), null);
+    assert.equal(buildPublicProfile('user-123', {
+        ...fullProfile,
+        privacy: { ...fullProfile.privacy, profile: 'private' }
+    }), null);
+    assert.equal(buildPublicProfile('user-123', {
+        ...fullProfile,
+        privacy: { ...fullProfile.privacy, profile: 'unknown' }
+    }), null);
+});
+
+test('explicit profile opt-in does not override private category preferences', () => {
+    const result = buildPublicProfile('user-123', {
+        ...fullProfile,
+        privacy: {
+            profile: 'public',
+            travels: 'private',
+            food: 'private',
+            movies: 'private',
+            books: 'private',
+            dreams: 'private'
+        }
+    });
+    assert.deepEqual(result.stats, {});
 });

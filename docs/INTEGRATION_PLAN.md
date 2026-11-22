@@ -281,3 +281,13 @@
 - [x] Root cause: test file imported `./signup-v2-client.js` from `tests/`, but implementation is in `js/core/`; Node correctly failed with `ERR_MODULE_NOT_FOUND`.
 - [x] Corrected the test import to `../js/core/signup-v2-client.js`.
 - [ ] Re-run CI on the corrected exact HEAD; adapter tests remain unverified until Actions passes.
+
+
+### Firestore access-control inventory — 2026-11-22
+
+- [x] Mapped major Firestore paths and client operations across Auth, profiles, books, chat, daily tasks, dreams, friends, level, movies, notifications, restaurants, search, travel and settings.
+- [x] Documented unsafe cross-user writes in chat summaries, friend records/requests and client-created notifications.
+- [x] Documented why the mixed `users/{uid}` profile document cannot safely become globally readable while it contains private account fields.
+- [x] Added `docs/FIRESTORE_ACCESS_MATRIX.md` with intended V1.0 access, blockers, cross-cutting Rules requirements and implementation order.
+- [ ] Public/private profile split, server-mediated cross-user operations, path-specific Rules, Rules Emulator matrix and two-account staging remain NOT DONE.
+- **Decision: keep deny-all rules unchanged; do not open client access until services are reconciled to this matrix.**

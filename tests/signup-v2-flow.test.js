@@ -14,6 +14,7 @@ function setup(overrides = {}) {
             return account;
         },
         registerProfile: async username => calls.push(['registerProfile', username]),
+        getRegistrationState: async () => ({ status: 'needs-profile' }),
         deleteAuthUser: async user => calls.push(['deleteAuthUser', user.uid]),
         signOutAuth: async () => calls.push(['signOutAuth']),
         ...overrides
@@ -71,7 +72,7 @@ test('definitive username conflict rolls back the newly created Auth account', a
     ]);
 });
 
-test('uncertain network outcome never deletes the account and requires recovery', async () => {
+test('uncertain network outcome with missing state never deletes the account and requires recovery', async () => {
     const { calls, deps } = setup({
         registerProfile: async () => {
             calls.push(['registerProfile']);
@@ -109,6 +110,67 @@ test('missing error code is treated as uncertain and never triggers destructive 
     const result = await completeSignupV2(deps);
     assert.equal(result.success, false);
     assert.equal(result.code, 'unknown');
+    assert.equal(result.recoveryRequired, true);
+    assert.equal(calls.some(call => call[0] === 'deleteAuthUser'), false);
+});
+
+
+test('lost callable response is treated as success when server confirms profile commit', async () => {
+    const { calls, account, deps } = setup({
+        registerProfile: async () => {
+            calls.push(['registerProfile']);
+            throw Object.assign(new Error('response lost'), { code: 'functions/unavailable' });
+        },
+        getRegistrationState: async () => {
+            calls.push(['getRegistrationState']);
+            return { status: 'complete' };
+        }
+    });
+    const result = await completeSignupV2(deps);
+    assert.deepEqual(result, { success: true, user: account, recovered: true });
+    assert.equal(calls.some(call => call[0] === 'deleteAuthUser'), false);
+    assert.equal(calls.some(call => call[0] === 'signOutAuth'), false);
+});
+
+test('definitive rejection may clean up only after server confirms no profile exists', async () => {
+    const { calls, deps } = setup({
+        registerProfile: async () => {
+            calls.push(['registerProfile']);
+            throw Object.assign(new Error('taken'), { code: 'functions/already-exists' });
+        },
+        getRegistrationState: async () => {
+            calls.push(['getRegistrationState']);
+            return { status: 'needs-profile' };
+        }
+    });
+    const result = await completeSignupV2(deps);
+    assert.equal(result.success, false);
+    assert.equal(result.code, 'functions/already-exists');
+    assert.deepEqual(calls.map(call => call[0]), [
+        'createAuthUser', 'registerProfile', 'getRegistrationState', 'deleteAuthUser'
+    ]);
+});
+
+test('definitive rejection with unavailable registry does not delete Auth account', async () => {
+    const { calls, deps } = setup({
+        registerProfile: async () => {
+            throw Object.assign(new Error('migration gate'), { code: 'functions/failed-precondition' });
+        },
+        getRegistrationState: async () => ({ status: 'temporarily-unavailable' })
+    });
+    const result = await completeSignupV2(deps);
+    assert.equal(result.recoveryRequired, true);
+    assert.equal(calls.some(call => call[0] === 'deleteAuthUser'), false);
+});
+
+test('registration state lookup failure never triggers destructive rollback', async () => {
+    const { calls, deps } = setup({
+        registerProfile: async () => {
+            throw Object.assign(new Error('network'), { code: 'functions/unavailable' });
+        },
+        getRegistrationState: async () => { throw new Error('offline'); }
+    });
+    const result = await completeSignupV2(deps);
     assert.equal(result.recoveryRequired, true);
     assert.equal(calls.some(call => call[0] === 'deleteAuthUser'), false);
 });

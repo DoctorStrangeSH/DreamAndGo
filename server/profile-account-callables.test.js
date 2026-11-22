@@ -11,6 +11,7 @@ class TestHttpsError extends Error {
 
 function setup({ profile = {}, registryReady = true, oldReservation = true, newReservation = false } = {}) {
     const calls = [];
+    const reads = [];
     const records = new Map([
         ['users/user-1', profile],
         ['system/usernameRegistry', registryReady ? { ready: true, schemaVersion: 1, legacyBackfillComplete: true } : null],
@@ -26,6 +27,7 @@ function setup({ profile = {}, registryReady = true, oldReservation = true, newR
                     return {
                         ...document,
                         async get() {
+                            reads.push(document.path);
                             const value = records.get(document.path);
                             return {
                                 exists: value !== undefined && value !== null,
@@ -73,6 +75,7 @@ function setup({ profile = {}, registryReady = true, oldReservation = true, newR
     };
     return {
         calls,
+        reads,
         registrations,
         create: () => createProfileAccountCallables(dependencies),
         validInput: { username: 'old_name', displayName: 'Dreamer', bio: 'Hello', location: 'Berlin' }
@@ -94,7 +97,7 @@ test('private profile read derives UID from auth and never accepts caller UID', 
     await assert.rejects(callable({ auth: { uid: 'user-1' }, data: { uid: 'user-2' } }), error => error.code === 'invalid-argument');
     const result = await callable({ auth: { uid: 'user-1' }, data: {} });
     assert.equal(result.profile.email, 'private@test.invalid');
-    assert.equal(ctx.calls[0].path, 'users/user-1');
+    assert.deepEqual(ctx.reads, ['users/user-1']);
 });
 
 test('private profile read rejects unauthenticated callers before database access', async () => {

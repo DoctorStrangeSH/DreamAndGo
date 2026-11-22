@@ -18,9 +18,10 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 export class AuthService {
-    constructor(auth, db) {
+    constructor(auth, db, profileAccountService = null) {
         this.auth = auth;
         this.db = db;
+        this.profileAccountService = profileAccountService;
     }
 
     // Отслеживание состояния авторизации
@@ -222,12 +223,11 @@ export class AuthService {
     // Получение данных пользователя
     async getUserData(uid) {
         try {
-            const userDoc = await getDoc(doc(this.db, 'users', uid));
-            if (userDoc.exists()) {
-                return { success: true, data: userDoc.data() };
-            } else {
-                return { success: false, error: 'Пользователь не найден' };
+            if (!uid || uid !== this.auth.currentUser?.uid || !this.profileAccountService) {
+                return { success: false, error: 'Профиль недоступен' };
             }
+            const data = await this.profileAccountService.getMyProfile();
+            return { success: true, data };
         } catch (error) {
             console.error('❌ Ошибка получения данных:', error);
             return { success: false, error: 'Ошибка загрузки данных' };

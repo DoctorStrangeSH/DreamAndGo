@@ -1,13 +1,14 @@
 export class ProfileAccountClient {
-    constructor({ firebaseApp, check, functionsFactory, callableFactory }) {
+    constructor({ firebaseApp, check, backendReady = true, functionsFactory, callableFactory }) {
         this.app = firebaseApp;
         this.appCheck = check;
+        this.backendReady = backendReady === true;
         this.functionsFactory = functionsFactory;
         this.callableFactory = callableFactory;
     }
 
     get isReady() {
-        return Boolean(this.app && this.appCheck);
+        return Boolean(this.app && this.appCheck && this.backendReady);
     }
 
     async invoke(name, payload = {}) {

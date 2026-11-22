@@ -237,5 +237,6 @@
 - [x] Added explicit privacy controls to Settings for profile visibility and each public statistic; missing preferences render as private.
 - [x] Added App Check initialization from the page meta configuration slot. The privacy form remains disabled until a valid reCAPTCHA v3 site key is supplied.
 - [ ] Owner profile edits still use legacy direct Firestore writes and need reconciliation with callable/server-authorized profile updates.
+- [x] Privacy callable client core is dependency-injected and tested without importing browser CDN modules; the root test glob includes the new profile security suites.
 - [ ] Public profile Firestore read Rules, callable transport Emulator coverage, real App Check site key, and staging remain NOT DONE.
 - [ ] No deployment, Firestore Rules broadening, or production data changes.

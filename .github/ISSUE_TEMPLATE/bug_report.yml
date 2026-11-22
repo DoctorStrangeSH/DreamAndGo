@@ -1,0 +1,37 @@
+name: Сообщить об ошибке
+description: Сообщите о воспроизводимой проблеме в Dream&Go
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Что произошло?
+      description: Опишите проблему без персональных данных.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Как повторить?
+      description: Перечислите точные шаги.
+      placeholder: "1. Открыть раздел…\n2. Нажать…\n3. Увидеть ошибку…"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Ожидаемое поведение
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Браузер и устройство
+      placeholder: "Например: Chrome, Windows 11"
+  - type: textarea
+    id: logs
+    attributes:
+      label: Ошибка из консоли (если есть)
+      description: Удалите токены, email, UID и любые персональные данные перед отправкой.

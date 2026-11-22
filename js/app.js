@@ -87,10 +87,6 @@ class DreamAndGo {
                     }
                     if (registration.success && registration.status === 'temporarily-unavailable') {
                         this.showAuth('recovery');
-                        const authModule = new AuthModule(this.authService);
-                        authModule.mode = 'recovery';
-                        authModule.render();
-                        authModule.showError('Реестр регистрации ещё не готов. Аккаунт сохранён; попробуйте восстановление позже.');
                         return;
                     }
                 }

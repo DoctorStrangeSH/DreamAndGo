@@ -1,39 +1,36 @@
 import { isValidUsername } from './username.js';
 
-// Firebase SDK functions are injected so validation, failure handling and
-// rollback can be tested without creating real accounts.
+// Firebase SDK functions are injected so the flow can be tested without
+// creating real accounts. A failed callable is reconciled with server state
+// before any destructive Auth action is considered.
 export async function completeSignupV2({
     email,
     password,
     username,
     createAuthUser,
     registerProfile,
+    getRegistrationState,
     deleteAuthUser,
     signOutAuth
 }) {
     if (typeof username !== 'string' || username !== username.trim() ||
         !isValidUsername(username)) {
-        return {
-            success: false,
-            error: 'Никнейм: 3–20 латинских букв, цифр или _.'
-        };
+        return { success: false, error: 'Никнейм: 3–20 латинских букв, цифр или _.' };
     }
 
     if (typeof email !== 'string' || !email.trim() ||
         typeof password !== 'string' || password.length < 6 ||
         typeof createAuthUser !== 'function' ||
         typeof registerProfile !== 'function' ||
+        typeof getRegistrationState !== 'function' ||
         typeof deleteAuthUser !== 'function' ||
         typeof signOutAuth !== 'function') {
-        return {
-            success: false,
-            error: 'Проверь email, пароль и настройки регистрации.'
-        };
+        return { success: false, error: 'Проверь email, пароль и настройки регистрации.' };
     }
 
     let account;
     try {
-        account = await createAuthUser(email, password);
+        account = await createAuthUser(email.trim(), password);
         if (!account || typeof account !== 'object') {
             throw new TypeError('Auth provider returned no account');
         }
@@ -48,17 +45,29 @@ export async function completeSignupV2({
     try {
         await registerProfile(username);
         return { success: true, user: account };
-    } catch (error) {
-        // A network timeout may mean Firestore committed the profile even
-        // though the callable response was lost. Never delete on uncertainty.
-        const code = error?.code || '';
+    } catch (registrationError) {
+        let state = null;
+        try {
+            state = await getRegistrationState();
+        } catch {
+            // The outcome is still uncertain. Never delete an account merely
+            // because both the registration response and reconciliation failed.
+        }
+
+        if (state?.status === 'complete') {
+            return { success: true, user: account, recovered: true };
+        }
+
+        const code = registrationError?.code || 'unknown';
         const definitive = [
             'functions/already-exists',
             'functions/invalid-argument',
             'functions/failed-precondition'
         ].includes(code);
 
-        if (definitive) {
+        // Only a definitive rejection plus a successful state read that proves
+        // no profile exists permits cleanup of this newly-created Auth account.
+        if (definitive && state?.status === 'needs-profile') {
             try {
                 await deleteAuthUser(account);
                 return {
@@ -69,22 +78,22 @@ export async function completeSignupV2({
                         : 'Регистрация пока недоступна. Попробуй позже.'
                 };
             } catch {
-                // The Auth account may remain. Do not encourage a duplicate
-                // registration; sign out and surface the recovery path below.
+                // The Auth account may remain. Keep it recoverable; do not ask
+                // the user to register with the same email again.
             }
         }
 
         try {
             await signOutAuth();
         } catch {
-            // Best-effort only. The user must not be told registration worked.
+            // Best effort. The recovery instructions remain explicit.
         }
 
         return {
             success: false,
-            code: code || 'unknown',
+            code,
             recoveryRequired: true,
-            error: 'Создание профиля не подтверждено. Не регистрируйся повторно с этим email; войди в аккаунт или обратись в поддержку.'
+            error: 'Не удалось подтвердить создание профиля. Аккаунт сохранён для восстановления. Войди с тем же email — повторная регистрация не нужна.'
         };
     }
 }

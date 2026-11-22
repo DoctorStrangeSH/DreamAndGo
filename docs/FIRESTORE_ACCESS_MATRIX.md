@@ -57,3 +57,14 @@ This is an implementation review, not a permission grant. The checked-in rules r
 - No production Rules publication or data migration.
 - No public profile or chat visibility assumptions have been enabled.
 - No client writes to username reservations or registry are permitted.
+
+## Public profile document contract (candidate; not deployed)
+
+`publicProfiles/{uid}` is a server-generated projection. It may contain only:
+
+- `uid`, normalized `username`, bounded `displayName`, `bio`, `location`.
+- `avatar` and `website` only as HTTPS URLs without embedded credentials.
+- `createdAt` when it is a recognized Firestore Timestamp or ISO date.
+- `stats` containing only `travels`, `restaurants`, `movies`, `books`, `dreams` whose existing privacy flag is explicitly `public`. `restaurants` maps to legacy `privacy.food`. Missing/unknown flags hide the statistic. `friends` count is omitted until a dedicated visibility preference exists.
+
+It must never contain email, last login, `usernameNormalized`, friends list, achievements, account preferences, or the privacy preference map itself. `server/public-profile.js` implements only this deterministic projection and is covered by `server/public-profile.test.js`; it does not perform authorization, persistence, synchronization, migration, or Rules enforcement. It is not wired into the running application and no public profile documents are currently created by this change.

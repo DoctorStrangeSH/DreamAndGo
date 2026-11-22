@@ -263,3 +263,13 @@
 - [ ] Owner-scoped profile read/update Rules and per-collection access matrix remain NOT DONE.
 - [ ] Legacy login compatibility, recovery UI and two-account browser staging remain NOT DONE.
 - **Decision: do not enable signup V2 or alter current login/profile reads until the browser integration and access matrix are implemented and staged.**
+
+
+### Browser callable adapter — 2026-11-22
+
+- [x] Added js/core/signup-v2-client.js, a dependency-injected adapter for registerProfileV2 and getRegistrationStateV2 only.
+- [x] Adapter validates nickname before network access, sends only username, validates canonical server response and allowlists recovery states.
+- [x] Callable transport errors are preserved for the signup recovery policy; malformed responses fail closed.
+- [x] Added eight adapter unit tests. The adapter does not initialize Firebase, configure App Check, enable rollout or alter the legacy AuthService.
+- [ ] CI for the latest adapter test HEAD pending because a prior Actions run on the same branch is still marked in progress.
+- [ ] Wiring into main AuthService, Firebase Functions SDK and App Check remains NOT DONE pending provider/site key and transport verification.

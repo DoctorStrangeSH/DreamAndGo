@@ -147,3 +147,12 @@
 - [ ] Browser callable adapter, App Check site key/provider wiring and HTTPS callable tests remain NOT DONE.
 - [ ] Owner-scoped profile/collection Rules and browser staging remain NOT DONE.
 - [ ] Signup V2 stays disabled; no production changes.
+
+
+### Signup V2 browser adapter — 2026-11-22
+
+- [x] Added dependency-injected client adapter for the two registration callables.
+- [x] Added response validation, nickname validation, allowlisted recovery states and safe transport error propagation.
+- [x] Added eight unit tests; no Firebase config, AuthService, App Check or rollout was changed.
+- [ ] Latest exact-head CI verification pending.
+- [ ] Main app wiring and staging remain NOT DONE.

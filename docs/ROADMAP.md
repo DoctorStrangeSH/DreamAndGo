@@ -264,3 +264,14 @@
 - [x] Emulator suite runs under the existing serialized `test:emulator` command.
 - [ ] Exact-head CI result pending.
 - [ ] Callable HTTPS transport and real App Check token exchange remain NOT DONE.
+
+
+### Owner profile callables — exact-head CI verified — 2026-11-22
+
+- [x] GitHub Actions run [44999378024](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/44999378024) passed on exact HEAD `fbb31b88cf42a98d3193ac0be4813155f9b6076e`.
+- [x] Root unit tests: 95/95 passed.
+- [x] Firestore Emulator integration suite: 14/14 passed, including owner-only profile read, safe projection refresh, atomic username reservation move and collision rollback.
+- [x] JavaScript syntax check: all 61 files passed.
+- [ ] HTTPS callable transport and real App Check token exchange remain NOT DONE.
+- [ ] Signup V2 browser integration, path-specific public profile Rules, two-account browser staging and production migration remain NOT DONE.
+- [ ] No deployment, Firestore Rules broadening or production data changes.

@@ -73,6 +73,7 @@ test('missing or unknown privacy settings hide statistics by default', () => {
 test('untrusted strings are bounded and unsafe URLs are removed', () => {
     const result = buildPublicProfile('user-123', {
         username: 'dreamer',
+        privacy: { profile: 'public' },
         displayName: 'x'.repeat(120),
         bio: 'b'.repeat(700),
         location: 'l'.repeat(140),
@@ -95,6 +96,7 @@ test('invalid UID, profile object or username is rejected', () => {
 test('only valid creation timestamps are copied', () => {
     const invalid = buildPublicProfile('user-123', {
         username: 'dreamer',
+        privacy: { profile: 'public' },
         createdAt: { unexpected: 'data' }
     });
     assert.equal(invalid.createdAt, undefined);

@@ -275,3 +275,17 @@
 - [ ] HTTPS callable transport and real App Check token exchange remain NOT DONE.
 - [ ] Signup V2 browser integration, path-specific public profile Rules, two-account browser staging and production migration remain NOT DONE.
 - [ ] No deployment, Firestore Rules broadening or production data changes.
+
+
+### Signup V2 browser integration — 2026-11-22
+
+- [x] Added Firebase Functions client adapter for `registerProfileV2` and `getRegistrationStateV2` in `europe-west3`.
+- [x] AuthService no longer queries `users` for nickname availability or writes profile/placeholder documents directly during signup.
+- [x] Login no longer attempts a direct client-side `lastLogin` Firestore write.
+- [x] Signup UI is wired to the server-backed V2 flow, but remains disabled unless App Check and all explicit rollout signals are enabled.
+- [x] Auth bootstrap routes an authenticated account with a missing profile to the recovery form when the protected callable transport is ready.
+- [x] Recovery submits only the nickname for the currently authenticated UID and confirms server state before returning to the application.
+- [x] Signup failure reconciliation checks server state before considering cleanup; uncertain outcomes never delete the Auth account.
+- [ ] Exact-head CI, Auth Emulator/browser flow, HTTPS callable transport and real App Check token exchange remain NOT DONE.
+- [ ] Signup V2 rollout flags remain false; no legacy backfill verification or staging sign-off exists.
+- [ ] No Functions deployment, Rules publication, production migration or account changes performed.

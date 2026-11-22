@@ -65,7 +65,7 @@ test('missing or unknown privacy settings hide statistics by default', () => {
     const result = buildPublicProfile('user-123', {
         username: 'dreamer',
         stats: { travels: 99, movies: 8 },
-        privacy: { travels: 'everyone' }
+        privacy: { profile: 'public', travels: 'everyone' }
     });
     assert.deepEqual(result.stats, {});
 });

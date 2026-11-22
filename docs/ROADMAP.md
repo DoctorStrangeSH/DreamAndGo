@@ -289,3 +289,11 @@
 - [ ] Exact-head CI, Auth Emulator/browser flow, HTTPS callable transport and real App Check token exchange remain NOT DONE.
 - [ ] Signup V2 rollout flags remain false; no legacy backfill verification or staging sign-off exists.
 - [ ] No Functions deployment, Rules publication, production migration or account changes performed.
+
+
+### Firebase backend readiness gate — 2026-11-22
+
+- [x] Added a separate `firebase-functions-backend-ready` false-by-default deployment signal.
+- [x] Profile and signup callable clients do not initialize/call Functions until the backend signal and App Check are both ready.
+- [x] Added regression coverage ensuring profile reads/edits fail closed before the backend is declared ready.
+- [ ] Real staging deploy, App Check token exchange and callable transport acceptance remain NOT DONE.

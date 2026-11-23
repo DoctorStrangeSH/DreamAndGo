@@ -207,3 +207,12 @@ The previous CI run was cancelled by subsequent documentation commits. The lates
 - [x] Added a process-suite source guard requiring checksum self-verification before output-directory creation.
 - [x] Added a source guard ensuring the exporter contains no Firestore `.set()`, `.update()`, `.delete()` or `.create()` calls.
 - [ ] Exact-HEAD CI for the final exporter self-verification and read-only guards is pending.
+
+
+### Read-only regression guard refinement — 2026-11-23
+
+- [x] CI on `746a586e` exposed a false positive in the static Firestore-write guard: it matched the in-memory `Map.set()` used to group messages, not a Firestore write.
+- [x] Narrowed the guard to Firestore document write calls chained from Firestore references (`db` / `document.ref`), preserving the read-only requirement without rejecting ordinary in-memory maps.
+- [x] Added offline backup read-back verifier and three synthetic tests for valid archives, tampered content, and mismatched inventory linkage.
+- [ ] Full CI on the latest branch HEAD is pending.
+- [ ] Real staging export and restore rehearsal remain blocked until a dedicated staging project is available.

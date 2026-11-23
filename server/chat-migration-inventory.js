@@ -114,7 +114,8 @@ function inspectMessage(message, participants) {
     const data = message.data || {};
     const issues = [];
     if (!isValidFirestoreId(message.id, MAX_MESSAGE_ID_LENGTH)) issues.push('invalid-message-id');
-    if (!participants.includes(data.senderId)) issues.push('unknown-sender');
+    if (participants && !participants.includes(data.senderId)) issues.push('unknown-sender');
+    if (!participants && !isValidFirestoreId(data.senderId)) issues.push('invalid-sender-id');
     if (typeof data.text !== 'string' || data.text.length === 0) issues.push('invalid-message-text');
     else if (data.text.length > MAX_TEXT_LENGTH) issues.push('message-text-over-limit');
     if (timestampMillis(data.createdAt) === null) issues.push('invalid-created-at');
@@ -140,7 +141,7 @@ function inspectMessage(message, participants) {
  * Build a deterministic, read-only inventory from already-read Firestore documents.
  * Message text is never copied into the report; only field metadata and SHA-256 hashes are emitted.
  */
-export function buildLegacyChatInventory({ summaries, messagesByChat }) {
+export function buildLegacyChatInventory({ summaries, messagesByChat, orphanMessageCollections = [] }) {
     const issues = [];
     const ignoredSummaryPaths = [];
     const normalizedSummaries = [];
@@ -189,12 +190,14 @@ export function buildLegacyChatInventory({ summaries, messagesByChat }) {
     }
 
     const pairs = [];
+    const candidateLegacyIds = new Set();
     const legacyIdOwners = new Map();
 
     for (const [key, participants] of candidatePairs) {
         const [uidA, uidB] = participants;
         const legacyId = legacyChatId(uidA, uidB);
         const canonicalId = canonicalChatId(uidA, uidB);
+        candidateLegacyIds.add(legacyId);
         if (!legacyIdOwners.has(legacyId)) legacyIdOwners.set(legacyId, []);
         legacyIdOwners.get(legacyId).push(key);
 
@@ -251,6 +254,30 @@ export function buildLegacyChatInventory({ summaries, messagesByChat }) {
         }
     }
 
+    const orphanCollections = orphanMessageCollections
+        .filter(collection => !candidateLegacyIds.has(collection.chatId))
+        .map(collection => {
+            const seen = new Set();
+            const messages = (collection.messages || []).map(message => {
+                const inspected = inspectMessage(message, null);
+                if (seen.has(message.id)) inspected.issues.push('duplicate-message-id');
+                seen.add(message.id);
+                return inspected;
+            }).sort((a, b) => String(a.id).localeCompare(String(b.id)));
+            return {
+                chatId: collection.chatId,
+                messageCount: messages.length,
+                totalSourceBytes: messages.reduce((sum, message) => sum + message.sourceBytes, 0),
+                messages,
+                issues: ['orphan-legacy-message-collection']
+            };
+        })
+        .sort((a, b) => a.chatId.localeCompare(b.chatId));
+
+    for (const orphan of orphanCollections) {
+        issues.push({ code: 'orphan-legacy-message-collection', chatId: orphan.chatId, messageCount: orphan.messageCount });
+    }
+
     pairs.sort((a, b) => a.canonicalChatId.localeCompare(b.canonicalChatId));
     issues.sort((a, b) => stableJson(a).localeCompare(stableJson(b)));
     ignoredSummaryPaths.sort();
@@ -264,7 +291,9 @@ export function buildLegacyChatInventory({ summaries, messagesByChat }) {
         pairsWithIssues: pairs.filter(pair => pair.issues.length > 0).length,
         globalIssues: issues.length,
         ignoredSentinelDocuments: ignoredSummaryPaths.length,
-        skippedGroupSummaryDocuments: skippedGroupSummaryPaths.length
+        skippedGroupSummaryDocuments: skippedGroupSummaryPaths.length,
+        orphanMessageCollections: orphanCollections.length,
+        orphanMessageDocuments: orphanCollections.reduce((sum, item) => sum + item.messageCount, 0)
     };
 
     const manifest = {
@@ -273,6 +302,7 @@ export function buildLegacyChatInventory({ summaries, messagesByChat }) {
         totals,
         ignoredSummaryPaths,
         skippedGroupSummaryPaths,
+        orphanMessageCollections: orphanCollections,
         globalIssues: issues,
         pairs
     };
@@ -293,6 +323,8 @@ export function buildLegacyChatInventory({ summaries, messagesByChat }) {
             `- Global issues: ${totals.globalIssues}`,
             `- Ignored sentinel documents: ${totals.ignoredSentinelDocuments}`,
             `- Group chat summaries skipped (out of scope): ${totals.skippedGroupSummaryDocuments}`,
+            `- Orphan message collections (manual review): ${totals.orphanMessageCollections}`,
+            `- Orphan message documents: ${totals.orphanMessageDocuments}`,
             '',
             `Manifest SHA-256: ${sha256(manifest)}`,
             '',

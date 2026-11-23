@@ -735,3 +735,13 @@
 - [x] Existing allowlisted profile projection and App Check requirements remain unchanged.
 - [ ] Run `server/friends-read-callables.test.js`, Friends callables tests, and the full exact-HEAD test/syntax suites.
 - [ ] Validate the visible list and notification delivery on two staging accounts.
+
+### Notifications delivery and error-state integrity — 2026-11-23
+
+- [x] NotificationsService no longer converts a failed protected fetch into an empty inbox; it reports a separate load-error callback.
+- [x] NotificationsWidget displays a retry state instead of misleading "Нет уведомлений" and keeps the unread badge intact until fresh data arrives.
+- [x] Manual retry re-establishes the subscription and refresh cycle.
+- [x] Refresh-after-mark-read verifies that the same subscription is still active before invoking its callback.
+- [x] Friend callable regression asserts duplicate friend requests create exactly one `friend_request` notification; acceptance lifecycle already asserts one `friend_accepted` notification.
+- [ ] Run notification/friend callable suites and full exact-HEAD CI/syntax checks.
+- [ ] Verify delivery, badge counts, retry and navigation with two staging accounts.

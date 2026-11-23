@@ -229,3 +229,13 @@
 - [x] Orphan collections are reported without inferring participant pairs from ambiguous IDs.
 - [x] Local inventory output is written with owner-only file/directory permissions where supported.
 - [ ] Exact-HEAD CI and staging execution remain pending; no real Firebase data has been read.
+
+
+## Legacy chat inventory — exact-HEAD CI — 2026-11-23
+
+- [x] Green CI run [45155314269](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/45155314269) on `6073403dd65000a97d28752bbe9758c3c443e2d9`.
+- [x] Unit tests: 163 passed, 0 failed.
+- [x] Real Chromium offline queue tests: 4 passed, 0 failed.
+- [x] Auth + Firestore Emulator tests: 23 passed, 0 failed.
+- [x] JavaScript syntax: 95 files passed.
+- [ ] No staging Firebase project/credentials supplied; real inventory and backup have not been executed. Production remains untouched.

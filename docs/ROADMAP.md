@@ -553,5 +553,5 @@
 - [x] Added a unit regression test for project-bound inventory manifests.
 - [x] Added a tagged Firestore value decoder for Timestamp, Date, Bytes, GeoPoint, and DocumentReference; Firebase dependencies are injected, not initialized by the pure module.
 - [x] Reserved the serialization tag key to prevent ambiguous round-trips of ordinary user objects.
-- [x] Added a Firestore Emulator restore integration test with synthetic documents, JSON read-back, native value checks, nested paths, and cleanup.
+- [x] Added a Firestore Emulator restore integration test with synthetic documents, JSON read-back, native value checks, nested paths, source/target value re-encoding checks, idempotent replay, and cleanup.
 - [ ] Exact-HEAD Emulator and full CI results remain pending; no live staging dataset or Production data was touched.

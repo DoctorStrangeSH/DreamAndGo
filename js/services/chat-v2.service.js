@@ -41,6 +41,10 @@ export class ChatV2Service {
         return this.enabled && typeof this.invoke === 'function';
     }
 
+    resetSession() {
+        this.pendingMessageIds.clear();
+    }
+
     async call(endpoint, payload) {
         if (!this.isEnabled) {
             throw new Error('Новый чат пока не включён.');

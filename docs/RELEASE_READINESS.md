@@ -206,3 +206,10 @@
 - [x] Separate browser accounts remain isolated after reload.
 - [x] Exact-HEAD CI run [45152046369](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/45152046369) completed successfully: 150 Unit, 4 Chromium, 23 Auth + Firestore Emulator, 92 syntax checks; zero failures or skips.
 - [ ] **NOT VERIFIED:** the browser suite uses a local fixture and simulated callable response. Real Firebase staging with two accounts, Functions/App Check, and legacy migration still requires acceptance before Chat V2 release.
+
+
+## Legacy conversation migration design — 2026-11-23
+
+- [x] Legacy source paths and fields and Chat V2 target schema mapped from the current repository code.
+- [x] Added [CHAT_MIGRATION_PLAN.md](CHAT_MIGRATION_PLAN.md), including safe participant-pair discovery, immutable source preservation, backup/checksum, dry-run, staging, idempotency, conflict policy and rollback rehearsal.
+- [ ] No production or staging data has been read, exported, or modified. Migration remains blocked until a separate staging project, representative test data, verified backup and explicit owner approval are available.

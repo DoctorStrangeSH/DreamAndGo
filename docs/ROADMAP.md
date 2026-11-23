@@ -546,3 +546,12 @@
 - [x] Added a regression test that changes the project ID inside the inventory manifest and recomputes its local checksum; verification still rejects it because the backup is bound to the original manifest hash.
 - [ ] Exact-HEAD full CI remains unconfirmed; no staging export or Firestore restore has been run.
 - **Safety:** code and synthetic fixtures only; no live Firebase reads/writes, Rules changes, or deployments.
+
+### Synthetic backup restore rehearsal added — 2026-11-23
+
+- [x] Fixed standalone Inventory CLI to include the explicitly selected Firebase project ID in its hashed manifest.
+- [x] Added a unit regression test for project-bound inventory manifests.
+- [x] Added a tagged Firestore value decoder for Timestamp, Date, Bytes, GeoPoint, and DocumentReference; Firebase dependencies are injected, not initialized by the pure module.
+- [x] Reserved the serialization tag key to prevent ambiguous round-trips of ordinary user objects.
+- [x] Added a Firestore Emulator restore integration test with synthetic documents, JSON read-back, native value checks, nested paths, and cleanup.
+- [ ] Exact-HEAD Emulator and full CI results remain pending; no live staging dataset or Production data was touched.

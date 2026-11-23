@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import {
     assertSafeInventoryTarget,
     buildLegacyChatInventory,
@@ -290,4 +291,9 @@ test('inventory manifest includes the explicit Firebase project ID before checks
 
     assert.equal(inventory.manifest.projectId, 'dream-and-go-staging');
     assert.equal(inventory.manifestSha256.length, 64);
+});
+
+test('read-only Inventory CLI passes its validated project ID into the manifest builder', async () => {
+    const source = await readFile(new URL('./scripts/chat-migration-inventory.js', import.meta.url), 'utf8');
+    assert.match(source, /buildLegacyChatInventory\(\{\s*projectId,\s*summaries,/);
 });

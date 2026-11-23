@@ -52,7 +52,9 @@ export class RealtimeService {
                 if (docSnap.id === '_init') continue;
 
                 const chatData = docSnap.data();
-                const partnerData = await this.getUserProfile(chatData.partnerId);
+                const partnerData = chatData.partnerName
+                    ? null
+                    : await this.getUserProfile(chatData.partnerId);
                 chats.push({
                     id: docSnap.id,
                     chatId: docSnap.id,

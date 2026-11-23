@@ -79,7 +79,9 @@ test('unrelated and anonymous users cannot read another private chat', { skip: !
 
 test('inbox summaries are readable only by their owner', { skip: !available }, async () => {
     assert.equal((await assertSucceeds(getDoc(doc(aliceDb, 'users/alice/chats/chat-1')))).exists(), true);
+    assert.equal((await assertSucceeds(getDocs(collection(aliceDb, 'users/alice/chats')))).size, 1);
     await assertFails(getDoc(doc(bobDb, 'users/alice/chats/chat-1')));
+    await assertFails(getDocs(collection(bobDb, 'users/alice/chats')));
     await assertFails(getDoc(doc(outsiderDb, 'users/alice/chats/chat-1')));
     await assertFails(getDoc(doc(anonymousDb, 'users/alice/chats/chat-1')));
 });

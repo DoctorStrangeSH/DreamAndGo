@@ -321,3 +321,16 @@
 - [x] Final exact-head run [45001207890](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/45001207890) passed on `ce990b79c8495ffb0c406b6a83db98452d938b33`.
 - [x] 100/100 unit tests; 14/14 Firestore Emulator tests; 62/62 JavaScript files passed syntax validation.
 - [ ] App Check site key, staging deployment, real callable transport, registry migration rehearsal and two-account acceptance remain NOT DONE.
+
+
+### Chat V2 backend candidate — 2026-11-23
+
+- [x] Added App Check-enforced private-chat create/send/history/read-receipt/status/unread callables.
+- [x] Canonical membership document and deterministic private chat ID are server-owned.
+- [x] New-message notification contains no message body.
+- [x] Added callable unit tests and registered them in both test runners.
+- [ ] Exact-HEAD CI and Firestore Emulator matrix.
+- [ ] Migrate browser ChatService, RealtimeService and chat UI to the callable contract with rollout gate closed by default.
+- [ ] Legacy conversation migration rehearsal; preserve all existing messages.
+- [ ] Two-account staging acceptance.
+- Scope lock: one-to-one private chat only in v1.0; group chat remains post-v1.0.

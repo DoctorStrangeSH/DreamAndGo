@@ -345,7 +345,8 @@ export class ChatModule {
 
         const v2Enabled = this.chatService.isV2Enabled;
         blockButton.classList.toggle('d-none', !v2Enabled);
-        blockButton.disabled = this.blockActionPending || Boolean(status.error);
+        blockButton.disabled = this.blockActionPending || Boolean(status.error) ||
+            globalThis.navigator?.onLine === false;
         blockButton.innerHTML = status.blockedByMe
             ? '<i class="bi bi-shield-check"></i>'
             : '<i class="bi bi-shield-lock"></i>';

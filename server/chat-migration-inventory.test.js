@@ -240,3 +240,43 @@ test('orphan legacy message collections are reported for manual review without g
     assert.equal(inventory.manifest.orphanMessageCollections[0].messages[0].senderId, 'former-user');
     assert.ok(inventory.manifest.globalIssues.some(issue => issue.code === 'orphan-legacy-message-collection'));
 });
+
+test('existing Chat V2 summaries are skipped instead of being mistaken for legacy partner-ID summaries', () => {
+    const chatId = canonicalChatId('alice', 'bob');
+    const inventory = buildLegacyChatInventory({
+        summaries: [
+            {
+                path: `users/alice/chats/${chatId}`,
+                id: chatId,
+                data: {
+                    type: 'private',
+                    chatId,
+                    partnerId: 'bob',
+                    partnerName: 'Bob',
+                    partnerAvatar: null,
+                    unread: 0
+                }
+            },
+            {
+                path: `users/bob/chats/${chatId}`,
+                id: chatId,
+                data: {
+                    type: 'private',
+                    chatId,
+                    partnerId: 'alice',
+                    partnerName: 'Alice',
+                    partnerAvatar: null,
+                    unread: 0
+                }
+            }
+        ],
+        messagesByChat: {}
+    });
+
+    assert.equal(inventory.manifest.totals.candidatePairs, 0);
+    assert.equal(inventory.manifest.totals.skippedV2SummaryDocuments, 2);
+    assert.deepEqual(inventory.manifest.skippedV2SummaryPaths, [
+        `users/alice/chats/${chatId}`,
+        `users/bob/chats/${chatId}`
+    ]);
+});

@@ -761,3 +761,11 @@
 - [x] A request failure continues to use the retry state and preserves the last known badge.
 - [ ] Execute notification, Friends, Chat V2, and full exact-HEAD test/syntax suites.
 - [ ] Verify unavailable, retry, unread badge, mark-read, and navigation behavior in browser with two staging accounts.
+
+### Emulator CI failure triage — 2026-11-23
+
+- [x] Inspected failed exact-HEAD Actions run `45181585519`: root unit tests and Chromium browser tests passed; Auth/Firestore Emulator suite failed; syntax step was skipped after failure.
+- [x] Identified restore-test import failure: `firebase-admin/firestore` does not export `Bytes`; test now supplies a local Buffer-backed Bytes adapter and handles Firestore byte return forms.
+- [x] Identified Friends read Emulator fixture failure: new reciprocal relationship validation correctly hid the friend because the fixture seeded only one side; fixture now seeds both reciprocal records.
+- [ ] Wait for exact-HEAD CI after both fixes; no green result claimed yet.
+- [ ] If CI exposes further Emulator failures, fix each against its real log and rerun before closing Friends/Chat V2.

@@ -204,7 +204,10 @@ function createChatCallables({ onCall, HttpsError, getFirestore, FieldValue }) {
 
                 const timestamp = FieldValue.serverTimestamp();
                 const preview = text.slice(0, 100);
-                const unread = Number.isSafeInteger(receiverSummary.data()?.unread)
+                const senderUnread = Number.isSafeInteger(senderSummary.data()?.unread)
+                    ? Math.max(0, senderSummary.data().unread)
+                    : 0;
+                const receiverUnread = Number.isSafeInteger(receiverSummary.data()?.unread)
                     ? Math.max(0, receiverSummary.data().unread)
                     : 0;
                 transaction.create(messageRef, {
@@ -216,10 +219,10 @@ function createChatCallables({ onCall, HttpsError, getFirestore, FieldValue }) {
                 });
                 transaction.update(chatRef, { updatedAt: timestamp, lastMessageAt: timestamp });
                 transaction.update(senderSummaryRef, {
-                    lastMessage: preview, lastMessageTime: timestamp, unread: 0
+                    lastMessage: preview, lastMessageTime: timestamp, unread: senderUnread
                 });
                 transaction.update(receiverSummaryRef, {
-                    lastMessage: preview, lastMessageTime: timestamp, unread: unread + 1
+                    lastMessage: preview, lastMessageTime: timestamp, unread: receiverUnread + 1
                 });
                 transaction.create(notificationRef, {
                     type: 'new_message',

@@ -72,6 +72,7 @@ const chat = createChatCallables({ onCall, HttpsError, getFirestore, FieldValue 
 
 export const createPrivateChatV2 = chat.createPrivateChatV2;
 export const sendPrivateMessageV2 = chat.sendPrivateMessageV2;
+export const getMyChatContactsV2 = chat.getMyChatContactsV2;
 export const getMyPrivateChatsV2 = chat.getMyPrivateChatsV2;
 export const getPrivateChatHistoryV2 = chat.getPrivateChatHistoryV2;
 export const getPrivateMessageStatusV2 = chat.getPrivateMessageStatusV2;

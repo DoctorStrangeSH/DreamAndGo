@@ -61,7 +61,7 @@ before(async () => {
         getFirestore: () => db,
         FieldValue
     });
-    assert.equal(registrations.length, 6);
+    assert.equal(registrations.length, 7);
     assert.ok(registrations.every(item => item.options.enforceAppCheck === true));
     assert.ok(registrations.every(item => item.options.region === 'europe-west3'));
 });

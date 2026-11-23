@@ -1,133 +1,118 @@
-import { db } from '../config/firebase.js';
-import { 
-    collection, doc, addDoc, getDocs, updateDoc, deleteDoc,
-    query, orderBy, limit, serverTimestamp, onSnapshot, where
-} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { app, appCheck } from '../config/firebase.js';
+import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
+
+const REFRESH_INTERVAL_MS = 30000;
+
+function backendReady() {
+    return document.querySelector('meta[name="firebase-functions-backend-ready"]')
+        ?.content?.trim().toLowerCase() === 'true';
+}
 
 export class NotificationsService {
     constructor() {
-        this.db = db;
         this.listeners = {};
-    }
+        this.callables = null;
 
-    async addNotification(userId, data) {
-        try {
-            const notifRef = collection(this.db, 'users', userId, 'notifications');
-            await addDoc(notifRef, {
-                ...data,
-                read: false,
-                createdAt: serverTimestamp()
-            });
-            return { success: true };
-        } catch (error) {
-            console.error('Ошибка создания уведомления:', error);
-            return { success: false };
+        if (app && appCheck && backendReady()) {
+            const functions = getFunctions(app, 'europe-west3');
+            this.callables = {
+                list: httpsCallable(functions, 'getMyNotificationsV1'),
+                markRead: httpsCallable(functions, 'markNotificationReadV1'),
+                markAllRead: httpsCallable(functions, 'markAllNotificationsReadV1')
+            };
         }
     }
 
-    // Типы уведомлений
-    async notifyFriendRequest(fromUserId, toUserId, fromUsername) {
-        await this.addNotification(toUserId, {
-            type: 'friend_request',
-            title: 'Новая заявка в друзья',
-            message: `@${fromUsername} хочет добавить тебя в друзья`,
-            icon: 'bi-person-plus',
-            color: 'primary',
-            link: '#friends',
-            fromUserId: fromUserId
-        });
+    get isReady() {
+        return Boolean(this.callables);
     }
 
-    async notifyFriendAccepted(fromUserId, toUserId, toUsername) {
-        await this.addNotification(fromUserId, {
-            type: 'friend_accepted',
-            title: 'Заявка принята',
-            message: `@${toUsername} принял твою заявку в друзья`,
-            icon: 'bi-person-check',
-            color: 'success',
-            link: `#profile/${toUserId}`,
-            fromUserId: toUserId
-        });
-    }
+    async fetchNotifications() {
+        if (!this.callables) {
+            throw new Error('Защищённая загрузка уведомлений пока не подключена.');
+        }
 
-    async notifyNewMessage(fromUserId, toUserId, fromUsername, text) {
-        await this.addNotification(toUserId, {
-            type: 'new_message',
-            title: 'Новое сообщение',
-            message: `@${fromUsername}: ${text.substring(0, 50)}`,
-            icon: 'bi-chat-dots',
-            color: 'info',
-            link: '#chat',
-            fromUserId: fromUserId
-        });
-    }
-
-    async notifyAchievement(userId, achievement) {
-        await this.addNotification(userId, {
-            type: 'achievement',
-            title: 'Новое достижение!',
-            message: `${achievement.emoji} ${achievement.title} — ${achievement.description}`,
-            icon: 'bi-trophy',
-            color: 'warning',
-            link: '#achievements'
-        });
-    }
-
-    async notifyLevelUp(userId, level, title) {
-        await this.addNotification(userId, {
-            type: 'level_up',
-            title: 'Новый уровень!',
-            message: `Ты достиг ${level} уровня — ${title}`,
-            icon: 'bi-star-fill',
-            color: 'warning',
-            link: '#profile'
-        });
+        const result = await this.callables.list({});
+        const notifications = result?.data?.notifications;
+        if (!Array.isArray(notifications)) {
+            throw new Error('Сервер вернул некорректный список уведомлений.');
+        }
+        return notifications;
     }
 
     subscribeToNotifications(userId, callback) {
+        this.unsubscribe(`notifications_${userId}`);
         const key = `notifications_${userId}`;
-        this.unsubscribe(key);
 
-        const notifRef = collection(this.db, 'users', userId, 'notifications');
-        const q = query(notifRef, orderBy('createdAt', 'desc'), limit(30));
+        if (!this.callables || !userId) {
+            callback([]);
+            return () => {};
+        }
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const notifications = [];
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                notifications.push({
-                    id: doc.id,
-                    ...data,
-                    createdAt: data.createdAt?.toDate?.() || new Date()
-                });
-            });
-            callback(notifications);
-        });
+        let active = true;
+        let loading = false;
 
-        this.listeners[key] = unsubscribe;
-        return unsubscribe;
+        const refresh = async () => {
+            if (!active || loading) return;
+            loading = true;
+            try {
+                const notifications = await this.fetchNotifications();
+                if (active) callback(notifications);
+            } catch (error) {
+                console.error('Ошибка загрузки уведомлений:', error);
+                if (active) callback([]);
+            } finally {
+                loading = false;
+            }
+        };
+
+        void refresh();
+        const timer = window.setInterval(refresh, REFRESH_INTERVAL_MS);
+        this.listeners[key] = () => {
+            active = false;
+            window.clearInterval(timer);
+        };
+        return this.listeners[key];
     }
 
     async markAsRead(userId, notificationId) {
+        if (!this.callables || !userId || !notificationId) {
+            return { success: false, error: 'Защищённые уведомления пока недоступны.' };
+        }
         try {
-            const notifRef = doc(this.db, 'users', userId, 'notifications', notificationId);
-            await updateDoc(notifRef, { read: true });
+            const result = await this.callables.markRead({ notificationId });
+            if (result?.data?.success !== true) throw new Error('Некорректный ответ сервера');
+            await this.refreshUserNotifications(userId);
+            return { success: true };
         } catch (error) {
             console.error('Ошибка отметки уведомления:', error);
+            return { success: false, error: 'Не удалось отметить уведомление прочитанным.' };
         }
     }
 
     async markAllAsRead(userId) {
+        if (!this.callables || !userId) {
+            return { success: false, error: 'Защищённые уведомления пока недоступны.' };
+        }
         try {
-            const notifRef = collection(this.db, 'users', userId, 'notifications');
-            const q = query(notifRef, where('read', '==', false));
-            const snapshot = await getDocs(q);
-            
-            for (const docSnap of snapshot.docs) {
-                await updateDoc(docSnap.ref, { read: true });
-            }
+            const result = await this.callables.markAllRead({});
+            if (result?.data?.success !== true) throw new Error('Некорректный ответ сервера');
+            await this.refreshUserNotifications(userId);
+            return { success: true, updated: result.data.updated || 0 };
         } catch (error) {
             console.error('Ошибка отметки всех уведомлений:', error);
+            return { success: false, error: 'Не удалось отметить уведомления прочитанными.' };
+        }
+    }
+
+    async refreshUserNotifications(userId) {
+        const key = `notifications_${userId}`;
+        if (!this.listeners[key]) return;
+        try {
+            const notifications = await this.fetchNotifications();
+            this.listeners[key].callback?.(notifications);
+        } catch (error) {
+            console.error('Ошибка обновления уведомлений:', error);
         }
     }
 
@@ -136,5 +121,9 @@ export class NotificationsService {
             this.listeners[key]();
             delete this.listeners[key];
         }
+    }
+
+    unsubscribeAll() {
+        Object.keys(this.listeners).forEach(key => this.unsubscribe(key));
     }
 }

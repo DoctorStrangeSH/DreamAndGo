@@ -221,3 +221,11 @@
 - [x] Added unit coverage for reciprocal summaries, malformed messages, privacy-safe hashes, legacy UID underscore collisions and production-project refusal.
 - [ ] Exact-HEAD CI for this new batch must pass before marking the tests verified.
 - [ ] No staging project ID/credentials are configured; no real Firestore data has been read or exported.
+
+
+## Legacy message inventory completeness — 2026-11-23
+
+- [x] Read-only scan covers all chat message collections and separately identifies V2, known group-chat, candidate legacy and orphan legacy collections.
+- [x] Orphan collections are reported without inferring participant pairs from ambiguous IDs.
+- [x] Local inventory output is written with owner-only file/directory permissions where supported.
+- [ ] Exact-HEAD CI and staging execution remain pending; no real Firebase data has been read.

@@ -136,6 +136,35 @@ test('Firestore Emulator enforces canonical membership and atomic private messag
     })).unread, 0);
 });
 
+test('Firestore Emulator history cursor returns separate bounded pages', { skip: !available }, async () => {
+    const { alice, chatId } = await createPair();
+    const messages = db.collection('chats').doc(chatId).collection('messages');
+    const batch = db.batch();
+    for (let index = 0; index < 55; index += 1) {
+        batch.set(messages.doc(`page-${String(index).padStart(3, '0')}`), {
+            senderId: alice,
+            text: `message ${index}`,
+            createdAt: new Date(1700000000000 + index * 1000),
+            read: false,
+            edited: false
+        });
+    }
+    await batch.commit();
+
+    const first = await endpoints.getPrivateChatHistoryV2({
+        auth: { uid: alice }, data: { chatId }
+    });
+    assert.equal(first.messages.length, 50);
+    assert.ok(first.nextCursor);
+
+    const second = await endpoints.getPrivateChatHistoryV2({
+        auth: { uid: alice }, data: { chatId, beforeMessageId: first.nextCursor }
+    });
+    assert.equal(second.messages.length, 5);
+    assert.equal(second.nextCursor, null);
+    assert.equal(new Set([...first.messages, ...second.messages].map(message => message.id)).size, 55);
+});
+
 test('Firestore Emulator rejects non-friend chat creation and forged callable fields', { skip: !available }, async () => {
     const suffix = uniqueId();
     const alice = `not-friend-a-${suffix}`;

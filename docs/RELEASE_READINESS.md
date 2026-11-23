@@ -113,3 +113,15 @@
 - Не считать наличие UI, callable или unit-теста доказательством готовности сценария.
 
 Связанные документы: [PRODUCT_SPEC.md](PRODUCT_SPEC.md), [DELIVERY_PLAN.md](DELIVERY_PLAN.md), [ROADMAP.md](ROADMAP.md), [INTEGRATION_PLAN.md](INTEGRATION_PLAN.md), [FIRESTORE_ACCESS_MATRIX.md](FIRESTORE_ACCESS_MATRIX.md).
+
+
+## Chat V2 — private conversation backend candidate
+
+- Added App Check-enforced callable endpoints for private chat creation, message sending, bounded history, read receipts, message status and unread count.
+- Chat IDs are deterministic SHA-256 identifiers derived from the sorted pair of UIDs; canonical `chats/{chatId}` metadata stores exactly two members and a schema version.
+- Creation requires reciprocal friendship and atomically creates both owner-scoped inbox summaries.
+- Sending derives sender and receiver from Auth + canonical membership, bounds text to 4,000 characters, and atomically writes the message, both summaries, unread count and a notification that does not contain message text.
+- History returns the latest 50 messages through an allowlisted projection; outsiders cannot access history or receipts.
+- Added Chat V2 unit tests and included them in both root and Functions test runners.
+
+**Still NOT DONE:** run exact-HEAD CI; add real Firestore Emulator authorization/transaction coverage; migrate the browser ChatService/RealtimeService and UI behind a closed feature gate; preserve legacy conversations through an idempotent migration rehearsal; test two real accounts in staging. Editing/deleting messages and group chats are not included in this backend batch. No deployment, Rules expansion or data migration has occurred.

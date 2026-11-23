@@ -9,6 +9,7 @@
 | [PRODUCT_SPEC.md](PRODUCT_SPEC.md) | Единственный источник продуктовых требований и критериев V1.0 |
 | [DELIVERY_PLAN.md](DELIVERY_PLAN.md) | Последовательность этапов, выходные условия и приёмка |
 | [ROADMAP.md](ROADMAP.md) | Краткий статус DONE / NOT DONE по текущей реализации |
+| [RELEASE_READINESS.md](RELEASE_READINESS.md) | Релизные ворота, подтверждённые проверки и блокеры V1.0 |
 
 ## Архитектура и инженерная работа
 

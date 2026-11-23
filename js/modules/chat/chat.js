@@ -457,6 +457,19 @@ export class ChatModule {
         } else {
             const result = await this.chatService.sendMessage(chatId, userId, this.currentChat, text);
             if (!result?.success) {
+                if (this.chatService.isV2Enabled && result?.code === 'permission-denied') {
+                    try {
+                        this.blockStatus = await this.chatService.getBlockStatus(chatId);
+                    } catch {
+                        this.blockStatus = {
+                            blockedByMe: false,
+                            blockedByPartner: false,
+                            canSend: false,
+                            error: true
+                        };
+                    }
+                    this.applyBlockStatus(this.blockStatus);
+                }
                 window.app.ui.showToast(result?.error || 'Не удалось отправить сообщение.', 'danger');
                 return;
             }

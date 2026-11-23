@@ -243,3 +243,10 @@ Final validation note: consolidated CI must run against the current branch HEAD 
 - [x] Bound the standalone read-only inventory CLI manifest to its explicit Firebase project ID.
 - [ ] Run the new Emulator restore test and full Checks workflow on the exact HEAD.
 - [ ] This is a synthetic restore test only; no live staging backup has been restored and no migration has been executed.
+
+### Inventory output path safety — 2026-11-23
+
+- [x] Inventory CLI now rejects filesystem roots and output directories inside the server working tree before Firebase initialization or any report writes.
+- [x] Added a process-level regression test proving an in-repository output path is rejected before credential lookup.
+- [ ] Exact-HEAD unit, syntax, and Emulator CI remain pending.
+- [ ] No staging export or migration was executed.

@@ -251,6 +251,59 @@ function createChatCallables({ onCall, HttpsError, getFirestore, FieldValue }) {
         }
     });
 
+    const getMyPrivateChatsV2 = onCall(options, async request => {
+        const actorUid = requireActor(request, HttpsError);
+        requirePayload(request.data, [], HttpsError);
+        try {
+            const db = getFirestore();
+            const summaries = await db.collection('users').doc(actorUid)
+                .collection('chats')
+                .orderBy('lastMessageTime', 'desc')
+                .limit(50)
+                .get();
+
+            const chats = await Promise.all(summaries.docs.map(async summary => {
+                const data = summary.data() || {};
+                const chatId = summary.id;
+                const partnerUid = data.partnerId;
+                if (data.type !== 'private' || !validId(chatId, 64) || !validId(partnerUid)) {
+                    return null;
+                }
+
+                const chatRef = db.collection('chats').doc(chatId);
+                const [chat, profile] = await Promise.all([
+                    chatRef.get(),
+                    db.collection('publicProfiles').doc(partnerUid).get()
+                ]);
+                const membership = chat.exists ? participantData(chat, actorUid) : null;
+                if (!membership || membership.partnerUid !== partnerUid) return null;
+
+                const profileData = profile.exists ? profile.data() || {} : {};
+                const lastMessageTime = data.lastMessageTime;
+                return {
+                    id: chatId,
+                    chatId,
+                    partnerId: partnerUid,
+                    partnerName: typeof profileData.username === 'string' && profileData.username
+                        ? profileData.username
+                        : 'Пользователь',
+                    partnerAvatar: typeof profileData.avatar === 'string' ? profileData.avatar : null,
+                    lastMessage: typeof data.lastMessage === 'string' ? data.lastMessage : '',
+                    lastMessageTime: typeof lastMessageTime?.toMillis === 'function'
+                        ? lastMessageTime.toMillis()
+                        : null,
+                    unread: Number.isSafeInteger(data.unread) ? Math.max(0, data.unread) : 0,
+                    isGroup: false
+                };
+            }));
+
+            return { chats: chats.filter(Boolean) };
+        } catch (error) {
+            if (error instanceof HttpsError) throw error;
+            throw new HttpsError('unavailable', 'Не удалось загрузить список диалогов');
+        }
+    });
+
     const getPrivateChatHistoryV2 = onCall(options, async request => {
         const actorUid = requireActor(request, HttpsError);
         requirePayload(request.data, ['chatId'], HttpsError);
@@ -363,6 +416,7 @@ function createChatCallables({ onCall, HttpsError, getFirestore, FieldValue }) {
     return Object.freeze({
         createPrivateChatV2,
         sendPrivateMessageV2,
+        getMyPrivateChatsV2,
         getPrivateChatHistoryV2,
         getPrivateMessageStatusV2,
         markPrivateMessageReadV2,

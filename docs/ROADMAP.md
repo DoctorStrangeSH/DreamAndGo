@@ -405,4 +405,15 @@
 - [x] Fixed the missing `createChatCallables` export used by callable tests.
 - [x] Fixed the test Firestore mock to use `DocumentSnapshot.ref.path` for stable cursor pagination; production history query remains bounded at 50.
 - [x] Removed duplicate `.github/workflows/ci.yml` and `.github/workflows/v1-quality-gates.yml`; retained the single `.github/workflows/checks.yml` pipeline.
+- [x] Added real IndexedDB API contract tests with `fake-indexeddb`: persistence across service recreation, CryptoKey cloning, per-account isolation, concurrent-tab key creation and blocked queue retention.
 - [ ] Real-browser IndexedDB persistence/reload and two-account offline/online staging acceptance remain pending.
+
+
+### IndexedDB storage verification — 2026-11-23
+
+- [x] Added `fake-indexeddb` as a server-side test dependency; no runtime dependency added.
+- [x] Storage adapter accepts an injectable database name for isolated tests while production retains the stable default database name.
+- [x] Verified encrypted message + non-extractable CryptoKey survive service/store recreation in IndexedDB.
+- [x] Verified account separation, concurrent tab key creation, blocked message retention and per-account queue clearing.
+- [x] CI green on HEAD `f26600a6`: 150/150 Unit tests, 23/23 Auth + Firestore Emulator tests, syntax check passed for 91 JavaScript files.
+- [ ] Real browser reload and two-account end-to-end acceptance remain open; fake IndexedDB does not replace browser testing.

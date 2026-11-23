@@ -174,7 +174,7 @@ export class RealtimeService {
 
     async getUserProfile(uid) {
         try {
-            const userDoc = await getDoc(doc(this.db, 'users', uid));
+            const userDoc = await getDoc(doc(this.db, 'publicProfiles', uid));
             if (userDoc.exists()) {
                 const data = userDoc.data();
                 return {

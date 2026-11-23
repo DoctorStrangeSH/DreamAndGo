@@ -108,8 +108,7 @@ class DreamAndGo {
                 this.notificationsService.unsubscribeAll();
                 this.realtimeService.unsubscribeAll();
                 const chatModule = this.router.routes.chat?.component;
-                chatModule?.closeChat?.();
-                chatModule?.chatService?.resetSession?.();
+                chatModule?.resetSession?.();
                 this.userData = null;
                 this.dataLoaded = false;
                 this.showAuth();

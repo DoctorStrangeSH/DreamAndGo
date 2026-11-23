@@ -184,4 +184,14 @@
 - [x] Auth + Firestore Emulator tests: 23 passed, 0 failed, 0 skipped.
 - [x] Syntax validation: all 90 JavaScript files passed.
 - [x] Test harness cursor path corrected; no production pagination behavior was changed for this failure.
-- [ ] **NOT VERIFIED:** browser IndexedDB persistence after reload and two-account offline → reconnect → delivery acceptance remain release gates.
+- [x] IndexedDB adapter contract tests pass for persisted ciphertext/key across service recreation, account isolation, concurrent-tab key creation and blocked queue retention.
+- [ ] **NOT VERIFIED:** real browser IndexedDB persistence after reload and two-account offline → reconnect → delivery acceptance remain release gates.
+
+
+## IndexedDB storage verification — 2026-11-23
+
+- [x] Added test-only `fake-indexeddb` dependency; production bundle/runtime dependencies are unchanged.
+- [x] IndexedDB adapter persistence tested across service recreation, including structured cloning of non-extractable AES-GCM CryptoKeys.
+- [x] Per-account isolation, concurrent tab key creation, blocked records and account-scoped queue clearing covered.
+- [x] CI run [45150048398](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/45150048398) passed: 150/150 Unit, 23/23 Auth + Firestore Emulator, 91/91 JavaScript syntax files.
+- [ ] **NOT VERIFIED:** real browser reload persistence and two-account end-to-end offline/reconnect acceptance. In-memory fake IndexedDB is an adapter contract test, not a browser durability proof.

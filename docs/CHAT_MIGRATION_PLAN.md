@@ -216,3 +216,12 @@ The previous CI run was cancelled by subsequent documentation commits. The lates
 - [x] Added offline backup read-back verifier and three synthetic tests for valid archives, tampered content, and mismatched inventory linkage.
 - [ ] Full CI on the latest branch HEAD is pending.
 - [ ] Real staging export and restore rehearsal remain blocked until a dedicated staging project is available.
+
+
+### Offline verification hardening — 2026-11-23
+
+- [x] Fixed the static read-only regression guard false positive: in-memory `Map.set()` is no longer confused with Firestore document writes.
+- [x] Added offline backup read-back tests using synthetic data: valid bundle, tampered message, mismatched inventory linkage, and tampered inventory manifest.
+- [x] Offline verifier now recomputes the inventory manifest SHA-256 from its actual contents, not merely compares a copied checksum field.
+- [ ] Exact-HEAD CI after these changes is pending.
+- [ ] Staging backup and restore rehearsal remain pending a dedicated non-production Firebase project.

@@ -72,6 +72,10 @@ function pairKey(uidA, uidB) {
     return JSON.stringify([uidA, uidB].sort());
 }
 
+function directedSummaryKey(ownerUid, partnerUid) {
+    return JSON.stringify([ownerUid, partnerUid]);
+}
+
 function summaryProjection(summary) {
     return {
         path: summary.path,
@@ -143,7 +147,7 @@ export function buildLegacyChatInventory({ summaries, messagesByChat }) {
             data: summary.data || {}
         };
         normalizedSummaries.push(normalized);
-        summariesByOwnerAndPartner.set(pairKey(ownerUid, partnerId), normalized);
+        summariesByOwnerAndPartner.set(directedSummaryKey(ownerUid, partnerId), normalized);
     }
 
     const candidatePairs = new Map();
@@ -164,8 +168,8 @@ export function buildLegacyChatInventory({ summaries, messagesByChat }) {
         if (!legacyIdOwners.has(legacyId)) legacyIdOwners.set(legacyId, []);
         legacyIdOwners.get(legacyId).push(key);
 
-        const summaryA = summariesByOwnerAndPartner.get(pairKey(uidA, uidB));
-        const summaryB = summariesByOwnerAndPartner.get(pairKey(uidB, uidA));
+        const summaryA = summariesByOwnerAndPartner.get(directedSummaryKey(uidA, uidB));
+        const summaryB = summariesByOwnerAndPartner.get(directedSummaryKey(uidB, uidA));
         const pairIssues = [];
         if (!summaryA || !summaryB) pairIssues.push('missing-reciprocal-summary');
 

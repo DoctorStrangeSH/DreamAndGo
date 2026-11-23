@@ -174,7 +174,7 @@ V1.0 scope is one-to-one private conversations. Group chats remain post-v1.0 and
 - History callable returns 50-message pages with a document cursor; the chat screen loads older pages when scrolled to the top. Read receipts for a visible page are batched into one transaction.
 - Account changes stop realtime listeners and clear cached chat IDs, contacts and pending retry IDs.
 - Added callable unit tests, callable Emulator scenarios and a Firestore Rules Emulator matrix. All are added but execution on exact HEAD is still pending.
-- Remaining blockers: exact-HEAD Unit/Emulator execution, persistent encrypted offline outbox and reconnect reconciliation, legacy chat migration rehearsal, real App Check/staging transport and two-account acceptance. Do not enable the feature gate.
+- Remaining blockers: exact-HEAD Unit/Emulator execution, browser IndexedDB and two-account offline/reconnect acceptance, legacy chat migration rehearsal, real App Check/staging transport. Do not enable the feature gate.
 
 
 ### Block enforcement — 2026-11-23
@@ -185,3 +185,13 @@ V1.0 scope is one-to-one private conversations. Group chats remain post-v1.0 and
 - Chat V2 header includes block/unblock control; composer is disabled whenever either participant has blocked the other or block status cannot be verified.
 - Block records remain server-only under the deny-by-default catch-all Rules.
 - Unit and Firestore Emulator regression cases added. Exact-HEAD execution remains pending.
+
+
+### Encrypted offline outbox — 2026-11-23
+
+- Message bodies are persisted only after AES-GCM-256 encryption; the key is a non-extractable CryptoKey stored in IndexedDB and scoped to the signed-in Firebase UID.
+- Additional authenticated data binds each ciphertext to the account UID, canonical chat ID and stable client message ID.
+- The local queue is not end-to-end encryption and does not replace server-side authorization or Firestore Rules.
+- On reconnect, queued messages are sent sequentially using the original client message ID. Successful sends are removed; permission-denied messages remain encrypted and are marked blocked.
+- Account switching stops the previous account's active flush. Encrypted records remain local for that account and are not included in another account's queue projection.
+- Browser-level IndexedDB durability, multi-tab behavior and two-account staging still require explicit acceptance.

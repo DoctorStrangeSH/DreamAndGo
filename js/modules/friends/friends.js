@@ -228,6 +228,8 @@ export class FriendsModule {
 
     switchTab(tab) {
         this.currentTab = tab;
+        this.relationshipRequestId = (this.relationshipRequestId || 0) + 1;
+        this.searchRequestId = (this.searchRequestId || 0) + 1;
 
         const searchSection = document.getElementById('searchSection');
         const searchResults = document.getElementById('searchResults');
@@ -258,6 +260,10 @@ export class FriendsModule {
         const username = input.value.trim().replace('@', '');
         if (!username) return;
 
+        const searchRequestId = (this.searchRequestId || 0) + 1;
+        this.searchRequestId = searchRequestId;
+        this.currentTab = 'search';
+
         if (friendsList) friendsList.innerHTML = '';
         results.innerHTML = window.app.ui.createLoader();
 
@@ -274,6 +280,8 @@ export class FriendsModule {
             `;
             return;
         }
+
+        if (searchRequestId !== this.searchRequestId || this.currentTab !== 'search') return;
 
         if (!user) {
             results.innerHTML = `
@@ -317,7 +325,7 @@ export class FriendsModule {
                     return;
                 }
                 window.app.ui.showToast('Заявка отклонена', 'info');
-                this.subscribeToRequests();
+                this.refreshCurrentTab();
             });
         });
 
@@ -380,6 +388,7 @@ export class FriendsModule {
 
     destroy() {
         this.relationshipRequestId = (this.relationshipRequestId || 0) + 1;
+        this.searchRequestId = (this.searchRequestId || 0) + 1;
         this.unsubscribeFriends = null;
         this.unsubscribeRequests = null;
         this.unsubscribeSent = null;

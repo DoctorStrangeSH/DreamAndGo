@@ -20,12 +20,18 @@ export class RealtimeService {
             let active = true;
             let loading = false;
             let hasEmitted = false;
+            let lastSignature = null;
             const refresh = async () => {
                 if (!active || loading) return;
                 loading = true;
                 try {
                     const messages = await this.chatV2.getHistory(chatId);
-                    if (active) {
+                    const signature = JSON.stringify(messages.map(message => [
+                        message.id, message.text, message.senderId, message.read,
+                        message.edited, message.createdAt?.getTime?.(), message.readAt?.getTime?.()
+                    ]));
+                    if (active && signature !== lastSignature) {
+                        lastSignature = signature;
                         hasEmitted = true;
                         callback(messages);
                     }

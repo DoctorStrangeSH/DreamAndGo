@@ -220,6 +220,51 @@ test('chat contacts are derived from the authenticated user friend list', async 
     }), { contacts: [] });
 });
 
+test('blocking either participant prevents chat creation and both directions of messaging', async () => {
+    const ctx = createHarness(friendSeed());
+    const { chatId } = await createChat(ctx);
+    assert.deepEqual(await ctx.callables.getChatBlockStatusV2({
+        auth: { uid: 'alice' }, data: { chatId }
+    }), { blockedByMe: false, blockedByPartner: false, canSend: true });
+
+    await ctx.callables.blockUserV1({
+        auth: { uid: 'alice' }, data: { targetUid: 'bob' }
+    });
+    assert.deepEqual(await ctx.callables.getChatBlockStatusV2({
+        auth: { uid: 'alice' }, data: { chatId }
+    }), { blockedByMe: true, blockedByPartner: false, canSend: false });
+    assert.deepEqual((await ctx.callables.getMyChatContactsV2({
+        auth: { uid: 'alice' }, data: {}
+    })).contacts, []);
+    await assert.rejects(ctx.callables.sendPrivateMessageV2({
+        auth: { uid: 'bob' },
+        data: { chatId, text: 'blocked', clientMessageId: 'blocked-message' }
+    }), error => error.code === 'permission-denied');
+    await assert.rejects(createChat(ctx), error => error.code === 'permission-denied');
+
+    await ctx.callables.unblockUserV1({
+        auth: { uid: 'alice' }, data: { targetUid: 'bob' }
+    });
+    assert.deepEqual(await ctx.callables.getChatBlockStatusV2({
+        auth: { uid: 'bob' }, data: { chatId }
+    }), { blockedByMe: false, blockedByPartner: false, canSend: true });
+});
+
+test('a block created by the other participant is also enforced', async () => {
+    const ctx = createHarness(friendSeed());
+    const { chatId } = await createChat(ctx);
+    await ctx.callables.blockUserV1({
+        auth: { uid: 'bob' }, data: { targetUid: 'alice' }
+    });
+    await assert.rejects(ctx.callables.sendPrivateMessageV2({
+        auth: { uid: 'alice' },
+        data: { chatId, text: 'blocked from the other side', clientMessageId: 'reverse-block' }
+    }), error => error.code === 'permission-denied');
+    assert.deepEqual((await ctx.callables.getMyChatContactsV2({
+        auth: { uid: 'alice' }, data: {}
+    })).contacts, []);
+});
+
 test('private inbox returns only canonical chats owned by the authenticated user', async () => {
     const ctx = createHarness(friendSeed());
     const { chatId } = await createChat(ctx);

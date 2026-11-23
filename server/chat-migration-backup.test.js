@@ -184,6 +184,7 @@ test('backup decoder restores Firestore tagged values and rejects unknown or mal
     assert.deepEqual(decoded.authorRef, { path: 'users/alice' });
     assert.deepEqual(decoded.nested, [{ value: 'kept' }]);
     assert.throws(() => decodeFirestoreValue({ __firestoreType: 'unknown' }), /Неизвестный Firestore tag/);
+    assert.throws(() => decodeFirestoreValue({ __firestoreType: 'timestamp', seconds: 1, nanoseconds: 0, ignored: true }, { Timestamp: TestTimestamp }), /Некорректная структура Firestore tag/);
     assert.throws(() => decodeFirestoreValue({ __firestoreType: 'bytes', base64: 'not base64!' }, { Bytes }), /Некорректные Bytes/);
     assert.throws(() => decodeFirestoreValue({ __firestoreType: 'documentReference', path: 'users' }, { firestore }), /чётное число сегментов/);
 });

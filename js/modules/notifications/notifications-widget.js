@@ -6,13 +6,32 @@ export class NotificationsWidget {
     }
 
     init() {
+        this.destroy();
         const userId = window.app.currentUser?.uid;
         if (!userId) return;
 
-        this.unsubscribe = window.app.notificationsService.subscribeToNotifications(userId, (notifications) => {
+        const service = window.app.notificationsService;
+        if (!service?.isReady) {
+            this.renderUnavailable();
+            this.updateBadge([]);
+            return;
+        }
+
+        this.unsubscribe = service.subscribeToNotifications(userId, (notifications) => {
             this.renderDropdown(notifications);
             this.updateBadge(notifications);
         });
+    }
+
+    renderUnavailable() {
+        const container = document.getElementById('notificationsDropdown');
+        if (!container) return;
+        container.innerHTML = `
+            <div class="p-4 text-center text-muted">
+                <i class="bi bi-shield-lock fs-3"></i>
+                <p class="small mt-2 mb-0">Уведомления временно недоступны в этой сборке</p>
+            </div>
+        `;
     }
 
     updateBadge(notifications) {
@@ -61,7 +80,10 @@ export class NotificationsWidget {
 
         document.getElementById('markAllReadBtn')?.addEventListener('click', async (e) => {
             e.stopPropagation();
-            await window.app.notificationsService.markAllAsRead(window.app.currentUser.uid);
+            const result = await window.app.notificationsService.markAllAsRead(window.app.currentUser.uid);
+            if (!result.success) {
+                window.app.ui.showToast(result.error || 'Не удалось обновить уведомления', 'error');
+            }
         });
 
         container.querySelectorAll('.notification-item').forEach(item => {
@@ -69,8 +91,12 @@ export class NotificationsWidget {
                 const notifId = item.dataset.notifId;
                 const link = item.dataset.link;
                 
-                await window.app.notificationsService.markAsRead(window.app.currentUser.uid, notifId);
-                
+                const result = await window.app.notificationsService.markAsRead(window.app.currentUser.uid, notifId);
+                if (!result.success) {
+                    window.app.ui.showToast(result.error || 'Не удалось отметить уведомление', 'error');
+                    return;
+                }
+
                 const safeRoute = safeInternalRoute(link);
                 if (safeRoute) window.app.router.navigate(safeRoute.replace(/^#/, ''));
             });
@@ -121,6 +147,9 @@ export class NotificationsWidget {
     }
 
     destroy() {
-        if (this.unsubscribe) this.unsubscribe();
+        if (this.unsubscribe) {
+            this.unsubscribe();
+            this.unsubscribe = null;
+        }
     }
 }

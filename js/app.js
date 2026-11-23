@@ -98,6 +98,8 @@ class DreamAndGo {
                 await this.loadUserData();
                 setTimeout(() => this.renderNavWidgets(), 500);
             } else {
+                this.notificationsWidget.destroy();
+                this.notificationsService.unsubscribeAll();
                 this.userData = null;
                 this.dataLoaded = false;
                 this.showAuth();

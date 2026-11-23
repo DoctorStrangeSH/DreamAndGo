@@ -324,3 +324,13 @@ This pass inspected the integration-branch browser service implementations, not 
 - [x] Closing a conversation invalidates any pending open operation.
 - [ ] Run browser-level rapid-switch regression (A → B while A's profile/chat/block request is delayed) and exact-HEAD CI.
 - [ ] Complete two-account staging acceptance; no successful browser/CI run is claimed.
+
+### Chat V2 block-state race and transition hardening — 2026-11-23
+
+- [x] Block-status refreshes are scoped to the active chat and ignore late responses after a conversation switch or close.
+- [x] Block/unblock actions capture the target UID and chat ID; their responses cannot overwrite the UI of a subsequently opened conversation.
+- [x] Switching/closing conversations invalidates pending block actions and resets only the new view's pending state.
+- [x] Block/unblock confirmation no longer leaves the button in a pending state when the user cancels.
+- [x] After a block mutation, the UI refreshes the authoritative server status and only reports success when the expected state is confirmed.
+- [ ] Verify live block/unblock while both users have the conversation open, including immediate message-send attempts from both sides.
+- [ ] Run exact-HEAD automated tests and browser acceptance; no successful CI or staging run is claimed.

@@ -366,3 +366,14 @@
 - [x] Syntax checker now includes `server/` in addition to browser code, scripts and tests.
 - [x] Firestore Rules and Chat V2 callable Emulator suites run with Firestore Emulator, Java 21 and isolated demo project.
 - [ ] Await a real GitHub Actions run; workflow creation is not evidence of a passing test run.
+
+
+### Chat block enforcement — 2026-11-23
+
+- [x] Add owner-scoped server-only block records under `users/{uid}/blockedUsers/{targetUid}`.
+- [x] Add block, unblock and participant-scoped block-status callables.
+- [x] Reject chat creation and message sends when either participant has blocked the other.
+- [x] Exclude blocked pairs from new-chat contact results.
+- [x] Add block/unblock controls and fail-closed composer state to Chat V2 UI.
+- [x] Add Unit, callable Emulator and Rules Emulator regression scenarios.
+- [ ] Run the complete suite on exact HEAD and complete two-account staging acceptance.

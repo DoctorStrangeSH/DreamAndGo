@@ -35,6 +35,21 @@ export class ChatService {
         return [userId, partnerId].sort().join('_');
     }
 
+    async blockUser(targetUid) {
+        if (!this.isV2Enabled) throw new Error('Блокировка доступна после включения нового чата.');
+        return this.chatV2.blockUser(targetUid);
+    }
+
+    async unblockUser(targetUid) {
+        if (!this.isV2Enabled) throw new Error('Блокировка доступна после включения нового чата.');
+        return this.chatV2.unblockUser(targetUid);
+    }
+
+    async getBlockStatus(chatId) {
+        if (!this.isV2Enabled) return { blockedByMe: false, blockedByPartner: false, canSend: true };
+        return this.chatV2.getBlockStatus(chatId);
+    }
+
     async getChats(userId) {
         try {
             const chatsRef = collection(this.db, 'users', userId, 'chats');

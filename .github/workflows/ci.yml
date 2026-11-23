@@ -30,8 +30,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: server/package.json
 
       - name: Install server test dependencies
         run: npm install --prefix server --no-package-lock --ignore-scripts
@@ -41,3 +39,28 @@ jobs:
 
       - name: Run project and Chat V2 unit tests
         run: npm test
+
+  firestore-emulator:
+    name: Firestore Emulator tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install server test dependencies
+        run: npm install --prefix server --no-package-lock --ignore-scripts
+
+      - name: Run Firestore Emulator regression tests
+        run: npx --yes firebase-tools@14.12.0 emulators:exec --only firestore --project demo-dream-and-go "npm --prefix server run test:emulator"

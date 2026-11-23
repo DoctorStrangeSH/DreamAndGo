@@ -121,7 +121,7 @@ async function createChat(ctx, actor = 'alice', target = 'bob') {
 
 test('all Chat V2 callables enforce App Check in the selected region', () => {
     const ctx = createHarness();
-    assert.equal(ctx.registrations.length, 5);
+    assert.equal(ctx.registrations.length, 6);
     for (const registration of ctx.registrations) {
         assert.deepEqual(registration.options, { region: 'europe-west3', enforceAppCheck: true });
     }
@@ -196,6 +196,32 @@ test('history returns only an allowlisted message projection', async () => {
     assert.deepEqual(Object.keys(result.messages[0]).sort(),
         ['createdAt', 'edited', 'editedAt', 'id', 'read', 'readAt', 'senderId', 'text'].sort());
     assert.equal(result.messages[0].text, 'private text');
+});
+
+test('read receipt status is visible only to chat participants', async () => {
+    const ctx = createHarness(friendSeed());
+    const { chatId } = await createChat(ctx);
+    const sent = await ctx.callables.sendPrivateMessageV2({
+        auth: { uid: 'alice' }, data: { chatId, text: 'receipt check' }
+    });
+    assert.deepEqual(await ctx.callables.getPrivateMessageStatusV2({
+        auth: { uid: 'bob' }, data: { chatId, messageId: sent.messageId }
+    }), { senderId: 'alice', read: false, readAt: null });
+    await assert.rejects(ctx.callables.getPrivateMessageStatusV2({
+        auth: { uid: 'mallory' }, data: { chatId, messageId: sent.messageId }
+    }), error => error.code === 'permission-denied');
+});
+
+test('opening the same private chat is idempotent and does not reset unread state', async () => {
+    const ctx = createHarness(friendSeed());
+    const first = await createChat(ctx);
+    ctx.records.set(`users/alice/chats/${first.chatId}`, {
+        ...ctx.records.get(`users/alice/chats/${first.chatId}`), unread: 2
+    });
+    const second = await createChat(ctx, 'bob', 'alice');
+    assert.equal(second.chatId, first.chatId);
+    assert.equal(ctx.records.get(`users/alice/chats/${first.chatId}`).unread, 2);
+    assert.equal([...ctx.records.keys()].filter(path => path === `chats/${first.chatId}`).length, 1);
 });
 
 test('recipient can mark a message read once and unread count is owner-scoped', async () => {

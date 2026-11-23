@@ -37,14 +37,17 @@ function transactionDone(transaction) {
     });
 }
 
-export function createIndexedDbChatOutbox(indexedDBApi = globalThis.indexedDB) {
+export function createIndexedDbChatOutbox(
+    indexedDBApi = globalThis.indexedDB,
+    { databaseName = DATABASE_NAME } = {}
+) {
     if (!indexedDBApi?.open) throw new Error('IndexedDB недоступен в этом браузере.');
 
     let databasePromise;
     const database = () => {
         if (!databasePromise) {
             databasePromise = new Promise((resolve, reject) => {
-                const request = indexedDBApi.open(DATABASE_NAME, DATABASE_VERSION);
+                const request = indexedDBApi.open(databaseName, DATABASE_VERSION);
                 request.onupgradeneeded = () => {
                     const db = request.result;
                     if (!db.objectStoreNames.contains(QUEUE_STORE)) {

@@ -262,3 +262,12 @@ This pass inspected the integration-branch browser service implementations, not 
 - Verifies anonymous access and client-supplied UID are rejected, and email/private stats never enter the public projection.
 - Bounded list reads use a 101-record lookahead to return at most 100 rows with an accurate `truncated` indicator.
 - Test execution remains pending because no exact-HEAD Emulator run has been observed.
+
+
+### Friends UI realtime-reader retirement — 2026-11-23
+
+- [x] Replaced FriendsModule's three Firestore realtime subscriptions with authenticated FriendsService callable reads.
+- [x] Removed the now-unused `subscribeToFriends`, `subscribeToFriendRequests` and `subscribeToSentRequests` direct Firestore listeners from RealtimeService. Chat profile lookup remains because it is used by chat UI and reads only the public profile projection.
+- [x] Added request sequencing so stale tab responses cannot overwrite the currently selected list.
+- [x] Fixed relationship-action refresh behavior: accepting a request refreshes the active incoming-request tab rather than launching three competing asynchronous list loads.
+- [ ] Browser-level UI verification and exact-HEAD CI remain pending. Friend lists now refresh on tab entry and after the relevant action; they are not realtime-pushed. This is intentional for the callable-only V1.0 access boundary.

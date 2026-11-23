@@ -119,22 +119,32 @@ export class FriendsService {
     }
 
     async loadRelationshipList(userId, callableName, timestampField) {
-        if (!userId || userId !== auth.currentUser?.uid) return [];
+        if (!userId || userId !== auth.currentUser?.uid) {
+            throw new Error('Не удалось подтвердить текущий аккаунт. Войди снова.');
+        }
         const callable = this.callables?.[callableName];
         if (!callable) {
-            console.warn('Защищённое чтение списка друзей пока не подключено.');
-            return [];
+            throw new Error('Защищённые списки друзей пока недоступны. Попробуй позже.');
         }
+
         try {
             const result = await callable({});
-            if (result?.data?.success !== true || !Array.isArray(result.data.items)) return [];
+            if (result?.data?.success !== true || !Array.isArray(result.data.items)) {
+                throw new Error('Сервер вернул некорректный список друзей.');
+            }
             return result.data.items.map(item => ({
                 ...item,
-                [timestampField]: item[timestampField] ? new Date(item[timestampField]) : new Date()
+                [timestampField]: item[timestampField] ? new Date(item[timestampField]) : null
             }));
         } catch (error) {
             console.error('Ошибка загрузки списка друзей:', error);
-            return [];
+            if (error instanceof Error && error.message.startsWith('Сервер вернул')) throw error;
+            const messages = {
+                'functions/unauthenticated': 'Сессия истекла. Войди в аккаунт снова.',
+                'functions/app-check-failed': 'Не пройдена проверка безопасности. Обнови страницу.',
+                'functions/permission-denied': 'Нет доступа к этому списку.'
+            };
+            throw new Error(messages[error.code] || 'Не удалось загрузить список. Проверь подключение и попробуй снова.');
         }
     }
 

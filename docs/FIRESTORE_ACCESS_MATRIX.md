@@ -18,7 +18,7 @@ This is an implementation review, not a permission grant. The checked-in rules r
 | `users/{uid}/books/{id}` | Owner CRUD; profile/search reads | Owner-only CRUD by default | Same owner check; validate fields and prevent client changes to server-managed counters. |
 | `users/{uid}/dreams/{id}` | Owner CRUD; profile/search reads | Owner-only CRUD by default; sharing must be an explicit separate feature | Same owner check; do not assume dreams are public because the profile has a public privacy default. |
 | `users/{uid}/dailyTasks/current` | Owner read/create/update | Owner-only read/write with field/type validation | Client must not award XP/currency or mutate server-calculated rewards without trusted validation. |
-| `users/{uid}/notifications/{id}` | Client create, list, mark-read | Owner read and mark-read only; creation restricted to trusted server | Current client-side notification creation is not safe to retain as a general permission. |
+| `users/{uid}/notifications/{id}` | Legacy client create/list/mark-read | Owner-scoped callable list (allowlisted projection) and mark-read; creation only from trusted, validated domain events | Notification list/read callables are implemented in candidate. Firestore Rules remain deny-all; direct realtime listener and client writes are removed from the notification service. Achievement/level-up creation waits for server-side progression; message creation waits for trusted chat send. |
 | `users/{uid}/chats/{partnerUid}` | Client creates/updates/deletes both participants' chat summaries | No cross-user client writes; trusted server creates and updates both summaries, or redesign to per-user owner-scoped inbox records | Current implementation lets one client write into another user's subtree. Must be redesigned before Rules are opened. |
 | `chats/{chatId}/messages/{messageId}` | Client create/read/update/delete; chat ID is derived from sorted UIDs | Only authenticated chat participants may read; sender may create messages as self; edits/deletes constrained; server validates participant membership | Rules must verify membership from trusted chat metadata, not trust senderId/receiverId fields supplied by client. Current code has no canonical participant document. |
 | `users/{uid}/friends/{friendUid}` | Client writes both users' friend records | No cross-user writes; server-mediated acceptance/removal or per-user requests with independently accepted counterpart records | Current bilateral batch writes violate least privilege. |
@@ -66,10 +66,10 @@ The current deny-all Rules are intentional. Do not replace them with broad owner
 - [x] Move friend-request creation, acceptance, rejection, cancellation and removal behind authenticated server operations.
 - [x] Every friend mutation derives the actor UID from callable auth context; client-supplied actor IDs are not accepted.
 - [x] Cross-user friendship state changes and reciprocal records are written only inside trusted server transactions.
-- [ ] Move all notification creation to trusted server operations. Friend-request and friend-accepted notifications are now created inside trusted transactions; achievement, level-up and message notifications remain NOT DONE.
+- [ ] Move all notification creation to trusted server operations. Friend-request and friend-accepted notifications are created inside trusted transactions. Achievement/level-up events wait for trusted progression logic; message events wait for trusted chat send.
 - [x] Friend-event notification text/type/target are fixed server templates and use server-read profile labels; other event types remain pending.
 - [x] Duplicate friend requests are rejected transactionally; repeated transitions fail when the pending request no longer exists.
-- [ ] Emulator matrix: anonymous, requester, recipient, unrelated user; verify no caller can mutate another user's friend or notification records. Unit tests for callable authorization and transaction effects are added; Emulator coverage remains pending.
+- [ ] Emulator matrix: anonymous, requester, recipient, unrelated user; verify no caller can mutate another user's friend or notification records. Callable unit tests exist for friend and notification ownership; Emulator coverage remains pending.
 
 ### Batch 3 — chat
 - [ ] Establish canonical server-owned chat membership metadata before allowing message access.
@@ -137,3 +137,13 @@ The Settings module now exposes explicit profile-level and category-level visibi
 ### Owner profile callable boundary — 2026-11-22
 
 The integration branch now routes the Settings profile editor and AuthService private-profile load through `getMyProfileV1` and `updateMyProfileV1`. Both require Auth and App Check. The update callable accepts only username, displayName, bio and location; username changes require a ready registry and atomically move reservations. If profile visibility is public, the allowlisted public projection is refreshed in the same transaction. This does not authorize any direct client access to `users/{uid}`; Rules remain deny-all and the legacy signup/statistics/level flows still need migration.
+
+
+### Notification callable boundary — candidate only
+
+- `getMyNotificationsV1` derives the account from Auth, reads only that account's notification subcollection and returns an allowlisted projection (no arbitrary payload fields).
+- `markNotificationReadV1` accepts only a notification ID and updates only the authenticated owner's document.
+- `markAllNotificationsReadV1` updates the owner's unread records in bounded batches; client-selected UIDs and arbitrary update fields are rejected.
+- The browser service no longer creates notification documents or directly reads/writes Firestore. It loads the latest 30 notifications through the callable and refreshes every 30 seconds while the widget is active.
+- The existing friend callables remain the only newly migrated notification producers. Achievement/level-up creation is intentionally deferred until progression awards are server-authoritative; message notifications are deferred until the chat send path is server-authoritative.
+- Unit tests cover App Check options, auth, owner isolation, allowlist projection, input validation and read-state changes. Emulator and two-account staging remain NOT DONE.

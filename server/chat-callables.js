@@ -105,20 +105,27 @@ function createChatCallables({ onCall, HttpsError, getFirestore, FieldValue }) {
         const targetFriendRef = targetRef.collection('friends').doc(actorUid);
         const actorSummaryRef = actorRef.collection('chats').doc(chatId);
         const targetSummaryRef = targetRef.collection('chats').doc(chatId);
+        const actorBlockRef = actorRef.collection('blockedUsers').doc(targetUid);
+        const targetBlockRef = targetRef.collection('blockedUsers').doc(actorUid);
 
         try {
             await db.runTransaction(async transaction => {
-                const [actor, target, actorFriend, targetFriend, chat, actorSummaryDoc, targetSummaryDoc] = await Promise.all([
+                const [actor, target, actorFriend, targetFriend, chat, actorSummaryDoc, targetSummaryDoc, actorBlock, targetBlock] = await Promise.all([
                     transaction.get(actorRef),
                     transaction.get(targetRef),
                     transaction.get(actorFriendRef),
                     transaction.get(targetFriendRef),
                     transaction.get(chatRef),
                     transaction.get(actorSummaryRef),
-                    transaction.get(targetSummaryRef)
+                    transaction.get(targetSummaryRef),
+                    transaction.get(actorBlockRef),
+                    transaction.get(targetBlockRef)
                 ]);
                 if (!actor.exists || !target.exists) {
                     throw new HttpsError('not-found', 'Пользователь не найден');
+                }
+                if (actorBlock.exists || targetBlock.exists) {
+                    throw new HttpsError('permission-denied', 'Нельзя начать диалог: один из пользователей заблокировал другого');
                 }
                 if (!actorFriend.exists || !targetFriend.exists ||
                     actorFriend.data()?.friendId !== targetUid ||
@@ -228,6 +235,18 @@ function createChatCallables({ onCall, HttpsError, getFirestore, FieldValue }) {
                 }
 
                 const receiverUid = membership.partnerUid;
+                const actorBlockRef = db.collection('users').doc(actorUid)
+                    .collection('blockedUsers').doc(receiverUid);
+                const receiverBlockRef = db.collection('users').doc(receiverUid)
+                    .collection('blockedUsers').doc(actorUid);
+                const [actorBlock, receiverBlock] = await Promise.all([
+                    transaction.get(actorBlockRef),
+                    transaction.get(receiverBlockRef)
+                ]);
+                if (actorBlock.exists || receiverBlock.exists) {
+                    throw new HttpsError('permission-denied', 'Нельзя отправить сообщение: пользователь заблокирован');
+                }
+
                 const senderRef = db.collection('users').doc(actorUid);
                 const receiverRef = db.collection('users').doc(receiverUid);
                 const senderSummaryRef = senderRef.collection('chats').doc(chatId);
@@ -288,6 +307,83 @@ function createChatCallables({ onCall, HttpsError, getFirestore, FieldValue }) {
         }
     });
 
+    const blockUserV1 = onCall(options, async request => {
+        const actorUid = requireActor(request, HttpsError);
+        requirePayload(request.data, ['targetUid'], HttpsError);
+        const targetUid = request.data.targetUid;
+        if (!validId(targetUid) || targetUid === actorUid) {
+            throw new HttpsError('invalid-argument', 'Некорректный пользователь');
+        }
+        try {
+            const db = getFirestore();
+            const targetRef = db.collection('users').doc(targetUid);
+            const blockRef = db.collection('users').doc(actorUid)
+                .collection('blockedUsers').doc(targetUid);
+            await db.runTransaction(async transaction => {
+                const target = await transaction.get(targetRef);
+                if (!target.exists) throw new HttpsError('not-found', 'Пользователь не найден');
+                transaction.set(blockRef, {
+                    uid: targetUid,
+                    blockedAt: FieldValue.serverTimestamp()
+                });
+            });
+            return { success: true, blockedUid: targetUid };
+        } catch (error) {
+            if (error instanceof HttpsError) throw error;
+            throw new HttpsError('unavailable', 'Не удалось заблокировать пользователя');
+        }
+    });
+
+    const unblockUserV1 = onCall(options, async request => {
+        const actorUid = requireActor(request, HttpsError);
+        requirePayload(request.data, ['targetUid'], HttpsError);
+        const targetUid = request.data.targetUid;
+        if (!validId(targetUid) || targetUid === actorUid) {
+            throw new HttpsError('invalid-argument', 'Некорректный пользователь');
+        }
+        try {
+            const db = getFirestore();
+            const blockRef = db.collection('users').doc(actorUid)
+                .collection('blockedUsers').doc(targetUid);
+            await db.runTransaction(async transaction => {
+                const block = await transaction.get(blockRef);
+                if (block.exists) transaction.delete(blockRef);
+            });
+            return { success: true, unblockedUid: targetUid };
+        } catch (error) {
+            if (error instanceof HttpsError) throw error;
+            throw new HttpsError('unavailable', 'Не удалось снять блокировку');
+        }
+    });
+
+    const getChatBlockStatusV2 = onCall(options, async request => {
+        const actorUid = requireActor(request, HttpsError);
+        requirePayload(request.data, ['chatId'], HttpsError);
+        const chatId = requireChatId(request.data, HttpsError);
+        try {
+            const db = getFirestore();
+            const chatRef = db.collection('chats').doc(chatId);
+            const chat = await chatRef.get();
+            const membership = chat.exists ? participantData(chat, actorUid) : null;
+            if (!membership) {
+                throw new HttpsError('permission-denied', 'Нет доступа к этому диалогу');
+            }
+            const partnerUid = membership.partnerUid;
+            const [blockedByMe, blockedByPartner] = await Promise.all([
+                db.collection('users').doc(actorUid).collection('blockedUsers').doc(partnerUid).get(),
+                db.collection('users').doc(partnerUid).collection('blockedUsers').doc(actorUid).get()
+            ]);
+            return {
+                blockedByMe: blockedByMe.exists,
+                blockedByPartner: blockedByPartner.exists,
+                canSend: !blockedByMe.exists && !blockedByPartner.exists
+            };
+        } catch (error) {
+            if (error instanceof HttpsError) throw error;
+            throw new HttpsError('unavailable', 'Не удалось проверить настройки блокировки');
+        }
+    });
+
     const getMyChatContactsV2 = onCall(options, async request => {
         const actorUid = requireActor(request, HttpsError);
         requirePayload(request.data, [], HttpsError);
@@ -301,10 +397,13 @@ function createChatCallables({ onCall, HttpsError, getFirestore, FieldValue }) {
             const contacts = await Promise.all(friends.docs.map(async friend => {
                 const partnerUid = friend.id;
                 if (!validId(partnerUid) || partnerUid === actorUid) return null;
-                const [publicProfile, privateProfile] = await Promise.all([
+                const [publicProfile, privateProfile, actorBlock, partnerBlock] = await Promise.all([
                     db.collection('publicProfiles').doc(partnerUid).get(),
-                    db.collection('users').doc(partnerUid).get()
+                    db.collection('users').doc(partnerUid).get(),
+                    db.collection('users').doc(actorUid).collection('blockedUsers').doc(partnerUid).get(),
+                    db.collection('users').doc(partnerUid).collection('blockedUsers').doc(actorUid).get()
                 ]);
+                if (actorBlock.exists || partnerBlock.exists) return null;
                 const publicData = publicProfile.exists ? publicProfile.data() || {} : {};
                 const privateData = privateProfile.exists ? privateProfile.data() || {} : {};
                 const username = typeof publicData.username === 'string' && publicData.username
@@ -583,6 +682,9 @@ function createChatCallables({ onCall, HttpsError, getFirestore, FieldValue }) {
         createPrivateChatV2,
         sendPrivateMessageV2,
         getMyChatContactsV2,
+        blockUserV1,
+        unblockUserV1,
+        getChatBlockStatusV2,
         getMyPrivateChatsV2,
         getPrivateChatHistoryV2,
         markPrivateMessagesReadV2,

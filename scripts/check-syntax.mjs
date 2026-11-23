@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { join, relative } from 'node:path';
 import process from 'node:process';
 
-const roots = ['js', 'scripts', 'tests'];
+const roots = ['js', 'server', 'scripts', 'tests'];
 const extensions = new Set(['.js', '.mjs', '.cjs']);
 const files = [];
 

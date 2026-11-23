@@ -147,3 +147,13 @@ The read-only inspector's total `messageDocuments` count includes both messages 
 ### Backup implementation boundary — 2026-11-23
 
 The new `server/chat-migration-backup.js` is a tested pure builder/verifier only. It does not read Firestore, write backup files, or restore documents. The actual staging export CLI remains blocked until a separate staging project and read-only credentials are supplied. Synthetic tests are not evidence of a real backup.
+
+
+### Read-only backup export CLI — 2026-11-23
+
+- [x] Added `server/scripts/chat-migration-backup.js` to read the staging chat summary and message collections, build the inventory from the same read snapshot, and create a checksummed backup bundle plus inventory/report files.
+- [x] Export requires the exact `CHAT_MIGRATION_ALLOWED_PROJECT_ID`, explicit `--confirm-non-production`, and refuses the known production project through the shared safety guard.
+- [x] Output directory must be new; directory/file permissions are restricted to owner access where supported; output files use exclusive creation and must never be committed because they contain private message text.
+- [x] Export includes all user chat summary documents and all root chat message documents in the backup, while the private-chat inventory separately excludes verified Chat V2 and group records from legacy migration candidates.
+- [ ] Exact-HEAD CI and synthetic CLI safety tests remain pending.
+- [ ] No real staging export has been run; no staging project ID or credentials have been supplied.

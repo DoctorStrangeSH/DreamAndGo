@@ -165,6 +165,6 @@
 - [x] Offline and transient network failures are queued; reconnect retries use the original idempotency ID.
 - [x] Sent records are removed; permission-denied records remain encrypted and are excluded from automatic retries.
 - [x] Pending messages are rendered locally with delivery-state indicators; account switch stops the prior account's active flush.
-- [x] Added Node Unit tests for encryption, tamper detection, account isolation and blocked queue records.
+- [x] Added Node Unit tests for encryption, tamper detection, account isolation, blocked records, stable-ID delivery, retry behavior and account switching.
 - [ ] **NOT VERIFIED:** execute new Unit/syntax tests on exact HEAD and verify real IndexedDB persistence across browser reloads.
 - [ ] **NOT VERIFIED:** complete two-account offline → reconnect → delivery acceptance in staging. No production rollout or deployment performed.

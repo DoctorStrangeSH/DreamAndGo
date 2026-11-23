@@ -428,3 +428,11 @@
 - [x] Separate browser accounts retain isolated queues after reload.
 - [x] Exact-HEAD CI run [45152046369](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/45152046369): Unit 150/150, Chromium 4/4, Auth + Firestore Emulator 23/23, syntax 92/92.
 - [ ] Staging acceptance with two actual Firebase accounts, real Functions/App Check transport, offline/reconnect delivery and legacy conversation migration remains pending.
+
+
+### Legacy conversation migration design — 2026-11-23
+
+- [x] Audited the current legacy and Chat V2 schema from the checked-in client and callable implementations.
+- [x] Added `docs/CHAT_MIGRATION_PLAN.md` with read-only inventory, reciprocal-summary pair validation, backup/checksum, dry-run, staging rehearsal, idempotency, conflict handling and target-only rollback requirements.
+- [x] Explicitly prohibited parsing participant pairs by splitting legacy chat IDs; UIDs may contain underscores.
+- [ ] No real dataset has been inventoried or backed up; no migration has been run. Staging rehearsal and owner approval remain mandatory.

@@ -126,3 +126,16 @@
 - Added Firestore Emulator integration scenarios for membership, message writes, content-free notifications and read receipts; execution is pending.
 
 **Still NOT DONE:** run exact-HEAD CI and confirm Firestore Emulator authorization/transaction coverage passes; migrate the browser ChatService/RealtimeService and UI behind a closed feature gate; preserve legacy conversations through an idempotent migration rehearsal; test two real accounts in staging. Editing/deleting messages and group chats are not included in this backend batch. No deployment, Rules expansion or data migration has occurred.
+
+
+## Chat V2 browser integration and Rules candidate — 2026-11-23
+
+- Browser Chat V2 service is feature-gated by both backend readiness and a dedicated chat rollout meta flag; both are false in the checked-in app.
+- Chat contacts, private chat creation, message sends, inbox projection, paginated history and read receipts use callable endpoints.
+- Message send uses a stable client-generated ID and the server performs idempotent retries without duplicating message records, notifications or unread increments.
+- The chat screen subscribes to owner inbox summaries and participant messages through read-only Firestore listeners. Candidate Rules deny all client writes to chat membership, messages and inbox summaries.
+- History is paginated in 50-message pages and older pages load when scrolling to the top.
+- Account changes unsubscribe realtime listeners and clear chat IDs, cached contacts and pending retry identifiers.
+- Added Firestore Rules Emulator coverage for participant A/B, unrelated C, anonymous users, owner inbox isolation, public projection reads and denied writes. Added callable Emulator coverage for inbox/contacts, idempotent sends, pagination, read receipts and membership.
+
+**Still NOT DONE:** execute exact-HEAD CI and both Emulator suites; implement block/unblock behavior; persist the encrypted offline outbox and reconcile pending messages after reconnect/reload; rehearse legacy conversation migration without data loss; configure real App Check and staging callable transport; complete two-account browser acceptance. Do not enable `chat-v2-enabled`, change production Rules or deploy Functions before all gates pass.

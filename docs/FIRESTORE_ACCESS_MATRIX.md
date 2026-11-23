@@ -215,10 +215,11 @@ This pass inspected the integration-branch browser service implementations, not 
 
 ### P0 — friends UI reads bypass the new callable boundary
 
-- `js/services/friends.service.js` reads the signed-in user's `friends`, `friendRequests` and `sentRequests` subcollections directly.
-- The current exported friend callables cover send/accept/reject/cancel/remove, but do not expose read/list operations for those three views.
-- Public profile card reads use `publicProfiles/{uid}`, which has an explicit public read rule in the candidate Rules.
-- The friends list and request lists therefore need owner-scoped list callables (with bounded results and allowlisted fields) before client access can remain denied.
+- [x] Added `getMyFriendsV1`, `getMyFriendRequestsV1` and `getMySentFriendRequestsV1` owner-scoped App Check-enforced callables. They derive UID only from Auth, cap each list at 100 records and return an allowlisted public-profile projection.
+- [x] Migrated `FriendsService` friends/incoming/outgoing list reads to those callables; removed its unused direct `publicProfiles/{uid}` document read. Username search remains a bounded public-profile query.
+- [x] Added callable unit tests for App Check configuration, owner identity, anonymous rejection, extra-payload rejection and private-field exclusion; registered the suite in root `npm test`.
+- [ ] Run the new unit suite and full exact-HEAD CI; static source changes are not execution evidence.
+- [ ] Add Emulator coverage and test with two real accounts. Lists currently return at most 100 records; pagination is outside this V1.0 batch.
 
 ### P1 — owner collections and aggregate stats remain direct-client paths
 
@@ -241,3 +242,14 @@ This pass inspected the integration-branch browser service implementations, not 
 3. Migrate Books/Travels/Restaurants/Movies/Dreams CRUD to validated owner-scoped contracts; derive aggregate stats on the server.
 4. Only then add narrowly scoped Rules for any browser reads that remain necessary, with positive/negative query Emulator tests.
 5. Run exact-HEAD CI and staging with two independent accounts before any rollout.
+
+
+### Friends list callable migration — 2026-11-23
+
+- Friend list, incoming request and outgoing request reads now use three Auth-derived, App Check-enforced callable endpoints.
+- Each endpoint accepts an empty payload only, reads at most 100 relationship records for the authenticated UID, and returns a bounded allowlist of public profile fields plus ISO timestamps.
+- The browser FriendsService maps those ISO timestamps back to Date objects for existing UI consumers.
+- Removed unused direct document reads from FriendsService; username search remains a query against the publicProfiles collection and uses a narrow stats projection.
+- Added `server/friends-read-callables.test.js` and included it in the root explicit test command.
+- No Firestore Rules were opened. No callable deployment or production Firebase access occurred.
+- Pending: run unit suite/full CI, add callable Emulator coverage, and perform two-account staging acceptance. Pagination beyond 100 relationships is deferred.

@@ -108,12 +108,14 @@ function createChatCallables({ onCall, HttpsError, getFirestore, FieldValue }) {
 
         try {
             await db.runTransaction(async transaction => {
-                const [actor, target, actorFriend, targetFriend, chat] = await Promise.all([
+                const [actor, target, actorFriend, targetFriend, chat, actorSummaryDoc, targetSummaryDoc] = await Promise.all([
                     transaction.get(actorRef),
                     transaction.get(targetRef),
                     transaction.get(actorFriendRef),
                     transaction.get(targetFriendRef),
-                    transaction.get(chatRef)
+                    transaction.get(chatRef),
+                    transaction.get(actorSummaryRef),
+                    transaction.get(targetSummaryRef)
                 ]);
                 if (!actor.exists || !target.exists) {
                     throw new HttpsError('not-found', 'Пользователь не найден');
@@ -165,14 +167,22 @@ function createChatCallables({ onCall, HttpsError, getFirestore, FieldValue }) {
                     transaction.set(targetSummaryRef, reverseSummary);
                 } else {
                     // Existing conversations retain their current summaries and unread state.
-                    transaction.set(actorSummaryRef, {
-                        chatId, type: 'private', partnerId: targetUid,
-                        partnerName: summary.partnerName, partnerAvatar: summary.partnerAvatar
-                    }, { merge: true });
-                    transaction.set(targetSummaryRef, {
-                        chatId, type: 'private', partnerId: actorUid,
-                        partnerName: reverseSummary.partnerName, partnerAvatar: reverseSummary.partnerAvatar
-                    }, { merge: true });
+                    if (actorSummaryDoc.exists) {
+                        transaction.set(actorSummaryRef, {
+                            chatId, type: 'private', partnerId: targetUid,
+                            partnerName: summary.partnerName, partnerAvatar: summary.partnerAvatar
+                        }, { merge: true });
+                    } else {
+                        transaction.set(actorSummaryRef, summary);
+                    }
+                    if (targetSummaryDoc.exists) {
+                        transaction.set(targetSummaryRef, {
+                            chatId, type: 'private', partnerId: actorUid,
+                            partnerName: reverseSummary.partnerName, partnerAvatar: reverseSummary.partnerAvatar
+                        }, { merge: true });
+                    } else {
+                        transaction.set(targetSummaryRef, reverseSummary);
+                    }
                 }
             });
             return { success: true, chatId };

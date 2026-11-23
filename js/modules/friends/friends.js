@@ -20,9 +20,7 @@ export class FriendsModule {
         mainContent.innerHTML = this.getTemplate();
         this.attachEventListeners();
 
-        this.subscribeToFriends();
-        this.subscribeToRequests();
-        this.subscribeToSent();
+        this.loadRelationshipTab(this.currentTab);
     }
 
     getTemplate() {
@@ -122,6 +120,12 @@ export class FriendsModule {
             if (requestId === this.relationshipRequestId) {
                 list.innerHTML = '<div class="col-12 text-center text-muted py-4">Не удалось загрузить данные. Попробуй обновить страницу.</div>';
             }
+        }
+    }
+
+    refreshCurrentTab() {
+        if (['friends', 'requests', 'sent'].includes(this.currentTab)) {
+            return this.loadRelationshipTab(this.currentTab);
         }
     }
 
@@ -301,7 +305,7 @@ export class FriendsModule {
                 }
                 window.app.onUserAction('add_friend');
                 window.app.ui.showToast('Друг добавлен! 🤝', 'success');
-                this.subscribeToRequests();
+                this.refreshCurrentTab();
             });
         });
 
@@ -325,7 +329,7 @@ export class FriendsModule {
                     return;
                 }
                 window.app.ui.showToast('Заявка отменена', 'info');
-                this.subscribeToSent();
+                this.refreshCurrentTab();
             });
         });
 
@@ -338,7 +342,7 @@ export class FriendsModule {
                         return;
                     }
                     window.app.ui.showToast('Друг удалён', 'info');
-                    this.subscribeToFriends();
+                    this.refreshCurrentTab();
                 }
             });
         });
@@ -364,7 +368,7 @@ export class FriendsModule {
                     document.querySelector('[data-tab="sent"]')?.classList.add('active');
                     document.getElementById('searchSection').style.display = 'none';
                     document.getElementById('searchResults').innerHTML = '';
-                    this.subscribeToSent();
+                    this.refreshCurrentTab();
                 } else {
                     window.app.ui.showToast('Ошибка', 'error');
                     btn.disabled = false;

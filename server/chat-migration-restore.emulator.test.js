@@ -102,7 +102,12 @@ test('Firestore Emulator restores a JSON backup with nested paths and native Fir
             .doc(sourceRoot.id + '-' + readBack.records.find(record => record.path === sourceRoot.path).sourceSha256.slice(0, 12))
             .get();
         assert.equal(restoredRoot.get('ownerUid'), 'alice');
-        assert.equal(restoredRoot.get('createdAt').isEqual(new Timestamp(1700000000, 123456789)), true);
+        const sourceRootRecord = readBack.records.find(record => record.path === sourceRoot.path);
+        const expectedCreatedAt = sourceRootRecord.data.createdAt;
+        const restoredCreatedAt = restoredRoot.get('createdAt');
+        assert.equal(expectedCreatedAt.__firestoreType, 'timestamp');
+        assert.equal(restoredCreatedAt.seconds, expectedCreatedAt.seconds);
+        assert.equal(restoredCreatedAt.nanoseconds, expectedCreatedAt.nanoseconds);
         assert.equal(restoredRoot.get('location').latitude, 50.1109);
         const restoredAttachment = restoredRoot.get('attachment');
         const attachmentBytes = typeof restoredAttachment.toUint8Array === 'function'

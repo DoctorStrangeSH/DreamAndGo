@@ -38,25 +38,34 @@ function createHarness(seed = {}) {
             return documentRef(`${path}/${documentId}`);
         },
         orderBy(field, direction = 'asc') {
-            return {
+            let cursorPath = null;
+            const builder = {
+                startAfter(cursor) {
+                    cursorPath = cursor.path;
+                    return builder;
+                },
                 limit(count) {
                     return {
                         async get() {
-                            const docs = [...records.entries()]
+                            let entries = [...records.entries()]
                                 .filter(([key]) => key.startsWith(`${path}/`) &&
                                     !key.slice(path.length + 1).includes('/'))
                                 .sort((a, b) => {
-                                    const av = a[1][field]?.toMillis?.() || 0;
-                                    const bv = b[1][field]?.toMillis?.() || 0;
+                                    const av = a[1][field]?.toMillis?.() || a[1][field] || 0;
+                                    const bv = b[1][field]?.toMillis?.() || b[1][field] || 0;
                                     return direction === 'desc' ? bv - av : av - bv;
-                                })
-                                .slice(0, count)
-                                .map(([key]) => snapshot(key));
+                                });
+                            if (cursorPath) {
+                                const cursorIndex = entries.findIndex(([key]) => key === cursorPath);
+                                if (cursorIndex >= 0) entries = entries.slice(cursorIndex + 1);
+                            }
+                            const docs = entries.slice(0, count).map(([key]) => snapshot(key));
                             return { docs, empty: docs.length === 0, size: docs.length };
                         }
                     };
                 }
             };
+            return builder;
         }
     });
     const db = {

@@ -135,6 +135,10 @@ export class ChatV2Service {
         return this.call('markPrivateMessageReadV2', { chatId, messageId });
     }
 
+    async markMessagesRead(chatId, messageIds) {
+        return this.call('markPrivateMessagesReadV2', { chatId, messageIds });
+    }
+
     async getUnread(chatId) {
         const result = await this.call('getPrivateChatUnreadV2', { chatId });
         return Number.isSafeInteger(result.unread) ? Math.max(0, result.unread) : 0;

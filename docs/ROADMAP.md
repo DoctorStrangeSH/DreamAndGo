@@ -601,8 +601,21 @@
 - [x] Confirmed daily task progress, task claims, bonus claims, XP and achievement awards are still client-authoritative and not atomic/trusted.
 - [x] Confirmed Books/Travels (and the previously inventoried Restaurants/Movies/Dreams) retain direct CRUD and client-side aggregate-stat writes.
 - [x] Recorded a safe implementation order in `FIRESTORE_ACCESS_MATRIX.md`; do not relax Rules to mask these blockers.
-- [ ] Implement owner-scoped friend list/request callables and migrate the UI reads.
+- [x] Implement owner-scoped friend list/request callables and migrate the UI reads; unit suite is added to root CI but must still be executed on exact HEAD.
 - [ ] Move progression events, daily task state, XP, rewards and achievements behind trusted server transactions.
 - [ ] Migrate collection CRUD and aggregate counters to explicit allowlisted server contracts.
 - [ ] Exact-HEAD CI and two-account staging remain mandatory before rollout.
 - **Safety:** source inspection and documentation only; no production Firestore reads/writes, Rules changes, migrations or deployments.
+
+
+### Friends list reads moved behind server callables — 2026-11-23
+
+- [x] Added three owner-scoped list callables for friends, incoming requests and sent requests. UID is derived from callable Auth; request payload must be empty; App Check is enforced.
+- [x] Responses are capped at 100 records and contain only an allowlisted public-profile projection and ISO timestamps.
+- [x] Migrated FriendsService list methods away from direct relationship-subcollection reads; removed its unused direct public-profile document reader.
+- [x] Narrowed username-search card stats to the fields currently rendered by the Friends UI.
+- [x] Added unit tests and registered the new test file in the root explicit `npm test` command.
+- [ ] Execute the new unit suite and full Checks workflow on exact HEAD.
+- [ ] Add Emulator callable coverage and verify owner A/B, anonymous and unrelated-user cases in two-account staging.
+- [ ] Deploy nothing until the App Check site key and callable backend are intentionally configured and staging is accepted.
+- **Safety:** candidate branch code and docs only; no Rules changes, live Firebase operations or deployments.

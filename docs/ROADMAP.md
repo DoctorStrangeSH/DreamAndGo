@@ -502,3 +502,8 @@
 
 - [x] Backup exporter now includes all root `chats/{chatId}` parent documents, even when a chat has no messages, to preserve chat metadata for restore/review.
 - [ ] CI for this latest completeness fix pending; real staging backup remains blocked on staging project access.
+
+
+- [x] Last full CI on `60fc4587` passed: 174 unit, 4 Chromium, 23 Emulator tests; syntax check passed for 99 JavaScript files.
+- [x] Backup CLI now runs the bundle verifier before creating its output directory or writing files, and stops if any checksum/manifest check fails.
+- [ ] CI for the self-verification gate commit pending; staging export still requires a separate staging project and credentials.

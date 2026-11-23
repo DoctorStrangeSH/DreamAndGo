@@ -226,6 +226,7 @@ export class ChatModule {
         if (deleteChatButton) deleteChatButton.classList.toggle('d-none', this.chatService.isV2Enabled);
         document.getElementById('editMode')?.classList.toggle('d-none', this.chatService.isV2Enabled);
         const messagesContainer = document.getElementById('chatMessages');
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
         this.unsubscribeMessages = window.app.realtimeService.subscribeToMessages(chatId, (messages) => {
             const oldHeight = messagesContainer.scrollHeight;

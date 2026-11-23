@@ -80,7 +80,8 @@ The current deny-all Rules are intentional. Do not replace them with broad owner
 - [x] Candidate: new-message notifications contain sender label only; message body is not copied into notification payloads or server logs.
 - [x] Added Rules Emulator cases for participant A/B, unrelated C, anonymous, owner inbox reads and denied client writes; execution pending.
 - [x] Added callable Emulator cases for canonical membership, inbox projection, idempotent send retries, history pagination and read receipts; execution pending.
-- [ ] Block/unblock enforcement and UI; persistent AES-GCM outbox/reconnect reconciliation; preserve old conversations through an idempotent migration rehearsal; do not enable chat rollout before two-account staging.
+- [x] Block/unblock enforcement and UI; both directions are checked by trusted callables and blocked pairs are removed from new-chat contacts.
+- [ ] Persistent AES-GCM outbox/reconnect reconciliation; preserve old conversations through an idempotent migration rehearsal; do not enable chat rollout before two-account staging.
 
 ### Batch 4 — progression, tasks and user collections
 - [ ] Move XP, level, achievement and reward calculation to trusted server logic; the browser must not award or increment currency/XP directly.
@@ -173,7 +174,7 @@ V1.0 scope is one-to-one private conversations. Group chats remain post-v1.0 and
 - History callable returns 50-message pages with a document cursor; the chat screen loads older pages when scrolled to the top. Read receipts for a visible page are batched into one transaction.
 - Account changes stop realtime listeners and clear cached chat IDs, contacts and pending retry IDs.
 - Added callable unit tests, callable Emulator scenarios and a Firestore Rules Emulator matrix. All are added but execution on exact HEAD is still pending.
-- Remaining blockers: block/unblock support, persistent encrypted offline outbox and reconnect reconciliation, legacy chat migration rehearsal, real App Check/staging transport and two-account acceptance. Do not enable the feature gate.
+- Remaining blockers: exact-HEAD Unit/Emulator execution, persistent encrypted offline outbox and reconnect reconciliation, legacy chat migration rehearsal, real App Check/staging transport and two-account acceptance. Do not enable the feature gate.
 
 
 ### Block enforcement — 2026-11-23

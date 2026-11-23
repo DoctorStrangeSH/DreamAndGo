@@ -17,7 +17,7 @@
 | Профиль и приватность | PARTIAL | Owner-scoped read/update callables, публичная allowlist-проекция и UI-настройки реализованы в candidate | Callable transport, Rules для публичной проекции, согласие и два реальных аккаунта в staging |
 | Username Registry | PARTIAL | Транзакционная резервация, уникальность и закрытый migration gate покрыты тестами | Legacy dry-run, collision report, backup, rollback rehearsal и подтверждённый backfill |
 | Firestore Rules | PARTIAL | Candidate Rules now allow only public projection reads, owner inbox reads and participant chat/message reads; client writes remain denied; Rules Emulator matrix added | Exact-HEAD Rules Emulator execution, remaining owner-scoped collection policies and staging acceptance |
-| Chat V2 | NOT VERIFIED | Server authorization, callable-backed client, read-only listeners, cursor history, receipts and mutual block controls are implemented in candidate | Exact-HEAD Unit/Emulator execution, encrypted offline outbox, legacy migration rehearsal, App Check transport and two-account staging |
+| Chat V2 | NOT VERIFIED | Server authorization, callable-backed client, read-only listeners, cursor history, receipts and mutual block controls are implemented in candidate | Exact-HEAD Unit/Emulator execution, browser IndexedDB and two-account offline/online acceptance, legacy migration rehearsal and App Check transport |
 | Остальные MUST-модули | NOT VERIFIED | Требования перечислены в PRODUCT_SPEC и DELIVERY_PLAN | Реальная интеграция с UI, права доступа, сохранность данных и staging-приёмка каждого MUST-сценария |
 | Production rollout | BLOCKED | В этой ветке production Rules, Functions и данные не менялись | Отдельное подтверждение владельца после прохождения всех ворот |
 
@@ -156,3 +156,15 @@
 - [x] Chat header provides block/unblock action; composer fails closed when blocked or when status cannot be verified.
 - [x] Unit and Emulator regression scenarios added.
 - [ ] Exact-HEAD Unit, Rules Emulator and callable Emulator results are not yet confirmed; two-account staging acceptance remains pending.
+
+
+## Chat V2 encrypted offline outbox — 2026-11-23
+
+- [x] Candidate uses IndexedDB with AES-GCM-256 encryption before message persistence.
+- [x] Non-extractable encryption keys are persisted per Firebase UID; AES-GCM additional data binds each record to UID/chat/message ID.
+- [x] Offline and transient network failures are queued; reconnect retries use the original idempotency ID.
+- [x] Sent records are removed; permission-denied records remain encrypted and are excluded from automatic retries.
+- [x] Pending messages are rendered locally with delivery-state indicators; account switch stops the prior account's active flush.
+- [x] Added Node Unit tests for encryption, tamper detection, account isolation and blocked queue records.
+- [ ] **NOT VERIFIED:** execute new Unit/syntax tests on exact HEAD and verify real IndexedDB persistence across browser reloads.
+- [ ] **NOT VERIFIED:** complete two-account offline → reconnect → delivery acceptance in staging. No production rollout or deployment performed.

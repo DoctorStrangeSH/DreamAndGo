@@ -561,3 +561,9 @@
 - [x] Inventory CLI rejects filesystem roots and report output paths inside the repository before Firebase initialization.
 - [x] Added a process-level regression test proving rejection happens before credential lookup.
 - [ ] Exact-HEAD CI remains pending; no staging export or migration was executed.
+
+### Migration output path hardening — 2026-11-23
+
+- [x] Inventory and Backup CLIs share real-path validation based on the repository root, including protection against symlinks pointing into the repository.
+- [x] Added tests for repository-local paths, symlink traversal, and valid external output locations.
+- [ ] Exact-HEAD CI remains pending; no Firebase data was exported or modified.

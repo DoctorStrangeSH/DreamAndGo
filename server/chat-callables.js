@@ -267,6 +267,48 @@ function createChatCallables({ onCall, HttpsError, getFirestore, FieldValue }) {
         }
     });
 
+    const getMyChatContactsV2 = onCall(options, async request => {
+        const actorUid = requireActor(request, HttpsError);
+        requirePayload(request.data, [], HttpsError);
+        try {
+            const db = getFirestore();
+            const friends = await db.collection('users').doc(actorUid)
+                .collection('friends')
+                .limit(100)
+                .get();
+
+            const contacts = await Promise.all(friends.docs.map(async friend => {
+                const partnerUid = friend.id;
+                if (!validId(partnerUid) || partnerUid === actorUid) return null;
+                const [publicProfile, privateProfile] = await Promise.all([
+                    db.collection('publicProfiles').doc(partnerUid).get(),
+                    db.collection('users').doc(partnerUid).get()
+                ]);
+                const publicData = publicProfile.exists ? publicProfile.data() || {} : {};
+                const privateData = privateProfile.exists ? privateProfile.data() || {} : {};
+                const username = typeof publicData.username === 'string' && publicData.username
+                    ? publicData.username
+                    : (typeof privateData.username === 'string' ? privateData.username : '');
+                if (!username) return null;
+                return {
+                    uid: partnerUid,
+                    username,
+                    displayName: typeof publicData.displayName === 'string' && publicData.displayName
+                        ? publicData.displayName
+                        : (typeof privateData.displayName === 'string' ? privateData.displayName : username),
+                    avatar: typeof publicData.avatar === 'string'
+                        ? publicData.avatar
+                        : (typeof privateData.avatar === 'string' ? privateData.avatar : null)
+                };
+            }));
+
+            return { contacts: contacts.filter(Boolean) };
+        } catch (error) {
+            if (error instanceof HttpsError) throw error;
+            throw new HttpsError('unavailable', 'Не удалось загрузить список друзей');
+        }
+    });
+
     const getMyPrivateChatsV2 = onCall(options, async request => {
         const actorUid = requireActor(request, HttpsError);
         requirePayload(request.data, [], HttpsError);
@@ -432,6 +474,7 @@ function createChatCallables({ onCall, HttpsError, getFirestore, FieldValue }) {
     return Object.freeze({
         createPrivateChatV2,
         sendPrivateMessageV2,
+        getMyChatContactsV2,
         getMyPrivateChatsV2,
         getPrivateChatHistoryV2,
         getPrivateMessageStatusV2,

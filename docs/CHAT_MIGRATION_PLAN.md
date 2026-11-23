@@ -1,6 +1,6 @@
 # Chat V2 — legacy conversation migration plan
 
-Status: **DESIGN ONLY — NO DATA READ/WRITE OR MIGRATION HAS BEEN RUN**
+Status: **READ-ONLY INSPECTOR IMPLEMENTED — NOT EXECUTED AGAINST FIRESTORE**
 
 This plan is a release gate for preserving existing private conversations while moving from the legacy chat schema to Chat V2. It does not authorize a production migration, deployment, Rules change, or rollout-gate change.
 
@@ -36,13 +36,15 @@ This plan is a release gate for preserving existing private conversations while 
 
 ### Phase A — read-only inventory
 
-- [ ] Enumerate `users/*/chats/*` summaries without changing data.
-- [ ] Exclude known sentinel documents such as `_init` only after confirming their actual shape.
-- [ ] Build candidate participant pairs from `summary.partnerId` and require a reciprocal summary.
-- [ ] Compute the legacy chat ID from each validated pair and confirm that it matches the legacy source path.
-- [ ] Compute the canonical V2 chat ID using the same SHA-256/NUL algorithm as the server.
-- [ ] Enumerate messages and report counts, byte sizes, senders, ID validity, timestamp validity, duplicate IDs, and field-shape anomalies.
-- [ ] Produce a deterministic JSON manifest and a human-readable report. Do not write Firestore documents.
+- [x] Implemented `server/scripts/chat-migration-inventory.js` to enumerate user chat summaries and legacy message collections using Firebase Admin read operations only.
+- [x] `_init` is ignored only when it has no `partnerId`; malformed or unexpected summaries are reported.
+- [x] Candidate pairs are derived from reciprocal `summary.partnerId` documents and exact path checks.
+- [x] Legacy chat IDs are recomputed from sorted UIDs; underscore-based collisions are detected and block a clean result.
+- [x] Canonical V2 IDs use the exact SHA-256/NUL algorithm used by the server.
+- [x] Message metadata, byte sizes, senders, IDs, timestamps, flags, duplicate IDs and malformed fields are inspected; plaintext is represented only by hashes and lengths.
+- [x] Deterministic JSON manifest and Markdown report are generated locally; the tool contains no Firestore write/update/delete calls.
+- [x] CLI refuses the known production project `dream-and-go`, requires `--confirm-non-production`, and requires an exact `CHAT_MIGRATION_ALLOWED_PROJECT_ID` allowlist match.
+- [ ] Run against a separately provisioned staging project after credentials and its exact project ID are explicitly supplied.
 
 ### Phase B — backup and dry-run
 
@@ -103,3 +105,18 @@ This plan is a release gate for preserving existing private conversations while 
 ## 6. Current decision
 
 **NOT READY TO MIGRATE.** The current work has verified the Chat V2 server and encrypted offline outbox, but no real legacy dataset has been inventoried or backed up. This document intentionally defines the safe sequence without performing it.
+
+
+### Inspector invocation (staging only)
+
+The CLI is intentionally not run by CI and is not configured with production credentials. After a separate staging Firebase project and read-only credentials are available:
+
+```bash
+CHAT_MIGRATION_ALLOWED_PROJECT_ID=<exact-staging-project-id> \\
+  node server/scripts/chat-migration-inventory.js \\
+  --project-id <exact-staging-project-id> \\
+  --output-dir ./private-chat-inventory-<run-id> \\
+  --confirm-non-production
+```
+
+The output directory contains `legacy-chat-manifest.json` and `legacy-chat-report.md`. Keep it private: the manifest contains participant UIDs and source document paths, but no message plaintext.

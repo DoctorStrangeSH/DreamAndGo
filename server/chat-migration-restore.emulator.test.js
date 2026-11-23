@@ -2,7 +2,7 @@ import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { initializeApp, deleteApp } from 'firebase-admin/app';
-import { getFirestore, Timestamp, GeoPoint, Bytes } from 'firebase-admin/firestore';
+import { getFirestore, Timestamp, GeoPoint } from 'firebase-admin/firestore';
 import {
     buildChatMigrationBackup,
     decodeFirestoreValue,
@@ -15,6 +15,10 @@ const available = Boolean(emulatorHost);
 const projectId = process.env.GCLOUD_PROJECT || 'demo-dream-and-go';
 let app;
 let db;
+const Bytes = {
+    fromUint8Array: value => Buffer.from(value),
+    fromBase64String: value => Buffer.from(value, 'base64')
+};
 
 before(async () => {
     if (!available) return;
@@ -100,7 +104,10 @@ test('Firestore Emulator restores a JSON backup with nested paths and native Fir
         assert.equal(restoredRoot.get('ownerUid'), 'alice');
         assert.equal(restoredRoot.get('createdAt').isEqual(new Timestamp(1700000000, 123456789)), true);
         assert.equal(restoredRoot.get('location').latitude, 50.1109);
-        assert.deepEqual([...restoredRoot.get('attachment').toUint8Array()], [1, 2, 3, 254]);
+        const restoredAttachment = restoredRoot.get('attachment');
+        const attachmentBytes = typeof restoredAttachment.toUint8Array === 'function'
+            ? restoredAttachment.toUint8Array() : restoredAttachment;
+        assert.deepEqual([...attachmentBytes], [1, 2, 3, 254]);
         assert.equal(restoredRoot.get('profileRef').path, profileRef.path);
 
         const restoredMessageRecord = readBack.records.find(record => record.path === messageRef.path);

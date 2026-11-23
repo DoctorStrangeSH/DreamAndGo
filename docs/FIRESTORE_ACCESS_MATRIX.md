@@ -81,7 +81,8 @@ The current deny-all Rules are intentional. Do not replace them with broad owner
 - [x] Added Rules Emulator cases for participant A/B, unrelated C, anonymous, owner inbox reads and denied client writes; execution pending.
 - [x] Added callable Emulator cases for canonical membership, inbox projection, idempotent send retries, history pagination and read receipts; execution pending.
 - [x] Block/unblock enforcement and UI; both directions are checked by trusted callables and blocked pairs are removed from new-chat contacts.
-- [ ] Persistent AES-GCM outbox/reconnect reconciliation; preserve old conversations through an idempotent migration rehearsal; do not enable chat rollout before two-account staging.
+- [x] AES-GCM-256 encrypted IndexedDB outbox and stable-ID reconnect retry implemented in candidate.
+- [ ] Browser persistence/reconnect acceptance; preserve old conversations through an idempotent migration rehearsal; do not enable chat rollout before two-account staging.
 
 ### Batch 4 — progression, tasks and user collections
 - [ ] Move XP, level, achievement and reward calculation to trusted server logic; the browser must not award or increment currency/XP directly.

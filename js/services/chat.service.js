@@ -1,6 +1,5 @@
 import { db } from '../config/firebase.js';
 import { ChatV2Service } from './chat-v2.service.js';
-import { ChatV2Service } from './chat-v2.service.js';
 import {
     collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc,
     query, orderBy, serverTimestamp, writeBatch, setDoc

@@ -155,7 +155,7 @@ test('message send derives sender and recipient from authenticated membership', 
     const ctx = createHarness(friendSeed());
     const { chatId } = await createChat(ctx);
     const result = await ctx.callables.sendPrivateMessageV2({
-        auth: { uid: 'alice' }, data: { chatId, text: 'Привет, Боб!' }
+        auth: { uid: 'alice' }, data: { chatId, text: 'Привет, Боб!', clientMessageId: 'test-message-1' }
     });
     assert.equal(result.success, true);
     const message = ctx.records.get(`chats/${chatId}/messages/${result.messageId}`);
@@ -188,7 +188,7 @@ test('outsiders cannot send messages or read private history', async () => {
     const ctx = createHarness(friendSeed());
     const { chatId } = await createChat(ctx);
     await assert.rejects(ctx.callables.sendPrivateMessageV2({
-        auth: { uid: 'mallory' }, data: { chatId, text: 'intrusion' }
+        auth: { uid: 'mallory' }, data: { chatId, text: 'intrusion', clientMessageId: 'test-message-2' }
     }), error => error.code === 'permission-denied');
     await assert.rejects(ctx.callables.getPrivateChatHistoryV2({
         auth: { uid: 'mallory' }, data: { chatId }
@@ -199,7 +199,7 @@ test('history returns only an allowlisted message projection', async () => {
     const ctx = createHarness(friendSeed());
     const { chatId } = await createChat(ctx);
     const sent = await ctx.callables.sendPrivateMessageV2({
-        auth: { uid: 'alice' }, data: { chatId, text: 'private text' }
+        auth: { uid: 'alice' }, data: { chatId, text: 'private text', clientMessageId: 'test-message-3' }
     });
     ctx.records.set(`chats/${chatId}/messages/${sent.messageId}`, {
         ...ctx.records.get(`chats/${chatId}/messages/${sent.messageId}`),
@@ -218,7 +218,7 @@ test('read receipt status is visible only to chat participants', async () => {
     const ctx = createHarness(friendSeed());
     const { chatId } = await createChat(ctx);
     const sent = await ctx.callables.sendPrivateMessageV2({
-        auth: { uid: 'alice' }, data: { chatId, text: 'receipt check' }
+        auth: { uid: 'alice' }, data: { chatId, text: 'receipt check', clientMessageId: 'test-message-4' }
     });
     assert.deepEqual(await ctx.callables.getPrivateMessageStatusV2({
         auth: { uid: 'bob' }, data: { chatId, messageId: sent.messageId }
@@ -244,7 +244,7 @@ test('recipient can mark a message read once and unread count is owner-scoped', 
     const ctx = createHarness(friendSeed());
     const { chatId } = await createChat(ctx);
     const sent = await ctx.callables.sendPrivateMessageV2({
-        auth: { uid: 'alice' }, data: { chatId, text: 'hello' }
+        auth: { uid: 'alice' }, data: { chatId, text: 'hello', clientMessageId: 'test-message-5' }
     });
     assert.deepEqual(await ctx.callables.getPrivateChatUnreadV2({
         auth: { uid: 'bob' }, data: { chatId }
@@ -269,7 +269,7 @@ test('message payload is bounded and cannot forge sender identity', async () => 
         auth: { uid: 'alice' }, data: { chatId, text: 'x'.repeat(4001) }
     }), error => error.code === 'invalid-argument');
     await assert.rejects(ctx.callables.sendPrivateMessageV2({
-        auth: { uid: 'alice' }, data: { chatId, text: 'hi', senderId: 'bob' }
+        auth: { uid: 'alice' }, data: { chatId, text: 'hi', clientMessageId: 'test-forged', senderId: 'bob' }
     }), error => error.code === 'invalid-argument');
     await assert.rejects(ctx.callables.getPrivateChatHistoryV2({
         auth: { uid: 'alice' }, data: { chatId, targetUid: 'bob' }

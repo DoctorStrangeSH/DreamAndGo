@@ -191,3 +191,12 @@ The full test pipeline is being rerun after the backup CLI, V2-summary exclusion
 ### Final validation trigger — 2026-11-23
 
 The previous CI run was cancelled by subsequent documentation commits. The latest code change includes all root chat parent documents in the checksummed export. This commit intentionally triggers one final full pipeline on the reconciled branch HEAD; no Firebase export is started by CI.
+
+
+### Backup self-verification gate — 2026-11-23
+
+- [x] Exact-HEAD CI passed on `60fc4587`: 174 unit tests, 4 real Chromium tests, 23 Auth/Firestore Emulator tests, syntax validation across 99 JavaScript files.
+- [x] Backup export now verifies every document checksum, manifest checksum and bundle checksum in memory before creating the output directory or writing any backup files; export aborts closed if verification fails.
+- [x] Report explicitly identifies summaries, root chat parent documents and messages, and records a PASS self-verification line.
+- [ ] Exact-HEAD CI for this additional self-verification gate is pending.
+- [ ] Real staging export and independent restore/read-back test remain pending staging access.

@@ -166,3 +166,8 @@ The new `server/chat-migration-backup.js` is a tested pure builder/verifier only
 - [x] Added CLI preflight tests for help, production-project refusal, and mandatory non-production confirmation; these checks run before Firebase initialization.
 - [x] Backup export output must be outside the repository, uses a new directory and owner-only permissions, and includes a private backup plus inventory/report.
 - [ ] Exact-HEAD CI for these changes is pending.
+
+
+### Final CI trigger for backup CLI hardening — 2026-11-23
+
+The full test pipeline is being rerun after the backup CLI, V2-summary exclusion and process-level safety tests were added. No real Firebase export has been invoked.

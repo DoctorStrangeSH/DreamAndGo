@@ -41,3 +41,6 @@ Desktop.ini
 *.log
 *.tmp
 *.bak
+
+# Local staging preflight configuration (never commit project-specific values)
+**/staging-config.local.json

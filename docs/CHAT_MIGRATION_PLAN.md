@@ -51,6 +51,10 @@ This plan is a release gate for preserving existing private conversations while 
 
 ### Phase B — backup and dry-run
 
+- [x] Added a pure backup builder that encodes Firestore Timestamp, Date, bytes, GeoPoint and DocumentReference values into explicit tagged JSON; unknown value types fail closed.
+- [x] Added per-document SHA-256 and byte counts, a source-inventory hash binding, a deterministic manifest, and a whole-bundle checksum.
+- [x] Added a verifier that detects altered content, duplicate paths, path/ID mismatches, size/count mismatches, and invalid manifest/bundle checksums.
+- [x] Added synthetic unit tests for type preservation, determinism, tamper detection, invalid paths and unsupported values.
 - [ ] Export every source summary and message document, including document IDs and original field values, to a versioned local JSONL/JSON backup.
 - [ ] Record a SHA-256 checksum per source document and a checksum for the complete manifest.
 - [ ] Store the backup outside the Firebase project in an access-controlled location; verify it can be read back before proceeding.
@@ -138,3 +142,8 @@ The read-only inspector's total `messageDocuments` count includes both messages 
 - [x] Auth + Firestore Emulator suite: 23 passed, 0 failed.
 - [x] Syntax validation: all 95 JavaScript files passed.
 - [ ] Staging inventory remains unexecuted: no separate staging project ID or credentials have been provided.
+
+
+### Backup implementation boundary — 2026-11-23
+
+The new `server/chat-migration-backup.js` is a tested pure builder/verifier only. It does not read Firestore, write backup files, or restore documents. The actual staging export CLI remains blocked until a separate staging project and read-only credentials are supplied. Synthetic tests are not evidence of a real backup.

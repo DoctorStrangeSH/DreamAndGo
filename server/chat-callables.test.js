@@ -185,6 +185,28 @@ test('reopening a private chat repairs a missing owner inbox summary', async () 
     assert.ok(repaired.lastMessageTime);
 });
 
+test('removing reciprocal friendship removes Chat V2 contact eligibility and prevents chat recreation', async () => {
+    const ctx = createHarness(friendSeed());
+    const { chatId } = await createChat(ctx);
+
+    // Model the committed state produced by removeFriendV1.
+    ctx.records.delete('users/alice/friends/bob');
+    ctx.records.delete('users/bob/friends/alice');
+
+    const contacts = await ctx.callables.getMyChatContactsV2({
+        auth: { uid: 'alice' }, data: {}
+    });
+    assert.deepEqual(contacts, { contacts: [] });
+
+    await assert.rejects(createChat(ctx), error => error.code === 'permission-denied');
+
+    // Removing a friendship does not silently delete an existing conversation.
+    const existing = await ctx.callables.getMyPrivateChatsV2({
+        auth: { uid: 'alice' }, data: {}
+    });
+    assert.equal(existing.chats.some(chat => chat.chatId === chatId), true);
+});
+
 test('message send derives sender and recipient from authenticated membership', async () => {
     const ctx = createHarness(friendSeed());
     const { chatId } = await createChat(ctx);

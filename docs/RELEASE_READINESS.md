@@ -213,3 +213,11 @@
 - [x] Legacy source paths and fields and Chat V2 target schema mapped from the current repository code.
 - [x] Added [CHAT_MIGRATION_PLAN.md](CHAT_MIGRATION_PLAN.md), including safe participant-pair discovery, immutable source preservation, backup/checksum, dry-run, staging, idempotency, conflict policy and rollback rehearsal.
 - [ ] No production or staging data has been read, exported, or modified. Migration remains blocked until a separate staging project, representative test data, verified backup and explicit owner approval are available.
+
+
+## Chat V2 legacy inventory tool — 2026-11-23
+
+- [x] Implemented deterministic, read-only legacy conversation analyzer and guarded Admin SDK CLI.
+- [x] Added unit coverage for reciprocal summaries, malformed messages, privacy-safe hashes, legacy UID underscore collisions and production-project refusal.
+- [ ] Exact-HEAD CI for this new batch must pass before marking the tests verified.
+- [ ] No staging project ID/credentials are configured; no real Firestore data has been read or exported.

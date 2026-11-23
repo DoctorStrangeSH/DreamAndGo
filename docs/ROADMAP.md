@@ -396,4 +396,5 @@
 
 - [x] Added GitHub Actions workflow for pushes to `main` and `integration/v1.0-reconciliation`, pull requests to `main`, and manual dispatch.
 - [x] Workflow uses Node.js 22, installs server test dependencies, runs repository syntax checks and the root project/Chat V2 unit suite.
+- [x] Separate Emulator job starts Firestore and Auth emulators and runs the complete server `*emulator.test.js` suite.
 - [ ] Confirm first workflow run is green; CI has not yet reported a completed run for this commit.

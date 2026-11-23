@@ -76,11 +76,20 @@ export function createIndexedDbChatOutbox(indexedDBApi = globalThis.indexedDB) {
             return record?.cryptoKey || null;
         },
         async putKey(uid, cryptoKey) {
-            const db = await database();
-            const tx = db.transaction(KEY_STORE, 'readwrite');
-            const done = transactionDone(tx);
-            tx.objectStore(KEY_STORE).put({ uid, cryptoKey });
-            await done;
+            try {
+                const db = await database();
+                const tx = db.transaction(KEY_STORE, 'readwrite');
+                const done = transactionDone(tx);
+                const request = tx.objectStore(KEY_STORE).add({ uid, cryptoKey });
+                await Promise.all([requestResult(request), done]);
+                return cryptoKey;
+            } catch (error) {
+                // Another tab may have created the account key first. Never overwrite it:
+                // existing queue records may already have been encrypted with that key.
+                const existing = await this.getKey(uid);
+                if (existing) return existing;
+                throw error;
+            }
         },
         async putMessage(record) {
             const db = await database();
@@ -139,8 +148,8 @@ export function createEncryptedChatOutbox({
             false,
             ['encrypt', 'decrypt']
         );
-        await store.putKey(uid, key);
-        return key;
+        const storedKey = await store.putKey(uid, key);
+        return storedKey || await store.getKey(uid) || key;
     };
 
     const additionalData = (uid, chatId, messageId) =>

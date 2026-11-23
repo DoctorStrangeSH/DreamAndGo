@@ -773,3 +773,11 @@
 ### Exact-HEAD CI trigger — 2026-11-23
 
 - [ ] Verify the latest Emulator fixture corrections and full workflow on the branch HEAD; earlier runs were cancelled by rapid successive pushes.
+
+### Isolated staging preflight — 2026-11-23
+
+- [x] Added read-only `scripts/staging-preflight.mjs`: validates an isolated non-production Firebase project, staging web config, App Check site key and all closed rollout flags; prints no config values and performs no network operations.
+- [x] Added five negative/positive unit scenarios in `tests/staging-preflight.test.js` (root test glob already includes the file).
+- [x] Added [STAGING_PREFLIGHT.md](STAGING_PREFLIGHT.md) with setup steps, explicit non-actions and a two-account acceptance checklist; local `staging-config.local.json` is ignored by Git.
+- [ ] Verify new unit scenarios and full CI on exact updated branch HEAD.
+- [ ] No separate live staging Firebase project or credentials were provided/verified; no staging deployment, App Check exchange or user testing performed.

@@ -174,4 +174,14 @@
 
 - [x] Existing `.github/workflows/checks.yml` is the single CI entrypoint: Node.js 22, server dependency installation, root Unit suite, Auth + Firestore Emulator suite and syntax checks.
 - [x] Duplicate CI workflow definitions removed.
-- [ ] **NOT VERIFIED:** corrected pipeline must complete successfully on the latest HEAD.
+- [x] Latest `checks.yml` run is green on HEAD `97cfe149`: 146/146 Unit tests, 23/23 Auth + Firestore Emulator tests, and syntax checks for 90 JavaScript files.
+
+
+## CI acceptance — 2026-11-23
+
+- [x] Latest CI run: [45149621722](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/45149621722) completed successfully.
+- [x] Unit tests: 146 passed, 0 failed.
+- [x] Auth + Firestore Emulator tests: 23 passed, 0 failed, 0 skipped.
+- [x] Syntax validation: all 90 JavaScript files passed.
+- [x] Test harness cursor path corrected; no production pagination behavior was changed for this failure.
+- [ ] **NOT VERIFIED:** browser IndexedDB persistence after reload and two-account offline → reconnect → delivery acceptance remain release gates.

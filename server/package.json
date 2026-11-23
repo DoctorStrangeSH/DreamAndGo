@@ -8,7 +8,9 @@
   },
   "scripts": {
     "test": "node --test",
-    "test:emulator": "node --test --test-concurrency=1 *emulator.test.js"
+    "test:emulator": "node --test --test-concurrency=1 *emulator.test.js",
+    "chat:inventory": "node scripts/chat-migration-inventory.js",
+    "test:chat-inventory": "node --test chat-migration-inventory.test.js"
   },
   "dependencies": {
     "firebase-admin": "^13.0.0",

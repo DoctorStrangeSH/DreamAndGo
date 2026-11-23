@@ -53,7 +53,7 @@ function createHarness(seed = {}) {
             let cursorPath = null;
             const builder = {
                 startAfter(cursor) {
-                    cursorPath = cursor.path;
+                    cursorPath = cursor.ref?.path || cursor.path;
                     return builder;
                 },
                 limit(count) {

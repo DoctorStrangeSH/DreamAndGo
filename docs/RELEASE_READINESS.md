@@ -134,7 +134,7 @@
 - Chat contacts, private chat creation, message sends, inbox projection, paginated history and read receipts use callable endpoints.
 - Message send uses a stable client-generated ID and the server performs idempotent retries without duplicating message records, notifications or unread increments.
 - The chat screen subscribes to owner inbox summaries and participant messages through read-only Firestore listeners. Candidate Rules deny all client writes to chat membership, messages and inbox summaries.
-- History is paginated in 50-message pages and older pages load when scrolling to the top.
+- History is paginated in 50-message pages and older pages load when scrolling to the top. Read receipts for each page are applied in one server transaction.
 - Account changes unsubscribe realtime listeners and clear chat IDs, cached contacts and pending retry identifiers.
 - Added Firestore Rules Emulator coverage for participant A/B, unrelated C, anonymous users, owner inbox isolation, public projection reads and denied writes. Added callable Emulator coverage for inbox/contacts, idempotent sends, pagination, read receipts and membership.
 

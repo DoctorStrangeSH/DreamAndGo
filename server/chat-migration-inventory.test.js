@@ -280,3 +280,14 @@ test('existing Chat V2 summaries are skipped instead of being mistaken for legac
         `users/bob/chats/${chatId}`
     ]);
 });
+
+test('inventory manifest includes the explicit Firebase project ID before checksum calculation', () => {
+    const inventory = buildLegacyChatInventory({
+        projectId: 'dream-and-go-staging',
+        summaries: [summary('alice', 'bob'), summary('bob', 'alice')],
+        messagesByChat: { alice_bob: [message('message-1')] }
+    });
+
+    assert.equal(inventory.manifest.projectId, 'dream-and-go-staging');
+    assert.equal(inventory.manifestSha256.length, 64);
+});

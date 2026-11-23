@@ -73,8 +73,11 @@ async function main() {
     });
 
     const resolvedOutputDir = path.resolve(outputDir);
-    if (resolvedOutputDir === path.parse(resolvedOutputDir).root || resolvedOutputDir === process.cwd()) {
-        throw new Error('Нельзя использовать корень файловой системы или текущую папку как output-dir');
+    const relativeOutputPath = path.relative(process.cwd(), resolvedOutputDir);
+    if (resolvedOutputDir === path.parse(resolvedOutputDir).root ||
+        relativeOutputPath === '' ||
+        (!relativeOutputPath.startsWith('..' + path.sep) && relativeOutputPath !== '..' && !path.isAbsolute(relativeOutputPath))) {
+        throw new Error('Резервную копию нужно сохранять вне рабочей папки репозитория');
     }
 
     const app = initializeApp({ projectId }, \`chat-migration-backup-\${projectId}\`);

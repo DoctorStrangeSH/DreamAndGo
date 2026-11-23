@@ -527,5 +527,6 @@
 
 - [x] Fixed project identity validation to compare the inventory project ID with `backup.manifest.projectId`; the backup envelope has no top-level `projectId` field.
 - [x] Added process-level regression tests for a valid backup/inventory pair, cross-project inventory rejection, and credential-free help.
+- [x] Registered the new verifier CLI suite in the root `npm test` command (which uses an explicit file list).
 - [ ] Exact-HEAD full CI must pass before marking this correction verified.
 - [ ] No real staging backup was created or inspected; no Firebase connection, migration, Rules change, or deployment occurred.

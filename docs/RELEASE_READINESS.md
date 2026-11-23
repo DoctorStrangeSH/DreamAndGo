@@ -74,23 +74,23 @@
 Критический вывод аудита candidate:
 - AuthService private profile read и profile edit уже переведены на owner-scoped callables.
 - FriendsService всё ещё содержит прямые cross-user операции: создание заявок в подколлекции получателя, двустороннее принятие/удаление дружбы и обновление чужого счётчика.
-- NotificationsService всё ещё позволяет клиенту создавать уведомления с произвольным payload.
+- NotificationsService переведён на owner-scoped callable list/read; произвольное клиентское создание удалено. Achievement/level-up producers ждут серверной миграции progression, message producer — серверной миграции chat.
 - DailyTasksService всё ещё меняет прогресс и claim-флаги на клиенте; награда должна начисляться атомарно и только сервером.
 - Chat V2 требует отдельного canonical membership contract до включения доступа к сообщениям.
 
 Это не разрешение расширять Firestore Rules. До завершения соответствующей серверной миграции эти пути остаются закрытыми.
 
-## Friend operations — candidate implementation added
+## Friends and notifications — candidate implementation added
 
-- Added App Check-enforced callables for sending, accepting, rejecting, cancelling and removing friend relationships.
-- Actor identity is derived from callable Auth context; mutation payloads accept only `targetUid`.
-- Reciprocal friendship/request records, friend counters and friend-event notifications are changed in trusted Firestore transactions.
-- Browser friend mutation methods now call the server adapter and no longer write cross-user documents directly.
-- Friend cards and username lookup now read from `publicProfiles`, not private `users` documents.
-- UI now reports callable failures instead of showing success after a rejected request.
-- Added unit tests for auth, payload validation, duplicate requests, recipient-only acceptance, cancellation/rejection, reciprocal records and counter updates.
+- Friend mutations (send, accept, reject, cancel, remove) use App Check-enforced callables; actor UID comes only from Auth context.
+- Reciprocal friend/request records, friend counters and friend-event notifications are updated in trusted transactions.
+- Friend cards and username lookup use `publicProfiles`; the friend service has no direct cross-user Firestore writes.
+- Notification list/read operations use three owner-scoped callables: list, mark one read and mark all read.
+- Notification list returns only an allowlisted projection; read operations can only update the authenticated owner's records.
+- The browser notification service no longer creates arbitrary notification payloads or directly accesses Firestore; it refreshes the latest 30 notifications through the callable every 30 seconds.
+- Added unit suites for friend and notification callable authorization, ownership, validation and transaction effects.
 
-**Still NOT DONE:** run unit tests and Emulator tests on the exact candidate HEAD; stage Functions/App Check configuration; validate public-profile Rules and all friend-list/request listener reads; two-account staging. Do not enable the backend-ready flag or deploy.
+**Still NOT DONE:** achievement/level-up notification production (blocked on server-authoritative progression), message notification production (blocked on trusted chat send), exact-HEAD unit/Emulator run, App Check staging, Rules/reads matrix and two-account staging. Do not enable backend-ready flags or deploy.
 
 ## Следующий инженерный этап
 

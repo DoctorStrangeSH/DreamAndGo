@@ -3,9 +3,11 @@ import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/
 import { createChatV2CallableInvoker } from '../core/chat-v2-callable-invoker.js';
 
 function createClientMessageId() {
-    if (typeof crypto?.randomUUID === 'function') return crypto.randomUUID();
+    const cryptoApi = globalThis.crypto;
+    if (typeof cryptoApi?.randomUUID === 'function') return cryptoApi.randomUUID();
+    if (!cryptoApi?.getRandomValues) throw new Error('Безопасная генерация ID недоступна.');
     const bytes = new Uint8Array(16);
-    crypto.getRandomValues(bytes);
+    cryptoApi.getRandomValues(bytes);
     return [...bytes].map(value => value.toString(16).padStart(2, '0')).join('');
 }
 

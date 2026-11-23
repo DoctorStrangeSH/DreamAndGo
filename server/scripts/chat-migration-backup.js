@@ -24,12 +24,12 @@ function readArguments(argv) {
         }
         if (token.startsWith('--')) {
             const value = argv[index + 1];
-            if (!value || value.startsWith('--')) throw new Error(`Для ${token} требуется значение`);
+            if (!value || value.startsWith('--')) throw new Error(\`Для \${token} требуется значение\`);
             args[token.slice(2)] = value;
             index += 1;
             continue;
         }
-        throw new Error(`Неизвестный аргумент: ${token}`);
+        throw new Error(\`Неизвестный аргумент: \${token}\`);
     }
     return args;
 }
@@ -50,7 +50,7 @@ function usage() {
         'The output directory must not already exist.',
         'Firestore is read-only; no migration writes are performed.',
         ''
-    ].join('\\n');
+    ].join('\n');
 }
 
 async function main() {
@@ -62,7 +62,7 @@ async function main() {
     const projectId = args['project-id'];
     const outputDir = args['output-dir'];
     if (!projectId || !outputDir || !args.confirmNonProduction) {
-        throw new Error('Нужны --project-id, --output-dir и --confirm-non-production.\\n\\n' + usage());
+        throw new Error('Нужны --project-id, --output-dir и --confirm-non-production.\n\n' + usage());
     }
     assertSafeInventoryTarget({
         projectId,
@@ -76,13 +76,13 @@ async function main() {
         throw new Error('Нельзя использовать корень файловой системы или текущую папку как output-dir');
     }
 
-    const app = initializeApp({ projectId }, `chat-migration-backup-${projectId}`);
+    const app = initializeApp({ projectId }, \`chat-migration-backup-\${projectId}\`);
     const db = getFirestore(app);
-    process.stdout.write(`Чтение staging-проекта только для чтения: ${projectId}\\n`);
+    process.stdout.write(\`Чтение staging-проекта только для чтения: \${projectId}\n\`);
 
     const summarySnapshot = await db.collectionGroup('chats').get();
     const summaryDocs = summarySnapshot.docs.filter(document =>
-        /^users\\/[^/]+\\/chats\\/[^/]+$/.test(document.ref.path)
+        /^users\/[^/]+\/chats\/[^/]+$/.test(document.ref.path)
     );
     const summaries = summaryDocs.map(document => ({
         path: document.ref.path,
@@ -110,7 +110,7 @@ async function main() {
 
     const messageSnapshot = await db.collectionGroup('messages').get();
     const messageDocs = messageSnapshot.docs.filter(document =>
-        /^chats\\/[^/]+\\/messages\\/[^/]+$/.test(document.ref.path)
+        /^chats\/[^/]+\/messages\/[^/]+$/.test(document.ref.path)
     );
     const groupedMessages = new Map();
     for (const document of messageDocs) {
@@ -142,15 +142,11 @@ async function main() {
         orphanMessageCollections
     });
 
-    const documents = [
-        ...summaryDocs,
-        ...messageDocs
-    ].map(document => ({
+    const documents = [...summaryDocs, ...messageDocs].map(document => ({
         path: document.ref.path,
         id: document.id,
         data: document.data()
     }));
-
     const backup = buildChatMigrationBackup({
         projectId,
         sourceManifestSha256: inventory.manifestSha256,
@@ -163,35 +159,35 @@ async function main() {
     const inventoryPath = path.join(resolvedOutputDir, 'legacy-chat-inventory.json');
     const reportPath = path.join(resolvedOutputDir, 'legacy-chat-backup-report.md');
 
-    await writeFile(backupPath, JSON.stringify(backup, null, 2) + '\\n', { flag: 'wx', mode: 0o600 });
+    await writeFile(backupPath, JSON.stringify(backup, null, 2) + '\n', { flag: 'wx', mode: 0o600 });
     await writeFile(inventoryPath, JSON.stringify({
         projectId,
         manifestSha256: inventory.manifestSha256,
         manifest: inventory.manifest
-    }, null, 2) + '\\n', { flag: 'wx', mode: 0o600 });
+    }, null, 2) + '\n', { flag: 'wx', mode: 0o600 });
     const report = [
         '# Legacy Chat Backup',
         '',
         'Mode: READ ONLY — no Firestore writes performed.',
-        `- Firebase project: ${projectId}`,
-        `- Backed up summary and message documents: ${backup.manifest.documentCount}`,
-        `- Total source bytes: ${backup.manifest.totalSourceBytes}`,
-        `- Inventory SHA-256: ${inventory.manifestSha256}`,
-        `- Backup manifest SHA-256: ${backup.manifestSha256}`,
-        `- Backup bundle SHA-256: ${backup.bundleSha256}`,
-        `- Inventory issues requiring review: ${inventory.manifest.globalIssues.length + inventory.manifest.totals.pairsWithIssues}`,
+        \`- Firebase project: \${projectId}\`,
+        \`- Backed up summary and message documents: \${backup.manifest.documentCount}\`,
+        \`- Total source bytes: \${backup.manifest.totalSourceBytes}\`,
+        \`- Inventory SHA-256: \${inventory.manifestSha256}\`,
+        \`- Backup manifest SHA-256: \${backup.manifestSha256}\`,
+        \`- Backup bundle SHA-256: \${backup.bundleSha256}\`,
+        \`- Inventory issues requiring review: \${inventory.manifest.globalIssues.length + inventory.manifest.totals.pairsWithIssues}\`,
         '',
         'The backup contains private message content. Store it securely and do not commit it to Git.',
         ''
-    ].join('\\n');
+    ].join('\n');
     await writeFile(reportPath, report, { flag: 'wx', mode: 0o600 });
 
     process.stdout.write(report);
-    process.stdout.write(`\\nBackup: ${backupPath}\\nInventory: ${inventoryPath}\\nReport: ${reportPath}\\n`);
-    process.stdout.write('Firestore mode: READ ONLY. No document writes were issued.\\n');
+    process.stdout.write(\`\nBackup: \${backupPath}\nInventory: \${inventoryPath}\nReport: \${reportPath}\n\`);
+    process.stdout.write('Firestore mode: READ ONLY. No document writes were issued.\n');
 }
 
 main().catch(error => {
-    process.stderr.write(`Chat Migration Backup stopped: ${error.message}\\n`);
+    process.stderr.write(\`Chat Migration Backup stopped: \${error.message}\n\`);
     process.exitCode = 1;
 });

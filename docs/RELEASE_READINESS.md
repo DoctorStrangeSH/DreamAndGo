@@ -6,6 +6,21 @@
 
 > Этот документ фиксирует релизные ворота, а не объявляет готовность продукта. Галочка ставится только при наличии проверяемого результата на актуальном HEAD и, где требуется, в staging.
 
+## Текущая проверка CI — 2026-11-23
+
+- [x] **Exact-HEAD Checks:** [run #45240364276](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/45240364276) завершился успешно на commit `5a582e3f5aea37858cf0979956432e1aa746c8b0`.
+- [x] Unit: **202/202**, Chromium: **4/4**, Auth + Firestore Emulator: **27/27**; JavaScript syntax: **109 файлов**.
+- [x] В том числе проверены Friends Read / Friends mutation, Chat V2, правила доступа и синтетическое восстановление backup в Emulator.
+- [ ] **Staging не подтверждён:** реальный HTTPS Callable, App Check, отдельный Firebase staging project, два браузера/аккаунта и migration rehearsal не выполнялись.
+- [ ] **Release: NOT READY** до прохождения staging и контроля данных. Ни production Rules, ни Functions, ни rollout flags не включать.
+
+## Staging preflight — зафиксированное состояние кандидата
+
+- `index.html`: `firebase-app-check-site-key` пустой, `firebase-functions-backend-ready=false`, `chat-v2-enabled=false`, `signup-v2-enabled=false`, `signup-v2-backend-ready=false`, `signup-v2-legacy-migration-verified=false`. Все защитные переключатели остаются закрыты.
+- `js/config/firebase.js`: проект `dream-and-go`; **это production-конфигурация клиента, не отдельный staging project**. Нельзя считать тестирование на этом URL безопасной staging-приёмкой.
+- CI работает на изолированном demo project `demo-dream-and-go` через Emulator. Его зелёный результат не доказывает рабочий App Check или Functions deployment.
+- Следующее действие: подготовить отдельный staging Firebase project с собственной веб-конфигурацией, reCAPTCHA/App Check и безопасными тестовыми аккаунтами, не меняя live `dream-and-go`. Отдельно подтвердить правила и репетицию миграции перед открытием feature gates.
+
 ## Сводный статус
 
 **Релиз: NOT READY.** Основной блокер — не unit-тесты, а отсутствие полного staging-подтверждения безопасности и реальных пользовательских сценариев.
@@ -36,9 +51,10 @@
 ## Обязательные ворота перед staging sign-off
 
 ### A. Exact-HEAD quality
-- [ ] Запустить workflow `Checks` на текущем HEAD.
-- [ ] Сохранить ссылку на run и job logs.
-- [ ] Подтвердить unit, Emulator и syntax suites на одном commit SHA.
+- [x] Workflow `Checks` успешно выполнен на исходном code HEAD `5a582e3f5aea37858cf0979956432e1aa746c8b0`.
+- [x] Run и job logs: [45240364276](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/45240364276).
+- [x] Unit 202, Chromium 4, Emulator 27 и syntax 109 — на одном SHA.
+- [ ] После документальных или кодовых коммитов проверить CI нового HEAD, прежде чем называть его exact-HEAD зелёным.
 
 ### B. Auth, App Check и callable transport
 - [ ] Настроить отдельный staging Firebase project и корректный reCAPTCHA v3 site key.

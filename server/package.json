@@ -7,7 +7,7 @@
     "node": "22"
   },
   "scripts": {
-    "test": "node --test",
+    "test": "node --test chat-callables.test.js",
     "test:emulator": "node --test --test-concurrency=1 *emulator.test.js"
   },
   "dependencies": {

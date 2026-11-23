@@ -138,7 +138,7 @@
 - Account changes unsubscribe realtime listeners and clear chat IDs, cached contacts and pending retry identifiers.
 - Added Firestore Rules Emulator coverage for participant A/B, unrelated C, anonymous users, owner inbox isolation, public projection reads and denied writes. Added callable Emulator coverage for inbox/contacts, idempotent sends, pagination, read receipts and membership.
 
-**Still NOT DONE:** execute exact-HEAD CI and both Emulator suites; confirm block/unblock behavior with two accounts; persist the encrypted offline outbox and reconcile pending messages after reconnect/reload; rehearse legacy conversation migration without data loss; configure real App Check and staging callable transport; complete two-account browser acceptance. Do not enable `chat-v2-enabled`, change production Rules or deploy Functions before all gates pass.
+**Still NOT DONE:** execute exact-HEAD CI and both Emulator suites; confirm block/unblock behavior with two accounts; verify encrypted offline queue persistence and delivery after reconnect/reload in real browsers; rehearse legacy conversation migration without data loss; configure real App Check and staging callable transport; complete two-account browser acceptance. Do not enable `chat-v2-enabled`, change production Rules or deploy Functions before all gates pass.
 
 
 ## CI quality gates — 2026-11-23

@@ -493,3 +493,7 @@
 - [x] CLI preflight requires exact project allowlist, explicit non-production confirmation, and output directory outside the repository; output uses exclusive file creation and owner-only permissions.
 - [x] Added process-level safety tests for help, production refusal and missing confirmation.
 - [ ] Exact-HEAD CI pending; no staging credentials/project ID supplied and no real export performed.
+
+
+- [x] Backup CLI syntax issue found by process-level tests and corrected.
+- [ ] Full CI rerun on corrected CLI commit pending.

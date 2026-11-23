@@ -270,3 +270,11 @@
 - [x] Full CI green on `496b968e`; latest backup completeness refinement additionally includes every root chat parent document.
 - [ ] Exact-HEAD CI for the parent-document inclusion refinement pending.
 - [ ] No real staging export has been run; production remains untouched.
+
+
+## Backup self-verification gate — 2026-11-23
+
+- [x] Exact-HEAD CI passed on `60fc4587` (174 unit, 4 Chromium, 23 Emulator; syntax 99 JS files).
+- [x] Exporter now validates document, manifest and bundle checksums before writing any private backup artifacts.
+- [ ] CI for this latest safety change pending.
+- [ ] Real staging backup, independent read-back and restore rehearsal not yet performed; production untouched.

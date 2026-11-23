@@ -16,11 +16,11 @@
 ## V1.0 — обязательные релизные ворота
 
 ### Качество приложения
-- [ ] Root unit tests проходят на точном integration HEAD.
-- [ ] Синтаксическая проверка проходит на точном integration HEAD (checker now includes `server/`; execution evidence pending).
-- [ ] Emulator suites проходят на точном integration HEAD.
-- [x] Добавлен отдельный GitHub Actions workflow для root unit tests, syntax check и Firestore Emulator suites.
-- [ ] CI не зависает; для каждого набора есть сохранённый итоговый job result и логи на актуальном HEAD.
+- [x] Root Unit tests проходят на точном integration HEAD `46fec780` (150/150).
+- [x] Синтаксическая проверка проходит на точном integration HEAD (92/92 JavaScript files).
+- [x] Auth + Firestore Emulator suites проходят на точном integration HEAD (23/23).
+- [x] Chromium browser suite проходит на точном integration HEAD (4/4).
+- [x] Единый GitHub Actions workflow сохраняет итоговый результат и логи всех наборов; run [45152046369](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/45152046369) — SUCCESS.
 
 ### Аккаунт, приватность и безопасность
 - [ ] Регистрация, вход, выход и восстановление проверены двумя независимыми аккаунтами.
@@ -31,8 +31,8 @@
 - [ ] Username registry backfill имеет dry-run, collision report, backup и rollback.
 
 ### Chat V2
-- [ ] Серверная авторизация участников, сообщения, история, unread/read receipts и блокировки проверены Emulator-тестами.
-- [ ] Клиентская интеграция совместима с текущим main security baseline.
+- [x] Серверная авторизация участников, сообщения, история, unread/read receipts и блокировки покрыты Emulator-тестами на текущем HEAD.
+- [ ] Клиентская интеграция совместима с текущим main security baseline — требуется staging-проверка.
 - [ ] Старые переписки сохранены; миграция идемпотентна и прошла rehearsal.
 - [ ] Два аккаунта прошли staging-проверку; feature gate остаётся выключенным до приёмки.
 
@@ -417,3 +417,14 @@
 - [x] Verified account separation, concurrent tab key creation, blocked message retention and per-account queue clearing.
 - [x] CI green on HEAD `f26600a6`: 150/150 Unit tests, 23/23 Auth + Firestore Emulator tests, syntax check passed for 91 JavaScript files.
 - [ ] Real browser reload and two-account end-to-end acceptance remain open; fake IndexedDB does not replace browser testing.
+
+
+### Real-browser offline outbox verification — 2026-11-23
+
+- [x] Added Playwright + Chromium browser regression suite to the single `Checks` workflow.
+- [x] Real Chromium reload restores encrypted IndexedDB message content and the same non-extractable AES-GCM key.
+- [x] Offline → online reconnect test confirms queued message is delivered with the original idempotency ID and then removed from local storage.
+- [x] Two independent browser tabs concurrently enqueue messages for one account without losing either write or corrupting the shared key.
+- [x] Separate browser accounts retain isolated queues after reload.
+- [x] Exact-HEAD CI run [45152046369](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/45152046369): Unit 150/150, Chromium 4/4, Auth + Firestore Emulator 23/23, syntax 92/92.
+- [ ] Staging acceptance with two actual Firebase accounts, real Functions/App Check transport, offline/reconnect delivery and legacy conversation migration remains pending.

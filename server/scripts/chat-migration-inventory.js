@@ -69,6 +69,14 @@ async function main() {
     });
 
     const resolvedOutputDir = path.resolve(outputDir);
+    const relativeOutputPath = path.relative(process.cwd(), resolvedOutputDir);
+    const isInsideRepository = relativeOutputPath === '' ||
+        relativeOutputPath === '..' ||
+        (!relativeOutputPath.startsWith('..' + path.sep) && !path.isAbsolute(relativeOutputPath));
+    if (resolvedOutputDir === path.parse(resolvedOutputDir).root || isInsideRepository) {
+        throw new Error('Отчёт Inventory нужно сохранять вне рабочей папки репозитория');
+    }
+
     const app = initializeApp({ projectId }, `chat-migration-inspector-${projectId}`);
     const db = getFirestore(app);
 

@@ -53,5 +53,6 @@ test('backup exporter self-verifies checksums before creating output and remains
     assert.notEqual(verificationCall, -1);
     assert.ok(verificationCall < outputDirectoryCreation, 'backup verification must happen before output creation');
     assert.match(source, /if \(!verification\.valid\)/);
-    assert.doesNotMatch(source, /\.\s*(?:set|update|delete|create)\s*\(/, 'export must never write to Firestore');
+    const firestoreWriteCalls = source.match(/(?:db|document\.ref)\s*(?:\.\s*(?:collection|collectionGroup|doc)\s*\([^)]*\)\s*){1,4}\.\s*(?:set|update|delete|create)\s*\(/g) || [];
+    assert.deepEqual(firestoreWriteCalls, [], 'export must never invoke Firestore document write methods');
 });

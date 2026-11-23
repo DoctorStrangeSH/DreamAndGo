@@ -8,6 +8,7 @@ export class ChatModule {
         this.chatService = new ChatService();
         this.friendsService = new FriendsService();
         this.currentChat = null;
+        this.currentChatId = null;
         this.unsubscribeMessages = null;
         this.unsubscribeChats = null;
         this.editMessageId = null;
@@ -126,11 +127,13 @@ export class ChatModule {
                     const unreadBadge = unreadCount > 0
                         ? `<span class="badge bg-primary rounded-pill">${unreadCount}</span>`
                         : '';
+                    this.chatService.rememberChatId(chat.partnerId, chat.chatId || chat.id);
                     const isActive = this.currentChat === chat.partnerId;
 
                     return `
                         <div class="chat-list-item p-3 border-bottom ${isActive ? 'active' : ''}"
-                             data-partner-id="${escapeHTML(safeDocumentId(chat.partnerId))}">
+                             data-partner-id="${escapeHTML(safeDocumentId(chat.partnerId))}"
+                             data-chat-id="${escapeHTML(safeDocumentId(chat.chatId || chat.id))}">
                             <div class="d-flex align-items-center gap-2">
                                 <div class="chat-avatar-placeholder">
                                     ${escapeHTML(String(chat.partnerName || 'U').charAt(0).toUpperCase())}
@@ -160,7 +163,7 @@ export class ChatModule {
         );
     }
 
-    async openChat(partnerId) {
+    async openChat(partnerId, suppliedChatId = null) {
         const safePartnerId = safeDocumentId(partnerId);
         if (!safePartnerId) return;
         this.currentChat = safePartnerId;
@@ -181,9 +184,21 @@ export class ChatModule {
             <div class="chat-avatar-placeholder">${escapeHTML(String(partnerData?.username || 'U').charAt(0).toUpperCase())}</div>
         `;
 
+        let chatId = suppliedChatId || this.chatService.getChatId(userId, partnerId);
+        if (this.chatService.isV2Enabled && (!suppliedChatId && chatId.includes('_'))) {
+            chatId = await this.chatService.getOrCreateChat(userId, partnerId);
+        }
+        if (!chatId) {
+            window.app.ui.showToast('Не удалось открыть диалог. Попробуй ещё раз.', 'danger');
+            this.closeChat();
+            return;
+        }
+        this.chatService.rememberChatId(partnerId, chatId);
+        this.currentChatId = chatId;
         await this.chatService.markAsRead(userId, partnerId);
 
-        const chatId = this.chatService.getChatId(userId, partnerId);
+        const deleteChatButton = document.getElementById('deleteChatBtn');
+        if (deleteChatButton) deleteChatButton.classList.toggle('d-none', this.chatService.isV2Enabled);
         const messagesContainer = document.getElementById('chatMessages');
 
         this.unsubscribeMessages = window.app.realtimeService.subscribeToMessages(chatId, (messages) => {
@@ -242,14 +257,18 @@ export class ChatModule {
         if (!text || !this.currentChat) return;
 
         const userId = window.app.currentUser.uid;
-        const chatId = this.chatService.getChatId(userId, this.currentChat);
+        const chatId = this.currentChatId || this.chatService.getChatId(userId, this.currentChat);
 
-        if (this.editMessageId) {
+        if (this.editMessageId && !this.chatService.isV2Enabled) {
             await this.chatService.editMessage(chatId, this.editMessageId, text);
             this.editMessageId = null;
             document.getElementById('editMode').style.display = 'none';
         } else {
-            await this.chatService.sendMessage(chatId, userId, this.currentChat, text);
+            const result = await this.chatService.sendMessage(chatId, userId, this.currentChat, text);
+            if (!result?.success) {
+                window.app.ui.showToast(result?.error || 'Не удалось отправить сообщение.', 'danger');
+                return;
+            }
             window.app.onUserAction('send_message');
         }
 
@@ -259,6 +278,7 @@ export class ChatModule {
 
     closeChat() {
         this.currentChat = null;
+        this.currentChatId = null;
 
         if (this.unsubscribeMessages) {
             this.unsubscribeMessages();
@@ -295,7 +315,7 @@ export class ChatModule {
             document.querySelectorAll('.chat-list-item').forEach(i => i.classList.remove('active'));
             item.classList.add('active');
 
-            await this.openChat(item.dataset.partnerId);
+            await this.openChat(item.dataset.partnerId, item.dataset.chatId);
         });
 
         document.getElementById('sendMessageBtn')?.addEventListener('click', () => this.sendMessage());
@@ -407,9 +427,13 @@ export class ChatModule {
 
         container.querySelectorAll('.friend-item').forEach(item => {
             item.addEventListener('click', async () => {
-                await this.chatService.getOrCreateChat(window.app.currentUser.uid, item.dataset.uid);
+                const chatId = await this.chatService.getOrCreateChat(window.app.currentUser.uid, item.dataset.uid);
+                if (!chatId) {
+                    window.app.ui.showToast('Не удалось создать диалог.', 'danger');
+                    return;
+                }
                 modal.hide();
-                await this.openChat(item.dataset.uid);
+                await this.openChat(item.dataset.uid, this.chatService.isV2Enabled ? chatId : null);
             });
         });
     }

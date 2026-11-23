@@ -674,3 +674,11 @@
 - [x] Explicitly verified that removing friendship does not silently delete the pre-existing conversation from the user's inbox. Existing conversation retention is preserved.
 - [ ] Execute the updated Chat V2 unit suite and full exact-HEAD CI.
 - [ ] Verify the Friends → Chat V2 flow with two real staging accounts and App Check.
+
+### Chat V2 reciprocal-contact integrity — 2026-11-23
+
+- [x] Contact discovery now verifies both the current user's friendship record and the reciprocal record owned by the other user.
+- [x] One-sided/orphaned friendship records are excluded from Chat V2 contacts instead of presenting a contact that will fail when a conversation is opened.
+- [x] Added a regression test for an orphaned friendship record; private chat creation remains server-denied without reciprocal records.
+- [ ] Run the Chat V2 unit suite and full exact-HEAD CI; execution is not yet observed.
+- [ ] Confirm the behavior with two staging accounts after real friend removal and re-addition.

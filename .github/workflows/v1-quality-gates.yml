@@ -1,0 +1,56 @@
+name: V1.0 quality gates
+
+on:
+  push:
+    branches:
+      - integration/v1.0-reconciliation
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v1-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-and-syntax:
+    name: Unit tests and syntax
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run root unit tests
+        run: npm test
+
+      - name: Check JavaScript syntax
+        run: npm run check
+
+  firestore-emulator:
+    name: Firestore Rules and callable Emulator tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install server test dependencies
+        run: npm --prefix server install --no-package-lock --ignore-scripts --no-audit --no-fund
+
+      - name: Run Firestore Emulator suites
+        run: npx --yes firebase-tools@14.12.0 emulators:exec --project demo-dream-and-go --only firestore "npm --prefix server run test:emulator"

@@ -315,3 +315,12 @@ This pass inspected the integration-branch browser service implementations, not 
 - [x] Added a regression test for an orphaned friendship record; private chat creation remains server-denied without reciprocal records.
 - [ ] Run the Chat V2 unit suite and full exact-HEAD CI; execution is not yet observed.
 - [ ] Confirm the behavior with two staging accounts after real friend removal and re-addition.
+
+### Chat V2 conversation-open race protection — 2026-11-23
+
+- [x] Added monotonically increasing request identity to asynchronous conversation opening.
+- [x] Stale contact/profile, chat-creation and block-status responses are ignored after the user switches conversations or closes the current one.
+- [x] Message subscription callbacks verify that their conversation is still the active conversation before updating the UI.
+- [x] Closing a conversation invalidates any pending open operation.
+- [ ] Run browser-level rapid-switch regression (A → B while A's profile/chat/block request is delayed) and exact-HEAD CI.
+- [ ] Complete two-account staging acceptance; no successful browser/CI run is claimed.

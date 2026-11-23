@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { mkdir, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
@@ -128,7 +128,8 @@ async function main() {
     }
 
     const inventory = buildLegacyChatInventory({ summaries, messagesByChat, orphanMessageCollections });
-    await mkdir(resolvedOutputDir, { recursive: true });
+    await mkdir(resolvedOutputDir, { recursive: true, mode: 0o700 });
+    await chmod(resolvedOutputDir, 0o700);
     const manifestPath = path.join(resolvedOutputDir, 'legacy-chat-manifest.json');
     const reportPath = path.join(resolvedOutputDir, 'legacy-chat-report.md');
     await writeFile(manifestPath, JSON.stringify(inventory.manifest, null, 2) + '\n', { flag: 'wx', mode: 0o600 });

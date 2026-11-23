@@ -349,6 +349,7 @@
 - [x] Added path-specific candidate Rules: public profile projection read, owner inbox read, participant chat/message read; all chat client writes denied.
 - [x] Added stable client message IDs and idempotent same-ID retries.
 - [x] Added 50-message cursor pagination and scroll-based older-history loading.
+- [x] Batch read receipts for up to 50 incoming messages in a single transaction.
 - [x] Stop listeners and clear account-scoped chat state on logout/account switch.
 - [ ] Block/unblock enforcement and UI.
 - [ ] Persistent AES-GCM outbox and safe reconnect/retry across reloads.

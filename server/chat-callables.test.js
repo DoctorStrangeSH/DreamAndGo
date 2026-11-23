@@ -178,9 +178,10 @@ test('private inbox returns only canonical chats owned by the authenticated user
     assert.equal(result.chats[0].chatId, chatId);
     assert.equal(result.chats[0].partnerId, 'bob');
     assert.equal(result.chats[0].partnerName, 'Пользователь');
-    await assert.rejects(ctx.callables.getMyPrivateChatsV2({
+    const outsider = await ctx.callables.getMyPrivateChatsV2({
         auth: { uid: 'mallory' }, data: {}
-    }), error => error.code === 'unavailable' || error.code === 'permission-denied');
+    });
+    assert.deepEqual(outsider, { chats: [] });
 });
 
 test('outsiders cannot send messages or read private history', async () => {

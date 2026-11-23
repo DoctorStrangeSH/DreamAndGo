@@ -199,8 +199,9 @@ export class ChatService {
     async markMessagesRead(userId, chatId, messages) {
         if (!this.isV2Enabled || !chatId || !Array.isArray(messages)) return;
         const unread = messages.filter(message => message.senderId !== userId && message.read !== true);
+        if (unread.length === 0) return;
+        await this.chatV2.markMessagesRead(chatId, unread.map(message => message.id));
         for (const message of unread) {
-            await this.chatV2.markMessageRead(chatId, message.id);
             message.read = true;
             message.readAt = new Date();
         }

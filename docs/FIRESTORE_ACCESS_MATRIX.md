@@ -280,3 +280,12 @@ This pass inspected the integration-branch browser service implementations, not 
 - [x] Covers reject and sender cancel cleanup of reciprocal request records.
 - [ ] Execute both Friends Emulator suites against a running Firestore Emulator and full exact-HEAD CI. The tests invoke callable handlers with controlled Auth contexts; they do not emulate the HTTPS callable transport or App Check token verification.
 - [ ] Complete browser-level two-account UI acceptance.
+
+### Friends UI error-state and request efficiency hardening — 2026-11-23
+
+- [x] Friends page now requests only the initially active Friends list instead of launching three simultaneous list requests and discarding two responses.
+- [x] Relationship actions refresh only the currently visible list through one shared helper.
+- [x] FriendsService no longer converts authentication, App Check, network or backend failures into an empty array. The UI's existing error state now distinguishes unavailable data from a genuinely empty list.
+- [x] Missing/invalid relationship timestamps remain null rather than being replaced with the current time.
+- [ ] Run exact-HEAD unit, Emulator, browser and syntax CI; no successful run is available yet.
+- [ ] Complete real browser two-account acceptance and callable transport/App Check verification.

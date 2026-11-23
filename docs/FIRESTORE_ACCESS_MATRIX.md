@@ -271,3 +271,12 @@ This pass inspected the integration-branch browser service implementations, not 
 - [x] Added request sequencing so stale tab responses cannot overwrite the currently selected list.
 - [x] Fixed relationship-action refresh behavior: accepting a request refreshes the active incoming-request tab rather than launching three competing asynchronous list loads.
 - [ ] Browser-level UI verification and exact-HEAD CI remain pending. Friend lists now refresh on tab entry and after the relevant action; they are not realtime-pushed. This is intentional for the callable-only V1.0 access boundary.
+
+
+### Friends actions Emulator regression — 2026-11-23
+
+- [x] Added `server/friends-callables.emulator.test.js` using isolated Firestore Emulator documents and real Admin SDK transactions.
+- [x] Covers send → accept → remove lifecycle, reciprocal friendship documents, request cleanup and both users' `stats.friends` counters.
+- [x] Covers reject and sender cancel cleanup of reciprocal request records.
+- [ ] Execute both Friends Emulator suites against a running Firestore Emulator and full exact-HEAD CI. The tests invoke callable handlers with controlled Auth contexts; they do not emulate the HTTPS callable transport or App Check token verification.
+- [ ] Complete browser-level two-account UI acceptance.

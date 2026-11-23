@@ -173,22 +173,37 @@ function createChatCallables({ onCall, HttpsError, getFirestore, FieldValue }) {
 
     const sendPrivateMessageV2 = onCall(options, async request => {
         const actorUid = requireActor(request, HttpsError);
-        requirePayload(request.data, ['chatId', 'text'], HttpsError);
+        requirePayload(request.data, ['chatId', 'text', 'clientMessageId'], HttpsError);
         const chatId = requireChatId(request.data, HttpsError);
         const text = typeof request.data.text === 'string' ? request.data.text.trim() : '';
+        const clientMessageId = request.data.clientMessageId;
         if (!text || text.length > MAX_TEXT_LENGTH) {
             throw new HttpsError('invalid-argument', 'Сообщение должно содержать от 1 до 4000 символов');
+        }
+        if (!validId(clientMessageId, 128)) {
+            throw new HttpsError('invalid-argument', 'Некорректный идентификатор отправки');
         }
 
         const db = getFirestore();
         const chatRef = db.collection('chats').doc(chatId);
-        const messageRef = chatRef.collection('messages').doc();
+        const messageRef = chatRef.collection('messages').doc(clientMessageId);
         try {
             const result = await db.runTransaction(async transaction => {
-                const chat = await transaction.get(chatRef);
+                const [chat, existingMessage] = await Promise.all([
+                    transaction.get(chatRef),
+                    transaction.get(messageRef)
+                ]);
                 const membership = chat.exists ? participantData(chat, actorUid) : null;
                 if (!membership) {
                     throw new HttpsError('permission-denied', 'Нет доступа к этому диалогу');
+                }
+
+                if (existingMessage.exists) {
+                    const existing = existingMessage.data() || {};
+                    if (existing.senderId !== actorUid || existing.text !== text) {
+                        throw new HttpsError('already-exists', 'Идентификатор отправки уже использован');
+                    }
+                    return { messageId: messageRef.id, receiverUid: membership.partnerUid, duplicate: true };
                 }
 
                 const receiverUid = membership.partnerUid;
@@ -220,6 +235,7 @@ function createChatCallables({ onCall, HttpsError, getFirestore, FieldValue }) {
                 transaction.create(messageRef, {
                     senderId: actorUid,
                     text,
+                    clientMessageId,
                     createdAt: timestamp,
                     read: false,
                     edited: false
@@ -242,7 +258,7 @@ function createChatCallables({ onCall, HttpsError, getFirestore, FieldValue }) {
                     read: false,
                     createdAt: timestamp
                 });
-                return { messageId: messageRef.id, receiverUid };
+                return { messageId: messageRef.id, receiverUid, duplicate: false };
             });
             return { success: true, ...result };
         } catch (error) {

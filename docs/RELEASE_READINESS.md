@@ -123,5 +123,6 @@
 - Sending derives sender and receiver from Auth + canonical membership, bounds text to 4,000 characters, and atomically writes the message, both summaries, unread count and a notification that does not contain message text.
 - History returns the latest 50 messages through an allowlisted projection; outsiders cannot access history or receipts.
 - Added Chat V2 unit tests and included them in both root and Functions test runners.
+- Added Firestore Emulator integration scenarios for membership, message writes, content-free notifications and read receipts; execution is pending.
 
-**Still NOT DONE:** run exact-HEAD CI; add real Firestore Emulator authorization/transaction coverage; migrate the browser ChatService/RealtimeService and UI behind a closed feature gate; preserve legacy conversations through an idempotent migration rehearsal; test two real accounts in staging. Editing/deleting messages and group chats are not included in this backend batch. No deployment, Rules expansion or data migration has occurred.
+**Still NOT DONE:** run exact-HEAD CI and confirm Firestore Emulator authorization/transaction coverage passes; migrate the browser ChatService/RealtimeService and UI behind a closed feature gate; preserve legacy conversations through an idempotent migration rehearsal; test two real accounts in staging. Editing/deleting messages and group chats are not included in this backend batch. No deployment, Rules expansion or data migration has occurred.

@@ -182,3 +182,22 @@ test('inventory CLI accepts only the exact explicitly allowed non-production pro
         ambientProjectId: 'dream-and-go-staging'
     }), true);
 });
+
+test('divergent reciprocal previews and malformed summary metadata are reported', () => {
+    const inventory = buildLegacyChatInventory({
+        summaries: [
+            summary('alice', 'bob'),
+            summary('bob', 'alice', {
+                lastMessage: 'different preview',
+                lastMessageTime: null,
+                unread: -1
+            })
+        ],
+        messagesByChat: { alice_bob: [message('message-1')] }
+    });
+
+    const codes = inventory.manifest.pairs[0].issues;
+    assert.ok(codes.includes('reciprocal-summary-preview-mismatch'));
+    assert.ok(codes.includes('invalid-summary-last-message-time'));
+    assert.ok(codes.includes('invalid-summary-unread'));
+});

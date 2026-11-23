@@ -216,7 +216,7 @@ test('private inbox returns only canonical chats owned by the authenticated user
     assert.equal(result.chats.length, 1);
     assert.equal(result.chats[0].chatId, chatId);
     assert.equal(result.chats[0].partnerId, 'bob');
-    assert.equal(result.chats[0].partnerName, 'Пользователь');
+    assert.equal(result.chats[0].partnerName, 'bob');
     const outsider = await ctx.callables.getMyPrivateChatsV2({
         auth: { uid: 'mallory' }, data: {}
     });

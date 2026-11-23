@@ -293,3 +293,9 @@
 - [x] Confirmed the serial Firestore/Auth Emulator command includes the synthetic backup restore test through the `*emulator.test.js` pattern.
 - [x] Confirmed Chromium offline queue tests run separately before the Emulator suite, followed by syntax validation.
 - [ ] Static review only: exact-HEAD Actions execution and job logs remain unverified.
+
+### Latest Emulator CI failure and correction — 2026-11-23
+
+- [x] Run `45181585519` confirmed Unit and Chromium jobs passed, but Emulator suite had two failures: unsupported Admin SDK `Bytes` import in restore test and missing reciprocal friendship in read-test fixture.
+- [x] Both test-only issues corrected on `integration/v1.0-reconciliation`.
+- [ ] Await latest exact-HEAD Actions run; release remains NOT READY until all checks and staging gates pass.

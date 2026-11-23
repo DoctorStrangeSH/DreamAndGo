@@ -289,3 +289,12 @@ This pass inspected the integration-branch browser service implementations, not 
 - [x] Missing/invalid relationship timestamps remain null rather than being replaced with the current time.
 - [ ] Run exact-HEAD unit, Emulator, browser and syntax CI; no successful run is available yet.
 - [ ] Complete real browser two-account acceptance and callable transport/App Check verification.
+
+### Friends UI race and duplicate-action protection — 2026-11-23
+
+- [x] Username search now ignores both stale successful responses and stale error responses after switching tabs or starting a newer search.
+- [x] Accept, reject, cancel and remove buttons disable while their callable action is in flight, preventing accidental duplicate submissions; controls are re-enabled after a reported failure.
+- [x] Reject now refreshes the currently active relationship list through the shared refresh path.
+- [x] Removed obsolete subscription-state fields left behind after the Firestore realtime listeners were retired.
+- [ ] Execute unit, browser, Emulator and syntax checks on exact HEAD; this branch has not yet produced an observed passing CI run.
+- [ ] Real two-account browser acceptance and HTTPS Callable/App Check transport checks remain pending.

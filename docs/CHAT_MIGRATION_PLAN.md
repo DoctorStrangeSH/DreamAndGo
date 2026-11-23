@@ -259,3 +259,10 @@ Final validation note: consolidated CI must run against the current branch HEAD 
 - [x] Added isolated tests for repository paths, symlink traversal, and valid external destinations.
 - [ ] Exact-HEAD Unit, syntax, and Emulator CI remain pending.
 - [ ] No Firebase staging export, restore, or migration was executed.
+
+### Offline verifier regression coverage — 2026-11-23
+
+- [x] Added `server/chat-migration-backup-verify.test.js` to the root `npm test` command; it was previously omitted from the workflow's unit-test entry point.
+- [x] Corrected the verifier test fixture to include the same explicit staging project ID in the Inventory manifest that the Backup binds to.
+- [ ] Exact-HEAD CI execution is still unconfirmed. The workflow file is configured for pushes to this integration branch, but the available commit-run lookup only exposes pull-request-triggered runs.
+- [ ] No live Firebase export, restore, or migration was executed.

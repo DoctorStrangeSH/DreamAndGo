@@ -35,3 +35,5 @@
 - Интеграционные аудиты фиксируют технические ограничения и безопасный путь миграции.
 
 Не отмечайте задачу выполненной только потому, что создан файл или написан модуль. Для DONE требуется проверяемый результат: тесты, интеграция с UI, обработка ошибок и приёмка, если они требуются ТЗ.
+
+- [Chat V2 legacy conversation migration plan](CHAT_MIGRATION_PLAN.md) — read-only inventory, backup, dry-run, staging rehearsal, idempotency and rollback; no migration is authorized.

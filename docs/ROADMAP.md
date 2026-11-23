@@ -482,7 +482,8 @@
 - [x] Export includes all user chat summaries and root chat message documents; inventory distinguishes legacy candidates from existing V2 and group records.
 - [x] Existing canonical Chat V2 summaries are now explicitly skipped by the legacy inventory and covered by a regression test.
 - [x] Requires exact staging allowlist and explicit non-production confirmation; production project remains blocked; local output is owner-only and exclusive-create.
-- [ ] Exact-HEAD CI pending; real staging export and backup read-back remain unperformed.
+- [x] CI passed on `496b968e`: 174 unit, 4 Chromium, 23 Emulator tests; syntax passed for 99 JavaScript files.
+- [ ] CI for the latest parent-document backup completeness fix is pending; real staging export and backup read-back remain unperformed.
 
 
 ### Backup export hardening and V2 summary reconciliation — 2026-11-23
@@ -496,4 +497,8 @@
 
 
 - [x] Backup CLI syntax issue found by process-level tests and corrected.
-- [ ] Full CI rerun on corrected CLI commit pending.
+- [x] Full CI passed on corrected CLI commit `496b968e`.
+
+
+- [x] Backup exporter now includes all root `chats/{chatId}` parent documents, even when a chat has no messages, to preserve chat metadata for restore/review.
+- [ ] CI for this latest completeness fix pending; real staging backup remains blocked on staging project access.

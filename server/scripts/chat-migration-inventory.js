@@ -3,9 +3,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
-import { buildLegacyChatInventory, legacyChatId } from '../chat-migration-inventory.js';
-
-const PRODUCTION_PROJECT_IDS = new Set(['dream-and-go']);
+import { assertSafeInventoryTarget, buildLegacyChatInventory, legacyChatId } from '../chat-migration-inventory.js';
 
 function readArguments(argv) {
     const args = {};
@@ -63,15 +61,12 @@ async function main() {
     if (!projectId || !outputDir || !args.confirmNonProduction) {
         throw new Error('Нужны --project-id, --output-dir и --confirm-non-production.\\n\\n' + usage());
     }
-    if (PRODUCTION_PROJECT_IDS.has(projectId)) {
-        throw new Error('Отказ: production Firebase project запрещён для этого инструмента.');
-    }
-    if (process.env.CHAT_MIGRATION_ALLOWED_PROJECT_ID !== projectId) {
-        throw new Error('Отказ: CHAT_MIGRATION_ALLOWED_PROJECT_ID должен точно совпадать с --project-id.');
-    }
-    if (process.env.GCLOUD_PROJECT && process.env.GCLOUD_PROJECT !== projectId) {
-        throw new Error('Отказ: GCLOUD_PROJECT не совпадает с явно указанным project ID.');
-    }
+    assertSafeInventoryTarget({
+        projectId,
+        allowedProjectId: process.env.CHAT_MIGRATION_ALLOWED_PROJECT_ID,
+        confirmedNonProduction: args.confirmNonProduction,
+        ambientProjectId: process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT
+    });
 
     const resolvedOutputDir = path.resolve(outputDir);
     const app = initializeApp({ projectId }, `chat-migration-inspector-${projectId}`);

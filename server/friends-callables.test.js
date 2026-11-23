@@ -212,6 +212,14 @@ test('a removed friend can be requested and accepted again without counter drift
     assert.equal(ctx.records.get('users/user-b/friends/user-a').friendId, 'user-a');
     assert.equal(ctx.records.has('users/user-b/friendRequests/user-a'), false);
     assert.equal(ctx.records.has('users/user-a/sentRequests/user-b'), false);
+    await assert.rejects(ctx.callables.acceptFriendRequestV1({
+        auth: { uid: 'user-b' }, data: { targetUid: 'user-a' }
+    }), error => error.code === 'not-found');
+    assert.equal(ctx.records.get('users/user-a').stats.friends, 1);
+    assert.equal(ctx.records.get('users/user-b').stats.friends, 1);
+    const acceptedNotifications = [...ctx.records.entries()]
+        .filter(([path, value]) => path.startsWith('users/user-a/notifications/') && value.type === 'friend_accepted');
+    assert.equal(acceptedNotifications.length, 1);
 });
 
 test('removing a one-sided legacy friendship only decrements the owner with a real record', async () => {

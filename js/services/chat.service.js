@@ -137,7 +137,7 @@ export class ChatService {
                 return { success: true };
             } catch (error) {
                 console.error('Ошибка отправки Chat V2:', error);
-                return { success: false, error: error.message };
+                return { success: false, error: error.message, code: error.code || null };
             }
         }
 

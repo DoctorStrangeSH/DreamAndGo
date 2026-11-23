@@ -245,7 +245,7 @@
 
 - [x] Added deterministic pure backup builder and verifier with Firestore value type preservation and per-document/bundle checksums.
 - [x] Added synthetic tests for deterministic output, tamper detection, invalid paths and unsupported value types.
-- [ ] Exact-HEAD CI pending.
+- [x] CI passed on `496b968e`: 174 unit tests, 4 Chromium tests, 23 Emulator tests; syntax passed for 99 JavaScript files.
 - [ ] No staging export or real backup has been performed; a separate staging project and read-only credentials are still required.
 
 
@@ -254,7 +254,7 @@
 - [x] Added read-only Admin SDK export CLI with project allowlist, explicit non-production confirmation, exclusive output creation and owner-only local permissions.
 - [x] Backup contains all user chat summaries and root chat message documents; inventory is generated from the same fetched snapshot.
 - [x] Canonical V2 summary documents are excluded from legacy migration candidates by exact canonical ID verification.
-- [ ] Exact-HEAD CI pending.
+- [x] CI passed on `496b968e`: 174 unit tests, 4 Chromium tests, 23 Emulator tests; syntax passed for 99 JavaScript files.
 - [ ] No staging export has been run; staging credentials and project ID are not yet available.
 
 
@@ -263,5 +263,10 @@
 - [x] Canonical Chat V2 summaries are explicitly excluded from legacy candidate pairs, with a regression test.
 - [x] Added staging-only read-only backup export command; it writes private backup, inventory and report files outside the repository.
 - [x] Production refusal and explicit non-production confirmation are covered by process-level preflight tests.
-- [ ] Exact-HEAD CI pending.
+- [x] CI passed on `496b968e`: 174 unit tests, 4 Chromium tests, 23 Emulator tests; syntax passed for 99 JavaScript files.
 - [ ] Real staging export and backup read-back remain unperformed; production remains untouched.
+
+
+- [x] Full CI green on `496b968e`; latest backup completeness refinement additionally includes every root chat parent document.
+- [ ] Exact-HEAD CI for the parent-document inclusion refinement pending.
+- [ ] No real staging export has been run; production remains untouched.

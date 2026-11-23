@@ -123,3 +123,8 @@ CHAT_MIGRATION_ALLOWED_PROJECT_ID=<exact-staging-project-id> \\
 ```
 
 The output directory contains `legacy-chat-manifest.json` and `legacy-chat-report.md`. Keep it private: the manifest contains participant UIDs and source document paths, but no message plaintext.
+
+
+### Inventory coverage note — 2026-11-23
+
+The read-only inspector's total `messageDocuments` count includes both messages in validated participant pairs and messages in orphan collections. `pairedMessageDocuments` and `orphanMessageDocuments` are reported separately so totals cannot silently omit orphaned records. The manifest remains private because it contains participant UIDs, document paths, and message metadata/hashes.

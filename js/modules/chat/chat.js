@@ -199,6 +199,7 @@ export class ChatModule {
 
         const deleteChatButton = document.getElementById('deleteChatBtn');
         if (deleteChatButton) deleteChatButton.classList.toggle('d-none', this.chatService.isV2Enabled);
+        document.getElementById('editMode')?.classList.toggle('d-none', this.chatService.isV2Enabled);
         const messagesContainer = document.getElementById('chatMessages');
 
         this.unsubscribeMessages = window.app.realtimeService.subscribeToMessages(chatId, (messages) => {
@@ -229,8 +230,9 @@ export class ChatModule {
                     <div class="message-meta">
                         <small class="message-time">${time}</small>
                         ${message.edited ? '<small class="text-muted ms-1">изм.</small>' : ''}
+                        ${isMine && this.chatService.isV2Enabled ? (message.read ? '<i class="bi bi-check2-all text-primary ms-1" title="Прочитано"></i>' : '<i class="bi bi-check2 text-muted ms-1" title="Отправлено"></i>') : ''}
                     </div>
-                    ${isMine ? `
+                    ${isMine && !this.chatService.isV2Enabled ? `
                         <div class="message-actions">
                             <button class="btn btn-sm btn-link p-0 edit-msg-btn" data-msg-id="${escapeHTML(safeDocumentId(message.id))}">
                                 <i class="bi bi-pencil"></i>

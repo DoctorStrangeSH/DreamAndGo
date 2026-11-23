@@ -330,8 +330,28 @@
 - [x] New-message notification contains no message body.
 - [x] Added callable unit tests and registered them in both test runners.
 - [x] Added Firestore Emulator integration scenarios for participant access, message writes, notification privacy and read receipts.
-- [ ] Exact-HEAD CI and successful Firestore Emulator execution.
-- [ ] Migrate browser ChatService, RealtimeService and chat UI to the callable contract with rollout gate closed by default.
+- [x] Add callable Emulator coverage and Firestore Rules Emulator matrix (execution pending).
+- [ ] Exact-HEAD CI and successful callable/Rules Emulator execution.
+- [x] Add gated ChatV2Service, callable-backed contacts/create/send/history/read receipts and account-scoped chat session cleanup.
+- [x] Move inbox and message updates to read-only Firestore listeners backed by candidate participant/owner Rules; client chat writes remain denied.
+- [x] Add 50-message cursor pagination and scroll-to-load-older UI.
+- [x] Add stable client message IDs and server-side idempotent retry handling.
 - [ ] Legacy conversation migration rehearsal; preserve all existing messages.
 - [ ] Two-account staging acceptance.
 - Scope lock: one-to-one private chat only in v1.0; group chat remains post-v1.0.
+
+
+### Chat V2 browser and access-control integration — 2026-11-23
+
+- [x] Added a feature-gated browser service for Chat V2 callable operations.
+- [x] Routed contact discovery, private chat creation, message send, history, read receipts and inbox projection through trusted callables.
+- [x] Added read-only Firestore subscriptions for owner inbox summaries and participant message history.
+- [x] Added path-specific candidate Rules: public profile projection read, owner inbox read, participant chat/message read; all chat client writes denied.
+- [x] Added stable client message IDs and idempotent same-ID retries.
+- [x] Added 50-message cursor pagination and scroll-based older-history loading.
+- [x] Stop listeners and clear account-scoped chat state on logout/account switch.
+- [ ] Block/unblock enforcement and UI.
+- [ ] Persistent AES-GCM outbox and safe reconnect/retry across reloads.
+- [ ] Legacy chat migration rehearsal and preservation verification.
+- [ ] Exact-HEAD CI, callable/Rules Emulator execution and two-account staging acceptance.
+- Rollout flags remain false; no Firebase deployment or production Rules change.

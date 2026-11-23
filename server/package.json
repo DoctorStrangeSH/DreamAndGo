@@ -12,7 +12,8 @@
     "chat:inventory": "node scripts/chat-migration-inventory.js",
     "test:chat-inventory": "node --test chat-migration-inventory.test.js",
     "test:chat-backup": "node --test chat-migration-backup.test.js",
-    "chat:backup": "node scripts/chat-migration-backup.js"
+    "chat:backup": "node scripts/chat-migration-backup.js",
+    "chat:verify-backup": "node scripts/chat-migration-backup-verify.js"
   },
   "dependencies": {
     "firebase-admin": "^13.0.0",

@@ -147,6 +147,14 @@ function createFriendCallables({ onCall, HttpsError, getFirestore, FieldValue })
                 if (!actor.exists || !target.exists || !incoming.exists || !outgoing.exists) {
                     throw new HttpsError('not-found', 'Заявка больше не существует');
                 }
+                const incomingData = incoming.data() || {};
+                const outgoingData = outgoing.data() || {};
+                if (incomingData.from !== targetUid || incomingData.to !== actorUid ||
+                    incomingData.status !== 'pending' ||
+                    outgoingData.from !== targetUid || outgoingData.to !== actorUid ||
+                    outgoingData.status !== 'pending') {
+                    throw new HttpsError('failed-precondition', 'Заявка не прошла проверку целостности');
+                }
                 if (actorFriend.exists || targetFriend.exists) {
                     throw new HttpsError('already-exists', 'Связь уже существует');
                 }
@@ -200,6 +208,14 @@ function createFriendCallables({ onCall, HttpsError, getFirestore, FieldValue })
                 ]);
                 if (!incoming.exists || !outgoing.exists) {
                     throw new HttpsError('not-found', 'Заявка больше не существует');
+                }
+                const incomingData = incoming.data() || {};
+                const outgoingData = outgoing.data() || {};
+                if (incomingData.from !== senderUid || incomingData.to !== recipientUid ||
+                    incomingData.status !== 'pending' ||
+                    outgoingData.from !== senderUid || outgoingData.to !== recipientUid ||
+                    outgoingData.status !== 'pending') {
+                    throw new HttpsError('failed-precondition', 'Заявка не прошла проверку целостности');
                 }
                 transaction.delete(incomingRef);
                 transaction.delete(outgoingRef);

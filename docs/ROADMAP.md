@@ -567,3 +567,9 @@
 - [x] Inventory and Backup CLIs share real-path validation based on the repository root, including protection against symlinks pointing into the repository.
 - [x] Added tests for repository-local paths, symlink traversal, and valid external output locations.
 - [ ] Exact-HEAD CI remains pending; no Firebase data was exported or modified.
+
+### Offline verifier test suite wired into root CI — 2026-11-23
+
+- [x] Added the existing backup-verifier regression suite to root `npm test`; previously it was not part of the workflow's unit-test command.
+- [x] Corrected its synthetic Inventory fixture to carry the explicit staging Project ID.
+- [ ] Exact-HEAD CI remains unconfirmed; no live Firebase data was exported or restored.

@@ -769,3 +769,7 @@
 - [x] Identified Friends read Emulator fixture failure: new reciprocal relationship validation correctly hid the friend because the fixture seeded only one side; fixture now seeds both reciprocal records.
 - [ ] Wait for exact-HEAD CI after both fixes; no green result claimed yet.
 - [ ] If CI exposes further Emulator failures, fix each against its real log and rerun before closing Friends/Chat V2.
+
+### Exact-HEAD CI trigger — 2026-11-23
+
+- [ ] Verify the latest Emulator fixture corrections and full workflow on the branch HEAD; earlier runs were cancelled by rapid successive pushes.

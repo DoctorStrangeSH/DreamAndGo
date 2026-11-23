@@ -361,6 +361,31 @@ test('recipient can mark a message read once and unread count is owner-scoped', 
     }), error => error.code === 'permission-denied');
 });
 
+test('batch read receipts update only incoming unread messages once', async () => {
+    const ctx = createHarness(friendSeed());
+    const { chatId } = await createChat(ctx);
+    const first = await ctx.callables.sendPrivateMessageV2({
+        auth: { uid: 'alice' },
+        data: { chatId, text: 'first', clientMessageId: 'batch-read-1' }
+    });
+    const second = await ctx.callables.sendPrivateMessageV2({
+        auth: { uid: 'alice' },
+        data: { chatId, text: 'second', clientMessageId: 'batch-read-2' }
+    });
+    const result = await ctx.callables.markPrivateMessagesReadV2({
+        auth: { uid: 'bob' }, data: { chatId, messageIds: [first.messageId, second.messageId] }
+    });
+    assert.deepEqual(result, { success: true, updated: 2 });
+    assert.equal(ctx.records.get(`users/bob/chats/${chatId}`).unread, 0);
+    const repeated = await ctx.callables.markPrivateMessagesReadV2({
+        auth: { uid: 'bob' }, data: { chatId, messageIds: [first.messageId, second.messageId] }
+    });
+    assert.deepEqual(repeated, { success: true, updated: 0 });
+    await assert.rejects(ctx.callables.markPrivateMessagesReadV2({
+        auth: { uid: 'mallory' }, data: { chatId, messageIds: [first.messageId] }
+    }), error => error.code === 'permission-denied');
+});
+
 test('message payload is bounded and cannot forge sender identity', async () => {
     const ctx = createHarness(friendSeed());
     const { chatId } = await createChat(ctx);

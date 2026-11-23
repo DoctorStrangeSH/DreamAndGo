@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import { chmod, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { assertOutputDirectoryOutsideRepository } from '../chat-migration-paths.js';
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { assertSafeInventoryTarget, buildLegacyChatInventory, legacyChatId } from '../chat-migration-inventory.js';
@@ -68,14 +70,8 @@ async function main() {
         ambientProjectId: process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT
     });
 
-    const resolvedOutputDir = path.resolve(outputDir);
-    const relativeOutputPath = path.relative(process.cwd(), resolvedOutputDir);
-    const isInsideRepository = relativeOutputPath === '' ||
-        relativeOutputPath === '..' ||
-        (!relativeOutputPath.startsWith('..' + path.sep) && !path.isAbsolute(relativeOutputPath));
-    if (resolvedOutputDir === path.parse(resolvedOutputDir).root || isInsideRepository) {
-        throw new Error('Отчёт Inventory нужно сохранять вне рабочей папки репозитория');
-    }
+    const repositoryRoot = fileURLToPath(new URL('../../', import.meta.url));
+    const resolvedOutputDir = await assertOutputDirectoryOutsideRepository(outputDir, repositoryRoot);
 
     const app = initializeApp({ projectId }, `chat-migration-inspector-${projectId}`);
     const db = getFirestore(app);

@@ -515,7 +515,7 @@
 
 ### Main / integration reconciliation — 2026-11-23
 
-- [x] Rechecked branch divergence: `integration/v1.0-reconciliation` is 497 commits ahead and 3 behind `main`; merge base is `f02171c362d5944143a1202f425cd96f2386348f`.
+- [x] Rechecked branch divergence: `integration/v1.0-reconciliation` is 546 commits ahead and 3 behind `main`; merge base is `f02171c362d5944143a1202f425cd96f2386348f`.
 - [x] Inspected the three main-side changes since the merge base. They overlap with existing integration files: `docs/CHAT_MIGRATION_PLAN.md`, `server/chat-migration-backup-cli.test.js`, and `server/scripts/chat-migration-backup.js`.
 - [x] Confirmed the integration backup exporter includes root `chats/{chatId}` parent documents and runs `verifyChatMigrationBackup` before creating output; the current main variant omits parent documents and does not invoke the verifier.
 - [x] Confirmed the integration CLI test checks the self-verification gate and Firestore read-only behavior. The main-side test is a separate implementation and must not overwrite the stronger integration coverage.
@@ -573,3 +573,14 @@
 - [x] Added the existing backup-verifier regression suite to root `npm test`; previously it was not part of the workflow's unit-test command.
 - [x] Corrected its synthetic Inventory fixture to carry the explicit staging Project ID.
 - [ ] Exact-HEAD CI remains unconfirmed; no live Firebase data was exported or restored.
+
+
+### Branch reconciliation recheck — 2026-11-23 (latest audit)
+
+- [x] Rechecked live GitHub refs: only four branches remain — `main`, `integration/v1.0-reconciliation`, `refactor/security-foundation`, and `docs/product-spec-v1`.
+- [x] Current integration divergence is 546 commits ahead / 3 behind `main`; merge base remains `f02171c362d5944143a1202f425cd96f2386348f`.
+- [x] Reviewed all three main-side commits after the merge base. They overlap integration work in the migration plan, backup CLI regression tests, and backup exporter.
+- [x] Kept integration's stronger backup behavior as the candidate: it includes root chat parent documents and verifies the complete backup bundle before creating output files. The current main-side exporter variant lacks those two safeguards.
+- [ ] Do not merge PR #1 or reconcile refs until the overlapping changes have a reviewed, tested resolution. PR #1 still targets `refactor/security-foundation` and reports 1,626 commits / 331 changed files; it is not a safe substitute for the integration candidate.
+- [ ] Exact-HEAD Actions result is still not visible through the available commit status/run lookup. A configured workflow is not a passing CI result.
+- **Safety:** no branches were deleted or rewritten; no PR merged; no Firebase/Firestore production data or configuration touched.

@@ -12,6 +12,7 @@ export class ChatModule {
         this.unsubscribeMessages = null;
         this.unsubscribeChats = null;
         this.editMessageId = null;
+        this.partnerProfiles = new Map();
     }
 
     async render() {
@@ -128,6 +129,12 @@ export class ChatModule {
                         ? `<span class="badge bg-primary rounded-pill">${unreadCount}</span>`
                         : '';
                     this.chatService.rememberChatId(window.app.currentUser.uid, chat.partnerId, chat.chatId || chat.id);
+                    this.partnerProfiles.set(chat.partnerId, {
+                        uid: chat.partnerId,
+                        username: chat.partnerName,
+                        displayName: chat.partnerName,
+                        avatar: chat.partnerAvatar || null
+                    });
                     const isActive = this.currentChat === chat.partnerId;
 
                     return `
@@ -178,7 +185,8 @@ export class ChatModule {
         document.getElementById('noChatSelected').style.display = 'none';
         document.getElementById('activeChat').style.display = 'block';
 
-        const partnerData = await window.app.realtimeService.getUserProfile(partnerId);
+        const partnerData = this.partnerProfiles.get(partnerId) ||
+            (this.chatService.isV2Enabled ? null : await window.app.realtimeService.getUserProfile(partnerId));
         document.getElementById('chatPartnerName').textContent = '@' + (partnerData?.username || 'Пользователь');
         document.getElementById('chatPartnerAvatar').innerHTML = `
             <div class="chat-avatar-placeholder">${escapeHTML(String(partnerData?.username || 'U').charAt(0).toUpperCase())}</div>
@@ -380,7 +388,10 @@ export class ChatModule {
         document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
         document.body.classList.remove('modal-open');
 
-        const friends = await this.friendsService.getFriends(window.app.currentUser.uid);
+        const friends = this.chatService.isV2Enabled
+            ? await this.chatService.chatV2.getContacts()
+            : await this.friendsService.getFriends(window.app.currentUser.uid);
+        friends.forEach(friend => this.partnerProfiles.set(friend.uid, friend));
 
         const container = document.createElement('div');
         container.id = 'newChatModalContainer';

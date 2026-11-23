@@ -80,6 +80,18 @@
 
 Это не разрешение расширять Firestore Rules. До завершения соответствующей серверной миграции эти пути остаются закрытыми.
 
+## Friend operations — candidate implementation added
+
+- Added App Check-enforced callables for sending, accepting, rejecting, cancelling and removing friend relationships.
+- Actor identity is derived from callable Auth context; mutation payloads accept only `targetUid`.
+- Reciprocal friendship/request records, friend counters and friend-event notifications are changed in trusted Firestore transactions.
+- Browser friend mutation methods now call the server adapter and no longer write cross-user documents directly.
+- Friend cards and username lookup now read from `publicProfiles`, not private `users` documents.
+- UI now reports callable failures instead of showing success after a rejected request.
+- Added unit tests for auth, payload validation, duplicate requests, recipient-only acceptance, cancellation/rejection, reciprocal records and counter updates.
+
+**Still NOT DONE:** run unit tests and Emulator tests on the exact candidate HEAD; stage Functions/App Check configuration; validate public-profile Rules and all friend-list/request listener reads; two-account staging. Do not enable the backend-ready flag or deploy.
+
 ## Следующий инженерный этап
 
 Продолжать строго в таком порядке:

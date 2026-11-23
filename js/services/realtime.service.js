@@ -81,6 +81,42 @@ export class RealtimeService {
         const key = `chats_${userId}`;
         this.unsubscribe(key);
 
+        if (this.chatV2.isEnabled) {
+            let active = true;
+            let loading = false;
+            let lastSignature = null;
+            const refresh = async () => {
+                if (!active || loading) return;
+                loading = true;
+                try {
+                    const chats = await this.chatV2.getChats();
+                    const signature = JSON.stringify(chats.map(chat => [
+                        chat.chatId, chat.partnerId, chat.lastMessage, chat.lastMessageTime?.getTime?.(),
+                        chat.unread, chat.partnerName, chat.partnerAvatar
+                    ]));
+                    if (active && signature !== lastSignature) {
+                        lastSignature = signature;
+                        callback(chats);
+                    }
+                } catch (error) {
+                    console.error('Ошибка загрузки списка Chat V2:', error);
+                    if (active && lastSignature === null) callback([]);
+                } finally {
+                    loading = false;
+                }
+            };
+
+            void refresh();
+            const timer = window.setInterval(refresh, 5000);
+            const unsubscribe = () => {
+                active = false;
+                window.clearInterval(timer);
+                if (this.listeners[key] === unsubscribe) delete this.listeners[key];
+            };
+            this.listeners[key] = unsubscribe;
+            return unsubscribe;
+        }
+
         const chatsRef = collection(this.db, 'users', userId, 'chats');
         const q = query(chatsRef, orderBy('lastMessageTime', 'desc'));
 

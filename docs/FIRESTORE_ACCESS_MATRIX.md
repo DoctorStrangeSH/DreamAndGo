@@ -51,6 +51,50 @@ This is an implementation review, not a permission grant. The checked-in rules r
 - [ ] Run two-account staging for privacy boundaries and core user flows.
 - [ ] Only then propose a reviewed Rules deployment.
 
+## Execution batches — required before any Rules expansion
+
+The current deny-all Rules are intentional. Do not replace them with broad owner access: several legacy services still perform cross-user writes or mutate server-owned values.
+
+### Batch 1 — identity and profile boundary
+- [x] AuthService private profile reads use `getMyProfileV1`.
+- [x] Settings profile edits use `updateMyProfileV1`.
+- [x] Public profile data is shaped by a server-side allowlist.
+- [ ] Wire and verify App Check + callable transport in staging.
+- [ ] Verify public profile reads only from `publicProfiles/{uid}`; never expose `users/{uid}` to unrelated users.
+
+### Batch 2 — friends and notifications
+- [ ] Move friend-request creation, acceptance, rejection and removal behind authenticated server operations.
+- [ ] Every operation derives the actor UID from callable auth context; client-supplied actor IDs are ignored/rejected.
+- [ ] Write only the caller's own inbox/outbox records directly, or keep all cross-user state changes in a transaction on trusted server.
+- [ ] Move notification creation to trusted server operations; clients may only read their own notifications and mark an allowlisted read field.
+- [ ] Derive notification text/type/target from server-validated events; never accept arbitrary notification payloads from clients.
+- [ ] Add idempotency and duplicate-request handling.
+- [ ] Emulator matrix: anonymous, requester, recipient, unrelated user; verify no caller can mutate another user's friend or notification records.
+
+### Batch 3 — chat
+- [ ] Establish canonical server-owned chat membership metadata before allowing message access.
+- [ ] Migrate create/send/read/unread/receipt operations to participant-authorized callables or Rules backed by trusted membership documents.
+- [ ] Reject client-selected sender identity and recipient identity that do not match authenticated UID and verified membership.
+- [ ] Keep message content private; do not put message text in notification payloads or logs.
+- [ ] Emulator matrix: participant A, participant B, unrelated C, anonymous; test list queries and direct document reads/writes.
+- [ ] Preserve old conversations through an idempotent migration rehearsal; do not enable chat rollout before two-account staging.
+
+### Batch 4 — progression, tasks and user collections
+- [ ] Move XP, level, achievement and reward calculation to trusted server logic; the browser must not award or increment currency/XP directly.
+- [ ] Make daily task completion and reward claims atomic and idempotent; prevent replay and concurrent double claims.
+- [ ] For travels, restaurants, movies, books and dreams, implement owner-scoped CRUD with allowlisted fields and bounded input.
+- [ ] Validate immutable/server-managed fields on create and update.
+- [ ] Emulator matrix: owner CRUD succeeds; another authenticated user and anonymous user are denied; forged owner IDs and reward fields are rejected.
+
+### Batch 5 — Rules rollout gate
+- [ ] Every path in this matrix has an explicit rule or remains server-only.
+- [ ] Every rule has positive and negative Emulator tests, including query behavior.
+- [ ] All corresponding browser services use the approved callable or owner-scoped contract; no legacy direct writes remain for that path.
+- [ ] Full application regression and two-account staging pass on the exact candidate commit.
+- [ ] Only after review may a separate production Rules change be proposed.
+
+**Hard stop:** do not enable any broad `users/{uid}/**` read/write rule. It would grant access to nested friends, requests, notifications, chat summaries and progression records that have different trust requirements.
+
 ## Explicit non-actions
 
 - No Firestore Rules have been broadened.

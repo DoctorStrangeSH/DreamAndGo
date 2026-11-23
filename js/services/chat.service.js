@@ -16,15 +16,18 @@ export class ChatService {
         return this.chatV2.isEnabled;
     }
 
-    rememberChatId(partnerId, chatId) {
-        if (partnerId && chatId) this.chatIdsByPartner.set(partnerId, chatId);
+    rememberChatId(userId, partnerId, chatId) {
+        if (userId && partnerId && chatId) {
+            this.chatIdsByPartner.set(JSON.stringify([userId, partnerId]), chatId);
+        }
     }
 
-    getChatId(userId1, userId2) {
-        if (this.isV2Enabled && this.chatIdsByPartner.has(userId2)) {
-            return this.chatIdsByPartner.get(userId2);
+    getChatId(userId, partnerId) {
+        const key = JSON.stringify([userId, partnerId]);
+        if (this.isV2Enabled && this.chatIdsByPartner.has(key)) {
+            return this.chatIdsByPartner.get(key);
         }
-        return [userId1, userId2].sort().join('_');
+        return [userId, partnerId].sort().join('_');
     }
 
     async getChats(userId) {
@@ -66,7 +69,7 @@ export class ChatService {
                     throw new Error('Некорректный собеседник.');
                 }
                 const chatId = await this.chatV2.createPrivateChat(partnerId);
-                this.rememberChatId(partnerId, chatId);
+                this.rememberChatId(userId, partnerId, chatId);
                 return chatId;
             } catch (error) {
                 console.error('Ошибка создания Chat V2:', error);

@@ -9,6 +9,7 @@ import { createProfileCallables } from './profile-callables.js';
 import { buildPublicProfile } from './public-profile.js';
 import { createProfileAccountCallables } from './profile-account-callables.js';
 import { createFriendCallables } from './friends-callables.js';
+import { createFriendReadCallables } from './friends-read-callables.js';
 import { createNotificationCallables } from './notifications-callables.js';
 import { createChatCallables } from './chat-callables.js';
 
@@ -61,6 +62,12 @@ export const acceptFriendRequestV1 = friends.acceptFriendRequestV1;
 export const rejectFriendRequestV1 = friends.rejectFriendRequestV1;
 export const cancelFriendRequestV1 = friends.cancelFriendRequestV1;
 export const removeFriendV1 = friends.removeFriendV1;
+
+const friendReads = createFriendReadCallables({ onCall, HttpsError, getFirestore });
+
+export const getMyFriendsV1 = friendReads.getMyFriendsV1;
+export const getMyFriendRequestsV1 = friendReads.getMyFriendRequestsV1;
+export const getMySentFriendRequestsV1 = friendReads.getMySentFriendRequestsV1;
 
 const notifications = createNotificationCallables({ onCall, HttpsError, getFirestore });
 

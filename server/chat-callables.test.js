@@ -172,6 +172,19 @@ test('chat creation rejects self-chat and users who are not reciprocal friends',
     await assert.rejects(createChat(ctx), error => error.code === 'permission-denied');
 });
 
+test('reopening a private chat repairs a missing owner inbox summary', async () => {
+    const ctx = createHarness(friendSeed());
+    const { chatId } = await createChat(ctx);
+    ctx.records.delete(`users/alice/chats/${chatId}`);
+    await createChat(ctx, 'bob', 'alice');
+    const repaired = ctx.records.get(`users/alice/chats/${chatId}`);
+    assert.equal(repaired.chatId, chatId);
+    assert.equal(repaired.partnerId, 'bob');
+    assert.equal(repaired.type, 'private');
+    assert.equal(repaired.unread, 0);
+    assert.ok(repaired.lastMessageTime);
+});
+
 test('message send derives sender and recipient from authenticated membership', async () => {
     const ctx = createHarness(friendSeed());
     const { chatId } = await createChat(ctx);

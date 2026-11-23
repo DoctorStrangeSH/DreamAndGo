@@ -286,3 +286,10 @@
 - [x] Verifier now recalculates inventory manifest checksum against actual contents and detects tampering.
 - [x] Synthetic tests cover valid read-back, modified backup message, project/checksum mismatch and modified inventory manifest.
 - [ ] Exact-HEAD CI pending; no staging export has been run.
+
+### CI wiring review — 2026-11-23
+
+- [x] Confirmed root unit command includes the offline backup verifier regression suites.
+- [x] Confirmed the serial Firestore/Auth Emulator command includes the synthetic backup restore test through the `*emulator.test.js` pattern.
+- [x] Confirmed Chromium offline queue tests run separately before the Emulator suite, followed by syntax validation.
+- [ ] Static review only: exact-HEAD Actions execution and job logs remain unverified.

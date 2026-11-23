@@ -388,5 +388,5 @@
 - [x] Offline sends and transient online transport failures enter the encrypted queue; the same client message ID is reused for retries.
 - [x] Reconnect triggers sequential delivery; successful records are removed, server permission denials are retained as blocked and not retried automatically.
 - [x] Pending local messages are shown in the active conversation with queued/blocked indicators; account switching stops the previous account's flush.
-- [x] Added crypto, tamper-detection, account-isolation and blocked-record Unit tests.
+- [x] Added Unit tests for AES-GCM encryption, tamper detection, account isolation, blocked records, stable-ID delivery, retry behavior and account switching.
 - [ ] Execute Unit and syntax suites on exact HEAD; browser IndexedDB and two-account offline/online acceptance remain pending.

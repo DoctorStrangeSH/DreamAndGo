@@ -154,7 +154,7 @@ function inspectMessage(message, participants) {
  * Build a deterministic, read-only inventory from already-read Firestore documents.
  * Message text is never copied into the report; only field metadata and SHA-256 hashes are emitted.
  */
-export function buildLegacyChatInventory({ summaries, messagesByChat, orphanMessageCollections = [] }) {
+export function buildLegacyChatInventory({ projectId, summaries, messagesByChat, orphanMessageCollections = [] }) {
     const issues = [];
     const ignoredSummaryPaths = [];
     const normalizedSummaries = [];
@@ -325,6 +325,7 @@ export function buildLegacyChatInventory({ summaries, messagesByChat, orphanMess
     const manifest = {
         schemaVersion: 1,
         source: 'legacy-chat-read-only-inventory',
+        ...(typeof projectId === 'string' ? { projectId } : {}),
         totals,
         ignoredSummaryPaths,
         skippedGroupSummaryPaths,

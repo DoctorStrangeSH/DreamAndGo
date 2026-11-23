@@ -474,3 +474,12 @@
 - [x] Added backup verifier and synthetic regression tests for tampering, duplicate paths, malformed paths and unsupported values.
 - [ ] Actual staging Firestore export, private file creation and read-back verification remain pending separate staging project access.
 - [ ] New backup tests are awaiting exact-HEAD CI.
+
+
+### Staging backup export CLI — 2026-11-23
+
+- [x] Added guarded read-only `server/scripts/chat-migration-backup.js`; builds inventory and checksummed backup from one Firestore read snapshot.
+- [x] Export includes all user chat summaries and root chat message documents; inventory distinguishes legacy candidates from existing V2 and group records.
+- [x] Existing canonical Chat V2 summaries are now explicitly skipped by the legacy inventory and covered by a regression test.
+- [x] Requires exact staging allowlist and explicit non-production confirmation; production project remains blocked; local output is owner-only and exclusive-create.
+- [ ] Exact-HEAD CI pending; real staging export and backup read-back remain unperformed.

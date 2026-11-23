@@ -555,3 +555,9 @@
 - [x] Reserved the serialization tag key, rejected malformed/unknown/extra-field tags, and added prototype-safe handling for special object keys.
 - [x] Added a Firestore Emulator restore integration test with synthetic documents, JSON read-back, native value checks, nested paths, source/target value re-encoding checks, idempotent replay, and cleanup.
 - [ ] Exact-HEAD Emulator and full CI results remain pending; no live staging dataset or Production data was touched.
+
+### Inventory report path protection — 2026-11-23
+
+- [x] Inventory CLI rejects filesystem roots and report output paths inside the repository before Firebase initialization.
+- [x] Added a process-level regression test proving rejection happens before credential lookup.
+- [ ] Exact-HEAD CI remains pending; no staging export or migration was executed.

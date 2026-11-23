@@ -352,7 +352,7 @@
 - [x] Added 50-message cursor pagination and scroll-based older-history loading.
 - [x] Batch read receipts for up to 50 incoming messages in a single transaction.
 - [x] Stop listeners and clear account-scoped chat state on logout/account switch.
-- [ ] Block/unblock enforcement and UI.
+- [x] Block/unblock enforcement and UI added; exact-HEAD test execution and two-account acceptance pending.
 - [ ] Persistent AES-GCM outbox and safe reconnect/retry across reloads.
 - [ ] Legacy chat migration rehearsal and preservation verification.
 - [ ] Exact-HEAD CI, callable/Rules Emulator execution and two-account staging acceptance.

@@ -234,6 +234,8 @@ test('orphan legacy message collections are reported for manual review without g
 
     assert.equal(inventory.manifest.totals.orphanMessageCollections, 1);
     assert.equal(inventory.manifest.totals.orphanMessageDocuments, 1);
+    assert.equal(inventory.manifest.totals.pairedMessageDocuments, 1);
+    assert.equal(inventory.manifest.totals.messageDocuments, 2);
     assert.equal(inventory.manifest.orphanMessageCollections[0].chatId, 'orphan_legacy_chat');
     assert.equal(inventory.manifest.orphanMessageCollections[0].messages[0].senderId, 'former-user');
     assert.ok(inventory.manifest.globalIssues.some(issue => issue.code === 'orphan-legacy-message-collection'));

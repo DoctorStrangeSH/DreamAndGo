@@ -16,8 +16,8 @@
 | Регистрация V2 | PARTIAL | Серверные callables, клиентский adapter, recovery flow и fail-closed rollout gates реализованы | Реальный App Check site key, staging Functions, HTTPS callable transport, Auth/App Check end-to-end |
 | Профиль и приватность | PARTIAL | Owner-scoped read/update callables, публичная allowlist-проекция и UI-настройки реализованы в candidate | Callable transport, Rules для публичной проекции, согласие и два реальных аккаунта в staging |
 | Username Registry | PARTIAL | Транзакционная резервация, уникальность и закрытый migration gate покрыты тестами | Legacy dry-run, collision report, backup, rollback rehearsal и подтверждённый backfill |
-| Firestore Rules | BLOCKED | Текущие candidate Rules deny-all; негативные Emulator-проверки подтверждают запрет доступа | Не реализованы и не приняты path-specific Rules; сначала согласовать client/service контракт и positive/negative matrix |
-| Chat V2 | NOT VERIFIED | В roadmap зафиксированы обязательные критерии | Backend authorization, history, receipts, blocking, client integration, Emulator matrix и two-account staging |
+| Firestore Rules | PARTIAL | Candidate Rules now allow only public projection reads, owner inbox reads and participant chat/message reads; client writes remain denied; Rules Emulator matrix added | Exact-HEAD Rules Emulator execution, remaining owner-scoped collection policies and staging acceptance |
+| Chat V2 | NOT VERIFIED | Server authorization, callable-backed client, read-only listeners, cursor history, receipts and mutual block controls are implemented in candidate | Exact-HEAD Unit/Emulator execution, encrypted offline outbox, legacy migration rehearsal, App Check transport and two-account staging |
 | Остальные MUST-модули | NOT VERIFIED | Требования перечислены в PRODUCT_SPEC и DELIVERY_PLAN | Реальная интеграция с UI, права доступа, сохранность данных и staging-приёмка каждого MUST-сценария |
 | Production rollout | BLOCKED | В этой ветке production Rules, Functions и данные не менялись | Отдельное подтверждение владельца после прохождения всех ворот |
 
@@ -138,7 +138,7 @@
 - Account changes unsubscribe realtime listeners and clear chat IDs, cached contacts and pending retry identifiers.
 - Added Firestore Rules Emulator coverage for participant A/B, unrelated C, anonymous users, owner inbox isolation, public projection reads and denied writes. Added callable Emulator coverage for inbox/contacts, idempotent sends, pagination, read receipts and membership.
 
-**Still NOT DONE:** execute exact-HEAD CI and both Emulator suites; confirm block/unblock tests and two-account behavior; persist the encrypted offline outbox and reconcile pending messages after reconnect/reload; rehearse legacy conversation migration without data loss; configure real App Check and staging callable transport; complete two-account browser acceptance. Do not enable `chat-v2-enabled`, change production Rules or deploy Functions before all gates pass.
+**Still NOT DONE:** execute exact-HEAD CI and both Emulator suites; confirm block/unblock behavior with two accounts; persist the encrypted offline outbox and reconcile pending messages after reconnect/reload; rehearse legacy conversation migration without data loss; configure real App Check and staging callable transport; complete two-account browser acceptance. Do not enable `chat-v2-enabled`, change production Rules or deploy Functions before all gates pass.
 
 
 ## CI quality gates — 2026-11-23

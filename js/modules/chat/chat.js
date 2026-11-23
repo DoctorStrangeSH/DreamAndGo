@@ -197,6 +197,11 @@ export class ChatModule {
     async openChat(partnerId, suppliedChatId = null) {
         const safePartnerId = safeDocumentId(partnerId);
         if (!safePartnerId) return;
+        const openRequestId = (this.openChatRequestId || 0) + 1;
+        this.openChatRequestId = openRequestId;
+        const isCurrentOpen = () => this.openChatRequestId === openRequestId &&
+            this.currentChat === safePartnerId && window.app.currentUser?.uid === userId;
+        const userId = window.app.currentUser.uid;
         this.currentChat = safePartnerId;
 
         if (this.unsubscribeMessages) {
@@ -204,7 +209,6 @@ export class ChatModule {
             this.unsubscribeMessages = null;
         }
 
-        const userId = window.app.currentUser.uid;
         if (this.chatService.isV2Enabled) this.chatService.chatV2.startOutbox(userId);
 
         document.getElementById('noChatSelected').style.display = 'none';
@@ -214,14 +218,18 @@ export class ChatModule {
         if (!partnerData && this.chatService.isV2Enabled) {
             try {
                 const contacts = await this.chatService.chatV2.getContacts();
+                if (!isCurrentOpen()) return;
                 partnerData = contacts.find(contact => contact.uid === partnerId) || null;
                 if (partnerData) this.partnerProfiles.set(partnerId, partnerData);
             } catch (error) {
+                if (!isCurrentOpen()) return;
                 console.error('Не удалось загрузить профиль собеседника:', error);
             }
         } else if (!partnerData) {
             partnerData = await window.app.realtimeService.getUserProfile(partnerId);
+            if (!isCurrentOpen()) return;
         }
+        if (!isCurrentOpen()) return;
         document.getElementById('chatPartnerName').textContent = '@' + (partnerData?.username || 'Пользователь');
         document.getElementById('chatPartnerAvatar').innerHTML = `
             <div class="chat-avatar-placeholder">${escapeHTML(String(partnerData?.username || 'U').charAt(0).toUpperCase())}</div>
@@ -230,7 +238,9 @@ export class ChatModule {
         let chatId = suppliedChatId || this.chatService.getChatId(userId, partnerId);
         if (this.chatService.isV2Enabled && (!suppliedChatId && chatId.includes('_'))) {
             chatId = await this.chatService.getOrCreateChat(userId, partnerId);
+            if (!isCurrentOpen()) return;
         }
+        if (!isCurrentOpen()) return;
         if (!chatId) {
             window.app.ui.showToast('Не удалось открыть диалог. Попробуй ещё раз.', 'danger');
             this.closeChat();
@@ -248,8 +258,10 @@ export class ChatModule {
         if (this.chatService.isV2Enabled) {
             try {
                 this.blockStatus = await this.chatService.getBlockStatus(chatId);
+                if (!isCurrentOpen()) return;
                 this.applyBlockStatus(this.blockStatus);
             } catch (error) {
+                if (!isCurrentOpen()) return;
                 console.error('Не удалось проверить блокировку чата:', error);
                 this.blockStatus = globalThis.navigator?.onLine === false
                     ? { blockedByMe: false, blockedByPartner: false, canSend: false, offline: true }
@@ -261,6 +273,7 @@ export class ChatModule {
             this.applyBlockStatus(this.blockStatus);
         }
         await this.chatService.markAsRead(userId, partnerId);
+        if (!isCurrentOpen()) return;
         this.latestMessages = [];
         this.loadedOlderMessages = [];
         this.historyCursor = null;
@@ -272,6 +285,7 @@ export class ChatModule {
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
         this.unsubscribeMessages = window.app.realtimeService.subscribeToMessages(chatId, (messages) => {
+            if (!isCurrentOpen() || this.currentChatId !== chatId) return;
             const oldHeight = messagesContainer.scrollHeight;
             const oldTop = messagesContainer.scrollTop;
             const nearBottom = oldHeight - oldTop - messagesContainer.clientHeight < 96;
@@ -561,6 +575,7 @@ export class ChatModule {
     }
 
     closeChat() {
+        this.openChatRequestId = (this.openChatRequestId || 0) + 1;
         this.currentChat = null;
         this.currentChatId = null;
 

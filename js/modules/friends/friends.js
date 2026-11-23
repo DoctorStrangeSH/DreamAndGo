@@ -314,7 +314,6 @@ export class FriendsModule {
                 }
                 window.app.ui.showToast('Заявка отклонена', 'info');
                 this.subscribeToRequests();
-                this.subscribeToSent();
             });
         });
 

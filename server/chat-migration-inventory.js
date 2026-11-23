@@ -144,6 +144,7 @@ export function buildLegacyChatInventory({ summaries, messagesByChat }) {
     const issues = [];
     const ignoredSummaryPaths = [];
     const normalizedSummaries = [];
+    const skippedGroupSummaryPaths = [];
     const summariesByOwnerAndPartner = new Map();
 
     for (const summary of summaries) {
@@ -154,6 +155,11 @@ export function buildLegacyChatInventory({ summaries, messagesByChat }) {
         }
         if (parsed.partnerDocId === '_init' && !summary.data?.partnerId) {
             ignoredSummaryPaths.push(summary.path);
+            continue;
+        }
+        if (summary.data?.isGroup === true) {
+            skippedGroupSummaryPaths.push(summary.path);
+            issues.push({ code: 'group-chat-out-of-scope', path: summary.path });
             continue;
         }
         const ownerUid = parsed.ownerUid;
@@ -248,6 +254,7 @@ export function buildLegacyChatInventory({ summaries, messagesByChat }) {
     pairs.sort((a, b) => a.canonicalChatId.localeCompare(b.canonicalChatId));
     issues.sort((a, b) => stableJson(a).localeCompare(stableJson(b)));
     ignoredSummaryPaths.sort();
+    skippedGroupSummaryPaths.sort();
 
     const totals = {
         summaryDocuments: normalizedSummaries.length,
@@ -256,7 +263,8 @@ export function buildLegacyChatInventory({ summaries, messagesByChat }) {
         messageDocuments: pairs.reduce((sum, pair) => sum + pair.messageCount, 0),
         pairsWithIssues: pairs.filter(pair => pair.issues.length > 0).length,
         globalIssues: issues.length,
-        ignoredSentinelDocuments: ignoredSummaryPaths.length
+        ignoredSentinelDocuments: ignoredSummaryPaths.length,
+        skippedGroupSummaryDocuments: skippedGroupSummaryPaths.length
     };
 
     const manifest = {
@@ -264,6 +272,7 @@ export function buildLegacyChatInventory({ summaries, messagesByChat }) {
         source: 'legacy-chat-read-only-inventory',
         totals,
         ignoredSummaryPaths,
+        skippedGroupSummaryPaths,
         globalIssues: issues,
         pairs
     };
@@ -283,6 +292,7 @@ export function buildLegacyChatInventory({ summaries, messagesByChat }) {
             `- Pairs with issues: ${totals.pairsWithIssues}`,
             `- Global issues: ${totals.globalIssues}`,
             `- Ignored sentinel documents: ${totals.ignoredSentinelDocuments}`,
+            `- Group chat summaries skipped (out of scope): ${totals.skippedGroupSummaryDocuments}`,
             '',
             `Manifest SHA-256: ${sha256(manifest)}`,
             '',

@@ -155,7 +155,7 @@ The new `server/chat-migration-backup.js` is a tested pure builder/verifier only
 - [x] Export requires the exact `CHAT_MIGRATION_ALLOWED_PROJECT_ID`, explicit `--confirm-non-production`, and refuses the known production project through the shared safety guard.
 - [x] Output directory must be new; directory/file permissions are restricted to owner access where supported; output files use exclusive creation and must never be committed because they contain private message text.
 - [x] Export includes all user chat summary documents and all root chat message documents in the backup, while the private-chat inventory separately excludes verified Chat V2 and group records from legacy migration candidates.
-- [ ] Exact-HEAD CI and synthetic CLI safety tests remain pending.
+- [x] Exact-HEAD CI and synthetic CLI safety tests passed on commit `496b968e` (174 unit tests, 4 Chromium tests, 23 Emulator tests, syntax check across 99 JavaScript files).
 - [ ] No real staging export has been run; no staging project ID or credentials have been supplied.
 
 
@@ -165,7 +165,7 @@ The new `server/chat-migration-backup.js` is a tested pure builder/verifier only
 - [x] Added regression coverage proving canonical V2 summaries produce zero legacy candidate pairs.
 - [x] Added CLI preflight tests for help, production-project refusal, and mandatory non-production confirmation; these checks run before Firebase initialization.
 - [x] Backup export output must be outside the repository, uses a new directory and owner-only permissions, and includes a private backup plus inventory/report.
-- [ ] Exact-HEAD CI for these changes is pending.
+- [x] Exact-HEAD CI passed on commit `496b968e`; subsequent parent-document completeness change is awaiting its own CI run.
 
 
 ### Final CI trigger for backup CLI hardening — 2026-11-23
@@ -177,4 +177,12 @@ The full test pipeline is being rerun after the backup CLI, V2-summary exclusion
 
 - [x] Removed template-literal escaping entirely from the backup CLI to avoid source-generation ambiguity.
 - [x] Corrected report and error output statements and verified the committed source contains no stray interpolation markers or escaped template delimiters.
-- [ ] Full CI rerun on the corrected exact HEAD pending.
+- [x] Full CI passed on corrected exact HEAD `496b968e`.
+
+
+### Backup completeness refinement — 2026-11-23
+
+- [x] CI on `496b968e` passed: 174/174 unit tests, 4/4 real Chromium tests, 23/23 Firebase Emulator tests, and syntax validation for 99 JavaScript files.
+- [x] Backup exporter now reads every root `chats/{chatId}` parent document, including chats with no messages, and includes these parent records in the checksummed bundle. This preserves metadata needed for complete review and restore.
+- [ ] CI for this latest parent-document inclusion change is pending.
+- [ ] Real staging export, backup read-back and dry run remain pending staging project access.

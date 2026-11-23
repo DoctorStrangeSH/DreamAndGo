@@ -241,6 +241,33 @@ test('history returns only an allowlisted message projection', async () => {
     assert.equal(result.messages[0].text, 'private text');
 });
 
+test('private message history uses a stable cursor and returns bounded pages', async () => {
+    const ctx = createHarness(friendSeed());
+    const { chatId } = await createChat(ctx);
+    for (let index = 0; index < 55; index += 1) {
+        const messageId = `page-${String(index).padStart(3, '0')}`;
+        ctx.records.set(`chats/${chatId}/messages/${messageId}`, {
+            senderId: 'alice',
+            text: `message ${index}`,
+            createdAt: { toMillis: () => 1700000000000 + index },
+            read: false,
+            edited: false
+        });
+    }
+    const first = await ctx.callables.getPrivateChatHistoryV2({
+        auth: { uid: 'alice' }, data: { chatId }
+    });
+    assert.equal(first.messages.length, 50);
+    assert.ok(first.nextCursor);
+    const second = await ctx.callables.getPrivateChatHistoryV2({
+        auth: { uid: 'alice' }, data: { chatId, beforeMessageId: first.nextCursor }
+    });
+    assert.equal(second.messages.length, 5);
+    assert.equal(second.nextCursor, null);
+    const ids = [...first.messages, ...second.messages].map(message => message.id);
+    assert.equal(new Set(ids).size, 55);
+});
+
 test('read receipt status is visible only to chat participants', async () => {
     const ctx = createHarness(friendSeed());
     const { chatId } = await createChat(ctx);

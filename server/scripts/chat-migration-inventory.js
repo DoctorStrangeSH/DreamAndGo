@@ -83,11 +83,16 @@ async function main() {
     }));
 
     const legacyIds = new Set();
+    const groupChatIds = new Set();
     for (const summary of summaries) {
         const parts = summary.path.split('/');
         if (parts.length !== 4 || parts[0] !== 'users' || parts[2] !== 'chats') continue;
+        if (summary.data?.isGroup === true) {
+            groupChatIds.add(parts[3]);
+            if (typeof summary.data.chatId === 'string') groupChatIds.add(summary.data.chatId);
+            continue;
+        }
         const ownerUid = parts[1];
-        if (summary.data?.isGroup === true) continue;
         const partnerUid = summary.data?.partnerId;
         if (typeof partnerUid !== 'string' || !partnerUid || ownerUid === partnerUid) continue;
         try {
@@ -97,16 +102,32 @@ async function main() {
         }
     }
 
-    const messagesByChat = {};
-    for (const chatId of [...legacyIds].sort()) {
-        const snapshot = await db.collection('chats').doc(chatId).collection('messages').get();
-        messagesByChat[chatId] = snapshot.docs.map(document => ({
-            id: document.id,
-            data: document.data()
-        }));
+    const messagesByChat = Object.fromEntries([...legacyIds].map(chatId => [chatId, []]));
+    const orphanMessageCollections = [];
+    const messageSnapshot = await db.collectionGroup('messages').get();
+    const groupedMessages = new Map();
+    for (const document of messageSnapshot.docs) {
+        const parts = document.ref.path.split('/');
+        if (parts.length !== 4 || parts[0] !== 'chats' || parts[2] !== 'messages') continue;
+        const chatId = parts[1];
+        if (!groupedMessages.has(chatId)) groupedMessages.set(chatId, []);
+        groupedMessages.get(chatId).push({ id: document.id, data: document.data() });
     }
 
-    const inventory = buildLegacyChatInventory({ summaries, messagesByChat });
+    for (const [chatId, messages] of groupedMessages) {
+        if (groupChatIds.has(chatId)) continue;
+        const parentChat = await db.collection('chats').doc(chatId).get();
+        const parentData = parentChat.exists ? parentChat.data() || {} : {};
+        if (parentData.schemaVersion === 2) continue;
+        if (parentData.isGroup === true) continue;
+        if (legacyIds.has(chatId)) {
+            messagesByChat[chatId] = messages;
+        } else {
+            orphanMessageCollections.push({ chatId, messages });
+        }
+    }
+
+    const inventory = buildLegacyChatInventory({ summaries, messagesByChat, orphanMessageCollections });
     await mkdir(resolvedOutputDir, { recursive: true });
     const manifestPath = path.join(resolvedOutputDir, 'legacy-chat-manifest.json');
     const reportPath = path.join(resolvedOutputDir, 'legacy-chat-report.md');

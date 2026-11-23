@@ -58,5 +58,5 @@ jobs:
       - name: Install server test dependencies
         run: npm --prefix server install --no-package-lock --ignore-scripts --no-audit --no-fund
 
-      - name: Run Firestore Emulator suites
-        run: npx --yes firebase-tools@14.12.0 emulators:exec --project demo-dream-and-go --only firestore "npm --prefix server run test:emulator"
+      - name: Run Auth and Firestore Emulator suites
+        run: npx --yes firebase-tools@14.12.0 emulators:exec --project demo-dream-and-go --only firestore,auth "npm --prefix server run test:emulator"

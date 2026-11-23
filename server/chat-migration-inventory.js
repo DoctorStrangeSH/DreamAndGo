@@ -146,6 +146,7 @@ export function buildLegacyChatInventory({ summaries, messagesByChat, orphanMess
     const ignoredSummaryPaths = [];
     const normalizedSummaries = [];
     const skippedGroupSummaryPaths = [];
+    const skippedV2SummaryPaths = [];
     const summariesByOwnerAndPartner = new Map();
 
     for (const summary of summaries) {
@@ -165,6 +166,14 @@ export function buildLegacyChatInventory({ summaries, messagesByChat, orphanMess
         }
         const ownerUid = parsed.ownerUid;
         const partnerId = summary.data?.partnerId;
+        if (summary.data?.type === 'private' &&
+            typeof summary.data.chatId === 'string' &&
+            summary.data.chatId === parsed.partnerDocId &&
+            isValidFirestoreId(ownerUid) && isValidFirestoreId(partnerId) &&
+            canonicalChatId(ownerUid, partnerId) === parsed.partnerDocId) {
+            skippedV2SummaryPaths.push(summary.path);
+            continue;
+        }
         if (!isValidFirestoreId(ownerUid) || !isValidFirestoreId(partnerId) ||
             parsed.partnerDocId !== partnerId || ownerUid === partnerId) {
             issues.push({ code: 'invalid-summary-participants', path: summary.path });
@@ -282,6 +291,7 @@ export function buildLegacyChatInventory({ summaries, messagesByChat, orphanMess
     issues.sort((a, b) => stableJson(a).localeCompare(stableJson(b)));
     ignoredSummaryPaths.sort();
     skippedGroupSummaryPaths.sort();
+    skippedV2SummaryPaths.sort();
 
     const totals = {
         summaryDocuments: normalizedSummaries.length,
@@ -294,6 +304,7 @@ export function buildLegacyChatInventory({ summaries, messagesByChat, orphanMess
         globalIssues: issues.length,
         ignoredSentinelDocuments: ignoredSummaryPaths.length,
         skippedGroupSummaryDocuments: skippedGroupSummaryPaths.length,
+        skippedV2SummaryDocuments: skippedV2SummaryPaths.length,
         orphanMessageCollections: orphanCollections.length,
         orphanMessageDocuments: orphanCollections.reduce((sum, item) => sum + item.messageCount, 0)
     };
@@ -304,6 +315,7 @@ export function buildLegacyChatInventory({ summaries, messagesByChat, orphanMess
         totals,
         ignoredSummaryPaths,
         skippedGroupSummaryPaths,
+        skippedV2SummaryPaths,
         orphanMessageCollections: orphanCollections,
         globalIssues: issues,
         pairs
@@ -326,6 +338,7 @@ export function buildLegacyChatInventory({ summaries, messagesByChat, orphanMess
             `- Global issues: ${totals.globalIssues}`,
             `- Ignored sentinel documents: ${totals.ignoredSentinelDocuments}`,
             `- Group chat summaries skipped (out of scope): ${totals.skippedGroupSummaryDocuments}`,
+            `- Existing Chat V2 summaries skipped: ${totals.skippedV2SummaryDocuments}`,
             `- Orphan message collections (manual review): ${totals.orphanMessageCollections}`,
             `- Orphan message documents: ${totals.orphanMessageDocuments}`,
             '',

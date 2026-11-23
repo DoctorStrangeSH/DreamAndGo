@@ -390,3 +390,10 @@
 - [x] Pending local messages are shown in the active conversation with queued/blocked indicators; account switching stops the previous account's flush.
 - [x] Added Unit tests for AES-GCM encryption, tamper detection, account isolation, blocked records, stable-ID delivery, retry behavior and account switching.
 - [ ] Execute Unit and syntax suites on exact HEAD; browser IndexedDB and two-account offline/online acceptance remain pending.
+
+
+### CI guardrails — 2026-11-23
+
+- [x] Added GitHub Actions workflow for pushes to `main` and `integration/v1.0-reconciliation`, pull requests to `main`, and manual dispatch.
+- [x] Workflow uses Node.js 22, installs server test dependencies, runs repository syntax checks and the root project/Chat V2 unit suite.
+- [ ] Confirm first workflow run is green; CI has not yet reported a completed run for this commit.

@@ -185,6 +185,32 @@ test('removing a friendship deletes both sides and clamps counters at zero', asy
     assert.equal(ctx.records.get('users/user-b').stats.friends, 0);
 });
 
+test('removing a one-sided legacy friendship only decrements the owner with a real record', async () => {
+    const actorOwnsRecord = setup({
+        'users/user-a': { username: 'alice', stats: { friends: 2 } },
+        'users/user-b': { username: 'bob', stats: { friends: 5 } },
+        'users/user-a/friends/user-b': { friendId: 'user-b' }
+    });
+    await actorOwnsRecord.callables.removeFriendV1({
+        auth: { uid: 'user-a' }, data: { targetUid: 'user-b' }
+    });
+    assert.equal(actorOwnsRecord.records.get('users/user-a').stats.friends, 1);
+    assert.equal(actorOwnsRecord.records.get('users/user-b').stats.friends, 5);
+    assert.equal(actorOwnsRecord.records.has('users/user-a/friends/user-b'), false);
+
+    const targetOwnsRecord = setup({
+        'users/user-a': { username: 'alice', stats: { friends: 4 } },
+        'users/user-b': { username: 'bob', stats: { friends: 3 } },
+        'users/user-b/friends/user-a': { friendId: 'user-a' }
+    });
+    await targetOwnsRecord.callables.removeFriendV1({
+        auth: { uid: 'user-a' }, data: { targetUid: 'user-b' }
+    });
+    assert.equal(targetOwnsRecord.records.get('users/user-a').stats.friends, 4);
+    assert.equal(targetOwnsRecord.records.get('users/user-b').stats.friends, 2);
+    assert.equal(targetOwnsRecord.records.has('users/user-b/friends/user-a'), false);
+});
+
 test('factory rejects incomplete dependencies', () => {
     assert.throws(() => createFriendCallables({}), TypeError);
 });

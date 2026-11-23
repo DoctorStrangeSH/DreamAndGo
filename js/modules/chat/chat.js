@@ -19,6 +19,10 @@ export class ChatModule {
         this.loadingOlderMessages = false;
         this.blockStatus = null;
         this.blockActionPending = false;
+        this.pendingOutboxMessages = [];
+        this.chatService.chatV2.onOutboxChange = () => {
+            void this.refreshPendingOutbox();
+        };
     }
 
     async render() {
@@ -29,6 +33,7 @@ export class ChatModule {
         if (!userId) return;
 
         mainContent.innerHTML = this.getTemplate();
+        if (this.chatService.isV2Enabled) this.chatService.chatV2.startOutbox(userId);
         this.subscribeToChats();
         this.attachEventListeners();
     }
@@ -191,6 +196,7 @@ export class ChatModule {
         }
 
         const userId = window.app.currentUser.uid;
+        if (this.chatService.isV2Enabled) this.chatService.chatV2.startOutbox(userId);
 
         document.getElementById('noChatSelected').style.display = 'none';
         document.getElementById('activeChat').style.display = 'block';
@@ -236,7 +242,9 @@ export class ChatModule {
                 this.applyBlockStatus(this.blockStatus);
             } catch (error) {
                 console.error('Не удалось проверить блокировку чата:', error);
-                this.blockStatus = { blockedByMe: false, blockedByPartner: false, canSend: false, error: true };
+                this.blockStatus = globalThis.navigator?.onLine === false
+                    ? { blockedByMe: false, blockedByPartner: false, canSend: false, offline: true }
+                    : { blockedByMe: false, blockedByPartner: false, canSend: false, error: true };
                 this.applyBlockStatus(this.blockStatus);
             }
         } else {
@@ -281,6 +289,26 @@ export class ChatModule {
                 messagesContainer.scrollTop = oldTop + (messagesContainer.scrollHeight - oldHeight);
             }
         });
+        void this.refreshPendingOutbox();
+    }
+
+    async refreshPendingOutbox() {
+        if (!this.chatService.isV2Enabled || !this.currentChatId || !window.app.currentUser?.uid) return;
+        const chatId = this.currentChatId;
+        const userId = window.app.currentUser.uid;
+        try {
+            const pending = await this.chatService.chatV2.getPendingMessages(userId, chatId);
+            if (this.currentChatId !== chatId || window.app.currentUser?.uid !== userId) return;
+            this.pendingOutboxMessages = pending.map(message => ({
+                ...message,
+                deliveryState: message.deliveryState || 'queued'
+            }));
+            const container = document.getElementById('chatMessages');
+            if (container) this.renderMessageList(container, this.getCombinedMessages(), userId);
+        } catch (error) {
+            console.error('Не удалось восстановить локальные сообщения:', error);
+            window.app.ui.showToast('Не удалось прочитать зашифрованную очередь сообщений.', 'warning');
+        }
     }
 
     applyBlockStatus(status) {
@@ -299,11 +327,17 @@ export class ChatModule {
         blockButton.title = status.blockedByMe ? 'Разблокировать пользователя' : 'Заблокировать пользователя';
         blockButton.setAttribute('aria-label', blockButton.title);
 
-        const canSend = status.canSend === true && !status.checking;
+        const offlineQueueAvailable = v2Enabled &&
+            globalThis.navigator?.onLine === false &&
+            this.chatService.chatV2.isOutboxAvailable &&
+            !status.blockedByMe && !status.blockedByPartner;
+        const canSend = (status.canSend === true && !status.checking) || offlineQueueAvailable;
         messageInput.disabled = !canSend;
         sendButton.disabled = !canSend;
-        notice.classList.toggle('d-none', canSend || !v2Enabled);
-        if (status.error) {
+        notice.classList.toggle('d-none', (canSend && !offlineQueueAvailable) || !v2Enabled);
+        if (offlineQueueAvailable) {
+            notice.textContent = 'Нет интернета. Сообщение будет сохранено на устройстве в зашифрованном виде.';
+        } else if (status.error) {
             notice.textContent = 'Не удалось проверить блокировку. Отправка временно отключена.';
         } else if (status.checking) {
             notice.textContent = 'Проверяем настройки безопасности диалога…';
@@ -348,6 +382,7 @@ export class ChatModule {
 
     getCombinedMessages() {
         const byId = new Map();
+        this.pendingOutboxMessages.forEach(message => byId.set(message.id, message));
         [...this.loadedOlderMessages, ...this.latestMessages].forEach(message => {
             byId.set(message.id, message);
         });
@@ -411,6 +446,15 @@ export class ChatModule {
     createMessageBubble(message, userId) {
         const isMine = message.senderId === userId;
         const time = this.formatTime(message.createdAt);
+        const deliveryIndicator = message.deliveryState === 'blocked'
+            ? '<i class="bi bi-exclamation-circle text-danger ms-1" title="Не отправлено: доступ ограничен"></i>'
+            : message.deliveryState === 'queued'
+                ? '<i class="bi bi-clock-history text-muted ms-1" title="Сохранено на устройстве, ожидает отправки"></i>'
+                : (isMine && this.chatService.isV2Enabled
+                    ? (message.read
+                        ? '<i class="bi bi-check2-all text-primary ms-1" title="Прочитано"></i>'
+                        : '<i class="bi bi-check2 text-muted ms-1" title="Отправлено"></i>')
+                    : '');
 
         return `
             <div class="message-wrapper ${isMine ? 'message-mine' : 'message-theirs'}">
@@ -419,7 +463,7 @@ export class ChatModule {
                     <div class="message-meta">
                         <small class="message-time">${time}</small>
                         ${message.edited ? '<small class="text-muted ms-1">изм.</small>' : ''}
-                        ${isMine && this.chatService.isV2Enabled ? (message.read ? '<i class="bi bi-check2-all text-primary ms-1" title="Прочитано"></i>' : '<i class="bi bi-check2 text-muted ms-1" title="Отправлено"></i>') : ''}
+                        ${deliveryIndicator}
                     </div>
                     ${isMine && !this.chatService.isV2Enabled ? `
                         <div class="message-actions">
@@ -456,7 +500,10 @@ export class ChatModule {
             document.getElementById('editMode').style.display = 'none';
         } else {
             const result = await this.chatService.sendMessage(chatId, userId, this.currentChat, text);
-            if (!result?.success) {
+            if (result?.queued) {
+                await this.refreshPendingOutbox();
+                window.app.ui.showToast('Сообщение сохранено на устройстве и отправится после восстановления интернета.', 'info');
+            } else if (!result?.success) {
                 if (this.chatService.isV2Enabled && result?.code === 'permission-denied') {
                     try {
                         this.blockStatus = await this.chatService.getBlockStatus(chatId);
@@ -500,6 +547,7 @@ export class ChatModule {
         this.loadingOlderMessages = false;
         this.blockStatus = null;
         this.blockActionPending = false;
+        this.pendingOutboxMessages = [];
 
         const emptyState = document.getElementById('noChatSelected');
         const activeChat = document.getElementById('activeChat');

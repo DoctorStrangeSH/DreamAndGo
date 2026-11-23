@@ -13,8 +13,9 @@ import { createNotificationCallables } from './notifications-callables.js';
 
 if (getApps().length === 0) initializeApp();
 
-// This deployment unit exposes isolated signup and owner-scoped profile
-// callables only. Do not deploy until Emulator and staging acceptance are complete.
+// Candidate callable surface for registration, owner-scoped profile, friends
+// and notification access. Do not deploy until Emulator and staging acceptance
+// are complete; production rollout flags remain closed.
 const registration = createRegistrationCallables({
     onCall,
     HttpsError,

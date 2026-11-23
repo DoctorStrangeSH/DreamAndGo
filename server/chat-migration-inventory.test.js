@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import {
     assertSafeInventoryTarget,
@@ -296,4 +297,25 @@ test('inventory manifest includes the explicit Firebase project ID before checks
 test('read-only Inventory CLI passes its validated project ID into the manifest builder', async () => {
     const source = await readFile(new URL('./scripts/chat-migration-inventory.js', import.meta.url), 'utf8');
     assert.match(source, /buildLegacyChatInventory\(\{\s*projectId,\s*summaries,/);
+});
+
+test('read-only Inventory CLI refuses to write reports inside the repository before Firebase initialization', async () => {
+    const script = new URL('./scripts/chat-migration-inventory.js', import.meta.url);
+    const result = spawnSync(process.execPath, [
+        script.pathname,
+        '--project-id', 'dream-and-go-staging',
+        '--output-dir', '.',
+        '--confirm-non-production'
+    ], {
+        cwd: new URL('..', import.meta.url).pathname,
+        encoding: 'utf8',
+        env: {
+            ...process.env,
+            CHAT_MIGRATION_ALLOWED_PROJECT_ID: 'dream-and-go-staging'
+        }
+    });
+
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /сохранять вне рабочей папки репозитория/);
+    assert.doesNotMatch(result.stderr, /Could not load the default credentials|credential/i);
 });

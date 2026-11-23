@@ -68,11 +68,15 @@ export class NotificationsService {
 
         void refresh();
         const timer = window.setInterval(refresh, REFRESH_INTERVAL_MS);
-        this.listeners[key] = () => {
-            active = false;
-            window.clearInterval(timer);
+        const subscription = {
+            callback,
+            stop: () => {
+                active = false;
+                window.clearInterval(timer);
+            }
         };
-        return this.listeners[key];
+        this.listeners[key] = subscription;
+        return () => this.unsubscribe(key);
     }
 
     async markAsRead(userId, notificationId) {
@@ -110,7 +114,7 @@ export class NotificationsService {
         if (!this.listeners[key]) return;
         try {
             const notifications = await this.fetchNotifications();
-            this.listeners[key].callback?.(notifications);
+            this.listeners[key].callback(notifications);
         } catch (error) {
             console.error('Ошибка обновления уведомлений:', error);
         }
@@ -118,7 +122,7 @@ export class NotificationsService {
 
     unsubscribe(key) {
         if (this.listeners[key]) {
-            this.listeners[key]();
+            this.listeners[key].stop();
             delete this.listeners[key];
         }
     }

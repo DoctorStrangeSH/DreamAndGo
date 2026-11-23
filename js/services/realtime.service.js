@@ -16,55 +16,19 @@ export class RealtimeService {
         const key = `messages_${chatId}`;
         this.unsubscribe(key);
 
-        if (this.chatV2.isEnabled) {
-            let active = true;
-            let loading = false;
-            let hasEmitted = false;
-            let lastSignature = null;
-            const refresh = async () => {
-                if (!active || loading) return;
-                loading = true;
-                try {
-                    const messages = await this.chatV2.getHistory(chatId);
-                    const signature = JSON.stringify(messages.map(message => [
-                        message.id, message.text, message.senderId, message.read,
-                        message.edited, message.createdAt?.getTime?.(), message.readAt?.getTime?.()
-                    ]));
-                    if (active && signature !== lastSignature) {
-                        lastSignature = signature;
-                        hasEmitted = true;
-                        callback(messages);
-                    }
-                } catch (error) {
-                    console.error('Ошибка загрузки истории Chat V2:', error);
-                    if (active && !hasEmitted) callback([]);
-                } finally {
-                    loading = false;
-                }
-            };
-
-            void refresh();
-            const timer = window.setInterval(refresh, 2500);
-            const unsubscribe = () => {
-                active = false;
-                window.clearInterval(timer);
-                if (this.listeners[key] === unsubscribe) delete this.listeners[key];
-            };
-            this.listeners[key] = unsubscribe;
-            return unsubscribe;
-        }
-
         const messagesRef = collection(this.db, 'chats', chatId, 'messages');
         const q = query(messagesRef, orderBy('createdAt', 'asc'), limit(100));
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const messages = [];
-            snapshot.forEach(doc => {
-                const data = doc.data();
+            snapshot.forEach(docSnap => {
+                const data = docSnap.data();
                 messages.push({
-                    id: doc.id,
+                    id: docSnap.id,
                     ...data,
-                    createdAt: data.createdAt?.toDate?.() || new Date()
+                    createdAt: data.createdAt?.toDate?.() || new Date(),
+                    readAt: data.readAt?.toDate?.() || null,
+                    editedAt: data.editedAt?.toDate?.() || null
                 });
             });
             callback(messages);
@@ -81,68 +45,29 @@ export class RealtimeService {
         const key = `chats_${userId}`;
         this.unsubscribe(key);
 
-        if (this.chatV2.isEnabled) {
-            let active = true;
-            let loading = false;
-            let lastSignature = null;
-            const refresh = async () => {
-                if (!active || loading) return;
-                loading = true;
-                try {
-                    const chats = await this.chatV2.getChats();
-                    const signature = JSON.stringify(chats.map(chat => [
-                        chat.chatId, chat.partnerId, chat.lastMessage, chat.lastMessageTime?.getTime?.(),
-                        chat.unread, chat.partnerName, chat.partnerAvatar
-                    ]));
-                    if (active && signature !== lastSignature) {
-                        lastSignature = signature;
-                        callback(chats);
-                    }
-                } catch (error) {
-                    console.error('Ошибка загрузки списка Chat V2:', error);
-                    if (active && lastSignature === null) callback([]);
-                } finally {
-                    loading = false;
-                }
-            };
-
-            void refresh();
-            const timer = window.setInterval(refresh, 5000);
-            const unsubscribe = () => {
-                active = false;
-                window.clearInterval(timer);
-                if (this.listeners[key] === unsubscribe) delete this.listeners[key];
-            };
-            this.listeners[key] = unsubscribe;
-            return unsubscribe;
-        }
-
         const chatsRef = collection(this.db, 'users', userId, 'chats');
-        const q = query(chatsRef, orderBy('lastMessageTime', 'desc'));
+        const q = query(chatsRef, orderBy('lastMessageTime', 'desc'), limit(50));
 
         const unsubscribe = onSnapshot(q, async (snapshot) => {
             const chats = [];
-            
             for (const docSnap of snapshot.docs) {
                 if (docSnap.id === '_init') continue;
-                
+
                 const chatData = docSnap.data();
                 const partnerData = await this.getUserProfile(chatData.partnerId);
-                
                 chats.push({
                     id: docSnap.id,
                     chatId: docSnap.id,
                     partnerId: chatData.partnerId,
-                    partnerName: partnerData?.username || 'Пользователь',
-                    partnerAvatar: partnerData?.avatar || null,
+                    partnerName: partnerData?.username || chatData.partnerName || 'Пользователь',
+                    partnerAvatar: partnerData?.avatar || chatData.partnerAvatar || null,
                     lastMessage: chatData.lastMessage || '',
                     lastMessageTime: chatData.lastMessageTime?.toDate?.() || new Date(),
                     unread: chatData.unread || 0,
-                    isGroup: chatData.isGroup || false,
-                    groupName: chatData.groupName || ''
+                    isGroup: false,
+                    groupName: ''
                 });
             }
-            
             callback(chats);
         }, (error) => {
             console.error('Ошибка подписки на чаты:', error);

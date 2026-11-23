@@ -171,3 +171,10 @@ The new `server/chat-migration-backup.js` is a tested pure builder/verifier only
 ### Final CI trigger for backup CLI hardening — 2026-11-23
 
 The full test pipeline is being rerun after the backup CLI, V2-summary exclusion and process-level safety tests were added. No real Firebase export has been invoked.
+
+
+### Backup CLI follow-up fix — 2026-11-23
+
+- [x] Removed template-literal escaping entirely from the backup CLI to avoid source-generation ambiguity.
+- [x] Corrected report and error output statements and verified the committed source contains no stray interpolation markers or escaped template delimiters.
+- [ ] Full CI rerun on the corrected exact HEAD pending.

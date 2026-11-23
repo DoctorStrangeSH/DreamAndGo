@@ -629,3 +629,12 @@
 - [x] Corrected the Emulator host assertion and made the 100-record cap report truncation accurately via a one-record lookahead.
 - [ ] Execute the new unit and Emulator tests plus full Checks workflow on exact HEAD; no passing result is claimed yet.
 - [ ] Browser-level two-account staging acceptance remains pending.
+
+
+### Friends UI no longer subscribes directly to Firestore — 2026-11-23
+
+- [x] FriendsModule now loads friends, incoming requests and sent requests through the owner-scoped callable service.
+- [x] Removed the three unused direct Firestore list subscriptions from RealtimeService.
+- [x] Added stale-response protection when users switch tabs quickly.
+- [x] Fixed competing list refreshes after accepting a request; only the active tab is refreshed.
+- [ ] Browser UI regression testing and exact-HEAD CI remain pending. List updates are fetched when entering a tab and after an action; realtime list push is intentionally deferred rather than bypassing the callable boundary.

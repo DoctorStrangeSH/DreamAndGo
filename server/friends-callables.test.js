@@ -185,6 +185,35 @@ test('removing a friendship deletes both sides and clamps counters at zero', asy
     assert.equal(ctx.records.get('users/user-b').stats.friends, 0);
 });
 
+test('a removed friend can be requested and accepted again without counter drift', async () => {
+    const ctx = setup({
+        'users/user-a': { username: 'alice', stats: { friends: 1 } },
+        'users/user-b': { username: 'bob', stats: { friends: 1 } },
+        'users/user-a/friends/user-b': { friendId: 'user-b' },
+        'users/user-b/friends/user-a': { friendId: 'user-a' }
+    });
+
+    await ctx.callables.removeFriendV1({
+        auth: { uid: 'user-a' }, data: { targetUid: 'user-b' }
+    });
+    assert.equal(ctx.records.get('users/user-a').stats.friends, 0);
+    assert.equal(ctx.records.get('users/user-b').stats.friends, 0);
+
+    await ctx.callables.sendFriendRequestV1({
+        auth: { uid: 'user-a' }, data: { targetUid: 'user-b' }
+    });
+    await ctx.callables.acceptFriendRequestV1({
+        auth: { uid: 'user-b' }, data: { targetUid: 'user-a' }
+    });
+
+    assert.equal(ctx.records.get('users/user-a').stats.friends, 1);
+    assert.equal(ctx.records.get('users/user-b').stats.friends, 1);
+    assert.equal(ctx.records.get('users/user-a/friends/user-b').friendId, 'user-b');
+    assert.equal(ctx.records.get('users/user-b/friends/user-a').friendId, 'user-a');
+    assert.equal(ctx.records.has('users/user-b/friendRequests/user-a'), false);
+    assert.equal(ctx.records.has('users/user-a/sentRequests/user-b'), false);
+});
+
 test('removing a one-sided legacy friendship only decrements the owner with a real record', async () => {
     const actorOwnsRecord = setup({
         'users/user-a': { username: 'alice', stats: { friends: 2 } },

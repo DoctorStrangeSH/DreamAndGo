@@ -66,9 +66,9 @@ The current deny-all Rules are intentional. Do not replace them with broad owner
 - [ ] Move friend-request creation, acceptance, rejection and removal behind authenticated server operations.
 - [x] Every friend mutation derives the actor UID from callable auth context; client-supplied actor IDs are not accepted.
 - [x] Cross-user friendship state changes and reciprocal records are written only inside trusted server transactions.
-- [ ] Move all notification creation to trusted server operations; friend-request and friend-accepted notifications are now created inside the corresponding trusted server transactions. Achievement, level-up and message notifications remain NOT DONE.
-- [ ] Derive notification text/type/target from server-validated events; never accept arbitrary notification payloads from clients.
-- [ ] Add idempotency and duplicate-request handling.
+- [ ] Move all notification creation to trusted server operations. Friend-request and friend-accepted notifications are now created inside trusted transactions; achievement, level-up and message notifications remain NOT DONE.
+- [x] Friend-event notification text/type/target are fixed server templates and use server-read profile labels; other event types remain pending.
+- [x] Duplicate friend requests are rejected transactionally; repeated transitions fail when the pending request no longer exists.
 - [ ] Emulator matrix: anonymous, requester, recipient, unrelated user; verify no caller can mutate another user's friend or notification records. Unit tests for callable authorization and transaction effects are added; Emulator coverage remains pending.
 
 ### Batch 3 — chat

@@ -20,6 +20,8 @@ export class NotificationsWidget {
         this.unsubscribe = service.subscribeToNotifications(userId, (notifications) => {
             this.renderDropdown(notifications);
             this.updateBadge(notifications);
+        }, () => {
+            this.renderLoadError();
         });
     }
 
@@ -32,6 +34,19 @@ export class NotificationsWidget {
                 <p class="small mt-2 mb-0">Уведомления временно недоступны в этой сборке</p>
             </div>
         `;
+    }
+
+    renderLoadError() {
+        const container = document.getElementById('notificationsDropdown');
+        if (!container) return;
+        container.innerHTML = `
+            <div class="p-4 text-center text-muted">
+                <i class="bi bi-cloud-slash fs-3"></i>
+                <p class="small mt-2 mb-2">Не удалось загрузить уведомления</p>
+                <button class="btn btn-outline-secondary btn-sm" id="retryNotificationsBtn">Повторить</button>
+            </div>
+        `;
+        document.getElementById('retryNotificationsBtn')?.addEventListener('click', () => this.init());
     }
 
     updateBadge(notifications) {

@@ -138,6 +138,22 @@ test('only the recipient can accept and acceptance creates reciprocal friendship
     assert.equal(notifications[0][1].type, 'friend_accepted');
 });
 
+test('acceptance rejects forged or inconsistent legacy request records', async () => {
+    const ctx = setup({
+        'users/user-b/friendRequests/user-a': {
+            from: 'user-c', to: 'user-b', status: 'pending'
+        },
+        'users/user-a/sentRequests/user-b': {
+            from: 'user-a', to: 'user-b', status: 'pending'
+        }
+    });
+    await assert.rejects(ctx.callables.acceptFriendRequestV1({
+        auth: { uid: 'user-b' }, data: { targetUid: 'user-a' }
+    }), error => error.code === 'failed-precondition');
+    assert.equal(ctx.records.has('users/user-b/friendRequests/user-a'), true);
+    assert.equal(ctx.records.has('users/user-a/friends/user-b'), false);
+});
+
 test('reject and cancel remove only the request addressed by the authenticated actor', async () => {
     const rejected = setup();
     await rejected.callables.sendFriendRequestV1({ auth: { uid: 'user-a' }, data: { targetUid: 'user-b' } });

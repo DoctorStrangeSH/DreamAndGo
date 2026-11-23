@@ -172,7 +172,6 @@
 
 ## CI guardrails — 2026-11-23
 
-- [x] Added `.github/workflows/ci.yml` for push, pull request and manual validation.
-- [x] Workflow runs syntax checks and the project/Chat V2 unit suite on Node.js 22 after installing server dependencies.
-- [x] Dedicated job starts Firestore and Auth emulators and executes all server Emulator tests.
-- [ ] **NOT VERIFIED:** first GitHub Actions run must complete successfully before this gate can be marked DONE.
+- [x] Existing `.github/workflows/checks.yml` is the single CI entrypoint: Node.js 22, server dependency installation, root Unit suite, Auth + Firestore Emulator suite and syntax checks.
+- [x] Duplicate CI workflow definitions removed.
+- [ ] **NOT VERIFIED:** corrected pipeline must complete successfully on the latest HEAD.

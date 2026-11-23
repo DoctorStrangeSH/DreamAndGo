@@ -192,3 +192,15 @@ test('backup decoder restores Firestore tagged values and rejects unknown or mal
 test('backup encoder reserves the Firestore tag key to prevent ambiguous round-trips', () => {
     assert.throws(() => encodeFirestoreValue({ __firestoreType: 'timestamp', seconds: 1 }), /Зарезервированное поле/);
 });
+
+test('backup encoder and decoder preserve special own-property names without prototype mutation', () => {
+    const source = JSON.parse('{"__proto__":{"polluted":true},"constructor":{"safe":true}}');
+    const encoded = encodeFirestoreValue(source);
+    const decoded = decodeFirestoreValue(encoded);
+
+    assert.equal(Object.getPrototypeOf(decoded), Object.prototype);
+    assert.equal(Object.hasOwn(decoded, '__proto__'), true);
+    assert.deepEqual(decoded.__proto__, { polluted: true });
+    assert.deepEqual(decoded.constructor, { safe: true });
+    assert.equal({}.polluted, undefined);
+});

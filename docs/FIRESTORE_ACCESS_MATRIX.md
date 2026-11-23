@@ -359,3 +359,12 @@ This pass inspected the integration-branch browser service implementations, not 
 - [x] Repeated acceptance after the request has been consumed is rejected and does not change friend counters or create a duplicate acceptance notification.
 - [ ] Execute Friends callable tests and the full exact-HEAD test/syntax suites.
 - [ ] Verify remove/re-add notifications and counts with two staging accounts.
+
+### Friends read-model reciprocal integrity — 2026-11-23
+
+- [x] Friend-list reads now verify the reciprocal `users/{friendUid}/friends/{ownerUid}` record before returning a friend.
+- [x] One-sided legacy friendship records are omitted from the visible Friends list; incoming and outgoing request lists retain their own request semantics.
+- [x] Extended read-callable tests with a valid reciprocal friend and an orphaned one-sided friend record.
+- [x] Existing allowlisted profile projection and App Check requirements remain unchanged.
+- [ ] Run `server/friends-read-callables.test.js`, Friends callables tests, and the full exact-HEAD test/syntax suites.
+- [ ] Validate the visible list and notification delivery on two staging accounts.

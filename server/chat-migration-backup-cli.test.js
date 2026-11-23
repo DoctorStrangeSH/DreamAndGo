@@ -44,3 +44,14 @@ test('backup CLI requires explicit non-production confirmation before connecting
     assert.match(result.stderr, /confirm-non-production/);
     assert.doesNotMatch(result.stderr, /Could not load the default credentials|credential/i);
 });
+
+test('backup exporter self-verifies checksums before creating output and remains Firestore read-only', async () => {
+    const { readFile } = await import('node:fs/promises');
+    const source = await readFile(script, 'utf8');
+    const verificationCall = source.indexOf('const verification = verifyChatMigrationBackup(backup)');
+    const outputDirectoryCreation = source.indexOf('await mkdir(resolvedOutputDir');
+    assert.notEqual(verificationCall, -1);
+    assert.ok(verificationCall < outputDirectoryCreation, 'backup verification must happen before output creation');
+    assert.match(source, /if \(!verification\.valid\)/);
+    assert.doesNotMatch(source, /\.\s*(?:set|update|delete|create)\s*\(/, 'export must never write to Firestore');
+});

@@ -242,6 +242,21 @@ test('chat contacts are derived from the authenticated user friend list', async 
     }), { contacts: [] });
 });
 
+test('chat contacts exclude orphaned one-sided friendship records', async () => {
+    const ctx = createHarness({
+        'users/alice': { username: 'alice' },
+        'users/bob': { username: 'bob' },
+        'users/alice/friends/bob': { friendId: 'bob' },
+        'publicProfiles/bob': { username: 'bob' }
+    });
+
+    const result = await ctx.callables.getMyChatContactsV2({
+        auth: { uid: 'alice' }, data: {}
+    });
+    assert.deepEqual(result, { contacts: [] });
+    await assert.rejects(createChat(ctx), error => error.code === 'permission-denied');
+});
+
 test('blocking either participant prevents chat creation and both directions of messaging', async () => {
     const ctx = createHarness(friendSeed());
     const { chatId } = await createChat(ctx);

@@ -419,18 +419,20 @@ export class ChatModule {
         this.blockActionPending = true;
         this.applyBlockStatus(this.blockStatus);
         try {
-            if (this.blockStatus.blockedByMe) {
-                await this.chatService.unblockUser(targetUid);
-            } else {
+            const shouldBeBlocked = !this.blockStatus.blockedByMe;
+            if (shouldBeBlocked) {
                 await this.chatService.blockUser(targetUid);
+            } else {
+                await this.chatService.unblockUser(targetUid);
             }
             if (!isCurrentAction()) return;
-            const nextStatus = await this.chatService.getBlockStatus(chatId);
+            await this.refreshBlockStatus();
             if (!isCurrentAction()) return;
-            this.blockStatus = nextStatus;
-            this.applyBlockStatus(this.blockStatus);
+            if (this.blockStatus?.error || this.blockStatus?.blockedByMe !== shouldBeBlocked) {
+                throw new Error('Не удалось подтвердить новое состояние блокировки.');
+            }
             window.app.ui.showToast(
-                this.blockStatus.blockedByMe ? 'Пользователь заблокирован.' : 'Блокировка снята.',
+                shouldBeBlocked ? 'Пользователь заблокирован.' : 'Блокировка снята.',
                 'success'
             );
         } catch (error) {

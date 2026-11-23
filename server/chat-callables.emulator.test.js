@@ -131,9 +131,10 @@ test('Firestore Emulator enforces canonical membership and atomic private messag
     assert.equal(history.messages.length, 1);
     assert.equal(history.messages[0].text, 'emulator message');
 
-    await endpoints.markPrivateMessageReadV2({
-        auth: { uid: bob }, data: { chatId, messageId: sent.messageId }
+    const readResult = await endpoints.markPrivateMessagesReadV2({
+        auth: { uid: bob }, data: { chatId, messageIds: [sent.messageId] }
     });
+    assert.equal(readResult.updated, 1);
     const updatedMessage = await db.collection('chats').doc(chatId)
         .collection('messages').doc(sent.messageId).get();
     assert.equal(updatedMessage.get('read'), true);

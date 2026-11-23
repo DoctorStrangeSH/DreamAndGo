@@ -584,3 +584,12 @@
 - [ ] Do not merge PR #1 or reconcile refs until the overlapping changes have a reviewed, tested resolution. PR #1 still targets `refactor/security-foundation` and reports 1,626 commits / 331 changed files; it is not a safe substitute for the integration candidate.
 - [ ] Exact-HEAD Actions result is still not visible through the available commit status/run lookup. A configured workflow is not a passing CI result.
 - **Safety:** no branches were deleted or rewritten; no PR merged; no Firebase/Firestore production data or configuration touched.
+
+### CI wiring audit — 2026-11-23
+
+- [x] Confirmed root `npm test` explicitly includes both offline backup verifier suites, including the project-bound inventory regression.
+- [x] Confirmed `server/package.json` runs all `*emulator.test.js` files serially through `test:emulator`; the synthetic backup restore test is included in that glob.
+- [x] Confirmed Checks workflow order: unit tests → real Chromium offline queue tests → Auth/Firestore Emulator suite → JavaScript syntax check.
+- [x] Confirmed Emulator project uses the non-production `demo-dream-and-go` ID and only Auth + Firestore emulators are started.
+- [ ] This is a static workflow/configuration audit, not execution evidence. Exact-HEAD Actions run and logs remain unconfirmed.
+- **Safety:** no workflow triggers, Firebase config, Rules, or runtime code changed in this audit.

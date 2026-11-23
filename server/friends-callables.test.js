@@ -118,6 +118,9 @@ test('friend request rejects unauthenticated callers, extra fields, self-add and
     const requestNotifications = [...ctx.records.entries()]
         .filter(([path, value]) => path.startsWith('users/user-b/notifications/') && value.type === 'friend_request');
     assert.equal(requestNotifications.length, 1);
+    assert.equal(requestNotifications[0][1].link, '#friends');
+    assert.equal(requestNotifications[0][1].fromUserId, 'user-a');
+    assert.equal(requestNotifications[0][1].read, false);
 });
 
 test('only the recipient can accept and acceptance creates reciprocal friendship atomically', async () => {
@@ -139,6 +142,9 @@ test('only the recipient can accept and acceptance creates reciprocal friendship
     const notifications = [...ctx.records.entries()].filter(([path]) => path.startsWith('users/user-a/notifications/'));
     assert.equal(notifications.length, 1);
     assert.equal(notifications[0][1].type, 'friend_accepted');
+    assert.equal(notifications[0][1].link, '#profile/user-b');
+    assert.equal(notifications[0][1].fromUserId, 'user-b');
+    assert.equal(notifications[0][1].read, false);
 });
 
 test('acceptance rejects forged or inconsistent legacy request records', async () => {

@@ -63,7 +63,7 @@ The current deny-all Rules are intentional. Do not replace them with broad owner
 - [ ] Verify public profile reads only from `publicProfiles/{uid}`; never expose `users/{uid}` to unrelated users.
 
 ### Batch 2 — friends and notifications
-- [ ] Move friend-request creation, acceptance, rejection and removal behind authenticated server operations.
+- [x] Move friend-request creation, acceptance, rejection, cancellation and removal behind authenticated server operations.
 - [x] Every friend mutation derives the actor UID from callable auth context; client-supplied actor IDs are not accepted.
 - [x] Cross-user friendship state changes and reciprocal records are written only inside trusted server transactions.
 - [ ] Move all notification creation to trusted server operations. Friend-request and friend-accepted notifications are now created inside trusted transactions; achievement, level-up and message notifications remain NOT DONE.

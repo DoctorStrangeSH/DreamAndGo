@@ -78,6 +78,12 @@ test('Firestore Emulator enforces canonical membership and atomic private messag
     await db.collection('users').doc(outsider).set({ username: 'outsider' });
     createdPaths.push(db.collection('users').doc(outsider));
 
+    const contactsResult = await endpoints.getMyChatContactsV2({
+        auth: { uid: alice }, data: {}
+    });
+    assert.equal(contactsResult.contacts.length, 1);
+    assert.equal(contactsResult.contacts[0].uid, bob);
+
     const inboxResult = await endpoints.getMyPrivateChatsV2({
         auth: { uid: alice }, data: {}
     });

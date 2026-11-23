@@ -138,3 +138,21 @@ test('unknown Firestore value types fail closed instead of being silently omitte
     assert.throws(() => encodeFirestoreValue({ optional: undefined }), /Неподдерживаемое значение/);
     assert.throws(() => encodeFirestoreValue(Number.NaN), /Неконечное число/);
 });
+
+test('backup verifier reports malformed envelopes and records without throwing', () => {
+    assert.deepEqual(verifyChatMigrationBackup({ manifest: null, records: [] }), {
+        valid: false,
+        issues: ['invalid-backup-envelope']
+    });
+
+    const backup = buildChatMigrationBackup({
+        projectId: 'dream-and-go-staging',
+        sourceManifestSha256,
+        documents: validDocuments()
+    });
+    backup.records.push(null);
+    const result = verifyChatMigrationBackup(backup);
+    assert.equal(result.valid, false);
+    assert.ok(result.issues.includes('invalid-document-record'));
+    assert.ok(result.issues.includes('document-count-mismatch'));
+});

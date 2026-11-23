@@ -165,10 +165,11 @@ export function verifyChatMigrationBackup(backup) {
     }
     expectedRecords.sort((a, b) => a.path.localeCompare(b.path));
     if (backup.manifest.documentCount !== backup.records.length) issues.push('document-count-mismatch');
-    if (backup.manifest.totalSourceBytes !== backup.records.reduce((sum, record) => sum + (Number.isSafeInteger(record.sourceBytes) ? record.sourceBytes : 0), 0)) {
+    if (backup.manifest.totalSourceBytes !== backup.records.reduce((sum, record) => sum + (Number.isSafeInteger(record?.sourceBytes) ? record.sourceBytes : 0), 0)) {
         issues.push('total-source-bytes-mismatch');
     }
-    if (stableJson(backup.manifest.records) !== stableJson(expectedRecords)) issues.push('manifest-records-mismatch');
+    if (!Array.isArray(backup.manifest.records) ||
+        stableJson(backup.manifest.records) !== stableJson(expectedRecords)) issues.push('manifest-records-mismatch');
     const manifestHash = hash(backup.manifest);
     if (backup.manifestSha256 !== manifestHash) issues.push('manifest-checksum-mismatch');
     const bundleHash = hash({ manifest: backup.manifest, records: backup.records });

@@ -40,6 +40,17 @@ test('staging preflight rejects cross-project authDomain, production bucket and 
     assert.equal(result.errors.length, 3);
 });
 
+test('staging project with production-like prefix does not confuse RTDB host safety', () => {
+    const config = validConfig();
+    config.firebaseConfig.projectId = 'dream-and-go-staging';
+    config.firebaseConfig.authDomain = 'dream-and-go-staging.firebaseapp.com';
+    config.firebaseConfig.databaseURL = 'https://dream-and-go-staging-default-rtdb.europe-west1.firebasedatabase.app';
+    assert.equal(validateStagingConfig(config).valid, true);
+
+    config.firebaseConfig.databaseURL = 'https://dream-and-go-default-rtdb.europe-west1.firebasedatabase.app';
+    assert.equal(validateStagingConfig(config).valid, false);
+});
+
 test('staging preflight requires every rollout switch to be explicitly false', () => {
     for (const name of FLAG_NAMES) {
         const config = validConfig();

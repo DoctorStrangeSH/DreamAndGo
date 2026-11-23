@@ -23,6 +23,15 @@ export class ChatModule {
         this.chatService.chatV2.onOutboxChange = () => {
             void this.refreshPendingOutbox();
         };
+        this.handleChatOnline = () => {
+            void this.refreshBlockStatus();
+            void this.refreshPendingOutbox();
+        };
+        this.handleChatOffline = () => this.applyBlockStatus(this.blockStatus || {});
+        if (typeof window !== 'undefined') {
+            window.addEventListener('online', this.handleChatOnline);
+            window.addEventListener('offline', this.handleChatOffline);
+        }
     }
 
     async render() {
@@ -292,6 +301,22 @@ export class ChatModule {
         void this.refreshPendingOutbox();
     }
 
+    async refreshBlockStatus() {
+        if (!this.chatService.isV2Enabled || !this.currentChatId) return;
+        try {
+            this.blockStatus = await this.chatService.getBlockStatus(this.currentChatId);
+        } catch (error) {
+            console.error('Не удалось обновить статус блокировки:', error);
+            this.blockStatus = {
+                blockedByMe: false,
+                blockedByPartner: false,
+                canSend: false,
+                error: true
+            };
+        }
+        this.applyBlockStatus(this.blockStatus);
+    }
+
     async refreshPendingOutbox() {
         if (!this.chatService.isV2Enabled || !this.currentChatId || !window.app.currentUser?.uid) return;
         const chatId = this.currentChatId;
@@ -519,8 +544,9 @@ export class ChatModule {
                 }
                 window.app.ui.showToast(result?.error || 'Не удалось отправить сообщение.', 'danger');
                 return;
+            } else {
+                window.app.onUserAction('send_message');
             }
-            window.app.onUserAction('send_message');
         }
 
         input.value = '';

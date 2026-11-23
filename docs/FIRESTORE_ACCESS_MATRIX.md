@@ -196,3 +196,48 @@ V1.0 scope is one-to-one private conversations. Group chats remain post-v1.0 and
 - On reconnect, queued messages are sent sequentially using the original client message ID. Successful sends are removed; permission-denied messages remain encrypted and are marked blocked.
 - Account switching stops the previous account's active flush. Encrypted records remain local for that account and are not included in another account's queue projection.
 - Browser-level IndexedDB durability, multi-tab behavior and two-account staging still require explicit acceptance.
+
+## Client Firestore call-site audit — 2026-11-23 (source inspection)
+
+This pass inspected the integration-branch browser service implementations, not just the access matrix. It confirms several existing UI paths still depend on direct client Firestore access. The candidate deny-all catch-all Rules intentionally block these paths; do not loosen Rules to make them work.
+
+### P0 — progression and rewards are still client-authoritative
+
+- `js/services/daily-tasks.service.js` directly reads, creates and updates `users/{uid}/dailyTasks/current`.
+- Task progress is calculated in the browser from a caller-supplied action. A client can forge progress if this path is ever opened to writes.
+- `claimTaskReward` marks a task claimed in one client write and then calls the client-side `LevelService.addXP` in a separate operation. This is not atomic; failures can consume a claim without granting XP, and concurrent claims require server-side idempotency.
+- `claimBonusReward` sets `bonusClaimed` in the browser and returns 150 without any server-side reward transaction.
+- `js/services/level.service.js` directly increments `users/{uid}.stats.xp`; its client-supplied `action` selects the XP amount. It then reads the profile again and calculates the level in the browser.
+- `js/services/achievements.service.js` reads `users/{uid}` and writes the `achievements` array from client-calculated stats. Achievement awards and level-up notifications therefore are not yet server-authoritative.
+- No progression/daily-task callable module is currently exported from `server/index.js`.
+
+**Required design:** server-owned progression state; trusted domain mutations emit progress from validated server-side operations; reward claims use an idempotent transaction with server-calculated XP/bonus and immutable claim IDs. Do not add a generic callable that trusts a client-provided `action`, `progress`, `xp`, `level`, `completed` or `claimed` value.
+
+### P0 — friends UI reads bypass the new callable boundary
+
+- `js/services/friends.service.js` reads the signed-in user's `friends`, `friendRequests` and `sentRequests` subcollections directly.
+- The current exported friend callables cover send/accept/reject/cancel/remove, but do not expose read/list operations for those three views.
+- Public profile card reads use `publicProfiles/{uid}`, which has an explicit public read rule in the candidate Rules.
+- The friends list and request lists therefore need owner-scoped list callables (with bounded results and allowlisted fields) before client access can remain denied.
+
+### P1 — owner collections and aggregate stats remain direct-client paths
+
+- The inspected Book and Travel services perform direct owner collection CRUD and update `users/{uid}.stats.*` from the browser.
+- Restaurant service does the same; Movies and Dreams follow the same legacy client-service pattern recorded in this matrix.
+- Owner path scoping alone is insufficient: arbitrary spread payloads and direct aggregate-stat writes can alter server-managed fields.
+- These paths need explicit per-collection allowlists and bounded payload validation, or server callables. Aggregate counters must be derived/reconciled server-side, never accepted from a client write.
+
+### Rules and rollout decision
+
+- Keep `firestore.rules` deny-by-default for all unapproved paths.
+- Do not add broad `users/{uid}/**` owner read/write rules.
+- Do not deploy the candidate Rules, Functions or client code to the configured Firebase project; the browser config currently names `dream-and-go`, while the CI Emulator uses `demo-dream-and-go`.
+- No live Firestore access, data migration, Rules deployment or production write was performed during this source audit.
+
+### Ordered implementation batches
+
+1. Add read-only owner-scoped Friends list/request callables and migrate the FriendsService reads; test owner A/B, anonymous and unrelated caller.
+2. Design progression + daily-task server state and trusted event sources; implement atomic/idempotent reward claims and server-side achievement awards.
+3. Migrate Books/Travels/Restaurants/Movies/Dreams CRUD to validated owner-scoped contracts; derive aggregate stats on the server.
+4. Only then add narrowly scoped Rules for any browser reads that remain necessary, with positive/negative query Emulator tests.
+5. Run exact-HEAD CI and staging with two independent accounts before any rollout.

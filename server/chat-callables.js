@@ -46,7 +46,10 @@ function privateChatId(uidA, uidB) {
 function participantData(snapshot, uid) {
     const data = snapshot.data() || {};
     const participants = Array.isArray(data.participants) ? data.participants : [];
-    if (data.type !== 'private' || participants.length !== 2 || !participants.includes(uid)) {
+    if (data.type !== 'private' || data.schemaVersion !== 2 ||
+        participants.length !== 2 || participants[0] === participants[1] ||
+        !participants.every(participant => validId(participant)) ||
+        !participants.includes(uid)) {
         return null;
     }
     return { participants, partnerUid: participants.find(id => id !== uid) };
@@ -115,7 +118,9 @@ function createChatCallables({ onCall, HttpsError, getFirestore, FieldValue }) {
                 if (!actor.exists || !target.exists) {
                     throw new HttpsError('not-found', 'Пользователь не найден');
                 }
-                if (!actorFriend.exists || !targetFriend.exists) {
+                if (!actorFriend.exists || !targetFriend.exists ||
+                    actorFriend.data()?.friendId !== targetUid ||
+                    targetFriend.data()?.friendId !== actorUid) {
                     throw new HttpsError('permission-denied', 'Начать чат можно только с другом');
                 }
 
@@ -198,7 +203,9 @@ function createChatCallables({ onCall, HttpsError, getFirestore, FieldValue }) {
                     transaction.get(senderSummaryRef),
                     transaction.get(receiverSummaryRef)
                 ]);
-                if (!sender.exists || !receiver.exists || !senderSummary.exists || !receiverSummary.exists) {
+                if (!sender.exists || !receiver.exists || !senderSummary.exists || !receiverSummary.exists ||
+                    senderSummary.data()?.partnerId !== receiverUid ||
+                    receiverSummary.data()?.partnerId !== actorUid) {
                     throw new HttpsError('failed-precondition', 'Диалог не инициализирован корректно');
                 }
 

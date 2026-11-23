@@ -17,6 +17,8 @@ export class ChatModule {
         this.loadedOlderMessages = [];
         this.historyCursor = null;
         this.loadingOlderMessages = false;
+        this.blockStatus = null;
+        this.blockActionPending = false;
     }
 
     async render() {
@@ -69,6 +71,9 @@ export class ChatModule {
                                         <h6 class="fw-bold mb-0" id="chatPartnerName"></h6>
                                     </div>
                                     <div class="d-flex gap-1">
+                                        <button class="btn btn-sm btn-outline-danger d-none" id="blockChatUserBtn" title="Заблокировать пользователя">
+                                            <i class="bi bi-shield-lock"></i>
+                                        </button>
                                         <button class="btn btn-sm btn-outline-secondary" id="closeChatBtn" title="Закрыть">
                                             <i class="bi bi-x-lg"></i>
                                         </button>
@@ -86,6 +91,7 @@ export class ChatModule {
                                 </div>
 
                                 <div class="p-3 border-top flex-shrink-0" style="background: var(--bg-card);">
+                                    <div id="chatBlockNotice" class="alert alert-warning py-2 px-3 small mb-2 d-none" role="status"></div>
                                     <div id="editMode" class="text-muted small mb-1" style="display: none;">
                                         <i class="bi bi-pencil me-1"></i>Редактирование
                                         <button class="btn btn-link btn-sm p-0" id="cancelEdit">Отмена</button>
@@ -217,6 +223,26 @@ export class ChatModule {
         }
         this.chatService.rememberChatId(userId, partnerId, chatId);
         this.currentChatId = chatId;
+        this.blockStatus = null;
+        this.applyBlockStatus({
+            blockedByMe: false,
+            blockedByPartner: false,
+            canSend: false,
+            checking: true
+        });
+        if (this.chatService.isV2Enabled) {
+            try {
+                this.blockStatus = await this.chatService.getBlockStatus(chatId);
+                this.applyBlockStatus(this.blockStatus);
+            } catch (error) {
+                console.error('Не удалось проверить блокировку чата:', error);
+                this.blockStatus = { blockedByMe: false, blockedByPartner: false, canSend: false, error: true };
+                this.applyBlockStatus(this.blockStatus);
+            }
+        } else {
+            this.blockStatus = { blockedByMe: false, blockedByPartner: false, canSend: true };
+            this.applyBlockStatus(this.blockStatus);
+        }
         await this.chatService.markAsRead(userId, partnerId);
         this.latestMessages = [];
         this.loadedOlderMessages = [];
@@ -255,6 +281,69 @@ export class ChatModule {
                 messagesContainer.scrollTop = oldTop + (messagesContainer.scrollHeight - oldHeight);
             }
         });
+    }
+
+    applyBlockStatus(status) {
+        const blockButton = document.getElementById('blockChatUserBtn');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendMessageBtn');
+        const notice = document.getElementById('chatBlockNotice');
+        if (!blockButton || !messageInput || !sendButton || !notice) return;
+
+        const v2Enabled = this.chatService.isV2Enabled;
+        blockButton.classList.toggle('d-none', !v2Enabled);
+        blockButton.disabled = this.blockActionPending || Boolean(status.error);
+        blockButton.innerHTML = status.blockedByMe
+            ? '<i class="bi bi-shield-check"></i>'
+            : '<i class="bi bi-shield-lock"></i>';
+        blockButton.title = status.blockedByMe ? 'Разблокировать пользователя' : 'Заблокировать пользователя';
+        blockButton.setAttribute('aria-label', blockButton.title);
+
+        const canSend = status.canSend === true && !status.checking;
+        messageInput.disabled = !canSend;
+        sendButton.disabled = !canSend;
+        notice.classList.toggle('d-none', canSend || !v2Enabled);
+        if (status.error) {
+            notice.textContent = 'Не удалось проверить блокировку. Отправка временно отключена.';
+        } else if (status.checking) {
+            notice.textContent = 'Проверяем настройки безопасности диалога…';
+        } else if (status.blockedByMe) {
+            notice.textContent = 'Ты заблокировал(а) этого пользователя. Разблокируй его, чтобы продолжить общение.';
+        } else if (status.blockedByPartner) {
+            notice.textContent = 'Этот пользователь ограничил возможность получать от тебя сообщения.';
+        } else {
+            notice.textContent = '';
+        }
+    }
+
+    async toggleChatBlock() {
+        if (!this.chatService.isV2Enabled || !this.currentChat || !this.currentChatId ||
+            this.blockActionPending || !this.blockStatus || this.blockStatus.error) return;
+
+        this.blockActionPending = true;
+        this.applyBlockStatus(this.blockStatus);
+        const targetUid = this.currentChat;
+        try {
+            if (this.blockStatus.blockedByMe) {
+                await this.chatService.unblockUser(targetUid);
+            } else {
+                const confirmed = window.confirm('Заблокировать пользователя? Он не сможет отправлять тебе сообщения, а ты — ему.');
+                if (!confirmed) return;
+                await this.chatService.blockUser(targetUid);
+            }
+            this.blockStatus = await this.chatService.getBlockStatus(this.currentChatId);
+            this.applyBlockStatus(this.blockStatus);
+            window.app.ui.showToast(
+                this.blockStatus.blockedByMe ? 'Пользователь заблокирован.' : 'Блокировка снята.',
+                'success'
+            );
+        } catch (error) {
+            console.error('Не удалось изменить блокировку:', error);
+            window.app.ui.showToast(error?.message || 'Не удалось изменить блокировку.', 'danger');
+        } finally {
+            this.blockActionPending = false;
+            if (this.blockStatus) this.applyBlockStatus(this.blockStatus);
+        }
     }
 
     getCombinedMessages() {
@@ -396,6 +485,8 @@ export class ChatModule {
         this.loadedOlderMessages = [];
         this.historyCursor = null;
         this.loadingOlderMessages = false;
+        this.blockStatus = null;
+        this.blockActionPending = false;
 
         const emptyState = document.getElementById('noChatSelected');
         const activeChat = document.getElementById('activeChat');
@@ -456,6 +547,7 @@ export class ChatModule {
         document.getElementById('newChatBtn')?.addEventListener('click', () => this.showNewChatModal());
 
         document.getElementById('closeChatBtn')?.addEventListener('click', () => this.closeChat());
+        document.getElementById('blockChatUserBtn')?.addEventListener('click', () => this.toggleChatBlock());
 
         document.getElementById('backToChatList')?.addEventListener('click', () => this.closeChat());
 

@@ -13,7 +13,6 @@ export class NotificationsWidget {
         const service = window.app.notificationsService;
         if (!service?.isReady) {
             this.renderUnavailable();
-            this.updateBadge([]);
             return;
         }
 

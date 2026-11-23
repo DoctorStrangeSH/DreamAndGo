@@ -64,12 +64,12 @@ The current deny-all Rules are intentional. Do not replace them with broad owner
 
 ### Batch 2 — friends and notifications
 - [ ] Move friend-request creation, acceptance, rejection and removal behind authenticated server operations.
-- [ ] Every operation derives the actor UID from callable auth context; client-supplied actor IDs are ignored/rejected.
-- [ ] Write only the caller's own inbox/outbox records directly, or keep all cross-user state changes in a transaction on trusted server.
-- [ ] Move notification creation to trusted server operations; clients may only read their own notifications and mark an allowlisted read field.
+- [x] Every friend mutation derives the actor UID from callable auth context; client-supplied actor IDs are not accepted.
+- [x] Cross-user friendship state changes and reciprocal records are written only inside trusted server transactions.
+- [ ] Move all notification creation to trusted server operations; friend-request and friend-accepted notifications are now created inside the corresponding trusted server transactions. Achievement, level-up and message notifications remain NOT DONE.
 - [ ] Derive notification text/type/target from server-validated events; never accept arbitrary notification payloads from clients.
 - [ ] Add idempotency and duplicate-request handling.
-- [ ] Emulator matrix: anonymous, requester, recipient, unrelated user; verify no caller can mutate another user's friend or notification records.
+- [ ] Emulator matrix: anonymous, requester, recipient, unrelated user; verify no caller can mutate another user's friend or notification records. Unit tests for callable authorization and transaction effects are added; Emulator coverage remains pending.
 
 ### Batch 3 — chat
 - [ ] Establish canonical server-owned chat membership metadata before allowing message access.

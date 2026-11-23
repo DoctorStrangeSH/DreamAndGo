@@ -9,7 +9,7 @@ import {
     canonicalChatId,
     legacyChatId
 } from '../chat-migration-inventory.js';
-import { buildChatMigrationBackup } from '../chat-migration-backup.js';
+import { buildChatMigrationBackup, verifyChatMigrationBackup } from '../chat-migration-backup.js';
 
 function readArguments(argv) {
     const args = {};
@@ -159,6 +159,10 @@ async function main() {
         sourceManifestSha256: inventory.manifestSha256,
         documents
     });
+    const verification = verifyChatMigrationBackup(backup);
+    if (!verification.valid) {
+        throw new Error('Резервная копия не прошла самопроверку: ' + verification.issues.join(', '));
+    }
 
     await mkdir(resolvedOutputDir, { recursive: false, mode: 0o700 });
     await chmod(resolvedOutputDir, 0o700);
@@ -177,7 +181,8 @@ async function main() {
         '',
         'Mode: READ ONLY — no Firestore writes performed.',
         '- Firebase project: ' + projectId,
-        '- Backed up summary and message documents: ' + backup.manifest.documentCount,
+        '- Backed up Firestore documents (summaries, chat parents, messages): ' + backup.manifest.documentCount,
+        '- Backup self-verification: PASS, all document and bundle checksums valid,
         '- Total source bytes: ' + backup.manifest.totalSourceBytes,
         '- Inventory SHA-256: ' + inventory.manifestSha256,
         '- Backup manifest SHA-256: ' + backup.manifestSha256,

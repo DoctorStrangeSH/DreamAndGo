@@ -186,3 +186,8 @@ The full test pipeline is being rerun after the backup CLI, V2-summary exclusion
 - [x] Backup exporter now reads every root `chats/{chatId}` parent document, including chats with no messages, and includes these parent records in the checksummed bundle. This preserves metadata needed for complete review and restore.
 - [ ] CI for this latest parent-document inclusion change is pending.
 - [ ] Real staging export, backup read-back and dry run remain pending staging project access.
+
+
+### Final validation trigger — 2026-11-23
+
+The previous CI run was cancelled by subsequent documentation commits. The latest code change includes all root chat parent documents in the checksummed export. This commit intentionally triggers one final full pipeline on the reconciled branch HEAD; no Firebase export is started by CI.

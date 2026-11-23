@@ -1,7 +1,11 @@
 import { app, appCheck } from '../config/firebase.js';
 import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
 import { createChatV2CallableInvoker } from '../core/chat-v2-callable-invoker.js';
-import { createEncryptedChatOutbox, createIndexedDbChatOutbox } from './chat-v2-offline-outbox.js';
+import {
+    createEncryptedChatOutbox,
+    createIndexedDbChatOutbox,
+    flushEncryptedChatOutbox
+} from './chat-v2-offline-outbox.js';
 
 function createClientMessageId() {
     const cryptoApi = globalThis.crypto;
@@ -108,35 +112,16 @@ export class ChatV2Service {
 
         this.outboxFlushPromise = (async () => {
             try {
-                const records = await this.outbox.getQueued(uid);
-                const pendingMessages = await this.outbox.list(uid);
-                const textById = new Map(pendingMessages.map(message => [message.id, message.text]));
-                for (const record of records) {
-                    if (uid !== this.activeOutboxUid || globalThis.navigator?.onLine === false) break;
-                    try {
-                        const text = textById.get(record.messageId);
-                        if (typeof text !== 'string') throw new Error('Локальное сообщение не найдено.');
-                        const result = await this.call('sendPrivateMessageV2', {
-                            chatId: record.chatId,
-                            text,
-                            clientMessageId: record.messageId
-                        });
-                        if (result.success !== true || typeof result.messageId !== 'string') {
-                            throw new Error('Сервер не подтвердил отправку сообщения.');
-                        }
-                        await this.outbox.remove(uid, record.messageId);
-                        this.onOutboxChange?.();
-                    } catch (error) {
-                        if (String(error?.code || '').endsWith('permission-denied')) {
-                            await this.outbox.markBlocked(uid, record.messageId);
-                            this.onOutboxChange?.();
-                            continue;
-                        }
-                        if (!this.isTransientSendError(error)) {
-                            console.error('Офлайн-сообщение оставлено в очереди:', error);
-                        }
-                        break;
-                    }
+                const result = await flushEncryptedChatOutbox({
+                    outbox: this.outbox,
+                    uid,
+                    sendMessage: payload => this.call('sendPrivateMessageV2', payload),
+                    isOnline: () => globalThis.navigator?.onLine !== false,
+                    isCurrent: () => uid === this.activeOutboxUid,
+                    onChange: () => this.onOutboxChange?.()
+                });
+                if (result.error && !this.isTransientSendError(result.error)) {
+                    console.error('Офлайн-сообщение оставлено в очереди:', result.error);
                 }
             } catch (error) {
                 console.error('Не удалось прочитать зашифрованную офлайн-очередь:', error);

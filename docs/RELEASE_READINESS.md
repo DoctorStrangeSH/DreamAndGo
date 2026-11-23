@@ -239,3 +239,11 @@
 - [x] Auth + Firestore Emulator tests: 23 passed, 0 failed.
 - [x] JavaScript syntax: 95 files passed.
 - [ ] No staging Firebase project/credentials supplied; real inventory and backup have not been executed. Production remains untouched.
+
+
+## Checksummed chat backup foundation — 2026-11-23
+
+- [x] Added deterministic pure backup builder and verifier with Firestore value type preservation and per-document/bundle checksums.
+- [x] Added synthetic tests for deterministic output, tamper detection, invalid paths and unsupported value types.
+- [ ] Exact-HEAD CI pending.
+- [ ] No staging export or real backup has been performed; a separate staging project and read-only credentials are still required.

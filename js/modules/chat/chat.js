@@ -222,15 +222,6 @@ export class ChatModule {
         this.loadedOlderMessages = [];
         this.historyCursor = null;
         this.loadingOlderMessages = false;
-        if (this.chatService.isV2Enabled) {
-            try {
-                const firstPage = await this.chatService.chatV2.getHistoryPage(chatId);
-                this.historyCursor = firstPage.nextCursor;
-            } catch (error) {
-                console.error('Не удалось подготовить пагинацию истории:', error);
-            }
-        }
-
         const deleteChatButton = document.getElementById('deleteChatBtn');
         if (deleteChatButton) deleteChatButton.classList.toggle('d-none', this.chatService.isV2Enabled);
         document.getElementById('editMode')?.classList.toggle('d-none', this.chatService.isV2Enabled);
@@ -240,7 +231,21 @@ export class ChatModule {
             const oldHeight = messagesContainer.scrollHeight;
             const oldTop = messagesContainer.scrollTop;
             const nearBottom = oldHeight - oldTop - messagesContainer.clientHeight < 96;
+            if (this.loadedOlderMessages.length > 0 && this.latestMessages.length > 0 && messages.length > 0) {
+                const boundary = new Date(messages[0].createdAt).getTime();
+                const dropped = this.latestMessages.filter(message =>
+                    new Date(message.createdAt).getTime() < boundary
+                );
+                const olderById = new Map();
+                [...this.loadedOlderMessages, ...dropped].forEach(message => olderById.set(message.id, message));
+                this.loadedOlderMessages = [...olderById.values()].sort((left, right) =>
+                    new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime()
+                );
+            }
             this.latestMessages = messages;
+            if (this.loadedOlderMessages.length === 0) {
+                this.historyCursor = messages[0]?.id || null;
+            }
             const combined = this.getCombinedMessages();
             this.renderMessageList(messagesContainer, combined, userId);
             if (nearBottom) {

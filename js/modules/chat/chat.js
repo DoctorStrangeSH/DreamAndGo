@@ -13,6 +13,10 @@ export class ChatModule {
         this.unsubscribeChats = null;
         this.editMessageId = null;
         this.partnerProfiles = new Map();
+        this.latestMessages = [];
+        this.loadedOlderMessages = [];
+        this.historyCursor = null;
+        this.loadingOlderMessages = false;
     }
 
     async render() {
@@ -214,6 +218,18 @@ export class ChatModule {
         this.chatService.rememberChatId(userId, partnerId, chatId);
         this.currentChatId = chatId;
         await this.chatService.markAsRead(userId, partnerId);
+        this.latestMessages = [];
+        this.loadedOlderMessages = [];
+        this.historyCursor = null;
+        this.loadingOlderMessages = false;
+        if (this.chatService.isV2Enabled) {
+            try {
+                const firstPage = await this.chatService.chatV2.getHistoryPage(chatId);
+                this.historyCursor = firstPage.nextCursor;
+            } catch (error) {
+                console.error('Не удалось подготовить пагинацию истории:', error);
+            }
+        }
 
         const deleteChatButton = document.getElementById('deleteChatBtn');
         if (deleteChatButton) deleteChatButton.classList.toggle('d-none', this.chatService.isV2Enabled);
@@ -221,20 +237,80 @@ export class ChatModule {
         const messagesContainer = document.getElementById('chatMessages');
 
         this.unsubscribeMessages = window.app.realtimeService.subscribeToMessages(chatId, (messages) => {
-            if (messages.length === 0) {
-                messagesContainer.innerHTML = `
-                    <div class="text-center text-muted py-5">
-                        <i class="bi bi-chat-dots display-4 opacity-25"></i>
-                        <p class="mt-2">Начните общение!</p>
-                    </div>
-                `;
-            } else {
-                messagesContainer.innerHTML = messages
-                    .map(msg => this.createMessageBubble(msg, userId))
-                    .join('');
+            const oldHeight = messagesContainer.scrollHeight;
+            const oldTop = messagesContainer.scrollTop;
+            const nearBottom = oldHeight - oldTop - messagesContainer.clientHeight < 96;
+            this.latestMessages = messages;
+            const combined = this.getCombinedMessages();
+            this.renderMessageList(messagesContainer, combined, userId);
+            if (nearBottom) {
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            } else {
+                messagesContainer.scrollTop = oldTop + (messagesContainer.scrollHeight - oldHeight);
             }
         });
+    }
+
+    getCombinedMessages() {
+        const byId = new Map();
+        [...this.loadedOlderMessages, ...this.latestMessages].forEach(message => {
+            byId.set(message.id, message);
+        });
+        return [...byId.values()].sort((left, right) =>
+            new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime()
+        );
+    }
+
+    renderMessageList(container, messages, userId) {
+        if (!container) return;
+        if (messages.length === 0) {
+            container.innerHTML = `
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-chat-dots display-4 opacity-25"></i>
+                    <p class="mt-2">Начните общение!</p>
+                </div>
+            `;
+            return;
+        }
+        container.innerHTML = messages
+            .map(message => this.createMessageBubble(message, userId))
+            .join('');
+    }
+
+    async loadOlderMessages() {
+        if (!this.chatService.isV2Enabled || !this.currentChatId ||
+            !this.historyCursor || this.loadingOlderMessages) return;
+        const container = document.getElementById('chatMessages');
+        if (!container) return;
+
+        this.loadingOlderMessages = true;
+        const oldHeight = container.scrollHeight;
+        const oldTop = container.scrollTop;
+        try {
+            const page = await this.chatService.chatV2.getHistoryPage(
+                this.currentChatId,
+                this.historyCursor
+            );
+            const knownIds = new Set([
+                ...this.loadedOlderMessages,
+                ...this.latestMessages
+            ].map(message => message.id));
+            const older = page.messages.filter(message => !knownIds.has(message.id));
+            await this.chatService.markMessagesRead(
+                window.app.currentUser.uid,
+                this.currentChatId,
+                older
+            );
+            this.loadedOlderMessages = [...older, ...this.loadedOlderMessages];
+            this.historyCursor = page.nextCursor;
+            this.renderMessageList(container, this.getCombinedMessages(), window.app.currentUser.uid);
+            container.scrollTop = oldTop + (container.scrollHeight - oldHeight);
+        } catch (error) {
+            console.error('Не удалось загрузить старые сообщения:', error);
+            window.app.ui.showToast('Не удалось загрузить предыдущие сообщения.', 'warning');
+        } finally {
+            this.loadingOlderMessages = false;
+        }
     }
 
     createMessageBubble(message, userId) {
@@ -310,6 +386,10 @@ export class ChatModule {
             this.unsubscribeMessages();
             this.unsubscribeMessages = null;
         }
+        this.latestMessages = [];
+        this.loadedOlderMessages = [];
+        this.historyCursor = null;
+        this.loadingOlderMessages = false;
 
         const emptyState = document.getElementById('noChatSelected');
         const activeChat = document.getElementById('activeChat');
@@ -344,6 +424,12 @@ export class ChatModule {
             item.classList.add('active');
 
             await this.openChat(item.dataset.partnerId, item.dataset.chatId);
+        });
+
+        document.getElementById('chatMessages')?.addEventListener('scroll', () => {
+            if (this.chatService.isV2Enabled && document.getElementById('chatMessages').scrollTop <= 32) {
+                void this.loadOlderMessages();
+            }
         });
 
         document.getElementById('sendMessageBtn')?.addEventListener('click', () => this.sendMessage());

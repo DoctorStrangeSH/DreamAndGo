@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { webcrypto } from 'node:crypto';
+import { randomUUID, webcrypto } from 'node:crypto';
 import { IDBFactory } from 'fake-indexeddb';
 import {
     createEncryptedChatOutbox,
     createIndexedDbChatOutbox
 } from '../js/services/chat-v2-offline-outbox.js';
 
-function createHarness(databaseName = `chat-outbox-test-${crypto.randomUUID()}`) {
+function createHarness(databaseName = `chat-outbox-test-${randomUUID()}`) {
     const indexedDB = new IDBFactory();
     const create = () => {
         const store = createIndexedDbChatOutbox(indexedDB, { databaseName });

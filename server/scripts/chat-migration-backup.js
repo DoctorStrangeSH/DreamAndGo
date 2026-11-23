@@ -144,6 +144,7 @@ async function main() {
     }
 
     const inventory = buildLegacyChatInventory({
+        projectId,
         summaries,
         messagesByChat,
         orphanMessageCollections

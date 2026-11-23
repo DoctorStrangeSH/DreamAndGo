@@ -465,3 +465,12 @@
 - [x] Syntax validation: 95/95 JavaScript files passed.
 - [x] Marked the new inventory analyzer and its regression tests verified by the same green CI run.
 - [ ] Real staging Firestore inventory, backup, dry-run and migration remain blocked on a separate staging project and credentials.
+
+
+### Checksummed legacy backup foundation — 2026-11-23
+
+- [x] Added pure Firestore-value encoder for Timestamp, Date, bytes, GeoPoint and DocumentReference; unknown types fail closed.
+- [x] Added deterministic backup bundle builder with per-document SHA-256, source inventory binding, byte totals and bundle checksum.
+- [x] Added backup verifier and synthetic regression tests for tampering, duplicate paths, malformed paths and unsupported values.
+- [ ] Actual staging Firestore export, private file creation and read-back verification remain pending separate staging project access.
+- [ ] New backup tests are awaiting exact-HEAD CI.

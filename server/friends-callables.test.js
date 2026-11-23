@@ -115,6 +115,9 @@ test('friend request rejects unauthenticated callers, extra fields, self-add and
     await assert.rejects(ctx.callables.sendFriendRequestV1({
         auth: { uid: 'user-a' }, data: { targetUid: 'user-b' }
     }), error => error.code === 'already-exists');
+    const requestNotifications = [...ctx.records.entries()]
+        .filter(([path, value]) => path.startsWith('users/user-b/notifications/') && value.type === 'friend_request');
+    assert.equal(requestNotifications.length, 1);
 });
 
 test('only the recipient can accept and acceptance creates reciprocal friendship atomically', async () => {

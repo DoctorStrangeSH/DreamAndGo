@@ -2,6 +2,8 @@
 
 Источник требований: [PRODUCT_SPEC.md](PRODUCT_SPEC.md) и [DELIVERY_PLAN.md](DELIVERY_PLAN.md). Новые продуктовые функции вне согласованного объёма V1.0 не добавлять.
 
+Релизные ворота и подтверждённые блокеры: [RELEASE_READINESS.md](RELEASE_READINESS.md).
+
 ## Статус интеграции
 
 - [x] Создана отдельная ветка `integration/v1.0-reconciliation` от актуального `main` (`f02171c362d5944143a1202f425cd96f2386348f`).

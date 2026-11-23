@@ -76,9 +76,77 @@ export function encodeFirestoreValue(value, location = 'document.data') {
     if (prototype !== Object.prototype && prototype !== null) {
         throw new TypeError(`Неподдерживаемый тип объекта ${value.constructor?.name || 'unknown'}: ${location}`);
     }
+    if (Object.hasOwn(value, '__firestoreType')) {
+        throw new TypeError(`Зарезервированное поле __firestoreType: ${location}`);
+    }
     const output = {};
     for (const key of Object.keys(value).sort()) {
         output[key] = encodeFirestoreValue(value[key], `${location}.${key}`);
+    }
+    return output;
+}
+
+
+/**
+ * Rehydrate tagged values for a controlled restore into a Firestore database.
+ * Constructors are injected so the pure backup module does not initialize Firebase.
+ */
+export function decodeFirestoreValue(value, { firestore, Timestamp, GeoPoint, Bytes } = {}, location = 'document.data') {
+    if (value === null || typeof value !== 'object') return value;
+    if (Array.isArray(value)) {
+        return value.map((item, index) => decodeFirestoreValue(item, { firestore, Timestamp, GeoPoint, Bytes }, `${location}[${index}]`));
+    }
+
+    if (Object.hasOwn(value, '__firestoreType')) {
+        const type = value.__firestoreType;
+        if (type === 'timestamp') {
+            if (!Number.isSafeInteger(value.seconds) || !Number.isSafeInteger(value.nanoseconds) ||
+                value.nanoseconds < 0 || value.nanoseconds >= 1_000_000_000 || typeof Timestamp !== 'function') {
+                throw new TypeError(`Некорректный Timestamp: ${location}`);
+            }
+            return new Timestamp(value.seconds, value.nanoseconds);
+        }
+        if (type === 'date') {
+            if (typeof value.iso !== 'string' || !Number.isFinite(Date.parse(value.iso)) ||
+                new Date(value.iso).toISOString() !== value.iso) {
+                throw new TypeError(`Некорректная Date: ${location}`);
+            }
+            return new Date(value.iso);
+        }
+        if (type === 'bytes') {
+            if (typeof value.base64 !== 'string' ||
+                Buffer.from(value.base64, 'base64').toString('base64') !== value.base64 ||
+                !Bytes || typeof Bytes.fromBase64String !== 'function') {
+                throw new TypeError(`Некорректные Bytes: ${location}`);
+            }
+            return Bytes.fromBase64String(value.base64);
+        }
+        if (type === 'geoPoint') {
+            if (!Number.isFinite(value.latitude) || !Number.isFinite(value.longitude) ||
+                value.latitude < -90 || value.latitude > 90 ||
+                value.longitude < -180 || value.longitude > 180 ||
+                typeof GeoPoint !== 'function') {
+                throw new TypeError(`Некорректный GeoPoint: ${location}`);
+            }
+            return new GeoPoint(value.latitude, value.longitude);
+        }
+        if (type === 'documentReference') {
+            assertDocumentPath(value.path);
+            if (!firestore || typeof firestore.doc !== 'function') {
+                throw new TypeError(`Для DocumentReference требуется Firestore: ${location}`);
+            }
+            return firestore.doc(value.path);
+        }
+        throw new TypeError(`Неизвестный Firestore tag: ${location}`);
+    }
+
+    const prototype = Object.getPrototypeOf(value);
+    if (prototype !== Object.prototype && prototype !== null) {
+        throw new TypeError(`Неподдерживаемый объект в backup: ${location}`);
+    }
+    const output = {};
+    for (const key of Object.keys(value).sort()) {
+        output[key] = decodeFirestoreValue(value[key], { firestore, Timestamp, GeoPoint, Bytes }, `${location}.${key}`);
     }
     return output;
 }

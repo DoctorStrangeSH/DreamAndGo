@@ -64,6 +64,32 @@ export class ChatV2Service {
         return result.chatId;
     }
 
+    async blockUser(targetUid) {
+        const result = await this.call('blockUserV1', { targetUid });
+        if (result.success !== true || result.blockedUid !== targetUid) {
+            throw new Error('Не удалось заблокировать пользователя.');
+        }
+        return result;
+    }
+
+    async unblockUser(targetUid) {
+        const result = await this.call('unblockUserV1', { targetUid });
+        if (result.success !== true || result.unblockedUid !== targetUid) {
+            throw new Error('Не удалось снять блокировку.');
+        }
+        return result;
+    }
+
+    async getBlockStatus(chatId) {
+        const result = await this.call('getChatBlockStatusV2', { chatId });
+        if (typeof result.canSend !== 'boolean' ||
+            typeof result.blockedByMe !== 'boolean' ||
+            typeof result.blockedByPartner !== 'boolean') {
+            throw new Error('Сервер вернул некорректный статус блокировки.');
+        }
+        return result;
+    }
+
     async getContacts() {
         const result = await this.call('getMyChatContactsV2', {});
         if (!Array.isArray(result.contacts)) {

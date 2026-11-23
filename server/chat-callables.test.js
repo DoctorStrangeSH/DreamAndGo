@@ -196,7 +196,7 @@ test('message send derives sender and recipient from authenticated membership', 
     assert.equal(message.senderId, 'alice');
     assert.equal(message.text, 'Привет, Боб!');
     assert.equal(ctx.records.get(`users/bob/chats/${chatId}`).unread, 1);
-    const notification = ctx.records.get(`users/bob/notifications/auto-2`);
+    const notification = ctx.records.get(`users/bob/notifications/auto-1`);
     assert.equal(notification.type, 'new_message');
     assert.equal(notification.fromUserId, 'alice');
     assert.equal(notification.message.includes('Привет, Боб!'), false);

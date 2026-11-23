@@ -343,3 +343,11 @@ This pass inspected the integration-branch browser service implementations, not 
 - [x] A cancelled block confirmation does not enter a pending state.
 - [ ] Execute the updated Chat V2 unit suite and full exact-HEAD CI.
 - [ ] Verify both clients' live UI and message composer behavior with two staging accounts.
+
+### Friends legacy relationship counter integrity — 2026-11-23
+
+- [x] Friend removal now decrements each user's friend counter only when that user's friendship document actually exists.
+- [x] Both reciprocal records are still removed atomically when present; an orphaned one-sided record is repaired without changing the unaffected user's count.
+- [x] Added regression coverage for both legacy shapes: actor-only record and target-only record, with non-zero unrelated friend counts preserved.
+- [ ] Execute Friends callable tests and the full exact-HEAD test/syntax suites.
+- [ ] Validate legacy counter reconciliation against real staging data before release.

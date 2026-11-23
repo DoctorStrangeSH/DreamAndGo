@@ -25,6 +25,9 @@ test('only explicit Chat V2 callable endpoints are exposed', async () => {
     assert.equal(CHAT_V2_ENDPOINTS.includes('sendPrivateMessageV2'), true);
     assert.equal(CHAT_V2_ENDPOINTS.includes('getMyChatContactsV2'), true);
     assert.equal(CHAT_V2_ENDPOINTS.includes('markPrivateMessagesReadV2'), true);
+    assert.equal(CHAT_V2_ENDPOINTS.includes('blockUserV1'), true);
+    assert.equal(CHAT_V2_ENDPOINTS.includes('unblockUserV1'), true);
+    assert.equal(CHAT_V2_ENDPOINTS.includes('getChatBlockStatusV2'), true);
 });
 
 test('callable handles are cached per endpoint', async () => {

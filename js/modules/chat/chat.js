@@ -492,9 +492,16 @@ export class ChatModule {
         document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
         document.body.classList.remove('modal-open');
 
-        const friends = this.chatService.isV2Enabled
-            ? await this.chatService.chatV2.getContacts()
-            : await this.friendsService.getFriends(window.app.currentUser.uid);
+        let friends;
+        try {
+            friends = this.chatService.isV2Enabled
+                ? await this.chatService.chatV2.getContacts()
+                : await this.friendsService.getFriends(window.app.currentUser.uid);
+        } catch (error) {
+            console.error('Не удалось загрузить контакты для чата:', error);
+            window.app.ui.showToast('Не удалось загрузить список друзей.', 'danger');
+            return;
+        }
         friends.forEach(friend => this.partnerProfiles.set(friend.uid, friend));
 
         const container = document.createElement('div');

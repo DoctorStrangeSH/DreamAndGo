@@ -56,7 +56,7 @@ function validateStagingConfig(config) {
         } catch {
             errors.push('Некорректный databaseURL.');
         }
-        if (/^dream-and-go(?:-default-rtdb)?(?:\\.[a-z0-9-]+)?\\.(?:firebaseio\\.com|firebasedatabase\\.app)$/.test(host)) {
+        if (/^dream-and-go(?:-default-rtdb)?(?:\.[a-z0-9-]+)?\.(?:firebaseio\.com|firebasedatabase\.app)$/.test(host)) {
             errors.push('databaseURL указывает на production.');
         }
     }

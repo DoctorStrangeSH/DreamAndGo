@@ -168,3 +168,10 @@
 - [x] Added Node Unit tests for encryption, tamper detection, account isolation, blocked records, stable-ID delivery, retry behavior and account switching.
 - [ ] **NOT VERIFIED:** execute new Unit/syntax tests on exact HEAD and verify real IndexedDB persistence across browser reloads.
 - [ ] **NOT VERIFIED:** complete two-account offline → reconnect → delivery acceptance in staging. No production rollout or deployment performed.
+
+
+## CI guardrails — 2026-11-23
+
+- [x] Added `.github/workflows/ci.yml` for push, pull request and manual validation.
+- [x] Workflow runs syntax checks and the project/Chat V2 unit suite on Node.js 22 after installing server dependencies.
+- [ ] **NOT VERIFIED:** first GitHub Actions run must complete successfully before this gate can be marked DONE.

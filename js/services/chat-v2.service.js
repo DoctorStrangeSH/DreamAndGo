@@ -50,6 +50,19 @@ export class ChatV2Service {
         return result.chatId;
     }
 
+    async getChats() {
+        const result = await this.call('getMyPrivateChatsV2', {});
+        if (!Array.isArray(result.chats)) {
+            throw new Error('Сервер вернул некорректный список диалогов.');
+        }
+        return result.chats.map(chat => ({
+            ...chat,
+            lastMessageTime: Number.isFinite(chat.lastMessageTime)
+                ? new Date(chat.lastMessageTime)
+                : new Date()
+        }));
+    }
+
     async sendMessage(chatId, text) {
         const result = await this.call('sendPrivateMessageV2', { chatId, text });
         if (result.success !== true || typeof result.messageId !== 'string') {

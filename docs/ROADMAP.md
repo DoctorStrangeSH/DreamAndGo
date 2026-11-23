@@ -593,3 +593,16 @@
 - [x] Confirmed Emulator project uses the non-production `demo-dream-and-go` ID and only Auth + Firestore emulators are started.
 - [ ] This is a static workflow/configuration audit, not execution evidence. Exact-HEAD Actions run and logs remain unconfirmed.
 - **Safety:** no workflow triggers, Firebase config, Rules, or runtime code changed in this audit.
+
+### Direct Firestore call-site audit — 2026-11-23
+
+- [x] Inspected the actual FriendsService, DailyTasksService, LevelService, AchievementsService, BookService and TravelService implementations against the candidate deny-by-default Rules.
+- [x] Confirmed Friends UI still directly reads friends/incoming/outgoing request subcollections; matching owner-scoped list callables are not exported yet.
+- [x] Confirmed daily task progress, task claims, bonus claims, XP and achievement awards are still client-authoritative and not atomic/trusted.
+- [x] Confirmed Books/Travels (and the previously inventoried Restaurants/Movies/Dreams) retain direct CRUD and client-side aggregate-stat writes.
+- [x] Recorded a safe implementation order in `FIRESTORE_ACCESS_MATRIX.md`; do not relax Rules to mask these blockers.
+- [ ] Implement owner-scoped friend list/request callables and migrate the UI reads.
+- [ ] Move progression events, daily task state, XP, rewards and achievements behind trusted server transactions.
+- [ ] Migrate collection CRUD and aggregate counters to explicit allowlisted server contracts.
+- [ ] Exact-HEAD CI and two-account staging remain mandatory before rollout.
+- **Safety:** source inspection and documentation only; no production Firestore reads/writes, Rules changes, migrations or deployments.

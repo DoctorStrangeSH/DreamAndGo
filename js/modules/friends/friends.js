@@ -301,9 +301,7 @@ export class FriendsModule {
                 }
                 window.app.onUserAction('add_friend');
                 window.app.ui.showToast('Друг добавлен! 🤝', 'success');
-                this.subscribeToFriends();
                 this.subscribeToRequests();
-                this.subscribeToSent();
             });
         });
 

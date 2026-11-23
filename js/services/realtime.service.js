@@ -1,5 +1,6 @@
 import { db } from '../config/firebase.js';
 import { ChatV2Service } from './chat-v2.service.js';
+import { ChatV2Service } from './chat-v2.service.js';
 import { 
     collection, doc, query, orderBy, limit,
     onSnapshot, getDoc
@@ -9,11 +10,44 @@ export class RealtimeService {
     constructor() {
         this.db = db;
         this.listeners = {};
+        this.chatV2 = new ChatV2Service();
     }
 
     subscribeToMessages(chatId, callback) {
         const key = `messages_${chatId}`;
         this.unsubscribe(key);
+
+        if (this.chatV2.isEnabled) {
+            let active = true;
+            let loading = false;
+            let hasEmitted = false;
+            const refresh = async () => {
+                if (!active || loading) return;
+                loading = true;
+                try {
+                    const messages = await this.chatV2.getHistory(chatId);
+                    if (active) {
+                        hasEmitted = true;
+                        callback(messages);
+                    }
+                } catch (error) {
+                    console.error('Ошибка загрузки истории Chat V2:', error);
+                    if (active && !hasEmitted) callback([]);
+                } finally {
+                    loading = false;
+                }
+            };
+
+            void refresh();
+            const timer = window.setInterval(refresh, 2500);
+            const unsubscribe = () => {
+                active = false;
+                window.clearInterval(timer);
+                if (this.listeners[key] === unsubscribe) delete this.listeners[key];
+            };
+            this.listeners[key] = unsubscribe;
+            return unsubscribe;
+        }
 
         const messagesRef = collection(this.db, 'chats', chatId, 'messages');
         const q = query(messagesRef, orderBy('createdAt', 'asc'), limit(100));
@@ -56,6 +90,7 @@ export class RealtimeService {
                 
                 chats.push({
                     id: docSnap.id,
+                    chatId: docSnap.id,
                     partnerId: chatData.partnerId,
                     partnerName: partnerData?.username || 'Пользователь',
                     partnerAvatar: partnerData?.avatar || null,

@@ -471,6 +471,64 @@ function createChatCallables({ onCall, HttpsError, getFirestore, FieldValue }) {
         }
     });
 
+    const markPrivateMessagesReadV2 = onCall(options, async request => {
+        const actorUid = requireActor(request, HttpsError);
+        requirePayload(request.data, ['chatId', 'messageIds'], HttpsError);
+        const chatId = requireChatId(request.data, HttpsError);
+        const messageIds = request.data.messageIds;
+        if (!Array.isArray(messageIds) || messageIds.length < 1 || messageIds.length > HISTORY_LIMIT ||
+            new Set(messageIds).size !== messageIds.length ||
+            !messageIds.every(messageId => validId(messageId, 150))) {
+            throw new HttpsError('invalid-argument', 'Некорректный список сообщений');
+        }
+
+        try {
+            const db = getFirestore();
+            const chatRef = db.collection('chats').doc(chatId);
+            const summaryRef = db.collection('users').doc(actorUid).collection('chats').doc(chatId);
+            await db.runTransaction(async transaction => {
+                const chat = await transaction.get(chatRef);
+                if (!chat.exists || !participantData(chat, actorUid)) {
+                    throw new HttpsError('permission-denied', 'Нет доступа к этому диалогу');
+                }
+                const messageRefs = messageIds.map(messageId =>
+                    chatRef.collection('messages').doc(messageId)
+                );
+                const [summary, ...messages] = await Promise.all([
+                    transaction.get(summaryRef),
+                    ...messageRefs.map(messageRef => transaction.get(messageRef))
+                ]);
+                if (!summary.exists) {
+                    throw new HttpsError('failed-precondition', 'Диалог не инициализирован');
+                }
+                if (messages.some(message => !message.exists)) {
+                    throw new HttpsError('not-found', 'Одно или несколько сообщений не найдены');
+                }
+
+                const unreadMessages = messages.filter(message => {
+                    const data = message.data() || {};
+                    return data.senderId !== actorUid && data.read !== true;
+                });
+                if (unreadMessages.length === 0) return;
+
+                const unread = Number.isSafeInteger(summary.data()?.unread)
+                    ? Math.max(0, summary.data().unread)
+                    : 0;
+                const readAt = FieldValue.serverTimestamp();
+                for (const message of unreadMessages) {
+                    transaction.update(message.ref, { read: true, readAt });
+                }
+                transaction.update(summaryRef, {
+                    unread: Math.max(0, unread - unreadMessages.length)
+                });
+            });
+            return { success: true, updated: messageIds.length };
+        } catch (error) {
+            if (error instanceof HttpsError) throw error;
+            throw new HttpsError('unavailable', 'Не удалось отметить сообщения прочитанными');
+        }
+    });
+
     const getPrivateMessageStatusV2 = onCall(options, async request => {
         const actorUid = requireActor(request, HttpsError);
         requirePayload(request.data, ['chatId', 'messageId'], HttpsError);
@@ -526,6 +584,7 @@ function createChatCallables({ onCall, HttpsError, getFirestore, FieldValue }) {
         getMyChatContactsV2,
         getMyPrivateChatsV2,
         getPrivateChatHistoryV2,
+        markPrivateMessagesReadV2,
         getPrivateMessageStatusV2,
         markPrivateMessageReadV2,
         getPrivateChatUnreadV2

@@ -125,12 +125,13 @@ async function main() {
         groupedMessages.get(chatId).push({ id: document.id, data: document.data() });
     }
 
-    const parentSnapshots = await Promise.all([...groupedMessages.keys()].map(chatId =>
-        db.collection('chats').doc(chatId).get()
-    ));
-    const parentById = new Map(parentSnapshots.map(snapshot => [
-        snapshot.id,
-        snapshot.exists ? snapshot.data() || {} : {}
+    // Export every root chat parent, including chats with no message documents.
+    // These documents contain metadata needed for a faithful restore and review.
+    const parentSnapshot = await db.collection('chats').get();
+    const parentDocs = parentSnapshot.docs;
+    const parentById = new Map(parentDocs.map(document => [
+        document.id,
+        document.data() || {}
     ]));
 
     const messagesByChat = Object.fromEntries([...legacyIds].map(chatId => [chatId, []]));
@@ -148,7 +149,7 @@ async function main() {
         orphanMessageCollections
     });
 
-    const documents = [...summaryDocs, ...messageDocs].map(document => ({
+    const documents = [...summaryDocs, ...parentDocs, ...messageDocs].map(document => ({
         path: document.ref.path,
         id: document.id,
         data: document.data()

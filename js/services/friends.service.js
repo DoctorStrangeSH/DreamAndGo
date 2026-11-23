@@ -17,7 +17,10 @@ export class FriendsService {
                 accept: httpsCallable(getFunctions(app, 'europe-west3'), 'acceptFriendRequestV1'),
                 reject: httpsCallable(getFunctions(app, 'europe-west3'), 'rejectFriendRequestV1'),
                 cancel: httpsCallable(getFunctions(app, 'europe-west3'), 'cancelFriendRequestV1'),
-                remove: httpsCallable(getFunctions(app, 'europe-west3'), 'removeFriendV1')
+                remove: httpsCallable(getFunctions(app, 'europe-west3'), 'removeFriendV1'),
+                listFriends: httpsCallable(getFunctions(app, 'europe-west3'), 'getMyFriendsV1'),
+                listRequests: httpsCallable(getFunctions(app, 'europe-west3'), 'getMyFriendRequestsV1'),
+                listSent: httpsCallable(getFunctions(app, 'europe-west3'), 'getMySentFriendRequestsV1')
             };
         }
     }
@@ -111,82 +114,36 @@ export class FriendsService {
         return this.invokeFriendAction('remove', friendId);
     }
 
-    async getFriends(userId) {
-        try {
-            const friendsRef = collection(this.db, 'users', userId, 'friends');
-            const snapshot = await getDocs(friendsRef);
-            
-            const friends = [];
-            for (const docSnap of snapshot.docs) {
-                if (docSnap.id !== '_init') {
-                    const friendData = await this.getUserProfile(docSnap.id);
-                    if (friendData) {
-                        friends.push({
-                            uid: docSnap.id,
-                            ...friendData,
-                            addedAt: docSnap.data().addedAt?.toDate?.() || new Date()
-                        });
-                    }
-                }
-            }
-
-            return friends;
-        } catch (error) {
-            console.error('Ошибка загрузки друзей:', error);
+    async loadRelationshipList(userId, callableName, timestampField) {
+        if (!userId || userId !== auth.currentUser?.uid) return [];
+        const callable = this.callables?.[callableName];
+        if (!callable) {
+            console.warn('Защищённое чтение списка друзей пока не подключено.');
             return [];
         }
+        try {
+            const result = await callable({});
+            if (result?.data?.success !== true || !Array.isArray(result.data.items)) return [];
+            return result.data.items.map(item => ({
+                ...item,
+                [timestampField]: item[timestampField] ? new Date(item[timestampField]) : new Date()
+            }));
+        } catch (error) {
+            console.error('Ошибка загрузки списка друзей:', error);
+            return [];
+        }
+    }
+
+    async getFriends(userId) {
+        return this.loadRelationshipList(userId, 'listFriends', 'addedAt');
     }
 
     async getFriendRequests(userId) {
-        try {
-            const requestsRef = collection(this.db, 'users', userId, 'friendRequests');
-            const snapshot = await getDocs(requestsRef);
-            
-            const requests = [];
-            for (const docSnap of snapshot.docs) {
-                if (docSnap.id !== '_init') {
-                    const userData = await this.getUserProfile(docSnap.id);
-                    if (userData) {
-                        requests.push({
-                            uid: docSnap.id,
-                            ...userData,
-                            createdAt: docSnap.data().createdAt?.toDate?.() || new Date()
-                        });
-                    }
-                }
-            }
-
-            return requests;
-        } catch (error) {
-            console.error('Ошибка загрузки заявок:', error);
-            return [];
-        }
+        return this.loadRelationshipList(userId, 'listRequests', 'createdAt');
     }
 
     async getSentRequests(userId) {
-        try {
-            const sentRef = collection(this.db, 'users', userId, 'sentRequests');
-            const snapshot = await getDocs(sentRef);
-            
-            const sent = [];
-            for (const docSnap of snapshot.docs) {
-                if (docSnap.id !== '_init') {
-                    const userData = await this.getUserProfile(docSnap.id);
-                    if (userData) {
-                        sent.push({
-                            uid: docSnap.id,
-                            ...userData,
-                            createdAt: docSnap.data().createdAt?.toDate?.() || new Date()
-                        });
-                    }
-                }
-            }
-
-            return sent;
-        } catch (error) {
-            console.error('Ошибка загрузки отправленных заявок:', error);
-            return [];
-        }
+        return this.loadRelationshipList(userId, 'listSent', 'createdAt');
     }
 
     async getUserProfile(uid) {

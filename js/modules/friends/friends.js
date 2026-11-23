@@ -78,81 +78,63 @@ export class FriendsModule {
         `;
     }
 
-    subscribeToFriends() {
+    async loadRelationshipTab(type) {
         const list = document.getElementById('friendsList');
-        if (!list) return;
+        const userId = window.app.currentUser?.uid;
+        if (!list || !userId) return;
 
+        const requestId = (this.relationshipRequestId || 0) + 1;
+        this.relationshipRequestId = requestId;
         list.innerHTML = window.app.ui.createLoader();
 
-        this.unsubscribeFriends = window.app.realtimeService.subscribeToFriends(
-            window.app.currentUser.uid,
-            (friends) => {
-                if (this.currentTab !== 'friends') return;
+        const loaders = {
+            friends: () => this.friendsService.getFriends(userId),
+            requests: () => this.friendsService.getFriendRequests(userId),
+            sent: () => this.friendsService.getSentRequests(userId)
+        };
+        const emptyStates = {
+            friends: ['bi-people', 'Нет друзей', 'Найди друга по никнейму'],
+            requests: ['bi-person-plus', 'Нет заявок', 'Когда кто-то добавит тебя, заявка появится здесь'],
+            sent: ['bi-send', 'Нет отправленных заявок', 'Отправленные заявки появятся здесь']
+        };
+        const cardTypes = { friends: 'friend', requests: 'request', sent: 'sent' };
 
-                if (friends.length === 0) {
-                    list.innerHTML = `
-                        <div class="col-12 text-center py-5">
-                            <i class="bi bi-people display-1 text-muted opacity-25"></i>
-                            <h5 class="mt-3 text-muted">Нет друзей</h5>
-                            <p class="text-muted small">Найди друга по никнейму</p>
-                        </div>
-                    `;
-                } else {
-                    list.innerHTML = friends.map(f => this.createCard(f, 'friend')).join('');
-                    this.attachCardListeners();
-                }
+        try {
+            const records = await loaders[type]();
+            if (requestId !== this.relationshipRequestId || this.currentTab !== type) return;
+
+            if (!records.length) {
+                const [icon, title, description] = emptyStates[type];
+                list.innerHTML = `
+                    <div class="col-12 text-center py-5">
+                        <i class="bi ${icon} display-1 text-muted opacity-25"></i>
+                        <h5 class="mt-3 text-muted">${title}</h5>
+                        <p class="text-muted small">${description}</p>
+                    </div>
+                `;
+                return;
             }
-        );
+
+            list.innerHTML = records.map(record => this.createCard(record, cardTypes[type])).join('');
+            this.attachCardListeners();
+        } catch (error) {
+            console.error('Не удалось загрузить список друзей:', error);
+            if (requestId === this.relationshipRequestId) {
+                list.innerHTML = '<div class="col-12 text-center text-muted py-4">Не удалось загрузить данные. Попробуй обновить страницу.</div>';
+            }
+        }
+    }
+
+    subscribeToFriends() {
+        return this.loadRelationshipTab('friends');
     }
 
     subscribeToRequests() {
-        this.unsubscribeRequests = window.app.realtimeService.subscribeToFriendRequests(
-            window.app.currentUser.uid,
-            (requests) => {
-                if (this.currentTab !== 'requests') return;
-
-                const list = document.getElementById('friendsList');
-                if (!list) return;
-
-                if (requests.length === 0) {
-                    list.innerHTML = `
-                        <div class="col-12 text-center py-5">
-                            <i class="bi bi-person-plus display-1 text-muted opacity-25"></i>
-                            <h5 class="mt-3 text-muted">Нет заявок</h5>
-                            <p class="text-muted small">Когда кто-то добавит тебя, заявка появится здесь</p>
-                        </div>
-                    `;
-                } else {
-                    list.innerHTML = requests.map(f => this.createCard(f, 'request')).join('');
-                    this.attachCardListeners();
-                }
-            }
-        );
+        return this.loadRelationshipTab('requests');
     }
 
     subscribeToSent() {
-        this.unsubscribeSent = window.app.realtimeService.subscribeToSentRequests(
-            window.app.currentUser.uid,
-            (sent) => {
-                if (this.currentTab !== 'sent') return;
-
-                const list = document.getElementById('friendsList');
-                if (!list) return;
-
-                if (sent.length === 0) {
-                    list.innerHTML = `
-                        <div class="col-12 text-center py-5">
-                            <i class="bi bi-send display-1 text-muted opacity-25"></i>
-                            <h5 class="mt-3 text-muted">Нет отправленных заявок</h5>
-                            <p class="text-muted small">Отправленные заявки появятся здесь</p>
-                        </div>
-                    `;
-                } else {
-                    list.innerHTML = sent.map(f => this.createCard(f, 'sent')).join('');
-                    this.attachCardListeners();
-                }
-            }
-        );
+        return this.loadRelationshipTab('sent');
     }
 
     createCard(user, type) {
@@ -226,8 +208,10 @@ export class FriendsModule {
         document.querySelectorAll('.friends-tabs [data-tab]').forEach(tab => {
             tab.addEventListener('click', (e) => {
                 document.querySelectorAll('.friends-tabs [data-tab]').forEach(t => t.classList.remove('active'));
-                e.target.classList.add('active');
-                this.switchTab(e.target.dataset.tab);
+                const selectedTab = e.target.closest('[data-tab]');
+                if (!selectedTab) return;
+                selectedTab.classList.add('active');
+                this.switchTab(selectedTab.dataset.tab);
             });
         });
 
@@ -394,8 +378,9 @@ export class FriendsModule {
     }
 
     destroy() {
-        if (this.unsubscribeFriends) this.unsubscribeFriends();
-        if (this.unsubscribeRequests) this.unsubscribeRequests();
-        if (this.unsubscribeSent) this.unsubscribeSent();
+        this.relationshipRequestId = (this.relationshipRequestId || 0) + 1;
+        this.unsubscribeFriends = null;
+        this.unsubscribeRequests = null;
+        this.unsubscribeSent = null;
     }
 }

@@ -40,7 +40,7 @@ export class NotificationsService {
         return notifications;
     }
 
-    subscribeToNotifications(userId, callback) {
+    subscribeToNotifications(userId, callback, onError = () => {}) {
         this.unsubscribe(`notifications_${userId}`);
         const key = `notifications_${userId}`;
 
@@ -60,7 +60,7 @@ export class NotificationsService {
                 if (active) callback(notifications);
             } catch (error) {
                 console.error('Ошибка загрузки уведомлений:', error);
-                if (active) callback([]);
+                if (active) onError(error);
             } finally {
                 loading = false;
             }
@@ -112,9 +112,11 @@ export class NotificationsService {
     async refreshUserNotifications(userId) {
         const key = `notifications_${userId}`;
         if (!this.listeners[key]) return;
+        const subscription = this.listeners[key];
+        if (!subscription) return;
         try {
             const notifications = await this.fetchNotifications();
-            this.listeners[key].callback(notifications);
+            if (this.listeners[key] === subscription) subscription.callback(notifications);
         } catch (error) {
             console.error('Ошибка обновления уведомлений:', error);
         }

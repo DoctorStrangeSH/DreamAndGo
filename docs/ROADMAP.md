@@ -483,3 +483,13 @@
 - [x] Existing canonical Chat V2 summaries are now explicitly skipped by the legacy inventory and covered by a regression test.
 - [x] Requires exact staging allowlist and explicit non-production confirmation; production project remains blocked; local output is owner-only and exclusive-create.
 - [ ] Exact-HEAD CI pending; real staging export and backup read-back remain unperformed.
+
+
+### Backup export hardening and V2 summary reconciliation — 2026-11-23
+
+- [x] Fixed inventory classification so existing canonical Chat V2 summaries cannot be mistaken for legacy partner-ID summaries.
+- [x] Added regression test for V2 summary exclusion.
+- [x] Added read-only staging backup export CLI and npm command `npm --prefix server run chat:backup`.
+- [x] CLI preflight requires exact project allowlist, explicit non-production confirmation, and output directory outside the repository; output uses exclusive file creation and owner-only permissions.
+- [x] Added process-level safety tests for help, production refusal and missing confirmation.
+- [ ] Exact-HEAD CI pending; no staging credentials/project ID supplied and no real export performed.

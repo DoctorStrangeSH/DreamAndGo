@@ -2,6 +2,13 @@ import { app, appCheck } from '../config/firebase.js';
 import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
 import { createChatV2CallableInvoker } from '../core/chat-v2-callable-invoker.js';
 
+function createClientMessageId() {
+    if (typeof crypto?.randomUUID === 'function') return crypto.randomUUID();
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    return [...bytes].map(value => value.toString(16).padStart(2, '0')).join('');
+}
+
 function enabledMeta(name) {
     return document.querySelector(`meta[name="${name}"]`)
         ?.content?.trim().toLowerCase() === 'true';
@@ -11,6 +18,7 @@ export class ChatV2Service {
     constructor() {
         this.invoke = null;
         this.enabled = false;
+        this.pendingMessageIds = new Map();
 
         if (!app || !appCheck ||
             !enabledMeta('firebase-functions-backend-ready') ||
@@ -64,10 +72,20 @@ export class ChatV2Service {
     }
 
     async sendMessage(chatId, text) {
-        const result = await this.call('sendPrivateMessageV2', { chatId, text });
+        const normalizedText = String(text ?? '').trim();
+        const pendingKey = JSON.stringify([chatId, normalizedText]);
+        const clientMessageId = this.pendingMessageIds.get(pendingKey) || createClientMessageId();
+        this.pendingMessageIds.set(pendingKey, clientMessageId);
+
+        const result = await this.call('sendPrivateMessageV2', {
+            chatId,
+            text: normalizedText,
+            clientMessageId
+        });
         if (result.success !== true || typeof result.messageId !== 'string') {
             throw new Error('Не удалось отправить сообщение.');
         }
+        this.pendingMessageIds.delete(pendingKey);
         return result;
     }
 

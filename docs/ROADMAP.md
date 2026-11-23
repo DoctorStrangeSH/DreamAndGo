@@ -454,3 +454,14 @@
 - [x] Orphan legacy message collections with no valid summary pair are included in the report for manual review; participant IDs are never guessed from underscore-delimited IDs.
 - [x] Local output directory permissions are restricted to owner access where supported by the host OS.
 - [ ] Exact-HEAD CI and staging inventory execution remain pending.
+
+
+### Legacy chat inventory — exact-HEAD CI accepted — 2026-11-23
+
+- [x] Exact-HEAD `checks.yml` run [45155314269](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/45155314269) passed on `6073403dd65000a97d28752bbe9758c3c443e2d9`.
+- [x] Root Unit suite: 163/163 passed.
+- [x] Real Chromium offline outbox suite: 4/4 passed.
+- [x] Auth + Firestore Emulator suite: 23/23 passed.
+- [x] Syntax validation: 95/95 JavaScript files passed.
+- [x] Marked the new inventory analyzer and its regression tests verified by the same green CI run.
+- [ ] Real staging Firestore inventory, backup, dry-run and migration remain blocked on a separate staging project and credentials.

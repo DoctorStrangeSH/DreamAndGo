@@ -75,6 +75,13 @@ class DreamAndGo {
         this.initEventListeners();
 
         this.authService.onAuthChange(async (user) => {
+            const previousUid = this.currentUser?.uid;
+            if (previousUid && previousUid !== user?.uid) {
+                this.realtimeService.unsubscribeAll();
+                const chatModule = this.router.routes.chat?.component;
+                chatModule?.closeChat?.();
+                chatModule?.chatService?.resetSession?.();
+            }
             this.currentUser = user;
             this.authResolved = true;
 
@@ -100,6 +107,10 @@ class DreamAndGo {
             } else {
                 this.notificationsWidget.destroy();
                 this.notificationsService.unsubscribeAll();
+                this.realtimeService.unsubscribeAll();
+                const chatModule = this.router.routes.chat?.component;
+                chatModule?.closeChat?.();
+                chatModule?.chatService?.resetSession?.();
                 this.userData = null;
                 this.dataLoaded = false;
                 this.showAuth();

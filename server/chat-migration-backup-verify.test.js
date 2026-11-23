@@ -17,7 +17,7 @@ function run(args) {
 
 async function fixture() {
     const directory = await mkdtemp(path.join(os.tmpdir(), 'dreamandgo-backup-verify-'));
-    const sourceInventory = buildLegacyChatInventory({ summaries: [], messagesByChat: {} });
+    const sourceInventory = buildLegacyChatInventory({ projectId: 'dream-and-go-staging', summaries: [], messagesByChat: {} });
     const sourceManifestSha256 = sourceInventory.manifestSha256;
     const backup = buildChatMigrationBackup({
         projectId: 'dream-and-go-staging',

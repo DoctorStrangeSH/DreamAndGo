@@ -3,6 +3,16 @@ import { createHash } from 'node:crypto';
 const MAX_UID_LENGTH = 128;
 const MAX_MESSAGE_ID_LENGTH = 150;
 const MAX_TEXT_LENGTH = 4000;
+const PRODUCTION_PROJECT_IDS = new Set(['dream-and-go']);
+
+export function assertSafeInventoryTarget({ projectId, allowedProjectId, confirmedNonProduction, ambientProjectId }) {
+    if (!isValidFirestoreId(projectId)) throw new Error('Некорректный Firebase project ID');
+    if (PRODUCTION_PROJECT_IDS.has(projectId)) throw new Error('Production Firebase project запрещён');
+    if (confirmedNonProduction !== true) throw new Error('Требуется явное подтверждение non-production проекта');
+    if (allowedProjectId !== projectId) throw new Error('Project ID не совпадает с CHAT_MIGRATION_ALLOWED_PROJECT_ID');
+    if (ambientProjectId && ambientProjectId !== projectId) throw new Error('Project ID не совпадает с переменной окружения Google Cloud');
+    return true;
+}
 
 export function isValidFirestoreId(value, maxLength = MAX_UID_LENGTH) {
     return typeof value === 'string' &&
@@ -84,6 +94,7 @@ function summaryProjection(summary) {
         partnerId: summary.data?.partnerId ?? null,
         unread: Number.isSafeInteger(summary.data?.unread) ? summary.data.unread : null,
         lastMessageTimeMillis: timestampMillis(summary.data?.lastMessageTime),
+        sourceBytes: Buffer.byteLength(stableJson(summary.data || {})),
         sourceSha256: sha256(summary.data || {})
     };
 }
@@ -106,6 +117,8 @@ function inspectMessage(message, participants) {
         id: message.id,
         senderId: typeof data.senderId === 'string' ? data.senderId : null,
         textLength: typeof data.text === 'string' ? data.text.length : null,
+        textBytes: typeof data.text === 'string' ? Buffer.byteLength(data.text, 'utf8') : null,
+        sourceBytes: Buffer.byteLength(stableJson(data)),
         createdAtMillis: timestampMillis(data.createdAt),
         sourceSha256: sha256(data),
         issues

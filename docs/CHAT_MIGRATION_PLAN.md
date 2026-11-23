@@ -250,3 +250,12 @@ Final validation note: consolidated CI must run against the current branch HEAD 
 - [x] Added a process-level regression test proving an in-repository output path is rejected before credential lookup.
 - [ ] Exact-HEAD unit, syntax, and Emulator CI remain pending.
 - [ ] No staging export or migration was executed.
+
+### Symlink-safe migration output paths — 2026-11-23
+
+- [x] Centralized Inventory/Backup output-path validation in `server/chat-migration-paths.js`.
+- [x] Resolve the repository root from the CLI module location rather than the caller's current working directory.
+- [x] Reject filesystem roots, repository descendants, and external symlink paths whose real target resolves inside the repository.
+- [x] Added isolated tests for repository paths, symlink traversal, and valid external destinations.
+- [ ] Exact-HEAD Unit, syntax, and Emulator CI remain pending.
+- [ ] No Firebase staging export, restore, or migration was executed.

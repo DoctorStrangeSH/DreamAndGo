@@ -59,7 +59,7 @@ async function main() {
     const projectId = args['project-id'];
     const outputDir = args['output-dir'];
     if (!projectId || !outputDir || !args.confirmNonProduction) {
-        throw new Error('Нужны --project-id, --output-dir и --confirm-non-production.\\n\\n' + usage());
+        throw new Error('Нужны --project-id, --output-dir и --confirm-non-production.\n\n' + usage());
     }
     assertSafeInventoryTarget({
         projectId,
@@ -72,9 +72,11 @@ async function main() {
     const app = initializeApp({ projectId }, `chat-migration-inspector-${projectId}`);
     const db = getFirestore(app);
 
-    process.stdout.write(`Подключение только для чтения: ${projectId}\\n`);
+    process.stdout.write(`Подключение только для чтения: ${projectId}\n`);
     const summarySnapshot = await db.collectionGroup('chats').get();
-    const summaries = summarySnapshot.docs.map(document => ({
+    const summaries = summarySnapshot.docs
+        .filter(document => /^users\/[^/]+\/chats\/[^/]+$/.test(document.ref.path))
+        .map(document => ({
         path: document.ref.path,
         id: document.id,
         data: document.data()
@@ -111,11 +113,11 @@ async function main() {
     await writeFile(reportPath, inventory.report, { flag: 'wx', mode: 0o600 });
 
     process.stdout.write(inventory.report);
-    process.stdout.write(`\\nManifest saved: ${manifestPath}\\nReport saved: ${reportPath}\\n`);
-    process.stdout.write('Firestore mode: READ ONLY. No document writes were issued.\\n');
+    process.stdout.write(`\nManifest saved: ${manifestPath}\nReport saved: ${reportPath}\n`);
+    process.stdout.write('Firestore mode: READ ONLY. No document writes were issued.\n');
 }
 
 main().catch(error => {
-    process.stderr.write(`Chat Migration Inspector stopped: ${error.message}\\n`);
+    process.stderr.write(`Chat Migration Inspector stopped: ${error.message}\n`);
     process.exitCode = 1;
 });

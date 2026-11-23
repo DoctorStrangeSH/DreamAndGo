@@ -174,4 +174,5 @@
 
 - [x] Added `.github/workflows/ci.yml` for push, pull request and manual validation.
 - [x] Workflow runs syntax checks and the project/Chat V2 unit suite on Node.js 22 after installing server dependencies.
+- [x] Dedicated job starts Firestore and Auth emulators and executes all server Emulator tests.
 - [ ] **NOT VERIFIED:** first GitHub Actions run must complete successfully before this gate can be marked DONE.

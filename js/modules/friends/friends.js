@@ -5,9 +5,6 @@ export class FriendsModule {
     constructor() {
         this.friendsService = new FriendsService();
         this.currentTab = 'friends';
-        this.unsubscribeFriends = null;
-        this.unsubscribeRequests = null;
-        this.unsubscribeSent = null;
     }
 
     async render() {
@@ -356,13 +353,13 @@ export class FriendsModule {
                 if (btn.disabled || !confirm('Удалить из друзей?')) return;
                 btn.disabled = true;
                 const result = await this.friendsService.removeFriend(window.app.currentUser.uid, btn.dataset.uid);
-                    if (!result.success) {
-                        btn.disabled = false;
-                        window.app.ui.showToast(result.error || 'Не удалось удалить друга', 'error');
-                        return;
-                    }
-                    window.app.ui.showToast('Друг удалён', 'info');
-                    this.refreshCurrentTab();
+                if (!result.success) {
+                    btn.disabled = false;
+                    window.app.ui.showToast(result.error || 'Не удалось удалить друга', 'error');
+                    return;
+                }
+                window.app.ui.showToast('Друг удалён', 'info');
+                this.refreshCurrentTab();
             });
         });
 
@@ -400,8 +397,5 @@ export class FriendsModule {
     destroy() {
         this.relationshipRequestId = (this.relationshipRequestId || 0) + 1;
         this.searchRequestId = (this.searchRequestId || 0) + 1;
-        this.unsubscribeFriends = null;
-        this.unsubscribeRequests = null;
-        this.unsubscribeSent = null;
     }
 }

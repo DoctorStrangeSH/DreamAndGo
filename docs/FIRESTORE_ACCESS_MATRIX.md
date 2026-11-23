@@ -253,3 +253,12 @@ This pass inspected the integration-branch browser service implementations, not 
 - Added `server/friends-read-callables.test.js` and included it in the root explicit test command.
 - No Firestore Rules were opened. No callable deployment or production Firebase access occurred.
 - Pending: run unit suite/full CI, add callable Emulator coverage, and perform two-account staging acceptance. Pagination beyond 100 relationships is deferred.
+
+
+### Friends callable Emulator coverage — 2026-11-23
+
+- Added `server/friends-read-callables.emulator.test.js`, discovered by the existing serial `*emulator.test.js` test command.
+- Seeds isolated owner/related accounts and checks friends, incoming requests and sent requests; verifies an unrelated account sees only its own empty list.
+- Verifies anonymous access and client-supplied UID are rejected, and email/private stats never enter the public projection.
+- Bounded list reads use a 101-record lookahead to return at most 100 rows with an accurate `truncated` indicator.
+- Test execution remains pending because no exact-HEAD Emulator run has been observed.

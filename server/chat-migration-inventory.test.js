@@ -201,3 +201,23 @@ test('divergent reciprocal previews and malformed summary metadata are reported'
     assert.ok(codes.includes('invalid-summary-last-message-time'));
     assert.ok(codes.includes('invalid-summary-unread'));
 });
+
+test('legacy group chat summaries are explicitly excluded from private migration candidates', () => {
+    const inventory = buildLegacyChatInventory({
+        summaries: [
+            summary('alice', 'bob'),
+            summary('bob', 'alice'),
+            {
+                path: 'users/alice/chats/group-123',
+                id: 'group-123',
+                data: { partnerId: 'group-123', isGroup: true, lastMessage: 'group', lastMessageTime: stamp, unread: 0, createdAt: stamp }
+            }
+        ],
+        messagesByChat: { alice_bob: [message('message-1')] }
+    });
+
+    assert.equal(inventory.manifest.totals.candidatePairs, 1);
+    assert.equal(inventory.manifest.totals.skippedGroupSummaryDocuments, 1);
+    assert.deepEqual(inventory.manifest.skippedGroupSummaryPaths, ['users/alice/chats/group-123']);
+    assert.ok(inventory.manifest.globalIssues.some(issue => issue.code === 'group-chat-out-of-scope'));
+});

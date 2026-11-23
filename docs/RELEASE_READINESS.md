@@ -256,3 +256,12 @@
 - [x] Canonical V2 summary documents are excluded from legacy migration candidates by exact canonical ID verification.
 - [ ] Exact-HEAD CI pending.
 - [ ] No staging export has been run; staging credentials and project ID are not yet available.
+
+
+## Backup export CLI and V2 inventory correction — 2026-11-23
+
+- [x] Canonical Chat V2 summaries are explicitly excluded from legacy candidate pairs, with a regression test.
+- [x] Added staging-only read-only backup export command; it writes private backup, inventory and report files outside the repository.
+- [x] Production refusal and explicit non-production confirmation are covered by process-level preflight tests.
+- [ ] Exact-HEAD CI pending.
+- [ ] Real staging export and backup read-back remain unperformed; production remains untouched.

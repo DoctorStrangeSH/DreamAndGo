@@ -6,6 +6,7 @@ import { getFirestore, Timestamp, GeoPoint, Bytes } from 'firebase-admin/firesto
 import {
     buildChatMigrationBackup,
     decodeFirestoreValue,
+    encodeFirestoreValue,
     verifyChatMigrationBackup
 } from './chat-migration-backup.js';
 
@@ -63,6 +64,7 @@ test('Firestore Emulator restores a JSON backup with nested paths and native Fir
         const readBack = JSON.parse(serialized);
         assert.deepEqual(verifyChatMigrationBackup(readBack), { valid: true, issues: [] });
 
+        const targetRefs = new Map();
         for (const record of readBack.records) {
             const restoredData = decodeFirestoreValue(record.data, {
                 firestore: db,
@@ -72,7 +74,24 @@ test('Firestore Emulator restores a JSON backup with nested paths and native Fir
             });
             const targetRef = restoreRoot.collection('documents').doc(record.id + '-' +
                 record.sourceSha256.slice(0, 12));
+            targetRefs.set(record.path, targetRef);
             await targetRef.set(restoredData);
+        }
+
+        for (const record of readBack.records) {
+            const restoredSnapshot = await targetRefs.get(record.path).get();
+            assert.deepEqual(encodeFirestoreValue(restoredSnapshot.data(), record.path), record.data);
+        }
+
+        // Replaying the same verified fixture must address the same target documents.
+        for (const record of readBack.records) {
+            const restoredData = decodeFirestoreValue(record.data, {
+                firestore: db,
+                Timestamp,
+                GeoPoint,
+                Bytes
+            });
+            await targetRefs.get(record.path).set(restoredData);
         }
 
         const restoredRoot = await restoreRoot.collection('documents')

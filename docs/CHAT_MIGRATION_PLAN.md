@@ -230,3 +230,6 @@ The previous CI run was cancelled by subsequent documentation commits. The lates
 ### Final exact-HEAD validation trigger — 2026-11-23
 
 All code and regression tests for offline backup read-back, inventory-manifest checksum verification, and Firestore read-only enforcement are now committed. Earlier runs were superseded by subsequent commits; this documentation-only commit triggers one consolidated CI run on the final branch HEAD. No Firebase export is run by CI.
+
+
+Final validation note: consolidated CI must run against the current branch HEAD after all offline verifier and inventory checksum changes; no live Firebase export is part of this workflow.

@@ -200,3 +200,10 @@ The previous CI run was cancelled by subsequent documentation commits. The lates
 - [x] Report explicitly identifies summaries, root chat parent documents and messages, and records a PASS self-verification line.
 - [ ] Exact-HEAD CI for this additional self-verification gate is pending.
 - [ ] Real staging export and independent restore/read-back test remain pending staging access.
+
+
+### Backup exporter safety regression test — 2026-11-23
+
+- [x] Added a process-suite source guard requiring checksum self-verification before output-directory creation.
+- [x] Added a source guard ensuring the exporter contains no Firestore `.set()`, `.update()`, `.delete()` or `.create()` calls.
+- [ ] Exact-HEAD CI for the final exporter self-verification and read-only guards is pending.

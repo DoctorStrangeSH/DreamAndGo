@@ -18,7 +18,7 @@ function run(args) {
 }
 
 async function createFixture(directory, projectId = 'dream-and-go-staging') {
-    const manifest = {};
+    const manifest = { projectId };
     const manifestSha256 = sha256(manifest);
     const backup = buildChatMigrationBackup({
         projectId,

@@ -17,9 +17,10 @@
 
 ### Качество приложения
 - [ ] Root unit tests проходят на точном integration HEAD.
-- [ ] Синтаксическая проверка проходит на точном integration HEAD (checker added; execution evidence pending).
+- [ ] Синтаксическая проверка проходит на точном integration HEAD (checker now includes `server/`; execution evidence pending).
 - [ ] Emulator suites проходят на точном integration HEAD.
-- [ ] CI не зависает; для каждого набора есть сохранённый итоговый job result и логи.
+- [x] Добавлен отдельный GitHub Actions workflow для root unit tests, syntax check и Firestore Emulator suites.
+- [ ] CI не зависает; для каждого набора есть сохранённый итоговый job result и логи на актуальном HEAD.
 
 ### Аккаунт, приватность и безопасность
 - [ ] Регистрация, вход, выход и восстановление проверены двумя независимыми аккаунтами.
@@ -356,3 +357,12 @@
 - [ ] Legacy chat migration rehearsal and preservation verification.
 - [ ] Exact-HEAD CI, callable/Rules Emulator execution and two-account staging acceptance.
 - Rollout flags remain false; no Firebase deployment or production Rules change.
+
+
+### CI quality-gate coverage — 2026-11-23
+
+- [x] Added `.github/workflows/v1-quality-gates.yml` for the integration branch and PRs targeting `main`.
+- [x] Root unit tests and syntax validation run on Node.js 22.
+- [x] Syntax checker now includes `server/` in addition to browser code, scripts and tests.
+- [x] Firestore Rules and Chat V2 callable Emulator suites run with Firestore Emulator, Java 21 and isolated demo project.
+- [ ] Await a real GitHub Actions run; workflow creation is not evidence of a passing test run.

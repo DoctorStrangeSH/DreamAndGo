@@ -718,3 +718,11 @@
 - [x] Added regression coverage for both legacy shapes: actor-only record and target-only record, with non-zero unrelated friend counts preserved.
 - [ ] Execute Friends callable tests and the full exact-HEAD test/syntax suites.
 - [ ] Validate legacy counter reconciliation against real staging data before release.
+
+### Friends remove/re-add lifecycle and duplicate acceptance — 2026-11-23
+
+- [x] Added a full callable lifecycle regression: remove an existing friend, send a fresh request, accept it, and verify reciprocal records and both counters return to the expected value.
+- [x] The lifecycle test verifies pending request documents are removed after acceptance.
+- [x] Repeated acceptance after the request has been consumed is rejected and does not change friend counters or create a duplicate acceptance notification.
+- [ ] Execute Friends callable tests and the full exact-HEAD test/syntax suites.
+- [ ] Verify remove/re-add notifications and counts with two staging accounts.

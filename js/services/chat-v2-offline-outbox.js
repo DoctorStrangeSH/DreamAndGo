@@ -244,3 +244,52 @@ export function createEncryptedChatOutbox({
         }
     });
 }
+
+
+export async function flushEncryptedChatOutbox({
+    outbox,
+    uid,
+    sendMessage,
+    isOnline = () => true,
+    isCurrent = () => true,
+    onChange = () => {}
+}) {
+    if (!outbox || typeof sendMessage !== 'function') {
+        throw new TypeError('Не настроена отправка офлайн-сообщений.');
+    }
+    const records = await outbox.getQueued(uid);
+    const pending = await outbox.list(uid);
+    const textById = new Map(pending.map(message => [message.id, message.text]));
+    const result = { sent: 0, blocked: 0, remaining: records.length };
+
+    for (const record of records) {
+        if (!isCurrent() || !isOnline()) break;
+        try {
+            const text = textById.get(record.messageId);
+            if (typeof text !== 'string') throw new Error('Локальное сообщение не найдено.');
+            const response = await sendMessage({
+                chatId: record.chatId,
+                text,
+                clientMessageId: record.messageId
+            });
+            if (response?.success !== true || typeof response.messageId !== 'string') {
+                throw new Error('Сервер не подтвердил отправку сообщения.');
+            }
+            await outbox.remove(uid, record.messageId);
+            result.sent += 1;
+            result.remaining -= 1;
+            onChange();
+        } catch (error) {
+            if (String(error?.code || '').endsWith('permission-denied')) {
+                await outbox.markBlocked(uid, record.messageId);
+                result.blocked += 1;
+                result.remaining -= 1;
+                onChange();
+                continue;
+            }
+            result.error = error;
+            break;
+        }
+    }
+    return result;
+}

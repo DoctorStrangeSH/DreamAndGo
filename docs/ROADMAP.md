@@ -522,3 +522,10 @@
 - [ ] Reconcile these overlapping files manually before any branch merge; retain parent-document backup and pre-write self-verification.
 - [ ] Run the full Checks workflow on the exact reconciled HEAD before considering a PR merge.
 - **Safety:** no branch ref, application code, Firebase configuration, Firestore Rules, or production data was changed in this audit.
+
+### Offline backup read-back verifier correction — 2026-11-23
+
+- [x] Fixed project identity validation to compare the inventory project ID with `backup.manifest.projectId`; the backup envelope has no top-level `projectId` field.
+- [x] Added process-level regression tests for a valid backup/inventory pair, cross-project inventory rejection, and credential-free help.
+- [ ] Exact-HEAD full CI must pass before marking this correction verified.
+- [ ] No real staging backup was created or inspected; no Firebase connection, migration, Rules change, or deployment occurred.

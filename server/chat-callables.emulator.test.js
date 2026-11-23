@@ -90,15 +90,22 @@ test('Firestore Emulator enforces canonical membership and atomic private messag
     assert.equal(chat.get('type'), 'private');
 
     await assert.rejects(endpoints.sendPrivateMessageV2({
-        auth: { uid: outsider }, data: { chatId, text: 'unauthorized' }
+        auth: { uid: outsider }, data: { chatId, text: 'unauthorized', clientMessageId: 'outsider-message' }
     }), error => error.code === 'permission-denied');
     await assert.rejects(endpoints.getPrivateChatHistoryV2({
         auth: { uid: outsider }, data: { chatId }
     }), error => error.code === 'permission-denied');
 
     const sent = await endpoints.sendPrivateMessageV2({
-        auth: { uid: alice }, data: { chatId, text: 'emulator message' }
+        auth: { uid: alice }, data: { chatId, text: 'emulator message', clientMessageId: 'emulator-message-id' }
     });
+    const retried = await endpoints.sendPrivateMessageV2({
+        auth: { uid: alice },
+        data: { chatId, text: 'emulator message', clientMessageId: 'emulator-message-id' }
+    });
+    assert.equal(retried.messageId, sent.messageId);
+    assert.equal(retried.duplicate, true);
+
     const message = await db.collection('chats').doc(chatId)
         .collection('messages').doc(sent.messageId).get();
     assert.equal(message.get('senderId'), alice);

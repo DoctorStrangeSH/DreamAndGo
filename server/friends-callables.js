@@ -255,10 +255,14 @@ function createFriendCallables({ onCall, HttpsError, getFirestore, FieldValue })
                     (!actorFriend.exists && !targetFriend.exists)) {
                     throw new HttpsError('not-found', 'Связь не найдена');
                 }
-                transaction.delete(actorFriendRef);
-                transaction.delete(targetFriendRef);
-                incrementFriendCount(transaction, actorRef, actor, -1);
-                incrementFriendCount(transaction, targetRef, target, -1);
+                if (actorFriend.exists) {
+                    transaction.delete(actorFriendRef);
+                    incrementFriendCount(transaction, actorRef, actor, -1);
+                }
+                if (targetFriend.exists) {
+                    transaction.delete(targetFriendRef);
+                    incrementFriendCount(transaction, targetRef, target, -1);
+                }
                 return { success: true };
             });
         } catch (error) {

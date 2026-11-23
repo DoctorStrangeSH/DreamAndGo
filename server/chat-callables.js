@@ -397,13 +397,15 @@ export function createChatCallables({ onCall, HttpsError, getFirestore, FieldVal
             const contacts = await Promise.all(friends.docs.map(async friend => {
                 const partnerUid = friend.id;
                 if (!validId(partnerUid) || partnerUid === actorUid) return null;
-                const [publicProfile, privateProfile, actorBlock, partnerBlock] = await Promise.all([
+                const [publicProfile, privateProfile, reciprocalFriend, actorBlock, partnerBlock] = await Promise.all([
                     db.collection('publicProfiles').doc(partnerUid).get(),
                     db.collection('users').doc(partnerUid).get(),
+                    db.collection('users').doc(partnerUid).collection('friends').doc(actorUid).get(),
                     db.collection('users').doc(actorUid).collection('blockedUsers').doc(partnerUid).get(),
                     db.collection('users').doc(partnerUid).collection('blockedUsers').doc(actorUid).get()
                 ]);
-                if (actorBlock.exists || partnerBlock.exists) return null;
+                if (!reciprocalFriend.exists || reciprocalFriend.data()?.friendId !== actorUid ||
+                    actorBlock.exists || partnerBlock.exists) return null;
                 const publicData = publicProfile.exists ? publicProfile.data() || {} : {};
                 const privateData = privateProfile.exists ? privateProfile.data() || {} : {};
                 const username = typeof publicData.username === 'string' && publicData.username

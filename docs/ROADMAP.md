@@ -329,7 +329,8 @@
 - [x] Canonical membership document and deterministic private chat ID are server-owned.
 - [x] New-message notification contains no message body.
 - [x] Added callable unit tests and registered them in both test runners.
-- [ ] Exact-HEAD CI and Firestore Emulator matrix.
+- [x] Added Firestore Emulator integration scenarios for participant access, message writes, notification privacy and read receipts.
+- [ ] Exact-HEAD CI and successful Firestore Emulator execution.
 - [ ] Migrate browser ChatService, RealtimeService and chat UI to the callable contract with rollout gate closed by default.
 - [ ] Legacy conversation migration rehearsal; preserve all existing messages.
 - [ ] Two-account staging acceptance.

@@ -237,7 +237,7 @@ Final validation note: consolidated CI must run against the current branch HEAD 
 ### Backup restore implementation — 2026-11-23
 
 - [x] Added a controlled decoder for tagged Timestamp, Date, Bytes, GeoPoint, and DocumentReference values. Firestore constructors and the target database are injected; importing the backup module does not initialize Firebase.
-- [x] Reserved the `__firestoreType` key in source objects to prevent ambiguous or lossy round-trips.
+- [x] Reserved the `__firestoreType` key in source objects and made the restore decoder reject unknown tags and extra/missing tag fields.
 - [x] Added unit coverage for valid tagged values and malformed/unknown tags.
 - [x] Added a Firestore Emulator integration test using synthetic records, JSON serialization/read-back, native Firestore value restoration, nested document paths, source/target value re-encoding checks, and idempotent replay with stable document counts.
 - [x] Bound the standalone read-only inventory CLI manifest to its explicit Firebase project ID.

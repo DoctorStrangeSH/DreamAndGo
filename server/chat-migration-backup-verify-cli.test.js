@@ -44,6 +44,7 @@ test('offline verifier accepts a valid backup and matching inventory project', a
         const result = run(['--backup', files.backupPath, '--inventory', files.inventoryPath]);
         assert.equal(result.status, 0, result.stderr);
         assert.match(result.stdout, /BACKUP VERIFICATION: PASS/);
+        assert.match(result.stdout, /Project: dream-and-go-staging/);
         assert.match(result.stdout, /Documents: 1/);
     } finally {
         await rm(directory, { recursive: true, force: true });

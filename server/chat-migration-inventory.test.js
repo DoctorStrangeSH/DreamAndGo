@@ -221,3 +221,20 @@ test('legacy group chat summaries are explicitly excluded from private migration
     assert.deepEqual(inventory.manifest.skippedGroupSummaryPaths, ['users/alice/chats/group-123']);
     assert.ok(inventory.manifest.globalIssues.some(issue => issue.code === 'group-chat-out-of-scope'));
 });
+
+test('orphan legacy message collections are reported for manual review without guessing participants', () => {
+    const inventory = buildLegacyChatInventory({
+        summaries: [summary('alice', 'bob'), summary('bob', 'alice')],
+        messagesByChat: { alice_bob: [message('known-message')] },
+        orphanMessageCollections: [{
+            chatId: 'orphan_legacy_chat',
+            messages: [message('orphan-message', 'former-user')]
+        }]
+    });
+
+    assert.equal(inventory.manifest.totals.orphanMessageCollections, 1);
+    assert.equal(inventory.manifest.totals.orphanMessageDocuments, 1);
+    assert.equal(inventory.manifest.orphanMessageCollections[0].chatId, 'orphan_legacy_chat');
+    assert.equal(inventory.manifest.orphanMessageCollections[0].messages[0].senderId, 'former-user');
+    assert.ok(inventory.manifest.globalIssues.some(issue => issue.code === 'orphan-legacy-message-collection'));
+});

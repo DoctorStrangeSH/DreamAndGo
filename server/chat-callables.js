@@ -486,7 +486,7 @@ function createChatCallables({ onCall, HttpsError, getFirestore, FieldValue }) {
             const db = getFirestore();
             const chatRef = db.collection('chats').doc(chatId);
             const summaryRef = db.collection('users').doc(actorUid).collection('chats').doc(chatId);
-            await db.runTransaction(async transaction => {
+            const updated = await db.runTransaction(async transaction => {
                 const chat = await transaction.get(chatRef);
                 if (!chat.exists || !participantData(chat, actorUid)) {
                     throw new HttpsError('permission-denied', 'Нет доступа к этому диалогу');
@@ -509,7 +509,7 @@ function createChatCallables({ onCall, HttpsError, getFirestore, FieldValue }) {
                     const data = message.data() || {};
                     return data.senderId !== actorUid && data.read !== true;
                 });
-                if (unreadMessages.length === 0) return;
+                if (unreadMessages.length === 0) return 0;
 
                 const unread = Number.isSafeInteger(summary.data()?.unread)
                     ? Math.max(0, summary.data().unread)
@@ -521,8 +521,9 @@ function createChatCallables({ onCall, HttpsError, getFirestore, FieldValue }) {
                 transaction.update(summaryRef, {
                     unread: Math.max(0, unread - unreadMessages.length)
                 });
+                return unreadMessages.length;
             });
-            return { success: true, updated: messageIds.length };
+            return { success: true, updated };
         } catch (error) {
             if (error instanceof HttpsError) throw error;
             throw new HttpsError('unavailable', 'Не удалось отметить сообщения прочитанными');

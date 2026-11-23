@@ -138,7 +138,7 @@
 - Account changes unsubscribe realtime listeners and clear chat IDs, cached contacts and pending retry identifiers.
 - Added Firestore Rules Emulator coverage for participant A/B, unrelated C, anonymous users, owner inbox isolation, public projection reads and denied writes. Added callable Emulator coverage for inbox/contacts, idempotent sends, pagination, read receipts and membership.
 
-**Still NOT DONE:** execute exact-HEAD CI and both Emulator suites; implement block/unblock behavior; persist the encrypted offline outbox and reconcile pending messages after reconnect/reload; rehearse legacy conversation migration without data loss; configure real App Check and staging callable transport; complete two-account browser acceptance. Do not enable `chat-v2-enabled`, change production Rules or deploy Functions before all gates pass.
+**Still NOT DONE:** execute exact-HEAD CI and both Emulator suites; confirm block/unblock tests and two-account behavior; persist the encrypted offline outbox and reconcile pending messages after reconnect/reload; rehearse legacy conversation migration without data loss; configure real App Check and staging callable transport; complete two-account browser acceptance. Do not enable `chat-v2-enabled`, change production Rules or deploy Functions before all gates pass.
 
 
 ## CI quality gates — 2026-11-23
@@ -147,3 +147,12 @@
 - [x] Syntax validation includes server-side JavaScript.
 - [x] Emulator job provisions Java 21 and runs Rules + Chat V2 callable tests against the demo Firestore project.
 - [ ] **NOT VERIFIED:** no successful workflow run has yet been observed on the current integration HEAD. Do not treat workflow configuration as a green CI result.
+
+
+## Chat block enforcement — 2026-11-23
+
+- [x] Server-owned block/unblock records and callable operations added.
+- [x] Both directions are enforced on chat creation and message send; blocked pairs are omitted from new-chat contacts.
+- [x] Chat header provides block/unblock action; composer fails closed when blocked or when status cannot be verified.
+- [x] Unit and Emulator regression scenarios added.
+- [ ] Exact-HEAD Unit, Rules Emulator and callable Emulator results are not yet confirmed; two-account staging acceptance remains pending.

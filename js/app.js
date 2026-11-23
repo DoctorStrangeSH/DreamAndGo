@@ -79,8 +79,7 @@ class DreamAndGo {
             if (previousUid && previousUid !== user?.uid) {
                 this.realtimeService.unsubscribeAll();
                 const chatModule = this.router.routes.chat?.component;
-                chatModule?.closeChat?.();
-                chatModule?.chatService?.resetSession?.();
+                chatModule?.resetSession?.();
             }
             this.currentUser = user;
             this.authResolved = true;

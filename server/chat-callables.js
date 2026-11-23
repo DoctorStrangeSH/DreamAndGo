@@ -142,25 +142,36 @@ function createChatCallables({ onCall, HttpsError, getFirestore, FieldValue }) {
                     }
                 }
 
+                const actorData = actor.data() || {};
+                const targetData = target.data() || {};
                 const summary = {
                     chatId,
                     type: 'private',
                     partnerId: targetUid,
+                    partnerName: targetData.username || targetData.displayName || 'Пользователь',
+                    partnerAvatar: typeof targetData.avatar === 'string' ? targetData.avatar : null,
                     lastMessage: '',
                     lastMessageTime: timestamp,
                     unread: 0
                 };
-                const reverseSummary = { ...summary, partnerId: actorUid };
+                const reverseSummary = {
+                    ...summary,
+                    partnerId: actorUid,
+                    partnerName: actorData.username || actorData.displayName || 'Пользователь',
+                    partnerAvatar: typeof actorData.avatar === 'string' ? actorData.avatar : null
+                };
                 if (!chat.exists) {
                     transaction.set(actorSummaryRef, summary);
                     transaction.set(targetSummaryRef, reverseSummary);
                 } else {
                     // Existing conversations retain their current summaries and unread state.
                     transaction.set(actorSummaryRef, {
-                        chatId, type: 'private', partnerId: targetUid
+                        chatId, type: 'private', partnerId: targetUid,
+                        partnerName: summary.partnerName, partnerAvatar: summary.partnerAvatar
                     }, { merge: true });
                     transaction.set(targetSummaryRef, {
-                        chatId, type: 'private', partnerId: actorUid
+                        chatId, type: 'private', partnerId: actorUid,
+                        partnerName: reverseSummary.partnerName, partnerAvatar: reverseSummary.partnerAvatar
                     }, { merge: true });
                 }
             });
@@ -329,23 +340,28 @@ function createChatCallables({ onCall, HttpsError, getFirestore, FieldValue }) {
                 }
 
                 const chatRef = db.collection('chats').doc(chatId);
-                const [chat, profile] = await Promise.all([
+                const [chat, profile, privateProfile] = await Promise.all([
                     chatRef.get(),
-                    db.collection('publicProfiles').doc(partnerUid).get()
+                    db.collection('publicProfiles').doc(partnerUid).get(),
+                    db.collection('users').doc(partnerUid).get()
                 ]);
                 const membership = chat.exists ? participantData(chat, actorUid) : null;
                 if (!membership || membership.partnerUid !== partnerUid) return null;
 
                 const profileData = profile.exists ? profile.data() || {} : {};
+                const privateData = privateProfile.exists ? privateProfile.data() || {} : {};
                 const lastMessageTime = data.lastMessageTime;
                 return {
                     id: chatId,
                     chatId,
                     partnerId: partnerUid,
-                    partnerName: typeof profileData.username === 'string' && profileData.username
-                        ? profileData.username
-                        : 'Пользователь',
-                    partnerAvatar: typeof profileData.avatar === 'string' ? profileData.avatar : null,
+                    partnerName: data.partnerName ||
+                        (typeof profileData.username === 'string' && profileData.username
+                            ? profileData.username
+                            : (privateData.username || privateData.displayName || 'Пользователь')),
+                    partnerAvatar: typeof profileData.avatar === 'string'
+                        ? profileData.avatar
+                        : (typeof data.partnerAvatar === 'string' ? data.partnerAvatar : null),
                     lastMessage: typeof data.lastMessage === 'string' ? data.lastMessage : '',
                     lastMessageTime: typeof lastMessageTime?.toMillis === 'function'
                         ? lastMessageTime.toMillis()

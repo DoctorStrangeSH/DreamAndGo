@@ -196,16 +196,23 @@ export class ChatService {
         }
     }
 
+    async markMessagesRead(userId, chatId, messages) {
+        if (!this.isV2Enabled || !chatId || !Array.isArray(messages)) return;
+        const unread = messages.filter(message => message.senderId !== userId && message.read !== true);
+        for (const message of unread) {
+            await this.chatV2.markMessageRead(chatId, message.id);
+            message.read = true;
+            message.readAt = new Date();
+        }
+    }
+
     async markAsRead(userId, partnerId) {
         if (this.isV2Enabled) {
             try {
                 const chatId = this.getChatId(userId, partnerId);
                 if (!chatId || chatId.includes('_')) return;
                 const messages = await this.chatV2.getHistory(chatId);
-                const unread = messages.filter(message => message.senderId !== userId && message.read !== true);
-                for (const message of unread) {
-                    await this.chatV2.markMessageRead(chatId, message.id);
-                }
+                await this.markMessagesRead(userId, chatId, messages);
             } catch (error) {
                 console.error('Ошибка отметки Chat V2 прочитанным:', error);
             }

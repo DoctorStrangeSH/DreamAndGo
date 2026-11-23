@@ -616,6 +616,16 @@
 - [x] Narrowed username-search card stats to the fields currently rendered by the Friends UI.
 - [x] Added unit tests and registered the new test file in the root explicit `npm test` command.
 - [ ] Execute the new unit suite and full Checks workflow on exact HEAD.
-- [ ] Add Emulator callable coverage and verify owner A/B, anonymous and unrelated-user cases in two-account staging.
+- [x] Add Emulator callable coverage for owner-scoped lists, anonymous denial, forged UID rejection and private-field exclusion; execution remains pending.
+- [ ] Complete browser-level two-account staging acceptance.
 - [ ] Deploy nothing until the App Check site key and callable backend are intentionally configured and staging is accepted.
 - **Safety:** candidate branch code and docs only; no Rules changes, live Firebase operations or deployments.
+
+
+### Friends callable Emulator regression added — 2026-11-23
+
+- [x] Added Firestore Emulator coverage for all three Friends list endpoints, isolated owner data and unrelated account isolation.
+- [x] Added assertions for anonymous access, forged UID payloads and private-field exclusion.
+- [x] Corrected the Emulator host assertion and made the 100-record cap report truncation accurately via a one-record lookahead.
+- [ ] Execute the new unit and Emulator tests plus full Checks workflow on exact HEAD; no passing result is claimed yet.
+- [ ] Browser-level two-account staging acceptance remains pending.

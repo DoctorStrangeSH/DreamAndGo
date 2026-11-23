@@ -240,6 +240,26 @@ test('opening the same private chat is idempotent and does not reset unread stat
     assert.equal([...ctx.records.keys()].filter(path => path === `chats/${first.chatId}`).length, 1);
 });
 
+test('retries with the same client message ID do not duplicate messages or unread counts', async () => {
+    const ctx = createHarness(friendSeed());
+    const { chatId } = await createChat(ctx);
+    const payload = {
+        auth: { uid: 'alice' },
+        data: { chatId, text: 'retry safely', clientMessageId: 'stable-retry-id' }
+    };
+    const first = await ctx.callables.sendPrivateMessageV2(payload);
+    const retry = await ctx.callables.sendPrivateMessageV2(payload);
+    assert.equal(first.messageId, retry.messageId);
+    assert.equal(first.duplicate, false);
+    assert.equal(retry.duplicate, true);
+    assert.equal(ctx.records.get(`users/bob/chats/${chatId}`).unread, 1);
+    assert.equal([...ctx.records.keys()].filter(path => path.startsWith(`chats/${chatId}/messages/`)).length, 1);
+    assert.equal([...ctx.records.keys()].filter(path => path.startsWith('users/bob/notifications/')).length, 1);
+    await assert.rejects(ctx.callables.sendPrivateMessageV2({
+        ...payload, data: { ...payload.data, text: 'different content' }
+    }), error => error.code === 'already-exists');
+});
+
 test('recipient can mark a message read once and unread count is owner-scoped', async () => {
     const ctx = createHarness(friendSeed());
     const { chatId } = await createChat(ctx);
@@ -266,7 +286,7 @@ test('message payload is bounded and cannot forge sender identity', async () => 
     const ctx = createHarness(friendSeed());
     const { chatId } = await createChat(ctx);
     await assert.rejects(ctx.callables.sendPrivateMessageV2({
-        auth: { uid: 'alice' }, data: { chatId, text: 'x'.repeat(4001) }
+        auth: { uid: 'alice' }, data: { chatId, text: 'x'.repeat(4001), clientMessageId: 'too-long' }
     }), error => error.code === 'invalid-argument');
     await assert.rejects(ctx.callables.sendPrivateMessageV2({
         auth: { uid: 'alice' }, data: { chatId, text: 'hi', clientMessageId: 'test-forged', senderId: 'bob' }

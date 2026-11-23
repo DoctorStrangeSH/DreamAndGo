@@ -121,7 +121,7 @@ async function createChat(ctx, actor = 'alice', target = 'bob') {
 
 test('all Chat V2 callables enforce App Check in the selected region', () => {
     const ctx = createHarness();
-    assert.equal(ctx.registrations.length, 7);
+    assert.equal(ctx.registrations.length, 8);
     for (const registration of ctx.registrations) {
         assert.deepEqual(registration.options, { region: 'europe-west3', enforceAppCheck: true });
     }
@@ -166,6 +166,24 @@ test('message send derives sender and recipient from authenticated membership', 
     assert.equal(notification.type, 'new_message');
     assert.equal(notification.fromUserId, 'alice');
     assert.equal(notification.message.includes('Привет, Боб!'), false);
+});
+
+test('chat contacts are derived from the authenticated user friend list', async () => {
+    const seed = {
+        ...friendSeed(),
+        'publicProfiles/bob': { username: 'bob', displayName: 'Bob', avatar: 'https://example.test/bob.png' }
+    };
+    const ctx = createHarness(seed);
+    const result = await ctx.callables.getMyChatContactsV2({
+        auth: { uid: 'alice' }, data: {}
+    });
+    assert.deepEqual(result.contacts, [{
+        uid: 'bob', username: 'bob', displayName: 'Bob',
+        avatar: 'https://example.test/bob.png'
+    }]);
+    assert.deepEqual(await ctx.callables.getMyChatContactsV2({
+        auth: { uid: 'mallory' }, data: {}
+    }), { contacts: [] });
 });
 
 test('private inbox returns only canonical chats owned by the authenticated user', async () => {

@@ -172,6 +172,46 @@ test('Firestore Emulator history cursor returns separate bounded pages', { skip:
     assert.equal(new Set([...first.messages, ...second.messages].map(message => message.id)).size, 55);
 });
 
+test('Firestore Emulator enforces block state in both directions and supports unblocking', { skip: !available }, async () => {
+    const { alice, bob, chatId } = await createPair();
+    const before = await endpoints.getChatBlockStatusV2({
+        auth: { uid: alice }, data: { chatId }
+    });
+    assert.equal(before.canSend, true);
+
+    await endpoints.blockUserV1({
+        auth: { uid: alice }, data: { targetUid: bob }
+    });
+    const blocked = await endpoints.getChatBlockStatusV2({
+        auth: { uid: alice }, data: { chatId }
+    });
+    assert.deepEqual(blocked, {
+        blockedByMe: true,
+        blockedByPartner: false,
+        canSend: false
+    });
+    assert.deepEqual((await endpoints.getMyChatContactsV2({
+        auth: { uid: alice }, data: {}
+    })).contacts, []);
+    await assert.rejects(endpoints.sendPrivateMessageV2({
+        auth: { uid: bob },
+        data: { chatId, text: 'blocked by alice', clientMessageId: 'blocked-by-alice' }
+    }), error => error.code === 'permission-denied');
+
+    await endpoints.unblockUserV1({
+        auth: { uid: alice }, data: { targetUid: bob }
+    });
+    const unblocked = await endpoints.getChatBlockStatusV2({
+        auth: { uid: bob }, data: { chatId }
+    });
+    assert.equal(unblocked.canSend, true);
+    const sent = await endpoints.sendPrivateMessageV2({
+        auth: { uid: bob },
+        data: { chatId, text: 'unblocked', clientMessageId: 'after-unblock' }
+    });
+    assert.equal(sent.success, true);
+});
+
 test('Firestore Emulator rejects non-friend chat creation and forged callable fields', { skip: !available }, async () => {
     const suffix = uniqueId();
     const alice = `not-friend-a-${suffix}`;

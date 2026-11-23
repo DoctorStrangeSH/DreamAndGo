@@ -278,3 +278,11 @@
 - [x] Exporter now validates document, manifest and bundle checksums before writing any private backup artifacts.
 - [ ] CI for this latest safety change pending.
 - [ ] Real staging backup, independent read-back and restore rehearsal not yet performed; production untouched.
+
+
+## Offline backup read-back hardening — 2026-11-23
+
+- [x] Added offline verifier for backup bundle and inventory file.
+- [x] Verifier now recalculates inventory manifest checksum against actual contents and detects tampering.
+- [x] Synthetic tests cover valid read-back, modified backup message, project/checksum mismatch and modified inventory manifest.
+- [ ] Exact-HEAD CI pending; no staging export has been run.

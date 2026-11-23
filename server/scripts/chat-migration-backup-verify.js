@@ -54,7 +54,8 @@ async function main() {
     const inventory = JSON.parse(inventoryText);
     const verification = verifyChatMigrationBackup(backup);
     const issues = [...verification.issues];
-    if (inventory.projectId !== backup.manifest?.projectId) issues.push('project-id-mismatch');
+    if (inventory.projectId !== backup.manifest?.projectId ||
+        inventory.manifest?.projectId !== backup.manifest?.projectId) issues.push('project-id-mismatch');
     if (inventory.manifestSha256 !== backup.manifest?.sourceManifestSha256) issues.push('source-inventory-checksum-mismatch');
     const inventoryVerification = verifyLegacyChatInventoryManifest(inventory.manifest, inventory.manifestSha256);
     issues.push(...inventoryVerification.issues);

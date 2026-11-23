@@ -87,6 +87,7 @@ async function main() {
         const parts = summary.path.split('/');
         if (parts.length !== 4 || parts[0] !== 'users' || parts[2] !== 'chats') continue;
         const ownerUid = parts[1];
+        if (summary.data?.isGroup === true) continue;
         const partnerUid = summary.data?.partnerId;
         if (typeof partnerUid !== 'string' || !partnerUid || ownerUid === partnerUid) continue;
         try {

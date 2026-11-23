@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+    assertSafeInventoryTarget,
     buildLegacyChatInventory,
     canonicalChatId,
     legacyChatId
@@ -147,4 +148,37 @@ test('unexpected summary paths are reported rather than silently treated as chat
 
     assert.equal(inventory.manifest.totals.candidatePairs, 0);
     assert.equal(inventory.manifest.globalIssues[0].code, 'unexpected-summary-path');
+});
+
+test('inventory CLI safety gate refuses production and missing explicit allowlist', () => {
+    assert.throws(() => assertSafeInventoryTarget({
+        projectId: 'dream-and-go',
+        allowedProjectId: 'dream-and-go',
+        confirmedNonProduction: true
+    }), /Production/);
+    assert.throws(() => assertSafeInventoryTarget({
+        projectId: 'dream-and-go-staging',
+        allowedProjectId: undefined,
+        confirmedNonProduction: true
+    }), /CHAT_MIGRATION_ALLOWED_PROJECT_ID/);
+    assert.throws(() => assertSafeInventoryTarget({
+        projectId: 'dream-and-go-staging',
+        allowedProjectId: 'dream-and-go-staging',
+        confirmedNonProduction: false
+    }), /явное подтверждение/);
+    assert.throws(() => assertSafeInventoryTarget({
+        projectId: 'dream-and-go-staging',
+        allowedProjectId: 'dream-and-go-staging',
+        confirmedNonProduction: true,
+        ambientProjectId: 'dream-and-go'
+    }), /переменной окружения/);
+});
+
+test('inventory CLI accepts only the exact explicitly allowed non-production project', () => {
+    assert.equal(assertSafeInventoryTarget({
+        projectId: 'dream-and-go-staging',
+        allowedProjectId: 'dream-and-go-staging',
+        confirmedNonProduction: true,
+        ambientProjectId: 'dream-and-go-staging'
+    }), true);
 });

@@ -9,6 +9,7 @@ import { createProfileCallables } from './profile-callables.js';
 import { buildPublicProfile } from './public-profile.js';
 import { createProfileAccountCallables } from './profile-account-callables.js';
 import { createFriendCallables } from './friends-callables.js';
+import { createNotificationCallables } from './notifications-callables.js';
 
 if (getApps().length === 0) initializeApp();
 
@@ -58,3 +59,9 @@ export const acceptFriendRequestV1 = friends.acceptFriendRequestV1;
 export const rejectFriendRequestV1 = friends.rejectFriendRequestV1;
 export const cancelFriendRequestV1 = friends.cancelFriendRequestV1;
 export const removeFriendV1 = friends.removeFriendV1;
+
+const notifications = createNotificationCallables({ onCall, HttpsError, getFirestore });
+
+export const getMyNotificationsV1 = notifications.getMyNotificationsV1;
+export const markNotificationReadV1 = notifications.markNotificationReadV1;
+export const markAllNotificationsReadV1 = notifications.markAllNotificationsReadV1;

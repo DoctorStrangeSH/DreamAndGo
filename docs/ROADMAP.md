@@ -512,3 +512,13 @@
 - [x] Refined Firestore read-only source guard to ignore in-memory Map operations while still checking Firestore write method chains.
 - [x] Added offline backup read-back verifier and synthetic tamper tests, including recomputation of inventory manifest checksum.
 - [ ] CI for latest offline-verification hardening pending.
+
+### Main / integration reconciliation — 2026-11-23
+
+- [x] Rechecked branch divergence: `integration/v1.0-reconciliation` is 497 commits ahead and 3 behind `main`; merge base is `f02171c362d5944143a1202f425cd96f2386348f`.
+- [x] Inspected the three main-side changes since the merge base. They overlap with existing integration files: `docs/CHAT_MIGRATION_PLAN.md`, `server/chat-migration-backup-cli.test.js`, and `server/scripts/chat-migration-backup.js`.
+- [x] Confirmed the integration backup exporter includes root `chats/{chatId}` parent documents and runs `verifyChatMigrationBackup` before creating output; the current main variant omits parent documents and does not invoke the verifier.
+- [x] Confirmed the integration CLI test checks the self-verification gate and Firestore read-only behavior. The main-side test is a separate implementation and must not overwrite the stronger integration coverage.
+- [ ] Reconcile these overlapping files manually before any branch merge; retain parent-document backup and pre-write self-verification.
+- [ ] Run the full Checks workflow on the exact reconciled HEAD before considering a PR merge.
+- **Safety:** no branch ref, application code, Firebase configuration, Firestore Rules, or production data was changed in this audit.

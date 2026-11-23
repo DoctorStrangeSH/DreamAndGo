@@ -103,12 +103,13 @@ export class ChatV2Service {
         return result;
     }
 
-    async getHistory(chatId) {
-        const result = await this.call('getPrivateChatHistoryV2', { chatId });
+    async getHistoryPage(chatId, beforeMessageId = null) {
+        const payload = beforeMessageId ? { chatId, beforeMessageId } : { chatId };
+        const result = await this.call('getPrivateChatHistoryV2', payload);
         if (!Array.isArray(result.messages)) {
             throw new Error('Сервер вернул некорректную историю сообщений.');
         }
-        return result.messages.map(message => ({
+        const messages = result.messages.map(message => ({
             ...message,
             createdAt: Number.isFinite(message.createdAt)
                 ? new Date(message.createdAt)
@@ -116,6 +117,14 @@ export class ChatV2Service {
             readAt: Number.isFinite(message.readAt) ? new Date(message.readAt) : null,
             editedAt: Number.isFinite(message.editedAt) ? new Date(message.editedAt) : null
         }));
+        return {
+            messages,
+            nextCursor: typeof result.nextCursor === 'string' ? result.nextCursor : null
+        };
+    }
+
+    async getHistory(chatId) {
+        return (await this.getHistoryPage(chatId)).messages;
     }
 
     async getMessageStatus(chatId, messageId) {

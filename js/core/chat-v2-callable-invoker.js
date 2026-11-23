@@ -8,6 +8,7 @@ export const CHAT_V2_ENDPOINTS = Object.freeze([
     'getMyPrivateChatsV2',
     'getPrivateMessageStatusV2',
     'markPrivateMessageReadV2',
+    'markPrivateMessagesReadV2',
     'getPrivateChatUnreadV2',
     'getPrivateChatHistoryV2'
 ]);

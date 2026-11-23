@@ -15,11 +15,11 @@ export class RealtimeService {
         this.unsubscribe(key);
 
         const messagesRef = collection(this.db, 'chats', chatId, 'messages');
-        const q = query(messagesRef, orderBy('createdAt', 'asc'), limit(100));
+        const q = query(messagesRef, orderBy('createdAt', 'desc'), limit(100));
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const messages = [];
-            snapshot.forEach(docSnap => {
+            snapshot.docs.slice().reverse().forEach(docSnap => {
                 const data = docSnap.data();
                 messages.push({
                     id: docSnap.id,

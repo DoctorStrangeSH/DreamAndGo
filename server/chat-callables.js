@@ -380,8 +380,17 @@ function createChatCallables({ onCall, HttpsError, getFirestore, FieldValue }) {
 
     const getPrivateChatHistoryV2 = onCall(options, async request => {
         const actorUid = requireActor(request, HttpsError);
-        requirePayload(request.data, ['chatId'], HttpsError);
-        const chatId = requireChatId(request.data, HttpsError);
+        const data = request.data;
+        if (!data || typeof data !== 'object' || Array.isArray(data) ||
+            !Object.hasOwn(data, 'chatId') ||
+            Object.keys(data).some(key => !['chatId', 'beforeMessageId'].includes(key))) {
+            throw new HttpsError('invalid-argument', 'Некорректные параметры запроса');
+        }
+        const chatId = requireChatId(data, HttpsError);
+        const beforeMessageId = data.beforeMessageId;
+        if (beforeMessageId !== undefined && !validId(beforeMessageId, 150)) {
+            throw new HttpsError('invalid-argument', 'Некорректный курсор истории');
+        }
         try {
             const db = getFirestore();
             const chatRef = db.collection('chats').doc(chatId);
@@ -389,9 +398,23 @@ function createChatCallables({ onCall, HttpsError, getFirestore, FieldValue }) {
             if (!chat.exists || !participantData(chat, actorUid)) {
                 throw new HttpsError('permission-denied', 'Нет доступа к этому диалогу');
             }
-            const snapshot = await chatRef.collection('messages')
-                .orderBy('createdAt', 'desc').limit(HISTORY_LIMIT).get();
-            return { messages: snapshot.docs.map(messageProjection).reverse() };
+
+            const messagesRef = chatRef.collection('messages');
+            let historyQuery = messagesRef.orderBy('createdAt', 'desc');
+            if (beforeMessageId) {
+                const cursor = await messagesRef.doc(beforeMessageId).get();
+                if (!cursor.exists) {
+                    throw new HttpsError('invalid-argument', 'Курсор истории больше не существует');
+                }
+                historyQuery = historyQuery.startAfter(cursor);
+            }
+            const snapshot = await historyQuery.limit(HISTORY_LIMIT + 1).get();
+            const hasMore = snapshot.docs.length > HISTORY_LIMIT;
+            const page = snapshot.docs.slice(0, HISTORY_LIMIT);
+            return {
+                messages: page.map(messageProjection).reverse(),
+                nextCursor: hasMore && page.length ? page[page.length - 1].id : null
+            };
         } catch (error) {
             if (error instanceof HttpsError) throw error;
             throw new HttpsError('unavailable', 'Не удалось загрузить историю');

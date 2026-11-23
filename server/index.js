@@ -77,4 +77,5 @@ export const getMyPrivateChatsV2 = chat.getMyPrivateChatsV2;
 export const getPrivateChatHistoryV2 = chat.getPrivateChatHistoryV2;
 export const getPrivateMessageStatusV2 = chat.getPrivateMessageStatusV2;
 export const markPrivateMessageReadV2 = chat.markPrivateMessageReadV2;
+export const markPrivateMessagesReadV2 = chat.markPrivateMessagesReadV2;
 export const getPrivateChatUnreadV2 = chat.getPrivateChatUnreadV2;

@@ -638,3 +638,12 @@
 - [x] Added stale-response protection when users switch tabs quickly.
 - [x] Fixed competing list refreshes after accepting a request; only the active tab is refreshed.
 - [ ] Browser UI regression testing and exact-HEAD CI remain pending. List updates are fetched when entering a tab and after an action; realtime list push is intentionally deferred rather than bypassing the callable boundary.
+
+
+### Friends actions and counter Emulator coverage added — 2026-11-23
+
+- [x] Added Firestore Emulator regression for sending and accepting a request, reciprocal friend records, request cleanup, removing friendship and restoring both friend counters.
+- [x] Added Emulator regression for rejecting an incoming request and cancelling an outgoing request.
+- [ ] Run both Friends Emulator test files with the Firestore Emulator and execute full exact-HEAD CI.
+- [ ] Browser-level two-account acceptance and App Check transport verification remain outstanding.
+- **Test boundary:** the new tests run callable handlers with controlled Auth context against the Firestore Emulator; they do not test HTTPS transport or App Check token exchange.

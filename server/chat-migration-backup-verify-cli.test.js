@@ -71,3 +71,20 @@ test('offline verifier help does not require Firebase credentials', () => {
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stdout, /OFFLINE READ-BACK VERIFICATION/);
 });
+
+test('offline verifier rejects a project ID changed inside the hashed inventory manifest', async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), 'dreamandgo-backup-verify-'));
+    try {
+        const files = await createFixture(directory);
+        const inventory = JSON.parse(await readFile(files.inventoryPath, 'utf8'));
+        inventory.manifest.projectId = 'another-staging-project';
+        inventory.manifestSha256 = sha256(inventory.manifest);
+        await writeFile(files.inventoryPath, JSON.stringify(inventory));
+        const result = run(['--backup', files.backupPath, '--inventory', files.inventoryPath]);
+        assert.equal(result.status, 1);
+        assert.match(result.stderr, /project-id-mismatch/);
+        assert.match(result.stderr, /source-inventory-checksum-mismatch/);
+    } finally {
+        await rm(directory, { recursive: true, force: true });
+    }
+});

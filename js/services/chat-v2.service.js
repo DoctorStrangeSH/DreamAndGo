@@ -95,6 +95,9 @@ export class ChatV2Service {
         }
         const queued = await this.outbox.enqueue({ uid, chatId, text, messageId });
         this.onOutboxChange?.();
+        if (globalThis.navigator?.onLine !== false && uid === this.activeOutboxUid) {
+            queueMicrotask(() => void this.flushOutbox(uid));
+        }
         return { success: true, queued: true, ...queued };
     }
 

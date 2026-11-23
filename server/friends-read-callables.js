@@ -1,5 +1,6 @@
 const REGION = 'europe-west3';
 const MAX_RESULTS = 100;
+const LOOKAHEAD_LIMIT = MAX_RESULTS + 1;
 const LISTS = Object.freeze({
     friends: { collection: 'friends', timestamp: 'addedAt', outputTimestamp: 'addedAt' },
     requests: { collection: 'friendRequests', timestamp: 'createdAt', outputTimestamp: 'createdAt' },
@@ -38,9 +39,10 @@ function createFriendReadCallables({ onCall, HttpsError, getFirestore }) {
 
         try {
             const snapshot = await db.collection('users').doc(uid)
-                .collection(config.collection).limit(MAX_RESULTS).get();
+                .collection(config.collection).limit(LOOKAHEAD_LIMIT).get();
 
-            const records = snapshot.docs.filter(item => item.id !== '_init');
+            const allRecords = snapshot.docs.filter(item => item.id !== '_init');
+            const records = allRecords.slice(0, MAX_RESULTS);
             const rows = await Promise.all(records.map(async item => {
                 const profile = await db.collection('publicProfiles').doc(item.id).get();
                 if (!profile.exists) return null;
@@ -64,7 +66,7 @@ function createFriendReadCallables({ onCall, HttpsError, getFirestore }) {
                 };
             }));
 
-            return { success: true, items: rows.filter(Boolean), truncated: records.length >= MAX_RESULTS };
+            return { success: true, items: rows.filter(Boolean), truncated: allRecords.length > MAX_RESULTS };
         } catch (error) {
             if (error instanceof HttpsError) throw error;
             throw new HttpsError('unavailable', 'Не удалось загрузить список. Попробуй позже.');

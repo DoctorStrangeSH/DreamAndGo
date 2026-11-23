@@ -34,7 +34,7 @@ function setup() {
                         collection(child) {
                             return {
                                 limit(count) {
-                                    assert.equal(count, 100);
+                                    assert.equal(count, 101);
                                     return { async get() { return { docs: docs[`${path}/${child}`] || [] }; } };
                                 }
                             };

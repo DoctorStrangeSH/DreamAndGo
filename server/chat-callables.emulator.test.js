@@ -43,6 +43,7 @@ async function createPair() {
     const created = await chatCallables.createPrivateChatV2({
         auth: { uid: alice }, data: { targetUid: bob }
     });
+    createdPaths.push(db.collection('chats').doc(created.chatId));
     return { alice, bob, chatId: created.chatId };
 }
 

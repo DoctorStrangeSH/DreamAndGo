@@ -225,3 +225,8 @@ The previous CI run was cancelled by subsequent documentation commits. The lates
 - [x] Offline verifier now recomputes the inventory manifest SHA-256 from its actual contents, not merely compares a copied checksum field.
 - [ ] Exact-HEAD CI after these changes is pending.
 - [ ] Staging backup and restore rehearsal remain pending a dedicated non-production Firebase project.
+
+
+### Final exact-HEAD validation trigger — 2026-11-23
+
+All code and regression tests for offline backup read-back, inventory-manifest checksum verification, and Firestore read-only enforcement are now committed. Earlier runs were superseded by subsequent commits; this documentation-only commit triggers one consolidated CI run on the final branch HEAD. No Firebase export is run by CI.

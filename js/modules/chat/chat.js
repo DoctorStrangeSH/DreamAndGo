@@ -185,8 +185,18 @@ export class ChatModule {
         document.getElementById('noChatSelected').style.display = 'none';
         document.getElementById('activeChat').style.display = 'block';
 
-        const partnerData = this.partnerProfiles.get(partnerId) ||
-            (this.chatService.isV2Enabled ? null : await window.app.realtimeService.getUserProfile(partnerId));
+        let partnerData = this.partnerProfiles.get(partnerId) || null;
+        if (!partnerData && this.chatService.isV2Enabled) {
+            try {
+                const contacts = await this.chatService.chatV2.getContacts();
+                partnerData = contacts.find(contact => contact.uid === partnerId) || null;
+                if (partnerData) this.partnerProfiles.set(partnerId, partnerData);
+            } catch (error) {
+                console.error('Не удалось загрузить профиль собеседника:', error);
+            }
+        } else if (!partnerData) {
+            partnerData = await window.app.realtimeService.getUserProfile(partnerId);
+        }
         document.getElementById('chatPartnerName').textContent = '@' + (partnerData?.username || 'Пользователь');
         document.getElementById('chatPartnerAvatar').innerHTML = `
             <div class="chat-avatar-placeholder">${escapeHTML(String(partnerData?.username || 'U').charAt(0).toUpperCase())}</div>
@@ -286,6 +296,12 @@ export class ChatModule {
         input.focus();
     }
 
+    resetSession() {
+        this.closeChat();
+        this.partnerProfiles.clear();
+        this.chatService.resetSession();
+    }
+
     closeChat() {
         this.currentChat = null;
         this.currentChatId = null;
@@ -295,8 +311,10 @@ export class ChatModule {
             this.unsubscribeMessages = null;
         }
 
-        document.getElementById('noChatSelected').style.display = '';
-        document.getElementById('activeChat').style.display = 'none';
+        const emptyState = document.getElementById('noChatSelected');
+        const activeChat = document.getElementById('activeChat');
+        if (emptyState) emptyState.style.display = '';
+        if (activeChat) activeChat.style.display = 'none';
 
         document.querySelectorAll('.chat-list-item').forEach(i => i.classList.remove('active'));
     }

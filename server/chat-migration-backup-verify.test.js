@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildChatMigrationBackup } from './chat-migration-backup.js';
+import { buildLegacyChatInventory } from './chat-migration-inventory.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const script = path.join(here, 'scripts', 'chat-migration-backup-verify.js');
@@ -16,7 +17,8 @@ function run(args) {
 
 async function fixture() {
     const directory = await mkdtemp(path.join(os.tmpdir(), 'dreamandgo-backup-verify-'));
-    const sourceManifestSha256 = 'a'.repeat(64);
+    const sourceInventory = buildLegacyChatInventory({ summaries: [], messagesByChat: {} });
+    const sourceManifestSha256 = sourceInventory.manifestSha256;
     const backup = buildChatMigrationBackup({
         projectId: 'dream-and-go-staging',
         sourceManifestSha256,
@@ -29,7 +31,7 @@ async function fixture() {
     const inventory = {
         projectId: 'dream-and-go-staging',
         manifestSha256: sourceManifestSha256,
-        manifest: { schemaVersion: 1, synthetic: true }
+        manifest: sourceInventory.manifest
     };
     const backupPath = path.join(directory, 'backup.json');
     const inventoryPath = path.join(directory, 'inventory.json');
@@ -75,6 +77,20 @@ test('offline verifier rejects inventory from another project or inventory check
         assert.notEqual(result.status, 0);
         assert.match(result.stderr, /project-id-mismatch/);
         assert.match(result.stderr, /source-inventory-checksum-mismatch/);
+    } finally {
+        await rm(files.directory, { recursive: true, force: true });
+    }
+});
+
+test('offline verifier rejects modified inventory manifest even when its stored checksum is unchanged', async () => {
+    const files = await fixture();
+    try {
+        const inventory = JSON.parse(await readFile(files.inventoryPath, 'utf8'));
+        inventory.manifest.totals.candidatePairs = 999;
+        await writeFile(files.inventoryPath, JSON.stringify(inventory));
+        const result = run(['--backup', files.backupPath, '--inventory', files.inventoryPath]);
+        assert.notEqual(result.status, 0);
+        assert.match(result.stderr, /inventory-manifest-checksum-mismatch/);
     } finally {
         await rm(files.directory, { recursive: true, force: true });
     }

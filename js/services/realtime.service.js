@@ -15,7 +15,7 @@ export class RealtimeService {
         this.unsubscribe(key);
 
         const messagesRef = collection(this.db, 'chats', chatId, 'messages');
-        const q = query(messagesRef, orderBy('createdAt', 'desc'), limit(100));
+        const q = query(messagesRef, orderBy('createdAt', 'desc'), limit(50));
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const messages = [];

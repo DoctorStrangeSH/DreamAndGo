@@ -182,7 +182,7 @@ async function main() {
         'Mode: READ ONLY — no Firestore writes performed.',
         '- Firebase project: ' + projectId,
         '- Backed up Firestore documents (summaries, chat parents, messages): ' + backup.manifest.documentCount,
-        '- Backup self-verification: PASS, all document and bundle checksums valid,
+        '- Backup self-verification: PASS, all document and bundle checksums valid',
         '- Total source bytes: ' + backup.manifest.totalSourceBytes,
         '- Inventory SHA-256: ' + inventory.manifestSha256,
         '- Backup manifest SHA-256: ' + backup.manifestSha256,

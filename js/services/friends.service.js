@@ -1,7 +1,7 @@
 import { app, auth, appCheck, db } from '../config/firebase.js';
 import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
 import { 
-    collection, doc, getDocs, getDoc,
+    collection, getDocs,
     query, where, limit
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
@@ -71,7 +71,11 @@ export class FriendsService {
                 avatar: data.avatar || null,
                 bio: data.bio || '',
                 location: data.location || '',
-                stats: data.stats || {}
+                stats: {
+                    travels: Number(data.stats?.travels) || 0,
+                    movies: Number(data.stats?.movies) || 0,
+                    books: Number(data.stats?.books) || 0
+                }
             };
         } catch (error) {
             console.error('Ошибка поиска пользователя:', error);
@@ -146,23 +150,5 @@ export class FriendsService {
         return this.loadRelationshipList(userId, 'listSent', 'createdAt');
     }
 
-    async getUserProfile(uid) {
-        try {
-            const userDoc = await getDoc(doc(this.db, 'publicProfiles', uid));
-            if (userDoc.exists()) {
-                const data = userDoc.data();
-                return {
-                    username: data.username,
-                    displayName: data.displayName || data.username,
-                    avatar: data.avatar,
-                    bio: data.bio || '',
-                    stats: data.stats || {}
-                };
-            }
-            return null;
-        } catch (error) {
-            return null;
-        }
-    }
 
 }

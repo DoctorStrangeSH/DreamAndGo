@@ -16,6 +16,11 @@ export class ChatService {
         return this.chatV2.isEnabled;
     }
 
+    resetSession() {
+        this.chatIdsByPartner.clear();
+        this.chatV2.resetSession();
+    }
+
     rememberChatId(userId, partnerId, chatId) {
         if (userId && partnerId && chatId) {
             this.chatIdsByPartner.set(JSON.stringify([userId, partnerId]), chatId);

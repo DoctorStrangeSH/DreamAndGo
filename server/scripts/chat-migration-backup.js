@@ -25,12 +25,12 @@ function readArguments(argv) {
         }
         if (token.startsWith('--')) {
             const value = argv[index + 1];
-            if (!value || value.startsWith('--')) throw new Error(\`Для \${token} требуется значение\`);
+            if (!value || value.startsWith('--')) throw new Error('Для ' + token + ' требуется значение');
             args[token.slice(2)] = value;
             index += 1;
             continue;
         }
-        throw new Error(\`Неизвестный аргумент: \${token}\`);
+        throw new Error('Неизвестный аргумент: ' + token);
     }
     return args;
 }
@@ -80,9 +80,9 @@ async function main() {
         throw new Error('Резервную копию нужно сохранять вне рабочей папки репозитория');
     }
 
-    const app = initializeApp({ projectId }, \`chat-migration-backup-\${projectId}\`);
+    const app = initializeApp({ projectId: projectId }, 'chat-migration-backup-' + projectId);
     const db = getFirestore(app);
-    process.stdout.write(\`Чтение staging-проекта только для чтения: \${projectId}\n\`);
+    process.stdout.write('Чтение staging-проекта только для чтения: ' + projectId + '\n');
 
     const summarySnapshot = await db.collectionGroup('chats').get();
     const summaryDocs = summarySnapshot.docs.filter(document =>
@@ -175,13 +175,13 @@ async function main() {
         '# Legacy Chat Backup',
         '',
         'Mode: READ ONLY — no Firestore writes performed.',
-        \`- Firebase project: \${projectId}\`,
-        \`- Backed up summary and message documents: \${backup.manifest.documentCount}\`,
-        \`- Total source bytes: \${backup.manifest.totalSourceBytes}\`,
-        \`- Inventory SHA-256: \${inventory.manifestSha256}\`,
-        \`- Backup manifest SHA-256: \${backup.manifestSha256}\`,
-        \`- Backup bundle SHA-256: \${backup.bundleSha256}\`,
-        \`- Inventory issues requiring review: \${inventory.manifest.globalIssues.length + inventory.manifest.totals.pairsWithIssues}\`,
+        '- Firebase project: ' + projectId,
+        '- Backed up summary and message documents: ' + backup.manifest.documentCount,
+        '- Total source bytes: ' + backup.manifest.totalSourceBytes,
+        '- Inventory SHA-256: ' + inventory.manifestSha256,
+        '- Backup manifest SHA-256: ' + backup.manifestSha256,
+        '- Backup bundle SHA-256: ' + backup.bundleSha256,
+        '- Inventory issues requiring review: ' + (inventory.manifest.globalIssues.length + inventory.manifest.totals.pairsWithIssues),
         '',
         'The backup contains private message content. Store it securely and do not commit it to Git.',
         ''
@@ -189,11 +189,11 @@ async function main() {
     await writeFile(reportPath, report, { flag: 'wx', mode: 0o600 });
 
     process.stdout.write(report);
-    process.stdout.write(\`\nBackup: \${backupPath}\nInventory: \${inventoryPath}\nReport: \${reportPath}\n\`);
+    process.stdout.write(\nBackup: ${backupPath}\nInventory: ${inventoryPath}\nReport: ${reportPath}\n);
     process.stdout.write('Firestore mode: READ ONLY. No document writes were issued.\n');
 }
 
 main().catch(error => {
-    process.stderr.write(\`Chat Migration Backup stopped: \${error.message}\n\`);
+    process.stderr.write(Chat Migration Backup stopped: ${error.message}\n);
     process.exitCode = 1;
 });

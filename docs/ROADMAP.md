@@ -647,3 +647,12 @@
 - [ ] Run both Friends Emulator test files with the Firestore Emulator and execute full exact-HEAD CI.
 - [ ] Browser-level two-account acceptance and App Check transport verification remain outstanding.
 - **Test boundary:** the new tests run callable handlers with controlled Auth context against the Firestore Emulator; they do not test HTTPS transport or App Check token exchange.
+
+### Friends UI error-state and request efficiency hardening — 2026-11-23
+
+- [x] Friends page now requests only the initially active Friends list instead of launching three simultaneous list requests and discarding two responses.
+- [x] Relationship actions refresh only the currently visible list through one shared helper.
+- [x] FriendsService no longer converts authentication, App Check, network or backend failures into an empty array. The UI's existing error state now distinguishes unavailable data from a genuinely empty list.
+- [x] Missing/invalid relationship timestamps remain null rather than being replaced with the current time.
+- [ ] Run exact-HEAD unit, Emulator, browser and syntax CI; no successful run is available yet.
+- [ ] Complete real browser two-account acceptance and callable transport/App Check verification.

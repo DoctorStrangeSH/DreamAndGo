@@ -78,7 +78,7 @@ function messageProjection(document) {
     };
 }
 
-function createChatCallables({ onCall, HttpsError, getFirestore, FieldValue }) {
+export function createChatCallables({ onCall, HttpsError, getFirestore, FieldValue }) {
     if (typeof onCall !== 'function' || typeof HttpsError !== 'function' ||
         typeof getFirestore !== 'function' ||
         typeof FieldValue?.serverTimestamp !== 'function' ||

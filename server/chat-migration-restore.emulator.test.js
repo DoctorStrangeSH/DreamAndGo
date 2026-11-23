@@ -39,7 +39,7 @@ test('Firestore Emulator restores a JSON backup with nested paths and native Fir
         const messageRef = sourceRoot.collection('messages').doc('message-1');
         await sourceRoot.set({
             ownerUid: 'alice',
-            createdAt: new Timestamp(1700000000, 123456789),
+            createdAt: new Timestamp(1700000000, 123000000),
             location: new GeoPoint(50.1109, 8.6821),
             attachment: Bytes.fromUint8Array(Uint8Array.from([1, 2, 3, 254])),
             profileRef

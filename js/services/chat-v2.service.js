@@ -104,36 +104,47 @@ export class ChatV2Service {
         if (this.outboxFlushPromise) return this.outboxFlushPromise;
 
         this.outboxFlushPromise = (async () => {
-            const records = await this.outbox.getQueued(uid);
-            const pendingMessages = await this.outbox.list(uid);
-            const textById = new Map(pendingMessages.map(message => [message.id, message.text]));
-            for (const record of records) {
-                if (uid !== this.activeOutboxUid || globalThis.navigator?.onLine === false) break;
-                try {
-                    const result = await this.call('sendPrivateMessageV2', {
-                        chatId: record.chatId,
-                        text: textById.get(record.messageId),
-                        clientMessageId: record.messageId
-                    });
-                    if (result.success !== true || typeof result.messageId !== 'string') {
-                        throw new Error('Сервер не подтвердил отправку сообщения.');
-                    }
-                    await this.outbox.remove(uid, record.messageId);
-                    this.onOutboxChange?.();
-                } catch (error) {
-                    if (String(error?.code || '').endsWith('permission-denied')) {
-                        await this.outbox.markBlocked(uid, record.messageId);
+            try {
+                const records = await this.outbox.getQueued(uid);
+                const pendingMessages = await this.outbox.list(uid);
+                const textById = new Map(pendingMessages.map(message => [message.id, message.text]));
+                for (const record of records) {
+                    if (uid !== this.activeOutboxUid || globalThis.navigator?.onLine === false) break;
+                    try {
+                        const text = textById.get(record.messageId);
+                        if (typeof text !== 'string') throw new Error('Локальное сообщение не найдено.');
+                        const result = await this.call('sendPrivateMessageV2', {
+                            chatId: record.chatId,
+                            text,
+                            clientMessageId: record.messageId
+                        });
+                        if (result.success !== true || typeof result.messageId !== 'string') {
+                            throw new Error('Сервер не подтвердил отправку сообщения.');
+                        }
+                        await this.outbox.remove(uid, record.messageId);
                         this.onOutboxChange?.();
-                        continue;
+                    } catch (error) {
+                        if (String(error?.code || '').endsWith('permission-denied')) {
+                            await this.outbox.markBlocked(uid, record.messageId);
+                            this.onOutboxChange?.();
+                            continue;
+                        }
+                        if (!this.isTransientSendError(error)) {
+                            console.error('Офлайн-сообщение оставлено в очереди:', error);
+                        }
+                        break;
                     }
-                    if (!this.isTransientSendError(error)) {
-                        console.error('Офлайн-сообщение оставлено в очереди:', error);
-                    }
-                    break;
                 }
+            } catch (error) {
+                console.error('Не удалось прочитать зашифрованную офлайн-очередь:', error);
+                this.onOutboxChange?.();
             }
         })().finally(() => {
             this.outboxFlushPromise = null;
+            if (this.activeOutboxUid && this.activeOutboxUid !== uid &&
+                globalThis.navigator?.onLine !== false) {
+                void this.flushOutbox(this.activeOutboxUid);
+            }
         });
         return this.outboxFlushPromise;
     }

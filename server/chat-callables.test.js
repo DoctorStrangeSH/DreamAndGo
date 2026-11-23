@@ -302,6 +302,33 @@ test('a block created by the other participant is also enforced', async () => {
     })).contacts, []);
 });
 
+test('unblocking one side does not override the other participant block', async () => {
+    const ctx = createHarness(friendSeed());
+    const { chatId } = await createChat(ctx);
+
+    await ctx.callables.blockUserV1({
+        auth: { uid: 'alice' }, data: { targetUid: 'bob' }
+    });
+    await ctx.callables.blockUserV1({
+        auth: { uid: 'bob' }, data: { targetUid: 'alice' }
+    });
+
+    await ctx.callables.unblockUserV1({
+        auth: { uid: 'alice' }, data: { targetUid: 'bob' }
+    });
+
+    assert.deepEqual(await ctx.callables.getChatBlockStatusV2({
+        auth: { uid: 'alice' }, data: { chatId }
+    }), { blockedByMe: false, blockedByPartner: true, canSend: false });
+    assert.deepEqual((await ctx.callables.getMyChatContactsV2({
+        auth: { uid: 'alice' }, data: {}
+    })).contacts, []);
+    await assert.rejects(ctx.callables.sendPrivateMessageV2({
+        auth: { uid: 'alice' },
+        data: { chatId, text: 'still blocked', clientMessageId: 'still-blocked' }
+    }), error => error.code === 'permission-denied');
+});
+
 test('private inbox returns only canonical chats owned by the authenticated user', async () => {
     const ctx = createHarness(friendSeed());
     const { chatId } = await createChat(ctx);

@@ -128,3 +128,13 @@ The output directory contains `legacy-chat-manifest.json` and `legacy-chat-repor
 ### Inventory coverage note — 2026-11-23
 
 The read-only inspector's total `messageDocuments` count includes both messages in validated participant pairs and messages in orphan collections. `pairedMessageDocuments` and `orphanMessageDocuments` are reported separately so totals cannot silently omit orphaned records. The manifest remains private because it contains participant UIDs, document paths, and message metadata/hashes.
+
+
+### Exact-HEAD CI verification — 2026-11-23
+
+- [x] `checks.yml` passed on commit `6073403dd65000a97d28752bbe9758c3c443e2d9` (run [45155314269](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/45155314269)).
+- [x] Root Unit suite: 163 passed, 0 failed.
+- [x] Real Chromium offline-outbox suite: 4 passed, 0 failed.
+- [x] Auth + Firestore Emulator suite: 23 passed, 0 failed.
+- [x] Syntax validation: all 95 JavaScript files passed.
+- [ ] Staging inventory remains unexecuted: no separate staging project ID or credentials have been provided.

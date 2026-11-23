@@ -37,6 +37,18 @@ function createHarness(seed = {}) {
             const documentId = id || `auto-${++nextId}`;
             return documentRef(`${path}/${documentId}`);
         },
+        limit(count) {
+            return {
+                async get() {
+                    const docs = [...records.entries()]
+                        .filter(([key]) => key.startsWith(`${path}/`) &&
+                            !key.slice(path.length + 1).includes('/'))
+                        .slice(0, count)
+                        .map(([key]) => snapshot(key));
+                    return { docs, empty: docs.length === 0, size: docs.length };
+                }
+            };
+        },
         orderBy(field, direction = 'asc') {
             let cursorPath = null;
             const builder = {

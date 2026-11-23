@@ -8,6 +8,7 @@ import { createRegistrationCallables } from './registration-callables.js';
 import { createProfileCallables } from './profile-callables.js';
 import { buildPublicProfile } from './public-profile.js';
 import { createProfileAccountCallables } from './profile-account-callables.js';
+import { createFriendCallables } from './friends-callables.js';
 
 if (getApps().length === 0) initializeApp();
 
@@ -48,3 +49,12 @@ const profileAccount = createProfileAccountCallables({
 
 export const getMyProfileV1 = profileAccount.getMyProfileV1;
 export const updateMyProfileV1 = profileAccount.updateMyProfileV1;
+
+
+const friends = createFriendCallables({ onCall, HttpsError, getFirestore, FieldValue });
+
+export const sendFriendRequestV1 = friends.sendFriendRequestV1;
+export const acceptFriendRequestV1 = friends.acceptFriendRequestV1;
+export const rejectFriendRequestV1 = friends.rejectFriendRequestV1;
+export const cancelFriendRequestV1 = friends.cancelFriendRequestV1;
+export const removeFriendV1 = friends.removeFriendV1;

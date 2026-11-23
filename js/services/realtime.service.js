@@ -1,5 +1,4 @@
 import { db } from '../config/firebase.js';
-import { ChatV2Service } from './chat-v2.service.js';
 import { 
     collection, doc, query, orderBy, limit,
     onSnapshot, getDoc
@@ -9,7 +8,6 @@ export class RealtimeService {
     constructor() {
         this.db = db;
         this.listeners = {};
-        this.chatV2 = new ChatV2Service();
     }
 
     subscribeToMessages(chatId, callback) {

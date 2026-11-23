@@ -81,7 +81,12 @@ export function encodeFirestoreValue(value, location = 'document.data') {
     }
     const output = {};
     for (const key of Object.keys(value).sort()) {
-        output[key] = encodeFirestoreValue(value[key], `${location}.${key}`);
+        Object.defineProperty(output, key, {
+            value: encodeFirestoreValue(value[key], `${location}.${key}`),
+            enumerable: true,
+            configurable: true,
+            writable: true
+        });
     }
     return output;
 }
@@ -159,7 +164,12 @@ export function decodeFirestoreValue(value, { firestore, Timestamp, GeoPoint, By
     }
     const output = {};
     for (const key of Object.keys(value).sort()) {
-        output[key] = decodeFirestoreValue(value[key], { firestore, Timestamp, GeoPoint, Bytes }, `${location}.${key}`);
+        Object.defineProperty(output, key, {
+            value: decodeFirestoreValue(value[key], { firestore, Timestamp, GeoPoint, Bytes }, `${location}.${key}`),
+            enumerable: true,
+            configurable: true,
+            writable: true
+        });
     }
     return output;
 }

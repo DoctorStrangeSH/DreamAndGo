@@ -530,3 +530,10 @@
 - [x] Registered the new verifier CLI suite in the root `npm test` command (which uses an explicit file list).
 - [ ] Exact-HEAD full CI must pass before marking this correction verified.
 - [ ] No real staging backup was created or inspected; no Firebase connection, migration, Rules change, or deployment occurred.
+
+### Backup verifier output consistency — 2026-11-23
+
+- [x] Corrected the successful read-back report to print the Firebase project ID from `backup.manifest.projectId` (the same canonical field used by validation).
+- [x] Extended the CLI regression test to assert the exact project identity in successful output.
+- [ ] Run the new regression suite and full Checks workflow on the resulting branch HEAD; connector status lookup currently exposes no check runs for these push commits.
+- **Safety:** offline synthetic fixtures only; no staging credentials or live Firestore data used.

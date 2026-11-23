@@ -127,7 +127,7 @@ async function main() {
         }
     }
 
-    const inventory = buildLegacyChatInventory({ summaries, messagesByChat, orphanMessageCollections });
+    const inventory = buildLegacyChatInventory({ projectId, summaries, messagesByChat, orphanMessageCollections });
     await mkdir(resolvedOutputDir, { recursive: true, mode: 0o700 });
     await chmod(resolvedOutputDir, 0o700);
     const manifestPath = path.join(resolvedOutputDir, 'legacy-chat-manifest.json');

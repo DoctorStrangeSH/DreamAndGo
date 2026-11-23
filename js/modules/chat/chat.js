@@ -199,6 +199,9 @@ export class ChatModule {
         if (!safePartnerId) return;
         const openRequestId = (this.openChatRequestId || 0) + 1;
         this.openChatRequestId = openRequestId;
+        this.blockActionRequestId = (this.blockActionRequestId || 0) + 1;
+        this.blockStatusRequestId = (this.blockStatusRequestId || 0) + 1;
+        this.blockActionPending = false;
         const isCurrentOpen = () => this.openChatRequestId === openRequestId &&
             this.currentChat === safePartnerId && window.app.currentUser?.uid === userId;
         const userId = window.app.currentUser.uid;
@@ -317,17 +320,24 @@ export class ChatModule {
 
     async refreshBlockStatus() {
         if (!this.chatService.isV2Enabled || !this.currentChatId) return;
+        const chatId = this.currentChatId;
+        const requestId = (this.blockStatusRequestId || 0) + 1;
+        this.blockStatusRequestId = requestId;
+        let nextStatus;
         try {
-            this.blockStatus = await this.chatService.getBlockStatus(this.currentChatId);
+            nextStatus = await this.chatService.getBlockStatus(chatId);
         } catch (error) {
+            if (this.currentChatId !== chatId || this.blockStatusRequestId !== requestId) return;
             console.error('Не удалось обновить статус блокировки:', error);
-            this.blockStatus = {
+            nextStatus = {
                 blockedByMe: false,
                 blockedByPartner: false,
                 canSend: false,
                 error: true
             };
         }
+        if (this.currentChatId !== chatId || this.blockStatusRequestId !== requestId) return;
+        this.blockStatus = nextStatus;
         this.applyBlockStatus(this.blockStatus);
     }
 
@@ -394,29 +404,45 @@ export class ChatModule {
         if (!this.chatService.isV2Enabled || !this.currentChat || !this.currentChatId ||
             this.blockActionPending || !this.blockStatus || this.blockStatus.error) return;
 
+        const targetUid = this.currentChat;
+        const chatId = this.currentChatId;
+        const actionId = (this.blockActionRequestId || 0) + 1;
+        this.blockActionRequestId = actionId;
+        const isCurrentAction = () => this.blockActionRequestId === actionId &&
+            this.currentChat === targetUid && this.currentChatId === chatId;
+
+        if (!this.blockStatus.blockedByMe) {
+            const confirmed = window.confirm('Заблокировать пользователя? Он не сможет отправлять тебе сообщения, а ты — ему.');
+            if (!confirmed || !isCurrentAction()) return;
+        }
+
         this.blockActionPending = true;
         this.applyBlockStatus(this.blockStatus);
-        const targetUid = this.currentChat;
         try {
             if (this.blockStatus.blockedByMe) {
                 await this.chatService.unblockUser(targetUid);
             } else {
-                const confirmed = window.confirm('Заблокировать пользователя? Он не сможет отправлять тебе сообщения, а ты — ему.');
-                if (!confirmed) return;
                 await this.chatService.blockUser(targetUid);
             }
-            this.blockStatus = await this.chatService.getBlockStatus(this.currentChatId);
+            if (!isCurrentAction()) return;
+            const nextStatus = await this.chatService.getBlockStatus(chatId);
+            if (!isCurrentAction()) return;
+            this.blockStatus = nextStatus;
             this.applyBlockStatus(this.blockStatus);
             window.app.ui.showToast(
                 this.blockStatus.blockedByMe ? 'Пользователь заблокирован.' : 'Блокировка снята.',
                 'success'
             );
         } catch (error) {
+            if (!isCurrentAction()) return;
             console.error('Не удалось изменить блокировку:', error);
             window.app.ui.showToast(error?.message || 'Не удалось изменить блокировку.', 'danger');
+            await this.refreshBlockStatus();
         } finally {
-            this.blockActionPending = false;
-            if (this.blockStatus) this.applyBlockStatus(this.blockStatus);
+            if (this.blockActionRequestId === actionId) {
+                this.blockActionPending = false;
+                if (this.blockStatus && this.currentChatId === chatId) this.applyBlockStatus(this.blockStatus);
+            }
         }
     }
 
@@ -576,6 +602,8 @@ export class ChatModule {
 
     closeChat() {
         this.openChatRequestId = (this.openChatRequestId || 0) + 1;
+        this.blockActionRequestId = (this.blockActionRequestId || 0) + 1;
+        this.blockStatusRequestId = (this.blockStatusRequestId || 0) + 1;
         this.currentChat = null;
         this.currentChatId = null;
 

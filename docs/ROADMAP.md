@@ -745,3 +745,11 @@
 - [x] Friend callable regression asserts duplicate friend requests create exactly one `friend_request` notification; acceptance lifecycle already asserts one `friend_accepted` notification.
 - [ ] Run notification/friend callable suites and full exact-HEAD CI/syntax checks.
 - [ ] Verify delivery, badge counts, retry and navigation with two staging accounts.
+
+### Friends notification payload and navigation contract — 2026-11-23
+
+- [x] Request notification regression now verifies the `#friends` destination, sender UID, unread state, and deduplication.
+- [x] Acceptance notification regression verifies the accepting user's profile destination, sender UID, unread state, and deduplication.
+- [x] Reviewed notification route allowlisting: only registered internal routes are accepted; profile routes permit a validated UID segment.
+- [ ] Execute Friends, Notifications, and full exact-HEAD test/syntax suites.
+- [ ] Verify notification click-through and unread badge behavior in a two-account staging session.

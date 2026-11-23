@@ -64,6 +64,14 @@ export class ChatV2Service {
         return result.chatId;
     }
 
+    async getContacts() {
+        const result = await this.call('getMyChatContactsV2', {});
+        if (!Array.isArray(result.contacts)) {
+            throw new Error('Сервер вернул некорректный список друзей.');
+        }
+        return result.contacts;
+    }
+
     async getChats() {
         const result = await this.call('getMyPrivateChatsV2', {});
         if (!Array.isArray(result.chats)) {

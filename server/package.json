@@ -16,6 +16,7 @@
   },
   "devDependencies": {
     "firebase": "^11.10.0",
-    "@firebase/rules-unit-testing": "^4.0.1"
+    "@firebase/rules-unit-testing": "^4.0.1",
+    "fake-indexeddb": "^6.2.8"
   }
 }

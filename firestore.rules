@@ -2,10 +2,42 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // All client access is denied by default. Trusted Firebase Admin SDK
-    // Functions bypass Firestore Security Rules and enforce authorization
-    // inside their callable handlers. Expand client access only with audited,
-    // path-specific rules and emulator tests.
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isChatParticipant(chatId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/chats/$(chatId))
+        && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+    }
+
+    // Public profile documents are server-generated, consent-gated projections.
+    // No client may create or mutate profile projections.
+    match /publicProfiles/{uid} {
+      allow read: if true;
+      allow create, update, delete: if false;
+    }
+
+    // Inbox summaries are private to their owner and server-written only.
+    match /users/{uid}/chats/{chatId} {
+      allow get, list: if signedIn() && request.auth.uid == uid;
+      allow create, update, delete: if false;
+    }
+
+    // Canonical membership and message documents are server-owned.
+    // Participants can read; all writes must go through trusted callables.
+    match /chats/{chatId} {
+      allow get: if isChatParticipant(chatId);
+      allow list, create, update, delete: if false;
+
+      match /messages/{messageId} {
+        allow get, list: if isChatParticipant(chatId);
+        allow create, update, delete: if false;
+      }
+    }
+
+    // All other paths remain closed until their own access contract is tested.
     match /{document=**} {
       allow read, write: if false;
     }

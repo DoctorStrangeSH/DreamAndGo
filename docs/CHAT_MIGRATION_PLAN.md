@@ -36,8 +36,11 @@ This plan is a release gate for preserving existing private conversations while 
 
 ### Phase A — read-only inventory
 
-- [x] Implemented `server/scripts/chat-migration-inventory.js` to enumerate user chat summaries and legacy message collections using Firebase Admin read operations only.
+- [x] Implemented `server/scripts/chat-migration-inventory.js` to enumerate user chat summaries and every `chats/{chatId}/messages/{messageId}` collection through Firebase Admin read operations only.
+- [x] The inspector distinguishes Chat V2 collections by their parent `schemaVersion`, skips known group-chat collections, and reports orphan legacy message collections without guessing participants.
 - [x] `_init` is ignored only when it has no `partnerId`; malformed or unexpected summaries are reported.
+- [x] Group summaries (`isGroup: true`) and their message collections are excluded from the private-chat migration scope and reported separately.
+- [x] Legacy message collections without a corresponding valid summary pair are reported as orphans for manual review; no participant IDs are inferred from ambiguous legacy IDs.
 - [x] Candidate pairs are derived from reciprocal `summary.partnerId` documents and exact path checks.
 - [x] Legacy chat IDs are recomputed from sorted UIDs; underscore-based collisions are detected and block a clean result.
 - [x] Canonical V2 IDs use the exact SHA-256/NUL algorithm used by the server.

@@ -86,6 +86,16 @@ function directedSummaryKey(ownerUid, partnerUid) {
     return JSON.stringify([ownerUid, partnerUid]);
 }
 
+function inspectSummary(summary) {
+    const data = summary.data || {};
+    const issues = [];
+    if (typeof data.lastMessage !== 'string') issues.push('invalid-summary-last-message');
+    if (timestampMillis(data.lastMessageTime) === null) issues.push('invalid-summary-last-message-time');
+    if (!Number.isSafeInteger(data.unread) || data.unread < 0) issues.push('invalid-summary-unread');
+    if (timestampMillis(data.createdAt) === null) issues.push('invalid-summary-created-at');
+    return issues.sort();
+}
+
 function summaryProjection(summary) {
     return {
         path: summary.path,
@@ -95,6 +105,7 @@ function summaryProjection(summary) {
         unread: Number.isSafeInteger(summary.data?.unread) ? summary.data.unread : null,
         lastMessageTimeMillis: timestampMillis(summary.data?.lastMessageTime),
         sourceBytes: Buffer.byteLength(stableJson(summary.data || {})),
+        issues: inspectSummary(summary),
         sourceSha256: sha256(summary.data || {})
     };
 }
@@ -185,6 +196,15 @@ export function buildLegacyChatInventory({ summaries, messagesByChat }) {
         const summaryB = summariesByOwnerAndPartner.get(directedSummaryKey(uidB, uidA));
         const pairIssues = [];
         if (!summaryA || !summaryB) pairIssues.push('missing-reciprocal-summary');
+        for (const summary of [summaryA, summaryB].filter(Boolean)) {
+            pairIssues.push(...inspectSummary(summary));
+        }
+        if (summaryA && summaryB) {
+            if (summaryA.data?.lastMessage !== summaryB.data?.lastMessage ||
+                timestampMillis(summaryA.data?.lastMessageTime) !== timestampMillis(summaryB.data?.lastMessageTime)) {
+                pairIssues.push('reciprocal-summary-preview-mismatch');
+            }
+        }
 
         const chatMessages = messagesByChat?.[legacyId] || [];
         const seenMessageIds = new Set();

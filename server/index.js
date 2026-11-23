@@ -10,6 +10,7 @@ import { buildPublicProfile } from './public-profile.js';
 import { createProfileAccountCallables } from './profile-account-callables.js';
 import { createFriendCallables } from './friends-callables.js';
 import { createNotificationCallables } from './notifications-callables.js';
+import { createChatCallables } from './chat-callables.js';
 
 if (getApps().length === 0) initializeApp();
 
@@ -66,3 +67,12 @@ const notifications = createNotificationCallables({ onCall, HttpsError, getFires
 export const getMyNotificationsV1 = notifications.getMyNotificationsV1;
 export const markNotificationReadV1 = notifications.markNotificationReadV1;
 export const markAllNotificationsReadV1 = notifications.markAllNotificationsReadV1;
+
+const chat = createChatCallables({ onCall, HttpsError, getFirestore, FieldValue });
+
+export const createPrivateChatV2 = chat.createPrivateChatV2;
+export const sendPrivateMessageV2 = chat.sendPrivateMessageV2;
+export const getPrivateChatHistoryV2 = chat.getPrivateChatHistoryV2;
+export const getPrivateMessageStatusV2 = chat.getPrivateMessageStatusV2;
+export const markPrivateMessageReadV2 = chat.markPrivateMessageReadV2;
+export const getPrivateChatUnreadV2 = chat.getPrivateChatUnreadV2;

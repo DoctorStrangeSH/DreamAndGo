@@ -19,8 +19,8 @@ This is an implementation review, not a permission grant. The checked-in rules r
 | `users/{uid}/dreams/{id}` | Owner CRUD; profile/search reads | Owner-only CRUD by default; sharing must be an explicit separate feature | Same owner check; do not assume dreams are public because the profile has a public privacy default. |
 | `users/{uid}/dailyTasks/current` | Owner read/create/update | Owner-only read/write with field/type validation | Client must not award XP/currency or mutate server-calculated rewards without trusted validation. |
 | `users/{uid}/notifications/{id}` | Legacy client create/list/mark-read | Owner-scoped callable list (allowlisted projection) and mark-read; creation only from trusted, validated domain events | Notification list/read callables are implemented in candidate. Firestore Rules remain deny-all; direct realtime listener and client writes are removed from the notification service. Achievement/level-up creation waits for server-side progression; message creation waits for trusted chat send. |
-| `users/{uid}/chats/{partnerUid}` | Client creates/updates/deletes both participants' chat summaries | No cross-user client writes; trusted server creates and updates both summaries, or redesign to per-user owner-scoped inbox records | Current implementation lets one client write into another user's subtree. Must be redesigned before Rules are opened. |
-| `chats/{chatId}/messages/{messageId}` | Client create/read/update/delete; chat ID is derived from sorted UIDs | Only authenticated chat participants may read; sender may create messages as self; edits/deletes constrained; server validates participant membership | Rules must verify membership from trusted chat metadata, not trust senderId/receiverId fields supplied by client. Current code has no canonical participant document. |
+| `users/{uid}/chats/{chatId}` | Legacy client uses `partnerUid` documents and cross-user batches; Chat V2 candidate writes one summary per owner through trusted callables | Owner-scoped inbox records; server creates/updates both summaries after verifying canonical chat membership | Legacy direct writes remain blocked. Chat V2 candidate uses deterministic chat IDs and server-only writes; client integration and Emulator tests remain pending. |
+| `chats/{chatId}` | Legacy client does not own canonical membership metadata; Chat V2 candidate creates private-chat metadata | Server-only canonical membership document with exactly two participant UIDs and schema version; no client writes | Candidate callable creates deterministic SHA-256 chat IDs and checks reciprocal friendship. Do not expose direct reads/writes through Rules before Emulator coverage. |\n| `chats/{chatId}/messages/{messageId}` | Legacy client create/read/update/delete; Chat V2 candidate writes and reads through participant-authorized callables | Server-only message writes; participants may retrieve bounded history and read receipts through callables | Candidate derives sender/recipient from Auth + canonical membership; message text is excluded from notifications. Legacy client path is not yet migrated. |
 | `users/{uid}/friends/{friendUid}` | Client writes both users' friend records | No cross-user writes; server-mediated acceptance/removal or per-user requests with independently accepted counterpart records | Current bilateral batch writes violate least privilege. |
 | `users/{uid}/friendRequests/{fromUid}` | Client creates request under recipient's subtree and removes both sides | Recipient reads/responds; sender creates only a request addressed to the recipient through a validated server endpoint, or redesign so sender writes own outgoing request | Do not allow arbitrary writes into another user's subtree. |
 | `users/{uid}/sentRequests/{toUid}` | Client writes both sender and recipient-side request docs | Sender-only own outgoing request; recipient-side state written by trusted server | Keep state transitions atomic and validate participants. |
@@ -72,10 +72,10 @@ The current deny-all Rules are intentional. Do not replace them with broad owner
 - [ ] Emulator matrix: anonymous, requester, recipient, unrelated user; verify no caller can mutate another user's friend or notification records. Callable unit tests exist for friend and notification ownership; Emulator coverage remains pending.
 
 ### Batch 3 — chat
-- [ ] Establish canonical server-owned chat membership metadata before allowing message access.
-- [ ] Migrate create/send/read/unread/receipt operations to participant-authorized callables or Rules backed by trusted membership documents.
-- [ ] Reject client-selected sender identity and recipient identity that do not match authenticated UID and verified membership.
-- [ ] Keep message content private; do not put message text in notification payloads or logs.
+- [x] Candidate: establish canonical server-owned private-chat membership metadata before allowing message access; exact-HEAD Emulator verification remains pending.
+- [x] Candidate: add App Check-enforced callables for create/send/history/read receipts/unread/status, backed by canonical membership metadata.
+- [x] Candidate: sender and recipient are derived from Auth UID and verified chat membership; extra identity fields are rejected.
+- [x] Candidate: new-message notifications contain sender label only; message body is not copied into notification payloads or server logs.
 - [ ] Emulator matrix: participant A, participant B, unrelated C, anonymous; test list queries and direct document reads/writes.
 - [ ] Preserve old conversations through an idempotent migration rehearsal; do not enable chat rollout before two-account staging.
 
@@ -147,3 +147,15 @@ The integration branch now routes the Settings profile editor and AuthService pr
 - The browser service no longer creates notification documents or directly reads/writes Firestore. It loads the latest 30 notifications through the callable and refreshes every 30 seconds while the widget is active.
 - The existing friend callables remain the only newly migrated notification producers. Achievement/level-up creation is intentionally deferred until progression awards are server-authoritative; message notifications are deferred until the chat send path is server-authoritative.
 - Unit tests cover App Check options, auth, owner isolation, allowlist projection, input validation and read-state changes. Emulator and two-account staging remain NOT DONE.
+
+
+### Chat V2 private conversation callables — candidate only
+
+V1.0 scope is one-to-one private conversations. Group chats remain post-v1.0 and are not part of this migration batch.
+
+- `createPrivateChatV2` requires reciprocal friendship, derives a stable SHA-256 chat ID from the two UIDs and creates canonical `chats/{chatId}` membership metadata plus two owner-scoped inbox summaries atomically.
+- `sendPrivateMessageV2` accepts only `chatId` and bounded text; sender and recipient are derived from callable Auth and the canonical participant list. Message, summaries, unread counter and a content-free notification are committed in one transaction.
+- `getPrivateChatHistoryV2` returns the latest 50 messages only to a participant and exposes an allowlisted projection.
+- `getPrivateMessageStatusV2`, `markPrivateMessageReadV2` and `getPrivateChatUnreadV2` are participant-authorized read-receipt/unread operations.
+- Existing legacy chat documents are not rewritten or deleted. The legacy browser ChatService/RealtimeService is not yet migrated; no feature gate is enabled.
+- Unit tests cover reciprocal-friend creation, deterministic IDs, membership enforcement, payload validation, bounded history projection, message privacy, read receipts and unread isolation. Exact-HEAD CI, Emulator matrix, client integration and legacy migration rehearsal remain NOT DONE.

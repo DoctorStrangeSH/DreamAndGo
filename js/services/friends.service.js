@@ -1,12 +1,47 @@
-import { db } from '../config/firebase.js';
+import { app, auth, appCheck, db } from '../config/firebase.js';
+import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
 import { 
-    collection, doc, getDocs, getDoc, updateDoc,
-    query, where, limit, serverTimestamp, writeBatch, setDoc
+    collection, doc, getDocs, getDoc,
+    query, where, limit
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 export class FriendsService {
     constructor() {
         this.db = db;
+        this.callables = null;
+        const backendReady = document.querySelector('meta[name="firebase-functions-backend-ready"]')
+            ?.content?.trim().toLowerCase() === 'true';
+        if (app && appCheck && backendReady) {
+            this.callables = {
+                send: httpsCallable(getFunctions(app, 'europe-west3'), 'sendFriendRequestV1'),
+                accept: httpsCallable(getFunctions(app, 'europe-west3'), 'acceptFriendRequestV1'),
+                reject: httpsCallable(getFunctions(app, 'europe-west3'), 'rejectFriendRequestV1'),
+                cancel: httpsCallable(getFunctions(app, 'europe-west3'), 'cancelFriendRequestV1'),
+                remove: httpsCallable(getFunctions(app, 'europe-west3'), 'removeFriendV1')
+            };
+        }
+    }
+
+    async invokeFriendAction(action, targetUid) {
+        if (!this.callables?.[action]) {
+            return { success: false, error: 'Защищённые операции с друзьями пока не подключены.' };
+        }
+        try {
+            const result = await this.callables[action]({ targetUid });
+            return result?.data?.success === true
+                ? { success: true }
+                : { success: false, error: 'Сервер вернул некорректный ответ.' };
+        } catch (error) {
+            const messages = {
+                'functions/already-exists': 'Заявка или дружба уже существует.',
+                'functions/not-found': 'Заявка или пользователь больше не существуют.',
+                'functions/failed-precondition': 'Это действие сейчас недоступно.',
+                'functions/invalid-argument': 'Некорректные данные запроса.',
+                'functions/unauthenticated': 'Войди в аккаунт и попробуй снова.',
+                'functions/app-check-failed': 'Не пройдена проверка безопасности.'
+            };
+            return { success: false, error: messages[error.code] || 'Не удалось выполнить действие. Попробуй позже.' };
+        }
     }
 
     async getUserByUsername(username) {
@@ -15,23 +50,13 @@ export class FriendsService {
         if (!/^[a-z0-9_]{3,20}$/.test(normalizedName)) return null;
 
         try {
-            const usersRef = collection(this.db, 'users');
+            const usersRef = collection(this.db, 'publicProfiles');
             const indexed = await getDocs(query(
                 usersRef,
-                where('usernameNormalized', '==', normalizedName),
+                where('username', '==', normalizedName),
                 limit(1)
             ));
             let match = indexed.docs[0];
-
-            // Compatibility path for accounts created before usernameNormalized existed.
-            if (!match) {
-                const legacy = await getDocs(query(
-                    usersRef,
-                    where('username', '==', searchName),
-                    limit(1)
-                ));
-                match = legacy.docs[0];
-            }
 
             if (!match) return null;
             const data = match.data();
@@ -52,92 +77,38 @@ export class FriendsService {
     }
 
     async sendFriendRequest(fromUserId, toUserId) {
-        try {
-            const requestRef = doc(this.db, 'users', toUserId, 'friendRequests', fromUserId);
-            await setDoc(requestRef, {
-                from: fromUserId,
-                to: toUserId,
-                status: 'pending',
-                createdAt: serverTimestamp()
-            });
-
-            const sentRef = doc(this.db, 'users', fromUserId, 'sentRequests', toUserId);
-            await setDoc(sentRef, {
-                from: fromUserId,
-                to: toUserId,
-                status: 'pending',
-                createdAt: serverTimestamp()
-            });
-
-            return { success: true };
-        } catch (error) {
-            console.error('Ошибка отправки заявки:', error);
-            return { success: false, error: error.message };
+        if (!fromUserId || fromUserId !== auth.currentUser?.uid) {
+            return { success: false, error: 'Не удалось подтвердить текущий аккаунт.' };
         }
+        return this.invokeFriendAction('send', toUserId);
     }
 
     async acceptFriendRequest(userId, friendId) {
-        try {
-            const batch = writeBatch(this.db);
-
-            batch.set(doc(this.db, 'users', userId, 'friends', friendId), {
-                friendId: friendId,
-                addedAt: serverTimestamp()
-            });
-
-            batch.set(doc(this.db, 'users', friendId, 'friends', userId), {
-                friendId: userId,
-                addedAt: serverTimestamp()
-            });
-
-            batch.delete(doc(this.db, 'users', userId, 'friendRequests', friendId));
-            batch.delete(doc(this.db, 'users', friendId, 'sentRequests', userId));
-
-            await batch.commit();
-
-            await this.updateFriendsCount(userId);
-            await this.updateFriendsCount(friendId);
-
-            return { success: true };
-        } catch (error) {
-            console.error('Ошибка принятия заявки:', error);
-            return { success: false, error: error.message };
+        if (!userId || userId !== auth.currentUser?.uid) {
+            return { success: false, error: 'Не удалось подтвердить текущий аккаунт.' };
         }
+        return this.invokeFriendAction('accept', friendId);
     }
 
     async rejectFriendRequest(userId, friendId) {
-        try {
-            const batch = writeBatch(this.db);
-
-            batch.delete(doc(this.db, 'users', userId, 'friendRequests', friendId));
-            batch.delete(doc(this.db, 'users', friendId, 'sentRequests', userId));
-
-            await batch.commit();
-
-            return { success: true };
-        } catch (error) {
-            console.error('Ошибка отклонения заявки:', error);
-            return { success: false, error: error.message };
+        if (!userId || userId !== auth.currentUser?.uid) {
+            return { success: false, error: 'Не удалось подтвердить текущий аккаунт.' };
         }
+        return this.invokeFriendAction('reject', friendId);
+    }
+
+    async cancelFriendRequest(userId, targetUid) {
+        if (!userId || userId !== auth.currentUser?.uid) {
+            return { success: false, error: 'Не удалось подтвердить текущий аккаунт.' };
+        }
+        return this.invokeFriendAction('cancel', targetUid);
     }
 
     async removeFriend(userId, friendId) {
-        try {
-            const batch = writeBatch(this.db);
-
-            batch.delete(doc(this.db, 'users', userId, 'friends', friendId));
-            batch.delete(doc(this.db, 'users', friendId, 'friends', userId));
-
-            await batch.commit();
-
-            await this.updateFriendsCount(userId);
-            await this.updateFriendsCount(friendId);
-
-            return { success: true };
-        } catch (error) {
-            console.error('Ошибка удаления друга:', error);
-            return { success: false, error: error.message };
+        if (!userId || userId !== auth.currentUser?.uid) {
+            return { success: false, error: 'Не удалось подтвердить текущий аккаунт.' };
         }
+        return this.invokeFriendAction('remove', friendId);
     }
 
     async getFriends(userId) {
@@ -220,7 +191,7 @@ export class FriendsService {
 
     async getUserProfile(uid) {
         try {
-            const userDoc = await getDoc(doc(this.db, 'users', uid));
+            const userDoc = await getDoc(doc(this.db, 'publicProfiles', uid));
             if (userDoc.exists()) {
                 const data = userDoc.data();
                 return {
@@ -237,13 +208,4 @@ export class FriendsService {
         }
     }
 
-    async updateFriendsCount(userId) {
-        try {
-            const friends = await this.getFriends(userId);
-            const userRef = doc(this.db, 'users', userId);
-            await updateDoc(userRef, { 'stats.friends': friends.length });
-        } catch (error) {
-            console.error('Ошибка обновления счётчика друзей:', error);
-        }
-    }
 }

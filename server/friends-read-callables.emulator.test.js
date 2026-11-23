@@ -56,7 +56,7 @@ async function seedPair() {
 
 before(async () => {
     if (!available) return;
-    assert.match(emulatorHost, /^(127\\.0\\.0\\.1|localhost):\\d+$/);
+    assert.match(emulatorHost, /^(127\.0\.0\.1|localhost):\d+$/);
     app = initializeApp({ projectId }, `friends-read-emulator-${process.pid}`);
     db = getFirestore(app);
     const registrations = [];

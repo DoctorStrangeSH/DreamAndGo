@@ -67,7 +67,7 @@ async function main() {
 
     process.stdout.write([
         'BACKUP VERIFICATION: PASS',
-        'Project: ' + backup.projectId,
+        'Project: ' + backup.manifest.projectId,
         'Documents: ' + backup.manifest.documentCount,
         'Source bytes: ' + backup.manifest.totalSourceBytes,
         'Inventory SHA-256: ' + inventory.manifestSha256,

@@ -14,8 +14,8 @@ import { createChatCallables } from './chat-callables.js';
 
 if (getApps().length === 0) initializeApp();
 
-// Candidate callable surface for registration, owner-scoped profile, friends
-// and notification access. Do not deploy until Emulator and staging acceptance
+// Candidate callable surface for registration, owner-scoped profile, friends,
+// notifications and private Chat V2. Do not deploy until Emulator and staging acceptance
 // are complete; production rollout flags remain closed.
 const registration = createRegistrationCallables({
     onCall,

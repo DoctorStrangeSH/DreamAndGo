@@ -168,6 +168,21 @@ test('message send derives sender and recipient from authenticated membership', 
     assert.equal(notification.message.includes('Привет, Боб!'), false);
 });
 
+test('private inbox returns only canonical chats owned by the authenticated user', async () => {
+    const ctx = createHarness(friendSeed());
+    const { chatId } = await createChat(ctx);
+    const result = await ctx.callables.getMyPrivateChatsV2({
+        auth: { uid: 'alice' }, data: {}
+    });
+    assert.equal(result.chats.length, 1);
+    assert.equal(result.chats[0].chatId, chatId);
+    assert.equal(result.chats[0].partnerId, 'bob');
+    assert.equal(result.chats[0].partnerName, 'Пользователь');
+    await assert.rejects(ctx.callables.getMyPrivateChatsV2({
+        auth: { uid: 'mallory' }, data: {}
+    }), error => error.code === 'unavailable' || error.code === 'permission-denied');
+});
+
 test('outsiders cannot send messages or read private history', async () => {
     const ctx = createHarness(friendSeed());
     const { chatId } = await createChat(ctx);

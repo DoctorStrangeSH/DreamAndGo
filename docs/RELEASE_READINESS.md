@@ -247,3 +247,12 @@
 - [x] Added synthetic tests for deterministic output, tamper detection, invalid paths and unsupported value types.
 - [ ] Exact-HEAD CI pending.
 - [ ] No staging export or real backup has been performed; a separate staging project and read-only credentials are still required.
+
+
+## Guarded staging backup export — 2026-11-23
+
+- [x] Added read-only Admin SDK export CLI with project allowlist, explicit non-production confirmation, exclusive output creation and owner-only local permissions.
+- [x] Backup contains all user chat summaries and root chat message documents; inventory is generated from the same fetched snapshot.
+- [x] Canonical V2 summary documents are excluded from legacy migration candidates by exact canonical ID verification.
+- [ ] Exact-HEAD CI pending.
+- [ ] No staging export has been run; staging credentials and project ID are not yet available.

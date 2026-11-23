@@ -189,11 +189,11 @@ async function main() {
     await writeFile(reportPath, report, { flag: 'wx', mode: 0o600 });
 
     process.stdout.write(report);
-    process.stdout.write(\nBackup: ${backupPath}\nInventory: ${inventoryPath}\nReport: ${reportPath}\n);
+    process.stdout.write('\nBackup: ' + backupPath + '\nInventory: ' + inventoryPath + '\nReport: ' + reportPath + '\n');
     process.stdout.write('Firestore mode: READ ONLY. No document writes were issued.\n');
 }
 
 main().catch(error => {
-    process.stderr.write(Chat Migration Backup stopped: ${error.message}\n);
+    process.stderr.write('Chat Migration Backup stopped: ' + error.message + '\n');
     process.exitCode = 1;
 });

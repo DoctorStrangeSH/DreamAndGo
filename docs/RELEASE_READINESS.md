@@ -315,3 +315,11 @@
 - [x] Run `45181585519` confirmed Unit and Chromium jobs passed, but Emulator suite had two failures: unsupported Admin SDK `Bytes` import in restore test and missing reciprocal friendship in read-test fixture.
 - [x] Both test-only issues corrected on `integration/v1.0-reconciliation`.
 - [ ] Await latest exact-HEAD Actions run; release remains NOT READY until all checks and staging gates pass.
+
+### Safe staging preflight added — 2026-11-23
+
+- [x] [STAGING_PREFLIGHT.md](STAGING_PREFLIGHT.md) documents the required isolated staging environment, local configuration and two-account acceptance.
+- [x] `scripts/staging-preflight.mjs` performs local fail-closed validation only: rejects production/demo projects, cross-project auth domains, production storage/Realtime Database references and open rollout switches.
+- [x] Added five unit regression scenarios; source file and local JSON configuration are kept separate from production.
+- [ ] Full CI on updated HEAD must pass before marking the preflight code verified.
+- [ ] Actual staging project, App Check, Functions transport, two-account browser acceptance and migration rehearsal remain **NOT DONE**.

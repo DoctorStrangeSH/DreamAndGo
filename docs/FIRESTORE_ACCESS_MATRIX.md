@@ -334,3 +334,12 @@ This pass inspected the integration-branch browser service implementations, not 
 - [x] After a block mutation, the UI refreshes the authoritative server status and only reports success when the expected state is confirmed.
 - [ ] Verify live block/unblock while both users have the conversation open, including immediate message-send attempts from both sides.
 - [ ] Run exact-HEAD automated tests and browser acceptance; no successful CI or staging run is claimed.
+
+### Chat V2 unilateral block/unblock regression — 2026-11-23
+
+- [x] Added a server-callable regression where both participants block each other, then only one side unblocks.
+- [x] Confirms the remaining partner-side block continues to hide the contact, reports `canSend: false`, and rejects message delivery.
+- [x] Chat UI block-status refresh and block/unblock action results are scoped to the active chat; late responses cannot overwrite a newly opened conversation.
+- [x] A cancelled block confirmation does not enter a pending state.
+- [ ] Execute the updated Chat V2 unit suite and full exact-HEAD CI.
+- [ ] Verify both clients' live UI and message composer behavior with two staging accounts.

@@ -386,3 +386,11 @@ This pass inspected the integration-branch browser service implementations, not 
 - [x] Reviewed notification route allowlisting: only registered internal routes are accepted; profile routes permit a validated UID segment.
 - [ ] Execute Friends, Notifications, and full exact-HEAD test/syntax suites.
 - [ ] Verify notification click-through and unread badge behavior in a two-account staging session.
+
+### Notifications unavailable-state badge preservation — 2026-11-23
+
+- [x] When protected notification backend configuration is unavailable, the widget shows its explicit unavailable state without replacing the unread badge with a false zero.
+- [x] A genuine successful empty response still renders the empty-inbox state and updates the badge to zero.
+- [x] A request failure continues to use the retry state and preserves the last known badge.
+- [ ] Execute notification, Friends, Chat V2, and full exact-HEAD test/syntax suites.
+- [ ] Verify unavailable, retry, unread badge, mark-read, and navigation behavior in browser with two staging accounts.

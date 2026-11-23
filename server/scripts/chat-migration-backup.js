@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import { chmod, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { assertOutputDirectoryOutsideRepository } from '../chat-migration-paths.js';
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import {
@@ -72,13 +74,8 @@ async function main() {
         ambientProjectId: process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT
     });
 
-    const resolvedOutputDir = path.resolve(outputDir);
-    const relativeOutputPath = path.relative(process.cwd(), resolvedOutputDir);
-    if (resolvedOutputDir === path.parse(resolvedOutputDir).root ||
-        relativeOutputPath === '' ||
-        (!relativeOutputPath.startsWith('..' + path.sep) && relativeOutputPath !== '..' && !path.isAbsolute(relativeOutputPath))) {
-        throw new Error('Резервную копию нужно сохранять вне рабочей папки репозитория');
-    }
+    const repositoryRoot = fileURLToPath(new URL('../../', import.meta.url));
+    const resolvedOutputDir = await assertOutputDirectoryOutsideRepository(outputDir, repositoryRoot);
 
     const app = initializeApp({ projectId: projectId }, 'chat-migration-backup-' + projectId);
     const db = getFirestore(app);

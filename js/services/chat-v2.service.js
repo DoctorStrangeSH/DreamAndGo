@@ -1,6 +1,7 @@
 import { app, appCheck } from '../config/firebase.js';
 import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
 import { createChatV2CallableInvoker } from '../core/chat-v2-callable-invoker.js';
+import { createEncryptedChatOutbox, createIndexedDbChatOutbox } from './chat-v2-offline-outbox.js';
 
 function createClientMessageId() {
     const cryptoApi = globalThis.crypto;
@@ -21,6 +22,23 @@ export class ChatV2Service {
         this.invoke = null;
         this.enabled = false;
         this.pendingMessageIds = new Map();
+        this.activeOutboxUid = null;
+        this.outboxFlushPromise = null;
+        this.onOutboxChange = null;
+        try {
+            this.outbox = createEncryptedChatOutbox({
+                store: createIndexedDbChatOutbox()
+            });
+        } catch (error) {
+            this.outbox = null;
+            console.warn('Зашифрованная офлайн-очередь недоступна:', error);
+        }
+        this.handleOnline = () => {
+            if (this.activeOutboxUid) void this.flushOutbox(this.activeOutboxUid);
+        };
+        if (typeof window !== 'undefined') {
+            window.addEventListener('online', this.handleOnline);
+        }
 
         if (!app || !appCheck ||
             !enabledMeta('firebase-functions-backend-ready') ||
@@ -43,6 +61,76 @@ export class ChatV2Service {
 
     resetSession() {
         this.pendingMessageIds.clear();
+        this.activeOutboxUid = null;
+    }
+
+    startOutbox(uid) {
+        if (typeof uid !== 'string' || !uid) return;
+        this.activeOutboxUid = uid;
+        if (globalThis.navigator?.onLine !== false) {
+            void this.flushOutbox(uid);
+        }
+    }
+
+    async getPendingMessages(uid, chatId = null) {
+        if (!this.outbox) return [];
+        return this.outbox.list(uid, chatId);
+    }
+
+    isTransientSendError(error) {
+        const code = String(error?.code || '').toLowerCase();
+        return globalThis.navigator?.onLine === false ||
+            ['unavailable', 'functions/unavailable', 'deadline-exceeded',
+                'functions/deadline-exceeded', 'network-request-failed',
+                'functions/network-request-failed', 'aborted'].includes(code);
+    }
+
+    async enqueueOfflineMessage(uid, chatId, text, messageId) {
+        if (!this.outbox) {
+            throw new Error('Не удалось безопасно сохранить сообщение: зашифрованная очередь недоступна.');
+        }
+        const queued = await this.outbox.enqueue({ uid, chatId, text, messageId });
+        this.onOutboxChange?.();
+        return { success: true, queued: true, ...queued };
+    }
+
+    async flushOutbox(uid) {
+        if (!this.outbox || !this.isEnabled || !uid || uid !== this.activeOutboxUid ||
+            globalThis.navigator?.onLine === false) return;
+        if (this.outboxFlushPromise) return this.outboxFlushPromise;
+
+        this.outboxFlushPromise = (async () => {
+            const records = await this.outbox.getQueued(uid);
+            for (const record of records) {
+                if (uid !== this.activeOutboxUid || globalThis.navigator?.onLine === false) break;
+                try {
+                    const result = await this.call('sendPrivateMessageV2', {
+                        chatId: record.chatId,
+                        text: (await this.outbox.list(uid, record.chatId))
+                            .find(message => message.id === record.messageId)?.text,
+                        clientMessageId: record.messageId
+                    });
+                    if (result.success !== true || typeof result.messageId !== 'string') {
+                        throw new Error('Сервер не подтвердил отправку сообщения.');
+                    }
+                    await this.outbox.remove(uid, record.messageId);
+                    this.onOutboxChange?.();
+                } catch (error) {
+                    if (String(error?.code || '').endsWith('permission-denied')) {
+                        await this.outbox.markBlocked(uid, record.messageId);
+                        this.onOutboxChange?.();
+                        continue;
+                    }
+                    if (!this.isTransientSendError(error)) {
+                        console.error('Офлайн-сообщение оставлено в очереди:', error);
+                    }
+                    break;
+                }
+            }
+        })().finally(() => {
+            this.outboxFlushPromise = null;
+        });
+        return this.outboxFlushPromise;
     }
 
     async call(endpoint, payload) {
@@ -111,22 +199,41 @@ export class ChatV2Service {
         }));
     }
 
-    async sendMessage(chatId, text) {
+    async sendMessage(chatId, text, uid) {
         const normalizedText = String(text ?? '').trim();
-        const pendingKey = JSON.stringify([chatId, normalizedText]);
+        if (!normalizedText || normalizedText.length > 4000) {
+            throw new Error('Сообщение должно содержать от 1 до 4000 символов.');
+        }
+        if (typeof uid !== 'string' || !uid) throw new Error('Не удалось определить аккаунт отправителя.');
+        const pendingKey = JSON.stringify([uid, chatId, normalizedText]);
         const clientMessageId = this.pendingMessageIds.get(pendingKey) || createClientMessageId();
         this.pendingMessageIds.set(pendingKey, clientMessageId);
 
-        const result = await this.call('sendPrivateMessageV2', {
-            chatId,
-            text: normalizedText,
-            clientMessageId
-        });
-        if (result.success !== true || typeof result.messageId !== 'string') {
-            throw new Error('Не удалось отправить сообщение.');
+        if (globalThis.navigator?.onLine === false) {
+            const queued = await this.enqueueOfflineMessage(uid, chatId, normalizedText, clientMessageId);
+            this.pendingMessageIds.delete(pendingKey);
+            return queued;
         }
-        this.pendingMessageIds.delete(pendingKey);
-        return result;
+
+        try {
+            const result = await this.call('sendPrivateMessageV2', {
+                chatId,
+                text: normalizedText,
+                clientMessageId
+            });
+            if (result.success !== true || typeof result.messageId !== 'string') {
+                throw new Error('Не удалось отправить сообщение.');
+            }
+            this.pendingMessageIds.delete(pendingKey);
+            return result;
+        } catch (error) {
+            if (this.isTransientSendError(error)) {
+                const queued = await this.enqueueOfflineMessage(uid, chatId, normalizedText, clientMessageId);
+                this.pendingMessageIds.delete(pendingKey);
+                return queued;
+            }
+            throw error;
+        }
     }
 
     async getHistoryPage(chatId, beforeMessageId = null) {

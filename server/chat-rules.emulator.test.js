@@ -98,6 +98,8 @@ test('clients cannot create, mutate or delete chat membership, messages or inbox
     await assertFails(deleteDoc(doc(aliceDb, 'chats/chat-1/messages/message-1')));
     await assertFails(updateDoc(doc(aliceDb, 'users/alice/chats/chat-1'), { unread: 999 }));
     await assertFails(deleteDoc(doc(aliceDb, 'users/alice/chats/chat-1')));
+    await assertFails(setDoc(doc(aliceDb, 'users/alice/blockedUsers/bob'), { uid: 'bob' }));
+    await assertFails(getDoc(doc(aliceDb, 'users/alice/blockedUsers/bob')));
 });
 
 test('public profile projections are readable but never client-writable', { skip: !available }, async () => {

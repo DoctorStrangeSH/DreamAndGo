@@ -507,3 +507,8 @@
 - [x] Last full CI on `60fc4587` passed: 174 unit, 4 Chromium, 23 Emulator tests; syntax check passed for 99 JavaScript files.
 - [x] Backup CLI now runs the bundle verifier before creating its output directory or writing files, and stops if any checksum/manifest check fails.
 - [ ] CI for the self-verification gate commit pending; staging export still requires a separate staging project and credentials.
+
+
+- [x] Refined Firestore read-only source guard to ignore in-memory Map operations while still checking Firestore write method chains.
+- [x] Added offline backup read-back verifier and synthetic tamper tests, including recomputation of inventory manifest checksum.
+- [ ] CI for latest offline-verification hardening pending.

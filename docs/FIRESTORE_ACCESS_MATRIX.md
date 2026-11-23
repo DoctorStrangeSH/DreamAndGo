@@ -158,7 +158,7 @@ V1.0 scope is one-to-one private conversations. Group chats remain post-v1.0 and
 - `createPrivateChatV2` requires reciprocal friendship, derives a stable SHA-256 chat ID from the two UIDs and creates canonical `chats/{chatId}` membership metadata plus two owner-scoped inbox summaries atomically.
 - `sendPrivateMessageV2` accepts only `chatId` and bounded text; sender and recipient are derived from callable Auth and the canonical participant list. Message, summaries, unread counter and a content-free notification are committed in one transaction.
 - `getPrivateChatHistoryV2` returns the latest 50 messages only to a participant and exposes an allowlisted projection.
-- `getPrivateMessageStatusV2`, `markPrivateMessageReadV2` and `getPrivateChatUnreadV2` are participant-authorized read-receipt/unread operations.
+- `getPrivateMessageStatusV2`, `markPrivateMessageReadV2`, `markPrivateMessagesReadV2` and `getPrivateChatUnreadV2` are participant-authorized read-receipt/unread operations; batch receipts update up to 50 messages in one transaction.
 - Existing legacy chat documents are not rewritten or deleted. The legacy browser ChatService/RealtimeService is not yet migrated; no feature gate is enabled.
 - Unit tests cover reciprocal-friend creation, deterministic IDs, membership enforcement, payload validation, bounded history projection, message privacy, read receipts and unread isolation. Exact-HEAD CI, Emulator matrix, client integration and legacy migration rehearsal remain NOT DONE.
 
@@ -169,7 +169,7 @@ V1.0 scope is one-to-one private conversations. Group chats remain post-v1.0 and
 - Chat create, contact discovery, inbox projection, message send, history pages and read-state operations use App Check-enforced callables.
 - Chat list and message updates use read-only Firestore listeners. Candidate Rules allow only owner inbox reads and participant reads; client writes to chat metadata, messages and inbox summaries are denied.
 - Message sends use a client-generated stable message ID. The server stores that ID as the message document ID and returns the existing result on a same-content retry without duplicating notifications or unread counts.
-- History callable returns 50-message pages with a document cursor; the chat screen loads older pages when scrolled to the top.
+- History callable returns 50-message pages with a document cursor; the chat screen loads older pages when scrolled to the top. Read receipts for a visible page are batched into one transaction.
 - Account changes stop realtime listeners and clear cached chat IDs, contacts and pending retry IDs.
 - Added callable unit tests, callable Emulator scenarios and a Firestore Rules Emulator matrix. All are added but execution on exact HEAD is still pending.
 - Remaining blockers: block/unblock support, persistent encrypted offline outbox and reconnect reconciliation, legacy chat migration rehearsal, real App Check/staging transport and two-account acceptance. Do not enable the feature gate.

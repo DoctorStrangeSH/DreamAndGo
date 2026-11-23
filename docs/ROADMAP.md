@@ -394,7 +394,6 @@
 
 ### CI guardrails — 2026-11-23
 
-- [x] Added GitHub Actions workflow for pushes to `main` and `integration/v1.0-reconciliation`, pull requests to `main`, and manual dispatch.
-- [x] Workflow uses Node.js 22, installs server test dependencies, runs repository syntax checks and the root project/Chat V2 unit suite.
-- [x] Separate Emulator job starts Firestore and Auth emulators and runs the complete server `*emulator.test.js` suite.
-- [ ] Confirm first workflow run is green; CI has not yet reported a completed run for this commit.
+- [x] Consolidated CI into the existing `.github/workflows/checks.yml`; removed duplicate workflows.
+- [x] Node.js 22, server dependency installation, root Unit suite, Auth + Firestore Emulator suite and syntax validation are covered in one pipeline.
+- [ ] Confirm the corrected pipeline is green on the latest HEAD.

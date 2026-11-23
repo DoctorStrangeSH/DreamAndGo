@@ -445,3 +445,12 @@
 - [x] Production project `dream-and-go` is hard-blocked; staging target requires exact environment allowlist and explicit non-production confirmation.
 - [ ] Exact-HEAD CI for the new analyzer is running; do not mark its tests complete until the Actions run passes.
 - [ ] No staging Firebase project ID or read-only credentials have been supplied; no Firestore inventory has been executed.
+
+
+### Legacy message collection completeness — 2026-11-23
+
+- [x] Inspector now scans all `chats/{chatId}/messages` collections read-only, not only those referenced by reciprocal summaries.
+- [x] Existing Chat V2 collections are excluded by their parent schema version; known group-chat collections are skipped from private migration.
+- [x] Orphan legacy message collections with no valid summary pair are included in the report for manual review; participant IDs are never guessed from underscore-delimited IDs.
+- [x] Local output directory permissions are restricted to owner access where supported by the host OS.
+- [ ] Exact-HEAD CI and staging inventory execution remain pending.

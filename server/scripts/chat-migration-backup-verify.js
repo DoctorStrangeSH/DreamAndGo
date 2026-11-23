@@ -2,6 +2,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { verifyChatMigrationBackup } from '../chat-migration-backup.js';
+import { verifyLegacyChatInventoryManifest } from '../chat-migration-inventory.js';
 
 function readArguments(argv) {
     const args = {};
@@ -55,7 +56,8 @@ async function main() {
     const issues = [...verification.issues];
     if (inventory.projectId !== backup.projectId) issues.push('project-id-mismatch');
     if (inventory.manifestSha256 !== backup.manifest?.sourceManifestSha256) issues.push('source-inventory-checksum-mismatch');
-    if (!inventory.manifest || typeof inventory.manifest !== 'object') issues.push('invalid-inventory-manifest');
+    const inventoryVerification = verifyLegacyChatInventoryManifest(inventory.manifest, inventory.manifestSha256);
+    issues.push(...inventoryVerification.issues);
 
     if (issues.length) {
         process.stderr.write('BACKUP VERIFICATION: FAILED\n' + [...new Set(issues)].sort().map(issue => '- ' + issue).join('\n') + '\n');
@@ -71,7 +73,7 @@ async function main() {
         'Inventory SHA-256: ' + inventory.manifestSha256,
         'Backup manifest SHA-256: ' + backup.manifestSha256,
         'Backup bundle SHA-256: ' + backup.bundleSha256,
-        'Read-back: parsed both files and verified all document, manifest, bundle and inventory linkage checksums.',
+        'Read-back: parsed both files and verified all document, backup manifest, bundle and inventory manifest checksums.',
         'Mode: OFFLINE READ ONLY — no Firebase connection or writes.'
     ].join('\n') + '\n');
 }

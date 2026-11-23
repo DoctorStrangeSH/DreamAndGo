@@ -298,3 +298,12 @@ This pass inspected the integration-branch browser service implementations, not 
 - [x] Removed obsolete subscription-state fields left behind after the Firestore realtime listeners were retired.
 - [ ] Execute unit, browser, Emulator and syntax checks on exact HEAD; this branch has not yet produced an observed passing CI run.
 - [ ] Real two-account browser acceptance and HTTPS Callable/App Check transport checks remain pending.
+
+### Friends ↔ Chat V2 eligibility regression — 2026-11-23
+
+- [x] Verified Chat V2 contact discovery is derived from the authenticated user's current `users/{uid}/friends` collection and excludes either-direction blocks.
+- [x] Verified server-side private chat creation requires reciprocal friend records and rejects blocked participants.
+- [x] Added a regression test modelling the committed state after friend removal: contact discovery no longer returns the former friend, and creating/recreating a private chat is denied.
+- [x] Explicitly verified that removing friendship does not silently delete the pre-existing conversation from the user's inbox. Existing conversation retention is preserved.
+- [ ] Execute the updated Chat V2 unit suite and full exact-HEAD CI.
+- [ ] Verify the Friends → Chat V2 flow with two real staging accounts and App Check.

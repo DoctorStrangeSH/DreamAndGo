@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
     buildChatMigrationBackup,
+    decodeFirestoreValue,
     encodeFirestoreValue,
     verifyChatMigrationBackup
 } from './chat-migration-backup.js';
@@ -155,4 +156,38 @@ test('backup verifier reports malformed envelopes and records without throwing',
     assert.equal(result.valid, false);
     assert.ok(result.issues.includes('invalid-document-record'));
     assert.ok(result.issues.includes('document-count-mismatch'));
+});
+
+test('backup decoder restores Firestore tagged values and rejects unknown or malformed tags', () => {
+    class TestTimestamp {
+        constructor(seconds, nanoseconds) { this.seconds = seconds; this.nanoseconds = nanoseconds; }
+    }
+    class TestGeoPoint {
+        constructor(latitude, longitude) { this.latitude = latitude; this.longitude = longitude; }
+    }
+    const firestore = { doc: path => ({ path }) };
+    const Bytes = { fromBase64String: base64 => ({ base64 }) };
+    const decoded = decodeFirestoreValue({
+        createdAt: { __firestoreType: 'timestamp', seconds: 1700000000, nanoseconds: 123 },
+        sentAtDate: { __firestoreType: 'date', iso: '2026-11-23T10:00:00.000Z' },
+        attachment: { __firestoreType: 'bytes', base64: 'AQID' },
+        location: { __firestoreType: 'geoPoint', latitude: 50.1, longitude: 8.6 },
+        authorRef: { __firestoreType: 'documentReference', path: 'users/alice' },
+        nested: [{ value: 'kept' }]
+    }, { firestore, Timestamp: TestTimestamp, GeoPoint: TestGeoPoint, Bytes });
+
+    assert.ok(decoded.createdAt instanceof TestTimestamp);
+    assert.equal(decoded.createdAt.seconds, 1700000000);
+    assert.ok(decoded.sentAtDate instanceof Date);
+    assert.deepEqual(decoded.attachment, { base64: 'AQID' });
+    assert.ok(decoded.location instanceof TestGeoPoint);
+    assert.deepEqual(decoded.authorRef, { path: 'users/alice' });
+    assert.deepEqual(decoded.nested, [{ value: 'kept' }]);
+    assert.throws(() => decodeFirestoreValue({ __firestoreType: 'unknown' }), /Неизвестный Firestore tag/);
+    assert.throws(() => decodeFirestoreValue({ __firestoreType: 'bytes', base64: 'not base64!' }, { Bytes }), /Некорректные Bytes/);
+    assert.throws(() => decodeFirestoreValue({ __firestoreType: 'documentReference', path: 'users' }, { firestore }), /чётное число сегментов/);
+});
+
+test('backup encoder reserves the Firestore tag key to prevent ambiguous round-trips', () => {
+    assert.throws(() => encodeFirestoreValue({ __firestoreType: 'timestamp', seconds: 1 }), /Зарезервированное поле/);
 });

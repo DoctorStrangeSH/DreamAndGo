@@ -537,3 +537,12 @@
 - [x] Extended the CLI regression test to assert the exact project identity in successful output.
 - [ ] Run the new regression suite and full Checks workflow on the resulting branch HEAD; connector status lookup currently exposes no check runs for these push commits.
 - **Safety:** offline synthetic fixtures only; no staging credentials or live Firestore data used.
+
+### Bind backup inventory to its Firebase project — 2026-11-23
+
+- [x] Added the Firebase project ID to the inventory manifest before its SHA-256 is calculated.
+- [x] Backup export now passes the explicit target project ID into inventory construction.
+- [x] Offline verification checks both the inventory envelope and the project ID inside the hashed manifest against the backup manifest.
+- [x] Added a regression test that changes the project ID inside the inventory manifest and recomputes its local checksum; verification still rejects it because the backup is bound to the original manifest hash.
+- [ ] Exact-HEAD full CI remains unconfirmed; no staging export or Firestore restore has been run.
+- **Safety:** code and synthetic fixtures only; no live Firebase reads/writes, Rules changes, or deployments.

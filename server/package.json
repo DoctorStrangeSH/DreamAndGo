@@ -11,7 +11,8 @@
     "test:emulator": "node --test --test-concurrency=1 *emulator.test.js",
     "chat:inventory": "node scripts/chat-migration-inventory.js",
     "test:chat-inventory": "node --test chat-migration-inventory.test.js",
-    "test:chat-backup": "node --test chat-migration-backup.test.js"
+    "test:chat-backup": "node --test chat-migration-backup.test.js",
+    "chat:backup": "node scripts/chat-migration-backup.js"
   },
   "dependencies": {
     "firebase-admin": "^13.0.0",

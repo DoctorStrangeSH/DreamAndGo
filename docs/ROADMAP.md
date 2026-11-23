@@ -396,4 +396,13 @@
 
 - [x] Consolidated CI into the existing `.github/workflows/checks.yml`; removed duplicate workflows.
 - [x] Node.js 22, server dependency installation, root Unit suite, Auth + Firestore Emulator suite and syntax validation are covered in one pipeline.
-- [ ] Confirm the corrected pipeline is green on the latest HEAD.
+- [x] Corrected pipeline is green on HEAD `97cfe149`: 146/146 Unit tests, 23/23 Auth + Firestore Emulator tests, syntax check passed for 90 JavaScript files.
+
+
+### CI acceptance — 2026-11-23
+
+- [x] Latest `checks.yml` run completed successfully: 146 Unit tests passed, 23 Auth + Firestore Emulator tests passed, 90 JavaScript files passed syntax validation.
+- [x] Fixed the missing `createChatCallables` export used by callable tests.
+- [x] Fixed the test Firestore mock to use `DocumentSnapshot.ref.path` for stable cursor pagination; production history query remains bounded at 50.
+- [x] Removed duplicate `.github/workflows/ci.yml` and `.github/workflows/v1-quality-gates.yml`; retained the single `.github/workflows/checks.yml` pipeline.
+- [ ] Real-browser IndexedDB persistence/reload and two-account offline/online staging acceptance remain pending.

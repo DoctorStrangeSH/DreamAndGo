@@ -11,6 +11,7 @@ function setup() {
     const docs = {
         'users/alice/friends': [
             { id: 'bob', data: () => ({ addedAt: new Date('2026-11-20T10:00:00.000Z') }) },
+            { id: 'carol', data: () => ({ addedAt: new Date('2026-11-20T11:00:00.000Z') }) },
             { id: '_init', data: () => ({}) }
         ],
         'users/alice/friendRequests': [
@@ -104,6 +105,7 @@ test('friend list excludes orphaned one-sided relationship records', async () =>
         auth: { uid: 'alice' }, data: {}
     });
     assert.deepEqual(result.items.map(item => item.uid), ['bob']);
+    assert.equal(result.items.some(item => item.uid === 'carol'), false);
 });
 
 test('friend list reads reject anonymous callers and client-selected UIDs or extra payload fields', async () => {

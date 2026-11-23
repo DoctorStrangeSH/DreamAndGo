@@ -6,6 +6,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import {
     assertSafeInventoryTarget,
     buildLegacyChatInventory,
+    canonicalChatId,
     legacyChatId
 } from '../chat-migration-inventory.js';
 import { buildChatMigrationBackup } from '../chat-migration-backup.js';
@@ -100,6 +101,8 @@ async function main() {
             continue;
         }
         const partnerUid = summary.data?.partnerId;
+        if (summary.data?.type === 'private' && summary.data.chatId === parts[3] &&
+            typeof partnerUid === 'string' && canonicalChatId(parts[1], partnerUid) === parts[3]) continue;
         if (typeof partnerUid !== 'string' || !partnerUid || parts[1] === partnerUid) continue;
         try {
             legacyIds.add(legacyChatId(parts[1], partnerUid));

@@ -59,6 +59,19 @@ export function sha256(value) {
     ).digest('hex');
 }
 
+export function verifyLegacyChatInventoryManifest(manifest, expectedSha256) {
+    if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)) {
+        return { valid: false, issues: ['invalid-inventory-manifest'] };
+    }
+    if (typeof expectedSha256 !== 'string' || !/^[a-f0-9]{64}$/.test(expectedSha256)) {
+        return { valid: false, issues: ['invalid-inventory-checksum'] };
+    }
+    const actualSha256 = sha256(manifest);
+    return actualSha256 === expectedSha256
+        ? { valid: true, issues: [] }
+        : { valid: false, issues: ['inventory-manifest-checksum-mismatch'] };
+}
+
 function timestampMillis(value) {
     if (value && typeof value.toMillis === 'function') {
         const millis = value.toMillis();

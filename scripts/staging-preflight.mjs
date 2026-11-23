@@ -47,8 +47,18 @@ function validateStagingConfig(config) {
          web.storageBucket === 'dream-and-go.appspot.com')) {
         errors.push('storageBucket указывает на production.');
     }
-    if (typeof web.databaseURL === 'string' && web.databaseURL.includes('dream-and-go')) {
-        errors.push('databaseURL может указывать на production.');
+    if (typeof web.databaseURL === 'string') {
+        let host = '';
+        try {
+            const url = new URL(web.databaseURL);
+            host = url.hostname.toLowerCase();
+            if (url.protocol !== 'https:') errors.push('databaseURL должен использовать HTTPS.');
+        } catch {
+            errors.push('Некорректный databaseURL.');
+        }
+        if (/^dream-and-go(?:-default-rtdb)?(?:\\.[a-z0-9-]+)?\\.(?:firebaseio\\.com|firebasedatabase\\.app)$/.test(host)) {
+            errors.push('databaseURL указывает на production.');
+        }
     }
     if (typeof config.appCheckSiteKey !== 'string' ||
         !/^[A-Za-z0-9_-]{20,128}$/.test(config.appCheckSiteKey)) {

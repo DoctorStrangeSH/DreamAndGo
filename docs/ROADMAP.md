@@ -436,3 +436,12 @@
 - [x] Added `docs/CHAT_MIGRATION_PLAN.md` with read-only inventory, reciprocal-summary pair validation, backup/checksum, dry-run, staging rehearsal, idempotency, conflict handling and target-only rollback requirements.
 - [x] Explicitly prohibited parsing participant pairs by splitting legacy chat IDs; UIDs may contain underscores.
 - [ ] No real dataset has been inventoried or backed up; no migration has been run. Staging rehearsal and owner approval remain mandatory.
+
+
+### Read-only legacy chat inventory tool — 2026-11-23
+
+- [x] Added deterministic pure inventory analyzer and focused tests for reciprocal summaries, message integrity, privacy, UID underscore collisions and project safety gates.
+- [x] Added Admin SDK CLI that only reads user chat summaries and legacy messages; writes a local JSON manifest and Markdown report, never Firestore.
+- [x] Production project `dream-and-go` is hard-blocked; staging target requires exact environment allowlist and explicit non-production confirmation.
+- [ ] Exact-HEAD CI for the new analyzer is running; do not mark its tests complete until the Actions run passes.
+- [ ] No staging Firebase project ID or read-only credentials have been supplied; no Firestore inventory has been executed.

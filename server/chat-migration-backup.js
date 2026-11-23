@@ -91,6 +91,14 @@ export function encodeFirestoreValue(value, location = 'document.data') {
  * Rehydrate tagged values for a controlled restore into a Firestore database.
  * Constructors are injected so the pure backup module does not initialize Firebase.
  */
+function assertTaggedValueKeys(value, expectedKeys, location) {
+    const actual = Object.keys(value).sort();
+    const expected = [...expectedKeys].sort();
+    if (actual.length !== expected.length || actual.some((key, index) => key !== expected[index])) {
+        throw new TypeError(`Некорректная структура Firestore tag: ${location}`);
+    }
+}
+
 export function decodeFirestoreValue(value, { firestore, Timestamp, GeoPoint, Bytes } = {}, location = 'document.data') {
     if (value === null || typeof value !== 'object') return value;
     if (Array.isArray(value)) {
@@ -100,6 +108,7 @@ export function decodeFirestoreValue(value, { firestore, Timestamp, GeoPoint, By
     if (Object.hasOwn(value, '__firestoreType')) {
         const type = value.__firestoreType;
         if (type === 'timestamp') {
+            assertTaggedValueKeys(value, ['__firestoreType', 'seconds', 'nanoseconds'], location);
             if (!Number.isSafeInteger(value.seconds) || !Number.isSafeInteger(value.nanoseconds) ||
                 value.nanoseconds < 0 || value.nanoseconds >= 1_000_000_000 || typeof Timestamp !== 'function') {
                 throw new TypeError(`Некорректный Timestamp: ${location}`);
@@ -107,6 +116,7 @@ export function decodeFirestoreValue(value, { firestore, Timestamp, GeoPoint, By
             return new Timestamp(value.seconds, value.nanoseconds);
         }
         if (type === 'date') {
+            assertTaggedValueKeys(value, ['__firestoreType', 'iso'], location);
             if (typeof value.iso !== 'string' || !Number.isFinite(Date.parse(value.iso)) ||
                 new Date(value.iso).toISOString() !== value.iso) {
                 throw new TypeError(`Некорректная Date: ${location}`);
@@ -114,6 +124,7 @@ export function decodeFirestoreValue(value, { firestore, Timestamp, GeoPoint, By
             return new Date(value.iso);
         }
         if (type === 'bytes') {
+            assertTaggedValueKeys(value, ['__firestoreType', 'base64'], location);
             if (typeof value.base64 !== 'string' ||
                 Buffer.from(value.base64, 'base64').toString('base64') !== value.base64 ||
                 !Bytes || typeof Bytes.fromBase64String !== 'function') {
@@ -122,6 +133,7 @@ export function decodeFirestoreValue(value, { firestore, Timestamp, GeoPoint, By
             return Bytes.fromBase64String(value.base64);
         }
         if (type === 'geoPoint') {
+            assertTaggedValueKeys(value, ['__firestoreType', 'latitude', 'longitude'], location);
             if (!Number.isFinite(value.latitude) || !Number.isFinite(value.longitude) ||
                 value.latitude < -90 || value.latitude > 90 ||
                 value.longitude < -180 || value.longitude > 180 ||
@@ -131,6 +143,7 @@ export function decodeFirestoreValue(value, { firestore, Timestamp, GeoPoint, By
             return new GeoPoint(value.latitude, value.longitude);
         }
         if (type === 'documentReference') {
+            assertTaggedValueKeys(value, ['__firestoreType', 'path'], location);
             assertDocumentPath(value.path);
             if (!firestore || typeof firestore.doc !== 'function') {
                 throw new TypeError(`Для DocumentReference требуется Firestore: ${location}`);

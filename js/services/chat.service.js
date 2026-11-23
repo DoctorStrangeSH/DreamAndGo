@@ -133,7 +133,7 @@ export class ChatService {
         if (this.isV2Enabled) {
             try {
                 if (!chatId || !text?.trim()) throw new Error('Пустое сообщение.');
-                await this.chatV2.sendMessage(chatId, text.trim());
+                await this.chatV2.sendMessage(chatId, text.trim(), senderId);
                 return { success: true };
             } catch (error) {
                 console.error('Ошибка отправки Chat V2:', error);

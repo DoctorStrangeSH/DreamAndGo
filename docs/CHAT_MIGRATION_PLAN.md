@@ -233,3 +233,13 @@ All code and regression tests for offline backup read-back, inventory-manifest c
 
 
 Final validation note: consolidated CI must run against the current branch HEAD after all offline verifier and inventory checksum changes; no live Firebase export is part of this workflow.
+
+### Backup restore implementation — 2026-11-23
+
+- [x] Added a controlled decoder for tagged Timestamp, Date, Bytes, GeoPoint, and DocumentReference values. Firestore constructors and the target database are injected; importing the backup module does not initialize Firebase.
+- [x] Reserved the `__firestoreType` key in source objects to prevent ambiguous or lossy round-trips.
+- [x] Added unit coverage for valid tagged values and malformed/unknown tags.
+- [x] Added a Firestore Emulator integration test using synthetic records, JSON serialization/read-back, native Firestore value restoration, nested document paths, and document-count checks.
+- [x] Bound the standalone read-only inventory CLI manifest to its explicit Firebase project ID.
+- [ ] Run the new Emulator restore test and full Checks workflow on the exact HEAD.
+- [ ] This is a synthetic restore test only; no live staging backup has been restored and no migration has been executed.

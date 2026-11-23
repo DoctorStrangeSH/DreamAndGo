@@ -121,7 +121,7 @@ async function createChat(ctx, actor = 'alice', target = 'bob') {
 
 test('all Chat V2 callables enforce App Check in the selected region', () => {
     const ctx = createHarness();
-    assert.equal(ctx.registrations.length, 6);
+    assert.equal(ctx.registrations.length, 7);
     for (const registration of ctx.registrations) {
         assert.deepEqual(registration.options, { region: 'europe-west3', enforceAppCheck: true });
     }

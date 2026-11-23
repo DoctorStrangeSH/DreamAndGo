@@ -20,6 +20,7 @@ function setup() {
             { id: 'dave', data: () => ({ createdAt: new Date('2026-11-22T10:00:00.000Z') }) }
         ]
     };
+    const reciprocalFriends = new Set(['users/bob/friends/alice']);
     const profiles = {
         bob: { username: 'bob', displayName: 'Bob', avatar: 'https://example.test/bob.png', bio: 'Hello', stats: { books: 4, movies: 2, travels: 1, privateField: 'never-return' } },
         carol: { username: 'carol', displayName: 'Carol', email: 'private@example.test' },
@@ -33,6 +34,15 @@ function setup() {
                     return {
                         collection(child) {
                             return {
+                                doc(childId) {
+                                    const childPath = `${path}/${child}/${childId}`;
+                                    return {
+                                        async get() {
+                                            const exists = reciprocalFriends.has(childPath);
+                                            return { exists, data: () => exists ? { friendId: childId } : undefined };
+                                        }
+                                    };
+                                },
                                 limit(count) {
                                     assert.equal(count, 101);
                                     return { async get() { return { docs: docs[`${path}/${child}`] || [] }; } };
@@ -86,6 +96,14 @@ test('friends, incoming requests and outgoing requests return only allowlisted p
     assert.equal(outgoing.items[0].createdAt, '2026-11-22T10:00:00.000Z');
     assert.equal(JSON.stringify(friends).includes('privateField'), false);
     assert.equal(JSON.stringify(incoming).includes('email'), false);
+});
+
+test('friend list excludes orphaned one-sided relationship records', async () => {
+    const { callables } = setup();
+    const result = await callables.getMyFriendsV1({
+        auth: { uid: 'alice' }, data: {}
+    });
+    assert.deepEqual(result.items.map(item => item.uid), ['bob']);
 });
 
 test('friend list reads reject anonymous callers and client-selected UIDs or extra payload fields', async () => {

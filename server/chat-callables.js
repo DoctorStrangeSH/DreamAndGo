@@ -301,6 +301,34 @@ function createChatCallables({ onCall, HttpsError, getFirestore, FieldValue }) {
         }
     });
 
+    const getPrivateMessageStatusV2 = onCall(options, async request => {
+        const actorUid = requireActor(request, HttpsError);
+        requirePayload(request.data, ['chatId', 'messageId'], HttpsError);
+        const chatId = requireChatId(request.data, HttpsError);
+        const messageId = request.data.messageId;
+        if (!validId(messageId, 150)) {
+            throw new HttpsError('invalid-argument', 'Некорректный идентификатор сообщения');
+        }
+        try {
+            const chatRef = getFirestore().collection('chats').doc(chatId);
+            const chat = await chatRef.get();
+            if (!chat.exists || !participantData(chat, actorUid)) {
+                throw new HttpsError('permission-denied', 'Нет доступа к этому диалогу');
+            }
+            const message = await chatRef.collection('messages').doc(messageId).get();
+            if (!message.exists) throw new HttpsError('not-found', 'Сообщение не найдено');
+            const data = message.data() || {};
+            return {
+                senderId: data.senderId,
+                read: data.read === true,
+                readAt: typeof data.readAt?.toMillis === 'function' ? data.readAt.toMillis() : null
+            };
+        } catch (error) {
+            if (error instanceof HttpsError) throw error;
+            throw new HttpsError('unavailable', 'Не удалось получить статус сообщения');
+        }
+    });
+
     const getPrivateChatUnreadV2 = onCall(options, async request => {
         const actorUid = requireActor(request, HttpsError);
         requirePayload(request.data, ['chatId'], HttpsError);
@@ -326,6 +354,7 @@ function createChatCallables({ onCall, HttpsError, getFirestore, FieldValue }) {
         createPrivateChatV2,
         sendPrivateMessageV2,
         getPrivateChatHistoryV2,
+        getPrivateMessageStatusV2,
         markPrivateMessageReadV2,
         getPrivateChatUnreadV2
     });

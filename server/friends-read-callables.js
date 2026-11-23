@@ -44,6 +44,12 @@ function createFriendReadCallables({ onCall, HttpsError, getFirestore }) {
             const allRecords = snapshot.docs.filter(item => item.id !== '_init');
             const records = allRecords.slice(0, MAX_RESULTS);
             const rows = await Promise.all(records.map(async item => {
+                if (listType === 'friends') {
+                    const reciprocal = await db.collection('users').doc(item.id)
+                        .collection('friends').doc(uid).get();
+                    if (!reciprocal.exists || reciprocal.data()?.friendId !== uid) return null;
+                }
+
                 const profile = await db.collection('publicProfiles').doc(item.id).get();
                 if (!profile.exists) return null;
 

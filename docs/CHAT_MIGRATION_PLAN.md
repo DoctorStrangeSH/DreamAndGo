@@ -157,3 +157,12 @@ The new `server/chat-migration-backup.js` is a tested pure builder/verifier only
 - [x] Export includes all user chat summary documents and all root chat message documents in the backup, while the private-chat inventory separately excludes verified Chat V2 and group records from legacy migration candidates.
 - [ ] Exact-HEAD CI and synthetic CLI safety tests remain pending.
 - [ ] No real staging export has been run; no staging project ID or credentials have been supplied.
+
+
+### V2 summary exclusion and backup CLI safety — 2026-11-23
+
+- [x] Inventory now identifies existing Chat V2 summaries by the exact canonical SHA-256 participant ID plus matching `chatId`, and skips them rather than treating them as legacy partner-ID documents.
+- [x] Added regression coverage proving canonical V2 summaries produce zero legacy candidate pairs.
+- [x] Added CLI preflight tests for help, production-project refusal, and mandatory non-production confirmation; these checks run before Firebase initialization.
+- [x] Backup export output must be outside the repository, uses a new directory and owner-only permissions, and includes a private backup plus inventory/report.
+- [ ] Exact-HEAD CI for these changes is pending.

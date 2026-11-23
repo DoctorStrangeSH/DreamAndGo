@@ -127,7 +127,7 @@ export class ChatModule {
                     const unreadBadge = unreadCount > 0
                         ? `<span class="badge bg-primary rounded-pill">${unreadCount}</span>`
                         : '';
-                    this.chatService.rememberChatId(chat.partnerId, chat.chatId || chat.id);
+                    this.chatService.rememberChatId(window.app.currentUser.uid, chat.partnerId, chat.chatId || chat.id);
                     const isActive = this.currentChat === chat.partnerId;
 
                     return `
@@ -193,7 +193,7 @@ export class ChatModule {
             this.closeChat();
             return;
         }
-        this.chatService.rememberChatId(partnerId, chatId);
+        this.chatService.rememberChatId(userId, partnerId, chatId);
         this.currentChatId = chatId;
         await this.chatService.markAsRead(userId, partnerId);
 

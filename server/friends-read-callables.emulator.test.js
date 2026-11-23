@@ -43,6 +43,9 @@ async function seedPair() {
         db.collection('users').doc(alice).collection('friends').doc(bob).set({
             friendId: bob, addedAt: FieldValue.serverTimestamp()
         }),
+        db.collection('users').doc(bob).collection('friends').doc(alice).set({
+            friendId: alice, addedAt: FieldValue.serverTimestamp()
+        }),
         db.collection('users').doc(alice).collection('friendRequests').doc(carol).set({
             from: carol, to: alice, status: 'pending', createdAt: FieldValue.serverTimestamp()
         }),

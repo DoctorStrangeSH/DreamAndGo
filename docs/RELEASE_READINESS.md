@@ -12,12 +12,12 @@
 
 | Область | Статус | Что подтверждено | Что блокирует DONE |
 | --- | --- | --- | --- |
-| Репозиторий и CI | PARTIAL | Интеграционная ветка основана на актуальном `main`; есть тестовый runner, syntax checker и Emulator workflow | Последний зафиксированный зелёный CI относится к `ce990b79c8495ffb0c406b6a83db98452d938b33`, а текущий HEAD новее; нужен exact-HEAD run |
+| Репозиторий и CI | VERIFIED | Exact-HEAD CI run `45152046369` зелёный: Unit 150/150, Chromium 4/4, Auth + Firestore Emulator 23/23, syntax 92/92 | Полный staging sign-off и оставшиеся пользовательские приёмочные сценарии |
 | Регистрация V2 | PARTIAL | Серверные callables, клиентский adapter, recovery flow и fail-closed rollout gates реализованы | Реальный App Check site key, staging Functions, HTTPS callable transport, Auth/App Check end-to-end |
 | Профиль и приватность | PARTIAL | Owner-scoped read/update callables, публичная allowlist-проекция и UI-настройки реализованы в candidate | Callable transport, Rules для публичной проекции, согласие и два реальных аккаунта в staging |
 | Username Registry | PARTIAL | Транзакционная резервация, уникальность и закрытый migration gate покрыты тестами | Legacy dry-run, collision report, backup, rollback rehearsal и подтверждённый backfill |
 | Firestore Rules | PARTIAL | Candidate Rules now allow only public projection reads, owner inbox reads and participant chat/message reads; client writes remain denied; Rules Emulator matrix added | Exact-HEAD Rules Emulator execution, remaining owner-scoped collection policies and staging acceptance |
-| Chat V2 | NOT VERIFIED | Server authorization, callable-backed client, read-only listeners, cursor history, receipts and mutual block controls are implemented in candidate | Exact-HEAD Unit/Emulator execution, browser IndexedDB and two-account offline/online acceptance, legacy migration rehearsal and App Check transport |
+| Chat V2 | PARTIAL | Server authorization, callable-backed client, read-only listeners, cursor history, receipts, mutual block controls; exact-HEAD Unit/Emulator and real Chromium IndexedDB/offline queue tests are green | Two real Firebase accounts in staging, callable + App Check transport, full UI offline/reconnect acceptance and legacy migration rehearsal |
 | Остальные MUST-модули | NOT VERIFIED | Требования перечислены в PRODUCT_SPEC и DELIVERY_PLAN | Реальная интеграция с UI, права доступа, сохранность данных и staging-приёмка каждого MUST-сценария |
 | Production rollout | BLOCKED | В этой ветке production Rules, Functions и данные не менялись | Отдельное подтверждение владельца после прохождения всех ворот |
 
@@ -195,3 +195,14 @@
 - [x] Per-account isolation, concurrent tab key creation, blocked records and account-scoped queue clearing covered.
 - [x] CI run [45150048398](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/45150048398) passed: 150/150 Unit, 23/23 Auth + Firestore Emulator, 91/91 JavaScript syntax files.
 - [ ] **NOT VERIFIED:** real browser reload persistence and two-account end-to-end offline/reconnect acceptance. In-memory fake IndexedDB is an adapter contract test, not a browser durability proof.
+
+
+## Real Chromium offline outbox verification — 2026-11-23
+
+- [x] Added `server/chat-v2-offline-outbox.browser.test.js` and Playwright Chromium to the single `Checks` workflow.
+- [x] Browser reload restores encrypted message plaintext only through the persisted non-extractable CryptoKey; the stored message body remains ciphertext.
+- [x] Browser offline mode retains a queued message; reconnect delivers it using the same client message ID and clears the successful record.
+- [x] Two real browser tabs concurrently write to the same account queue without losing records.
+- [x] Separate browser accounts remain isolated after reload.
+- [x] Exact-HEAD CI run [45152046369](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/45152046369) completed successfully: 150 Unit, 4 Chromium, 23 Auth + Firestore Emulator, 92 syntax checks; zero failures or skips.
+- [ ] **NOT VERIFIED:** the browser suite uses a local fixture and simulated callable response. Real Firebase staging with two accounts, Functions/App Check, and legacy migration still requires acceptance before Chat V2 release.

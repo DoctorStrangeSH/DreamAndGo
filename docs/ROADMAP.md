@@ -353,7 +353,8 @@
 - [x] Batch read receipts for up to 50 incoming messages in a single transaction.
 - [x] Stop listeners and clear account-scoped chat state on logout/account switch.
 - [x] Block/unblock enforcement and UI added; exact-HEAD test execution and two-account acceptance pending.
-- [ ] Persistent AES-GCM outbox and safe reconnect/retry across reloads.
+- [x] AES-GCM 256 encrypted IndexedDB outbox with account-scoped non-extractable keys, reconnect retry and stable message IDs added to candidate.
+- [ ] Exact-HEAD outbox tests, browser IndexedDB verification and two-account offline/online acceptance.
 - [ ] Legacy chat migration rehearsal and preservation verification.
 - [ ] Exact-HEAD CI, callable/Rules Emulator execution and two-account staging acceptance.
 - Rollout flags remain false; no Firebase deployment or production Rules change.
@@ -377,3 +378,15 @@
 - [x] Add block/unblock controls and fail-closed composer state to Chat V2 UI.
 - [x] Add Unit, callable Emulator and Rules Emulator regression scenarios.
 - [ ] Run the complete suite on exact HEAD and complete two-account staging acceptance.
+
+
+### Chat V2 encrypted offline outbox — 2026-11-23
+
+- [x] Added an IndexedDB-backed local queue; message bodies are encrypted with AES-GCM-256 before persistence.
+- [x] Persisted non-extractable encryption keys are scoped per Firebase UID; queue records are isolated by UID and chat.
+- [x] AES-GCM additional authenticated data binds ciphertext to UID, chat ID and client message ID.
+- [x] Offline sends and transient online transport failures enter the encrypted queue; the same client message ID is reused for retries.
+- [x] Reconnect triggers sequential delivery; successful records are removed, server permission denials are retained as blocked and not retried automatically.
+- [x] Pending local messages are shown in the active conversation with queued/blocked indicators; account switching stops the previous account's flush.
+- [x] Added crypto, tamper-detection, account-isolation and blocked-record Unit tests.
+- [ ] Execute Unit and syntax suites on exact HEAD; browser IndexedDB and two-account offline/online acceptance remain pending.

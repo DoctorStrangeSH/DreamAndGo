@@ -99,19 +99,27 @@ export function createNotificationCallables({ onCall, HttpsError, getFirestore }
 
         try {
             const db = getFirestore();
-            const snapshot = await db.collection('users').doc(uid)
-                .collection('notifications')
-                .where('read', '==', false)
-                .limit(100)
-                .get();
-            if (snapshot.empty) return { success: true, updated: 0 };
+            const notifications = db.collection('users').doc(uid).collection('notifications');
+            let updated = 0;
 
-            const batch = db.batch();
-            for (const document of snapshot.docs) {
-                batch.update(document.ref, { read: true });
+            // Firestore batches are capped at 500 writes. Re-query after each
+            // bounded batch so "read all" really covers the owner's full inbox.
+            while (true) {
+                const snapshot = await notifications
+                    .where('read', '==', false)
+                    .limit(450)
+                    .get();
+                if (snapshot.empty) break;
+
+                const batch = db.batch();
+                for (const document of snapshot.docs) {
+                    batch.update(document.ref, { read: true });
+                }
+                await batch.commit();
+                updated += snapshot.size;
             }
-            await batch.commit();
-            return { success: true, updated: snapshot.size };
+
+            return { success: true, updated };
         } catch {
             throw new HttpsError('unavailable', 'Не удалось обновить уведомления');
         }

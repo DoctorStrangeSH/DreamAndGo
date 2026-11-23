@@ -59,6 +59,10 @@ export class ChatV2Service {
         return this.enabled && typeof this.invoke === 'function';
     }
 
+    get isOutboxAvailable() {
+        return Boolean(this.outbox);
+    }
+
     resetSession() {
         this.pendingMessageIds.clear();
         this.activeOutboxUid = null;
@@ -101,13 +105,14 @@ export class ChatV2Service {
 
         this.outboxFlushPromise = (async () => {
             const records = await this.outbox.getQueued(uid);
+            const pendingMessages = await this.outbox.list(uid);
+            const textById = new Map(pendingMessages.map(message => [message.id, message.text]));
             for (const record of records) {
                 if (uid !== this.activeOutboxUid || globalThis.navigator?.onLine === false) break;
                 try {
                     const result = await this.call('sendPrivateMessageV2', {
                         chatId: record.chatId,
-                        text: (await this.outbox.list(uid, record.chatId))
-                            .find(message => message.id === record.messageId)?.text,
+                        text: textById.get(record.messageId),
                         clientMessageId: record.messageId
                     });
                     if (result.success !== true || typeof result.messageId !== 'string') {

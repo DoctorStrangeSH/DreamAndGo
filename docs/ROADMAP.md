@@ -810,3 +810,11 @@
 - [x] Dependency installation, Playwright headless-shell install/cache, every test stage, syntax check and cleanup passed.
 - [ ] Separate live staging Firebase, App Check token exchange, HTTPS Callable verification, two-account acceptance, and real backup/read-back/rollback rehearsal remain **NOT DONE**.
 - [ ] Release remains **NOT READY**; production config, Firestore Rules, rollout flags and `main` were not changed.
+
+### Isolated staging build — implementation added, CI pending
+
+- [x] Separate build command `npm run build:staging` writes to ignored `dist/staging`.
+- [x] Build injects only staging web config and App Check key, keeps rollout flags false, and strips production fallback from the staging copy.
+- [x] Missing staging config/App Check fails closed; production source files remain unchanged.
+- [ ] Five build regression tests and full CI on the latest HEAD are pending.
+- [ ] Real Firebase staging and two-account acceptance remain NOT DONE.

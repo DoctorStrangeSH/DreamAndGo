@@ -51,12 +51,18 @@ function validateStagingConfig(config) {
             errors.push('storageBucket должен принадлежать staging-проекту.');
         }
     }
-    if (typeof web.databaseURL === 'string') {
+    if (web.databaseURL !== undefined) {
         let host = '';
         try {
+            if (typeof web.databaseURL !== 'string' || !web.databaseURL.trim()) {
+                throw new TypeError('databaseURL must be a non-empty string');
+            }
             const url = new URL(web.databaseURL);
             host = url.hostname.toLowerCase();
-            if (url.protocol !== 'https:') errors.push('databaseURL должен использовать HTTPS.');
+            if (url.protocol !== 'https:' || url.username || url.password ||
+                url.port || url.pathname !== '/' || url.search || url.hash) {
+                errors.push('databaseURL должен быть HTTPS-адресом staging database без дополнительных компонентов.');
+            }
         } catch {
             errors.push('Некорректный databaseURL.');
         }

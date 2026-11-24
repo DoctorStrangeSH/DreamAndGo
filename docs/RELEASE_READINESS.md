@@ -365,3 +365,17 @@
 - [x] Closed sync PR [#3](https://github.com/DoctorStrangeSH/DreamAndGo/pull/3) without merging; the older main-side copies were not imported.
 - [ ] Branch history reconciliation remains a separate maintenance task; do not merge the 654-commit integration delta into `main` as part of V1.0 staging work.
 - [x] `main` and production remain unchanged.
+
+## Final exact-HEAD CI — 2026-11-24
+
+- [x] Run [45352559712](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/45352559712) passed on exact branch HEAD `4b34c3d7e056cc5f4071fc927b8f0cf414fddae8`.
+- [x] Unit: **209/209**; real Chromium offline queue: **4/4**; Auth + Firestore Emulator: **27/27**; JavaScript syntax: **111 files**.
+- [x] All workflow stages passed, including dependency install, Chromium headless-shell install/cache and cleanup.
+- [ ] Actual isolated staging Firebase, App Check token exchange, HTTPS Callable deployment, two-account browser acceptance, staging Rules role matrix, and real backup/read-back/rollback rehearsal remain **NOT DONE**.
+- [ ] Release remains **NOT READY**. Production config and Rules were not changed; no production deploy, rollout flag change, or merge into `main` was performed.
+
+## Current branch divergence snapshot — 2026-11-24
+
+- Integration branch is **655 commits ahead** and **3 commits behind** `main`.
+- The three commits missing from integration were reviewed; the older duplicate/add-add copies were not imported because integration already has more complete hardened versions.
+- Branch-history cleanup is intentionally separate from V1.0 staging acceptance. Do not merge the large integration delta into `main` as a release shortcut.

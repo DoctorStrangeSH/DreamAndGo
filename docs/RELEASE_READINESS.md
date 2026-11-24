@@ -379,3 +379,11 @@
 - Integration branch is **655 commits ahead** and **3 commits behind** `main`.
 - The three commits missing from integration were reviewed; the older duplicate/add-add copies were not imported because integration already has more complete hardened versions.
 - Branch-history cleanup is intentionally separate from V1.0 staging acceptance. Do not merge the large integration delta into `main` as a release shortcut.
+
+### Staging endpoint validation hardening — 2026-11-24
+
+- [x] `storageBucket` values, when supplied, must be strings matching the staging project bucket.
+- [x] `databaseURL` values, when supplied, must be non-empty strings using HTTPS, the exact staging project host, and an origin-only URL (no credentials, port, path, query, or fragment).
+- [x] Added regression coverage for non-string endpoint values and malformed/non-origin database URLs; staging preflight now has **eight** test scenarios.
+- [ ] Exact-HEAD CI for these changes is pending.
+- [ ] These are static local checks only; no staging project was configured, no Firebase network calls were made, and no production settings were changed.

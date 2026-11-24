@@ -13,7 +13,8 @@
 3. Создать **локальный игнорируемый Git-файл** `staging-config.local.json` (не коммитить, не вставлять ключи в сообщения).
 4. Заполнить его публичной *staging* веб-конфигурацией из Firebase Console и отдельным App Check site key. Никаких service account JSON или закрытых ключей в этом файле быть не должно.
 5. Запустить из корня репозитория: `node scripts/staging-preflight.mjs staging-config.local.json`. Получить `PASS` до начала дальнейшей приёмки.
-6. Протестировать в **отдельной staging сборке**. Статическая проверка **не изменяет** `js/config/firebase.js` и **не включает** rollout flags.
+6. Собрать из корня репозитория отдельную статическую staging-версию командой `npm run build:staging`. Скрипт создаёт `dist/staging`, подставляет только публичную Firebase-конфигурацию staging, App Check site key и сохраняет все rollout flags выключенными. Production `js/config/firebase.js` и `index.html` не переписываются.
+7. Проверить содержимое `dist/staging`: в HTML должен быть явный environment marker `staging`, а скомпилированный `js/config/firebase.js` не должен содержать production fallback. Для локальной проверки использовать только staging build, никогда не открывать production build с тестовыми аккаунтами.
 
 Пример **схемы** файла (значения ниже — только заглушки, они не пройдут проверку):
 
@@ -44,7 +45,9 @@
 - Firebase `authDomain` принадлежит тому же staging project ID, web `appId`, `apiKey` и sender ID имеют ожидаемый формат.
 - Отсутствуют ссылки на production storage bucket или production Realtime Database.
 - Присутствует App Check site key в ожидаемом формате.
-- Все пять rollout flags присутствуют и **строго** равны `false`.
+- Все пять rollout flags присутствуют и **строго** равны `false` в исходном HTML-шаблоне и в staging build.
+- Staging runtime config встраивается в отдельный output; production fallback удаляется только из копии `dist/staging/js/config/firebase.js`.
+- При отсутствии staging runtime config или App Check site key staging инициализация блокируется; автоматического fallback на production нет.
 
 ## Что ещё обязательно до DONE
 
@@ -54,5 +57,7 @@
 - [ ] Проверить migration inventory, отдельный backup, независимый read-back и rollback rehearsal на **тестовых копиях**.
 - [ ] Зафиксировать результаты, исходный commit, тестовые сценарии и ссылки на логи в `docs/RELEASE_READINESS.md`.
 - [ ] Не открывать production rollout gates и не трогать `main` без отдельных релизных ворот и явного подтверждения.
+
+Команда сборки: `npm run build:staging` (ожидает локальный игнорируемый `staging-config.local.json`). Output: `dist/staging`, не коммитится.
 
 Локальная проверка конфигурации **не заменяет** ни staging, ни безопасность App Check, ни двухаккаунтную приёмку.

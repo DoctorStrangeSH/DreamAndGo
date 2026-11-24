@@ -794,3 +794,11 @@
 - [x] Chromium installation bottleneck resolved: Playwright headless shell installed successfully in run `45351271008`.
 - [x] Unit run exposed one staging test fixture mismatch (project ID changed but Storage bucket retained prior ID); corrected fixture to keep all endpoints aligned.
 - [ ] Verify full CI on latest HEAD after fixture correction.
+
+### Latest exact-HEAD CI — 2026-11-24
+
+- [x] Run [45351651367](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/45351651367) passed on exact HEAD `9dee2504c49740978d3ed93cfad72b9abf2782e0`.
+- [x] Unit: **209/209**; Chromium browser: **4/4**; Auth + Firestore Emulator: **27/27**; syntax: **111 JavaScript files**.
+- [x] Playwright headless-shell install and browser cache both passed.
+- [x] Seven staging preflight test scenarios are included in the 209 passing unit tests.
+- [ ] Separate staging Firebase project, live App Check / Functions verification, two-account acceptance, and backup/rollback rehearsal remain **NOT DONE**.

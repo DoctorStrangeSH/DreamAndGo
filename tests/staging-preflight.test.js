@@ -44,6 +44,7 @@ test('staging project with production-like prefix does not confuse RTDB host saf
     const config = validConfig();
     config.firebaseConfig.projectId = 'dream-and-go-staging';
     config.firebaseConfig.authDomain = 'dream-and-go-staging.firebaseapp.com';
+    config.firebaseConfig.storageBucket = 'dream-and-go-staging.firebasestorage.app';
     config.firebaseConfig.databaseURL = 'https://dream-and-go-staging-default-rtdb.europe-west1.firebasedatabase.app';
     assert.equal(validateStagingConfig(config).valid, true);
 

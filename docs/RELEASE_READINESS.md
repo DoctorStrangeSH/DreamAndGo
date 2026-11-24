@@ -356,3 +356,12 @@
 - [x] Playwright headless-shell installation, browser cache, all test stages and cleanup passed.
 - [ ] Actual isolated staging Firebase project, live App Check token exchange, HTTPS Callable deployment, two-account browser acceptance, Rules role matrix on staging, and migration backup/read-back/rollback rehearsal remain **NOT DONE**.
 - [ ] Release remains **NOT READY**. Production config and Rules were not changed; no production deploy or main merge was performed.
+
+## Branch divergence review — 2026-11-24
+
+- [x] Reviewed the three commits present on `main` but not in the integration branch.
+- [x] Compared all three add/add paths: `docs/CHAT_MIGRATION_PLAN.md`, `server/chat-migration-backup-cli.test.js`, and `server/scripts/chat-migration-backup.js`.
+- [x] Integration already contains the more complete versions: backup self-verification before output creation, root chat-parent export, output-directory containment checks, and stronger read-only CLI assertions.
+- [x] Closed sync PR [#3](https://github.com/DoctorStrangeSH/DreamAndGo/pull/3) without merging; the older main-side copies were not imported.
+- [ ] Branch history reconciliation remains a separate maintenance task; do not merge the 654-commit integration delta into `main` as part of V1.0 staging work.
+- [x] `main` and production remain unchanged.

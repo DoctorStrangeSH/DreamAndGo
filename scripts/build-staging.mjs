@@ -49,6 +49,14 @@ function publicFirebaseConfig(config) {
     return result;
 }
 
+export function renderStagingFirebaseModule(sourceModule) {
+    const productionConfigPattern = /const PRODUCTION_FIREBASE_CONFIG = Object\\.freeze\\(\\{[\\s\\S]*?\\n\\}\\);/;
+    if (!productionConfigPattern.test(sourceModule)) {
+        throw new Error('Не найден production Firebase config block для отключения в staging build.');
+    }
+    return sourceModule.replace(productionConfigPattern, 'const PRODUCTION_FIREBASE_CONFIG = null;');
+}
+
 export function renderStagingIndex(sourceHtml, config) {
     const validation = validateStagingConfig(config);
     if (!validation.valid) {
@@ -96,6 +104,12 @@ export async function buildStaging(configPath = DEFAULT_CONFIG) {
     await mkdir(OUTPUT_DIR, { recursive: true });
     await cp(resolve(ROOT, 'css'), resolve(OUTPUT_DIR, 'css'), { recursive: true });
     await cp(resolve(ROOT, 'js'), resolve(OUTPUT_DIR, 'js'), { recursive: true });
+    const firebaseModule = await readFile(resolve(ROOT, 'js', 'config', 'firebase.js'), 'utf8');
+    await writeFile(
+        resolve(OUTPUT_DIR, 'js', 'config', 'firebase.js'),
+        renderStagingFirebaseModule(firebaseModule),
+        'utf8'
+    );
     await writeFile(resolve(OUTPUT_DIR, 'index.html'), stagingHtml, 'utf8');
 
     console.log(`Staging build created: ${relative(ROOT, OUTPUT_DIR)}`);

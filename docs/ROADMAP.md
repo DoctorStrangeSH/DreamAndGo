@@ -802,3 +802,11 @@
 - [x] Playwright headless-shell install and browser cache both passed.
 - [x] Seven staging preflight test scenarios are included in the 209 passing unit tests.
 - [ ] Separate staging Firebase project, live App Check / Functions verification, two-account acceptance, and backup/rollback rehearsal remain **NOT DONE**.
+
+### Exact-HEAD CI confirmation — 2026-11-24 (final branch HEAD)
+
+- [x] Run [45352559712](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/45352559712) passed on exact HEAD `4b34c3d7e056cc5f4071fc927b8f0cf414fddae8`.
+- [x] Unit: **209/209**; Chromium browser: **4/4**; Auth + Firestore Emulator: **27/27**; syntax: **111 JavaScript files**.
+- [x] Dependency installation, Playwright headless-shell install/cache, every test stage, syntax check and cleanup passed.
+- [ ] Separate live staging Firebase, App Check token exchange, HTTPS Callable verification, two-account acceptance, and real backup/read-back/rollback rehearsal remain **NOT DONE**.
+- [ ] Release remains **NOT READY**; production config, Firestore Rules, rollout flags and `main` were not changed.

@@ -32,8 +32,15 @@ jobs:
       - name: Install server dependencies
         run: npm install --prefix server --no-package-lock --ignore-scripts
 
-      - name: Install Chromium for browser tests
-        run: ./server/node_modules/.bin/playwright install --with-deps chromium
+      - name: Cache Playwright browser
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('server/package.json') }}
+
+      - name: Install Chromium headless shell for browser tests
+        timeout-minutes: 8
+        run: timeout 7m ./server/node_modules/.bin/playwright install chromium --only-shell
 
       - name: Run unit tests
         run: npm test

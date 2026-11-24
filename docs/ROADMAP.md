@@ -788,3 +788,9 @@
 - [x] Unit 208/208; Chromium 4/4; Auth + Firestore Emulator 27/27; syntax 111 JavaScript files.
 - [ ] Subsequent staging-preflight hardening is awaiting a fresh exact-HEAD CI run.
 - [ ] Separate staging Firebase project and real two-account acceptance are still not available/verified.
+
+### CI browser install and staging fixture follow-up — 2026-11-24
+
+- [x] Chromium installation bottleneck resolved: Playwright headless shell installed successfully in run `45351271008`.
+- [x] Unit run exposed one staging test fixture mismatch (project ID changed but Storage bucket retained prior ID); corrected fixture to keep all endpoints aligned.
+- [ ] Verify full CI on latest HEAD after fixture correction.

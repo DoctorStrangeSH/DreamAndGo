@@ -19,8 +19,9 @@ import {
     getDocs
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
-// Твой конфиг Firebase
-const firebaseConfig = {
+// Production remains the default runtime. Staging builds embed an explicit
+// JSON config and environment marker into their generated index.html.
+const PRODUCTION_FIREBASE_CONFIG = Object.freeze({
     apiKey: "AIzaSyCojBCBMu7ygKiDIfBzMgmf2ocFj9PScf8",
     authDomain: "dream-and-go.firebaseapp.com",
     projectId: "dream-and-go",
@@ -28,7 +29,51 @@ const firebaseConfig = {
     messagingSenderId: "185825350373",
     appId: "1:185825350373:web:749e60926a0c6294f7fa0c",
     measurementId: "G-FR9HRFS4S7"
-};
+});
+
+const runtimeEnvironment = document.querySelector('meta[name="dreamandgo-environment"]')?.content?.trim() || 'production';
+const runtimeConfigElement = document.getElementById('dreamandgo-firebase-config');
+const isStagingEnvironment = runtimeEnvironment === 'staging';
+
+function resolveFirebaseConfig() {
+    if (!isStagingEnvironment) {
+        if (runtimeConfigElement) {
+            throw new Error('Embedded Firebase config is only allowed in an explicit staging build.');
+        }
+        if (runtimeEnvironment !== 'production') {
+            throw new Error(`Unsupported Dream&Go environment: ${runtimeEnvironment}`);
+        }
+        return PRODUCTION_FIREBASE_CONFIG;
+    }
+
+    if (!runtimeConfigElement) {
+        throw new Error('Staging runtime config is missing; production fallback is disabled.');
+    }
+
+    let config;
+    try {
+        config = JSON.parse(runtimeConfigElement.textContent || '');
+    } catch {
+        throw new Error('Staging runtime Firebase config is not valid JSON.');
+    }
+
+    const projectId = config?.projectId;
+    if (!config || typeof config !== 'object' ||
+        typeof projectId !== 'string' ||
+        !/^[a-z][a-z0-9-]{4,28}[a-z0-9]$/.test(projectId) ||
+        !/(?:^|-)staging(?:-|$)/.test(projectId) ||
+        projectId === 'dream-and-go' ||
+        config.authDomain !== `${projectId}.firebaseapp.com` ||
+        typeof config.apiKey !== 'string' || !/^AIza[A-Za-z0-9_-]{20,}$/.test(config.apiKey) ||
+        typeof config.appId !== 'string' || !/^1:[0-9]+:web:[A-Za-z0-9]+$/.test(config.appId) ||
+        typeof config.messagingSenderId !== 'string' || !/^[0-9]+$/.test(config.messagingSenderId)) {
+        throw new Error('Staging runtime Firebase config failed its project identity checks.');
+    }
+
+    return Object.freeze(config);
+}
+
+const firebaseConfig = resolveFirebaseConfig();
 
 // Инициализация Firebase с проверкой ошибок
 let app, auth, db, appCheck = null;

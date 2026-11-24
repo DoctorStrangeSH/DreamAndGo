@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: dreamandgo-checks-${{ github.ref }}
+  group: dreamandgo-checks-v2-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

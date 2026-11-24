@@ -781,3 +781,10 @@
 - [x] Added [STAGING_PREFLIGHT.md](STAGING_PREFLIGHT.md) with setup steps, explicit non-actions and a two-account acceptance checklist; local `staging-config.local.json` is ignored by Git.
 - [ ] Verify new unit scenarios and full CI on exact updated branch HEAD.
 - [ ] No separate live staging Firebase project or credentials were provided/verified; no staging deployment, App Check exchange or user testing performed.
+
+### Exact-HEAD CI confirmation — 2026-11-24
+
+- [x] Run `45241634272` passed on exact HEAD `64ec0846c29a83ccca10e922afc732117d962888`.
+- [x] Unit 208/208; Chromium 4/4; Auth + Firestore Emulator 27/27; syntax 111 JavaScript files.
+- [ ] Subsequent staging-preflight hardening is awaiting a fresh exact-HEAD CI run.
+- [ ] Separate staging Firebase project and real two-account acceptance are still not available/verified.

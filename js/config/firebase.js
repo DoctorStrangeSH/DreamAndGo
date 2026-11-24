@@ -107,6 +107,10 @@ try {
 } catch (error) {
     console.error('❌ Ошибка инициализации Firebase:', error);
     console.error('Проверь конфигурацию в Firebase Console');
+    if (isStagingEnvironment) {
+        app = auth = db = appCheck = null;
+        throw error;
+    }
 }
 
 // Экспортируем для использования в других модулях

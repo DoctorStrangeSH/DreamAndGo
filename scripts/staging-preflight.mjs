@@ -42,10 +42,14 @@ function validateStagingConfig(config) {
     if (typeof web.messagingSenderId !== 'string' || !/^[0-9]+$/.test(web.messagingSenderId)) {
         errors.push('Некорректный messagingSenderId.');
     }
-    if (typeof web.storageBucket === 'string' &&
-        (web.storageBucket === 'dream-and-go.firebasestorage.app' ||
-         web.storageBucket === 'dream-and-go.appspot.com')) {
-        errors.push('storageBucket указывает на production.');
+    if (web.storageBucket !== undefined) {
+        const expectedBuckets = [
+            `${projectId}.appspot.com`,
+            `${projectId}.firebasestorage.app`
+        ];
+        if (typeof web.storageBucket !== 'string' || !expectedBuckets.includes(web.storageBucket)) {
+            errors.push('storageBucket должен принадлежать staging-проекту.');
+        }
     }
     if (typeof web.databaseURL === 'string') {
         let host = '';
@@ -56,8 +60,11 @@ function validateStagingConfig(config) {
         } catch {
             errors.push('Некорректный databaseURL.');
         }
-        if (/^dream-and-go(?:-default-rtdb)?(?:\.[a-z0-9-]+)?\.(?:firebaseio\.com|firebasedatabase\.app)$/.test(host)) {
-            errors.push('databaseURL указывает на production.');
+        const isProjectDatabase = host === `${projectId}.firebaseio.com` ||
+            (host.startsWith(`${projectId}-default-rtdb.`) &&
+             host.endsWith('.firebasedatabase.app'));
+        if (!isProjectDatabase) {
+            errors.push('databaseURL должен принадлежать staging-проекту.');
         }
     }
     if (typeof config.appCheckSiteKey !== 'string' ||

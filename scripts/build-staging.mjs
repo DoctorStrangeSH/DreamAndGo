@@ -22,7 +22,7 @@ function replaceMetaContent(html, name, value) {
     const pattern = new RegExp(`<meta\\b(?=[^>]*\\bname=["']${name}["'])[^>]*>`, 'i');
     const match = html.match(pattern);
     if (!match) throw new Error(`В index.html отсутствует meta ${name}.`);
-    const updated = match[0].replace(/\bcontent=(["'])[^"']*\1/i, \`content="\${escapeAttribute(value)}"\`);
+    const updated = match[0].replace(/\bcontent=(["'])[^"']*\1/i, 'content="' + escapeAttribute(value) + '"');
     if (updated === match[0]) throw new Error(`Не удалось обновить meta ${name}.`);
     return html.replace(match[0], updated);
 }

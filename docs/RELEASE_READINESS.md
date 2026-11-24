@@ -345,3 +345,14 @@
 - [x] Unit run reported 208/209 passing; the sole failure was a test fixture retaining the old Storage bucket after changing its staging project ID.
 - [x] Updated the fixture to use the matching staging bucket; no production code or Firebase configuration changed.
 - [ ] Full exact-HEAD CI after this fixture correction is pending.
+
+## Latest exact-HEAD CI — 2026-11-24
+
+- [x] Run [45351651367](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/45351651367) completed successfully on exact HEAD `9dee2504c49740978d3ed93cfad72b9abf2782e0`.
+- [x] Unit: **209/209**, including seven staging preflight scenarios.
+- [x] Real Chromium offline queue tests: **4/4**.
+- [x] Auth + Firestore Emulator integration tests: **27/27**.
+- [x] JavaScript syntax: **111 files**.
+- [x] Playwright headless-shell installation, browser cache, all test stages and cleanup passed.
+- [ ] Actual isolated staging Firebase project, live App Check token exchange, HTTPS Callable deployment, two-account browser acceptance, Rules role matrix on staging, and migration backup/read-back/rollback rehearsal remain **NOT DONE**.
+- [ ] Release remains **NOT READY**. Production config and Rules were not changed; no production deploy or main merge was performed.

@@ -70,15 +70,15 @@ export function renderStagingIndex(sourceHtml, config) {
     const injection = [
         '<meta name="dreamandgo-environment" content="staging">',
         `<script id="dreamandgo-firebase-config" type="application/json">${runtimeConfig}</script>`
-    ].join('\\n');
-    if (!/<\\/head>/i.test(html)) throw new Error('В index.html отсутствует закрывающий </head>.');
-    html = html.replace(/<\\/head>/i, `${injection}\\n</head>`);
+    ].join('\n');
+    if (!/<\/head>/i.test(html)) throw new Error('В index.html отсутствует закрывающий </head>.');
+    html = html.replace(/<\/head>/i, `${injection}\n</head>`);
     return html;
 }
 
 export async function buildStaging(configPath = DEFAULT_CONFIG) {
     const absoluteConfigPath = resolve(process.cwd(), configPath);
-    const outputRelativeToConfig = relative(absoluteConfigPath, OUTPUT_DIR);
+    const outputRelativeToConfig = relative(OUTPUT_DIR, absoluteConfigPath);
     if (outputRelativeToConfig === '' || (!outputRelativeToConfig.startsWith(`..${sep}`) && outputRelativeToConfig !== '..')) {
         throw new Error('Staging config не может находиться внутри каталога сборки.');
     }

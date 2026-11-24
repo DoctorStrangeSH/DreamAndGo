@@ -8,6 +8,7 @@
   "scripts": {
     "test": "node --test tests/*.test.js server/registration-callables.test.js server/registration-state.test.js server/public-profile.test.js server/profile-callables.test.js server/profile-account-callables.test.js server/username-reservation.test.js server/friends-callables.test.js server/friends-read-callables.test.js server/notifications-callables.test.js server/chat-callables.test.js server/chat-v2-offline-outbox.test.js server/chat-migration-inventory.test.js server/chat-migration-paths.test.js server/chat-migration-backup.test.js server/chat-migration-backup-cli.test.js server/chat-migration-backup-verify.test.js server/chat-migration-backup-verify-cli.test.js",
     "check": "node scripts/check-syntax.mjs",
-    "test:browser": "node --test server/chat-v2-offline-outbox.browser.test.js"
+    "test:browser": "node --test server/chat-v2-offline-outbox.browser.test.js",
+    "build:staging": "node scripts/build-staging.mjs staging-config.local.json"
   }
 }

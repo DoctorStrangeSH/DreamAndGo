@@ -62,6 +62,27 @@ test('staging preflight rejects storage and Realtime Database endpoints from ano
     assert.equal(validateStagingConfig(config).valid, false);
 });
 
+test('staging preflight rejects malformed optional endpoint values and non-origin database URLs', () => {
+    const nonStringDatabase = validConfig();
+    nonStringDatabase.firebaseConfig.databaseURL = 123;
+    assert.equal(validateStagingConfig(nonStringDatabase).valid, false);
+
+    const nonStringBucket = validConfig();
+    nonStringBucket.firebaseConfig.storageBucket = 123;
+    assert.equal(validateStagingConfig(nonStringBucket).valid, false);
+
+    for (const databaseURL of [
+        'http://dreamandgo-staging-default-rtdb.europe-west1.firebasedatabase.app',
+        'https://user@dreamandgo-staging-default-rtdb.europe-west1.firebasedatabase.app',
+        'https://dreamandgo-staging-default-rtdb.europe-west1.firebasedatabase.app/unexpected',
+        'https://dreamandgo-staging-default-rtdb.europe-west1.firebasedatabase.app?redirect=1'
+    ]) {
+        const config = validConfig();
+        config.firebaseConfig.databaseURL = databaseURL;
+        assert.equal(validateStagingConfig(config).valid, false, databaseURL);
+    }
+});
+
 test('staging preflight requires every rollout switch to be explicitly false', () => {
     for (const name of FLAG_NAMES) {
         const config = validConfig();

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { FLAG_NAMES } from '../scripts/staging-preflight.mjs';
-import { renderStagingIndex } from '../scripts/build-staging.mjs';
+import { renderStagingFirebaseModule, renderStagingIndex } from '../scripts/build-staging.mjs';
 
 function validConfig() {
     return {
@@ -70,10 +70,18 @@ test('staging build refuses to inject a second runtime configuration', () => {
     assert.throws(() => renderStagingIndex(html, validConfig()), /already contains staging runtime config/);
 });
 
-test('staging build escapes HTML-sensitive characters in embedded JSON', () => {
+test('staging build omits unsupported optional metadata and removes production fallback', () => {
     const config = validConfig();
-    config.firebaseConfig.measurementId = 'G-ABC123';
+    config.firebaseConfig.measurementId = '<script>alert(1)</script>';
     const html = renderStagingIndex(sourceIndex(), config);
-    assert.match(html, /<script id="dreamandgo-firebase-config"/);
-    assert.doesNotMatch(html, /<script id="dreamandgo-firebase-config"[^>]*>[^<]*</);
+    const embedded = html.match(/<script id="dreamandgo-firebase-config" type="application\\/json">([\\s\\S]*?)<\\/script>/);
+    assert.ok(embedded);
+    assert.equal(JSON.parse(embedded[1]).measurementId, undefined);
+    assert.equal(html.includes('<script>alert(1)</script>'), false);
+
+    const productionModule = 'const PRODUCTION_FIREBASE_CONFIG = Object.freeze({\\n    projectId: "dream-and-go"\\n});\\nexport const app = null;';
+    const stagingModule = renderStagingFirebaseModule(productionModule);
+    assert.match(stagingModule, /PRODUCTION_FIREBASE_CONFIG = null/);
+    assert.equal(stagingModule.includes('dream-and-go'), false);
+    assert.throws(() => renderStagingFirebaseModule('no firebase config here'), /production Firebase config block/);
 });

@@ -387,3 +387,13 @@
 - [x] Added regression coverage for non-string endpoint values and malformed/non-origin database URLs; staging preflight now has **eight** test scenarios.
 - [ ] Exact-HEAD CI for these changes is pending.
 - [ ] These are static local checks only; no staging project was configured, no Firebase network calls were made, and no production settings were changed.
+
+### Isolated staging build implementation — 2026-11-24
+
+- [x] Added `npm run build:staging`, which creates only `dist/staging` from the static app's `index.html`, `css/` and `js/`.
+- [x] Staging build embeds only the allowlisted public staging Firebase web config and App Check site key; service-account/private fields are never copied.
+- [x] Build refuses invalid staging config, any source HTML rollout flag not explicitly false, duplicate runtime config, and a missing App Check meta tag.
+- [x] Staging copy removes the production Firebase fallback. Missing staging marker/config or invalid/missing App Check blocks initialization rather than falling back to production.
+- [x] Added five staging-build tests; generated output remains under ignored `dist/`.
+- [ ] Exact-HEAD CI after this implementation is pending.
+- [ ] No real Firebase project, deployment, production setting, or rollout flag was changed.

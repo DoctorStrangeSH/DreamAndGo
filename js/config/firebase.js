@@ -74,6 +74,12 @@ function resolveFirebaseConfig() {
 }
 
 const firebaseConfig = resolveFirebaseConfig();
+const appCheckSiteKey = document.querySelector('meta[name="firebase-app-check-site-key"]')?.content?.trim();
+
+if (isStagingEnvironment &&
+    (!appCheckSiteKey || !/^[A-Za-z0-9_-]{20,128}$/.test(appCheckSiteKey))) {
+    throw new Error('Staging App Check site key is missing or invalid; Firebase initialization is blocked.');
+}
 
 // Инициализация Firebase с проверкой ошибок
 let app, auth, db, appCheck = null;
@@ -83,8 +89,6 @@ try {
     auth = getAuth(app);
     db = getFirestore(app);
 
-    // App Check remains fail-closed until the Firebase Console site key is configured.
-    const appCheckSiteKey = document.querySelector('meta[name="firebase-app-check-site-key"]')?.content?.trim();
     if (appCheckSiteKey && /^[A-Za-z0-9_-]{20,128}$/.test(appCheckSiteKey)) {
         appCheck = initializeAppCheck(app, {
             provider: new ReCaptchaV3Provider(appCheckSiteKey),

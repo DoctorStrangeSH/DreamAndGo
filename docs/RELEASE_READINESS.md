@@ -323,3 +323,11 @@
 - [x] Added five unit regression scenarios; source file and local JSON configuration are kept separate from production.
 - [ ] Full CI on updated HEAD must pass before marking the preflight code verified.
 - [ ] Actual staging project, App Check, Functions transport, two-account browser acceptance and migration rehearsal remain **NOT DONE**.
+
+## Exact-HEAD CI evidence — 2026-11-24
+
+- [x] Run [45241634272](https://github.com/DoctorStrangeSH/DreamAndGo/actions/runs/45241634272) completed successfully on exact HEAD `64ec0846c29a83ccca10e922afc732117d962888`.
+- [x] Unit: **208/208**; real Chromium offline queue: **4/4**; Auth + Firestore Emulator: **27/27**; JavaScript syntax: **111 files**.
+- [x] Every workflow step passed, including dependency install, Chromium install, unit, browser, Emulator and syntax.
+- [ ] Later staging-preflight hardening commits are newer than this run; run CI again on the latest HEAD before marking those changes verified.
+- [ ] Actual staging Firebase, App Check token exchange, HTTPS callable transport, two-account acceptance, production Rules read-only audit and backup/rollback rehearsal remain NOT DONE.

@@ -51,6 +51,16 @@ test('staging project with production-like prefix does not confuse RTDB host saf
     assert.equal(validateStagingConfig(config).valid, false);
 });
 
+test('staging preflight rejects storage and Realtime Database endpoints from another project', () => {
+    const config = validConfig();
+    config.firebaseConfig.storageBucket = 'unrelated-staging.firebasestorage.app';
+    assert.equal(validateStagingConfig(config).valid, false);
+
+    config.firebaseConfig.storageBucket = 'dreamandgo-staging.firebasestorage.app';
+    config.firebaseConfig.databaseURL = 'https://unrelated-staging-default-rtdb.europe-west1.firebasedatabase.app';
+    assert.equal(validateStagingConfig(config).valid, false);
+});
+
 test('staging preflight requires every rollout switch to be explicitly false', () => {
     for (const name of FLAG_NAMES) {
         const config = validConfig();

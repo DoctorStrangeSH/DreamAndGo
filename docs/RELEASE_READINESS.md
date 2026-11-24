@@ -331,3 +331,10 @@
 - [x] Every workflow step passed, including dependency install, Chromium install, unit, browser, Emulator and syntax.
 - [ ] Later staging-preflight hardening commits are newer than this run; run CI again on the latest HEAD before marking those changes verified.
 - [ ] Actual staging Firebase, App Check token exchange, HTTPS callable transport, two-account acceptance, production Rules read-only audit and backup/rollback rehearsal remain NOT DONE.
+
+### Latest staging preflight hardening — 2026-11-24
+
+- [x] Preflight now requires Storage bucket to match the exact staging project ID.
+- [x] Optional Realtime Database URL must be HTTPS and match the same staging project ID; unrelated project endpoints are rejected.
+- [x] Added a regression scenario for cross-project Storage and Realtime Database endpoints (seven staging preflight test scenarios total).
+- [ ] Exact-HEAD CI for the current branch HEAD is pending; the earlier green run predates these latest checks.

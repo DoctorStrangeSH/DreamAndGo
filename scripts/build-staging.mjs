@@ -50,7 +50,7 @@ function publicFirebaseConfig(config) {
 }
 
 export function renderStagingFirebaseModule(sourceModule) {
-    const productionConfigPattern = /const PRODUCTION_FIREBASE_CONFIG = Object\\.freeze\\(\\{[\\s\\S]*?\\n\\}\\);/;
+    const productionConfigPattern = /const PRODUCTION_FIREBASE_CONFIG = Object\.freeze\(\{[\s\S]*?\n\}\);/
     if (!productionConfigPattern.test(sourceModule)) {
         throw new Error('Не найден production Firebase config block для отключения в staging build.');
     }

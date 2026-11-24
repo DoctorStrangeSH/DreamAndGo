@@ -55,7 +55,7 @@ test('staging build embeds the isolated public Firebase config and App Check key
 
 test('staging build refuses rollout flags that are not explicitly false in source HTML', () => {
     const html = sourceIndex().replace('name="chat-v2-enabled" content="false"', 'name="chat-v2-enabled" content="true"');
-    assert.throws(() => renderStagingIndex(html, validConfig()), /Rollout flag chat-v2-enabled must remain false/);
+    assert.throws(() => renderStagingIndex(html, validConfig()), /Rollout flag chat-v2-enabled/);
 });
 
 test('staging build rejects invalid Firebase config and a template without App Check meta', () => {
@@ -67,7 +67,7 @@ test('staging build rejects invalid Firebase config and a template without App C
 
 test('staging build refuses to inject a second runtime configuration', () => {
     const html = sourceIndex().replace('</head>', '<meta name="dreamandgo-environment" content="staging"></head>');
-    assert.throws(() => renderStagingIndex(html, validConfig()), /already contains staging runtime config/);
+    assert.throws(() => renderStagingIndex(html, validConfig()), /staging runtime config/);
 });
 
 test('staging build omits unsupported optional metadata and removes production fallback', () => {

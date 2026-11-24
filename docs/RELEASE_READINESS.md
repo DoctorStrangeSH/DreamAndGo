@@ -338,3 +338,10 @@
 - [x] Optional Realtime Database URL must be HTTPS and match the same staging project ID; unrelated project endpoints are rejected.
 - [x] Added a regression scenario for cross-project Storage and Realtime Database endpoints (seven staging preflight test scenarios total).
 - [ ] Exact-HEAD CI for the current branch HEAD is pending; the earlier green run predates these latest checks.
+
+### CI browser install and staging fixture follow-up — 2026-11-24
+
+- [x] Playwright Chromium headless shell installation passed in run `45351271008`; cache step also passed.
+- [x] Unit run reported 208/209 passing; the sole failure was a test fixture retaining the old Storage bucket after changing its staging project ID.
+- [x] Updated the fixture to use the matching staging bucket; no production code or Firebase configuration changed.
+- [ ] Full exact-HEAD CI after this fixture correction is pending.
